@@ -1,0 +1,36 @@
+﻿using System;
+
+public enum CTAG
+{
+	important,
+	repeatSwing,
+	nonHold,
+	nonPick,
+	canMelee,
+	boss,
+	currency,
+	randomName,
+	noDrop,
+	hidden,
+	wilds,
+	neg,
+	replica,
+	seed,
+	rareSeed,
+	gift,
+	ignoreUse,
+	throwWeapon,
+	throwWeaponEnemy,
+	notHumanMeat,
+	noRandomProduct,
+	suicide,
+	kamikaze,
+	randomSkin,
+	noPortrait,
+	randomPortrait,
+	rareResource,
+	tourism,
+	staticSkin,
+	godArtifact,
+	noWish
+}
