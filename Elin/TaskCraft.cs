@@ -134,7 +134,7 @@ public class TaskCraft : Task
 				Msg.Say("invalidCraftResource");
 				return;
 			}
-			this.recipe.Craft(this.blessed, i == 0, null, false);
+			this.recipe.Craft(this.blessed, i == 0, null, null, false);
 			this.owner.elements.ModExp(orCreateElement.id, 200, false);
 			this.resources.Clear();
 		}

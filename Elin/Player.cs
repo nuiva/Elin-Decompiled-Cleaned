@@ -962,7 +962,10 @@ public class Player : EClass
 		WidgetCurrentTool instance = WidgetCurrentTool.Instance;
 		if (this.currentHotItem != null)
 		{
-			instance.buttonHotItem.Refresh();
+			if (instance)
+			{
+				instance.buttonHotItem.Refresh();
+			}
 			if (this.currentHotItem is HotItemHeld && this.currentHotItem.Thing != EClass.pc.held)
 			{
 				this.currentHotItem = null;
@@ -978,7 +981,7 @@ public class Player : EClass
 		}
 		if (this.currentHotItem == null)
 		{
-			if (instance.selected != -1 && instance.selectedButton.card != null && instance.selectedButton.card.GetRootCard() == EClass.pc)
+			if (instance && instance.selected != -1 && instance.selectedButton.card != null && instance.selectedButton.card.GetRootCard() == EClass.pc)
 			{
 				this.currentHotItem = instance.selectedButton.card.trait.GetHotItem();
 			}

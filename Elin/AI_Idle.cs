@@ -75,7 +75,7 @@ public class AI_Idle : AIAct
 					{
 						this.owner.hunger.Mod(-30);
 					}
-					else
+					else if (!this.owner.things.IsFull(0))
 					{
 						thing = ThingGen.CreateFromCategory("food", EClass.rnd(EClass.rnd(60) + 1) + 10);
 						thing.isNPCProperty = true;
@@ -603,7 +603,7 @@ public class AI_Idle : AIAct
 		{
 			EClass.pc.DoHostileAction(this.owner, false);
 		}
-		if (EClass.rnd(200) == 0)
+		if (EClass.rnd(200) == 0 && !this.owner.noMove)
 		{
 			Point cleanPoint = AI_Clean.GetCleanPoint(this.owner, 4, 10);
 			if (cleanPoint != null)
@@ -698,6 +698,10 @@ public class AI_Idle : AIAct
 									}
 									if (thing7 == null)
 									{
+										if (this.owner.things.IsFull(0))
+										{
+											goto IL_22F2;
+										}
 										thing7 = ThingGen.CreateFromCategory((EClass.rnd(5) != 0) ? "spellbook" : "ancientbook", -1);
 										thing7.isNPCProperty = true;
 									}
@@ -749,6 +753,7 @@ public class AI_Idle : AIAct
 					c.OnInsulted();
 				});
 			}
+			IL_22F2:
 			yield return base.Restart();
 		}
 		if (this.owner.host != null)

@@ -99,9 +99,21 @@ public class LayerPeople : ELayer
 		return layerPeople;
 	}
 
-	public static LayerPeople CreateGraze(AreaType areaType)
+	public static LayerPeople CreateBed(TraitBed bed)
 	{
-		return LayerPeople.Create(LayerPeople.Mode.Double);
+		LayerPeople layerPeople = LayerPeople.Create(LayerPeople.Mode.Double);
+		layerPeople.multi.AddOwner(0, new ListPeopleBed
+		{
+			textHeader = "candidates",
+			bed = bed
+		});
+		layerPeople.multi.AddOwner(1, new ListPeopleBed
+		{
+			textHeader = "listBedHolder".lang(bed.MaxHolders.ToString() ?? "", null, null, null, null),
+			bed = bed
+		});
+		ELayer.ui.AddLayer(layerPeople);
+		return layerPeople;
 	}
 
 	public static LayerPeople CreateSelectEmbarkMembers(List<Chara> settlers)

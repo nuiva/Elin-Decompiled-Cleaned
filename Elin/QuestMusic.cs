@@ -48,6 +48,11 @@ public class QuestMusic : QuestInstance
 		return new ZoneEventMusic();
 	}
 
+	public override ZoneInstanceRandomQuest CreateInstance()
+	{
+		return new ZoneInstanceMusic();
+	}
+
 	public override string GetTextProgress()
 	{
 		return "progressMusic".lang(this.score.ToString() ?? "", this.destScore.ToString() ?? "", null, null, null);

@@ -41,8 +41,16 @@ public class TraitFoodEggFertilized : TraitFoodEgg
 				element.vPotential += 30;
 			}
 		}
-		EClass.Branch.AddMemeber(chara);
-		EClass.Branch.ChangeMemberType(chara, FactionMemberType.Livestock);
+		FactionBranch factionBranch = EClass.Branch ?? EClass.pc.homeBranch;
+		if (factionBranch != null)
+		{
+			factionBranch.AddMemeber(chara);
+			factionBranch.ChangeMemberType(chara, EClass._zone.IsPCFaction ? FactionMemberType.Livestock : FactionMemberType.Default);
+			if (!EClass._zone.IsPCFaction)
+			{
+				EClass.pc.party.AddMemeber(chara);
+			}
+		}
 		Msg.Say("incubate", chara, null, null, null);
 		return chara;
 	}

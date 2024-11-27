@@ -30,7 +30,6 @@ public class WidgetNotice : BaseWidgetNotice
 		WidgetNotice.Instance = this;
 		LittlePopper.showStock = this.extra.showStock;
 		base.Add(new NotificationHome(), this.H1);
-		base.Add(new NotificationStockpile(), this.H3);
 		this.itemBattle = base.Add(new NotificationBattle(), this.H4);
 		this.itemGuest = base.Add(new NotificationGuest(), this.H4);
 	}

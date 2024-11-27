@@ -17,5 +17,7 @@ public enum AttackSource
 	Throw,
 	Finish,
 	Hang,
-	Wrath
+	Wrath,
+	ManaBackfire,
+	DeathSentense
 }

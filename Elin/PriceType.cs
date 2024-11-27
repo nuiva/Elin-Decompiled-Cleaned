@@ -5,5 +5,6 @@ public enum PriceType
 	Default,
 	Shipping,
 	PlayerShop,
-	CopyShop
+	CopyShop,
+	Tourism
 }

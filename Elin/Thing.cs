@@ -1220,7 +1220,7 @@ public class Thing : Card
 		}
 		if (base.GetInt(25, null) != 0)
 		{
-			i.AddText("isDangerLv".lang((base.GetInt(25, null) + 1).ToString() ?? "", null, null, null, null), FontColor.DontChange);
+			i.AddText("isDangerLv".lang((base.GetInt(25, null) + 1).ToString() ?? "", (EClass.pc.FameLv + 10).ToString() ?? "", null, null, null), FontColor.DontChange);
 		}
 		FontColor color = FontColor.Util;
 		if (this.trait is TraitTool && !(this.trait is TraitToolRange))
@@ -1316,7 +1316,7 @@ public class Thing : Card
 			}
 			if (this.sockets == null)
 			{
-				goto IL_11DE;
+				goto IL_11FC;
 			}
 			using (List<int>.Enumerator enumerator = this.sockets.GetEnumerator())
 			{
@@ -1325,7 +1325,7 @@ public class Thing : Card
 					int num2 = enumerator.Current;
 					i.AddText((num2 == 0) ? "emptySocket".lang() : "socket".lang(EClass.sources.elements.map[num2 / 100].GetName(), (num2 % 100).ToString() ?? "", null, null, null), FontColor.Gray);
 				}
-				goto IL_11DE;
+				goto IL_11FC;
 			}
 		}
 		i.AddText("isUnidentified".lang(), FontColor.Flavor);
@@ -1333,7 +1333,7 @@ public class Thing : Card
 		{
 			i.AddText("isUnidentified2".lang(), FontColor.Flavor);
 		}
-		IL_11DE:
+		IL_11FC:
 		this.trait.WriteNote(i, flag2);
 		if (flag2 && !flag3)
 		{
@@ -1361,9 +1361,13 @@ public class Thing : Card
 						text10 = "qualityLimit".lang(num3.ToString() ?? "", null, null, null, null);
 					}
 					int num4 = e.Value / 10;
-					if (num4 >= 0)
+					if (e.Value >= 0)
 					{
 						num4++;
+					}
+					else
+					{
+						num4--;
 					}
 					text9 = string.Concat(new string[]
 					{
@@ -1397,6 +1401,42 @@ public class Thing : Card
 			if (list.Count != list2.Count)
 			{
 				i.AddText("traitOther".lang((list2.Count - list.Count).ToString() ?? "", null, null, null, null), FontColor.DontChange);
+			}
+			if (mode == IInspect.NoteMode.Product && base.HasTag(CTAG.dish_bonus))
+			{
+				i.AddHeader("HeaderAdditionalTrait", "additional_trait", null);
+				this.source.model.elements.AddNote(i, (Element e) => e.IsFoodTraitMain, null, ElementContainer.NoteMode.Trait, false, delegate(Element e, string s)
+				{
+					string text8 = s;
+					string text9 = e.source.GetText("textExtra", false);
+					if (!text9.IsEmpty())
+					{
+						string text10 = "";
+						int num3 = e.Value / 10;
+						if (e.Value >= 0)
+						{
+							num3++;
+						}
+						else
+						{
+							num3--;
+						}
+						text9 = string.Concat(new string[]
+						{
+							"Lv.",
+							num3.ToString(),
+							text10,
+							" ",
+							text9
+						});
+						if (infoMode && e.IsFoodTraitMain)
+						{
+							text9 += "traitAdditive".lang();
+						}
+						text8 += (" <size=12>" + text9 + "</size>").TagColor(FontColor.Passive, null);
+					}
+					return text8;
+				}, null);
 			}
 		}
 		if (EClass.debug.showExtra)
@@ -1440,6 +1480,10 @@ public class Thing : Card
 		if (onWriteNote != null)
 		{
 			onWriteNote(i);
+		}
+		if (LayerDragGrid.Instance)
+		{
+			LayerDragGrid.Instance.owner.OnWriteNote(this, i);
 		}
 		if (EClass.debug.showExtra)
 		{
@@ -1657,6 +1701,10 @@ public class Thing : Card
 		{
 			return false;
 		}
+		if (this.trait.IsRequireFuel && base.c_charges != to.c_charges)
+		{
+			return false;
+		}
 		bool flag = false;
 		if (to.parent is Card)
 		{
@@ -1794,6 +1842,44 @@ public class Thing : Card
 			CS$<>8__locals1.buttonBuy.gameObject.AddComponent<CanvasGroup>();
 		}
 		CS$<>8__locals1.<ShowSplitMenu>g__UpdateButton|0();
+	}
+
+	public void ShowSplitMenu2(ButtonGrid button, string lang, Action<int> onSplit = null)
+	{
+		Thing.<>c__DisplayClass44_0 CS$<>8__locals1 = new Thing.<>c__DisplayClass44_0();
+		CS$<>8__locals1.<>4__this = this;
+		CS$<>8__locals1.lang = lang;
+		CS$<>8__locals1.button = button;
+		CS$<>8__locals1.onSplit = onSplit;
+		CS$<>8__locals1.count = 1;
+		UIContextMenu uicontextMenu = EClass.ui.CreateContextMenuInteraction();
+		CS$<>8__locals1.buttonBuy = null;
+		CS$<>8__locals1.itemSlider = null;
+		CS$<>8__locals1.itemSlider = uicontextMenu.AddSlider("sliderSplitMenu", "adjustmentNum", delegate(float a)
+		{
+			if (!EClass.core.IsGameStarted)
+			{
+				return "";
+			}
+			return "/" + CS$<>8__locals1.<>4__this.Num.ToString();
+		}, (float)CS$<>8__locals1.count, delegate(float b)
+		{
+			CS$<>8__locals1.count = (int)b;
+			base.<ShowSplitMenu2>g__UpdateButton|0();
+		}, 1f, (float)base.Num, true, false, true).GetComponent<UIItem>();
+		CS$<>8__locals1.buttonBuy = uicontextMenu.AddButton("invBuy", delegate()
+		{
+			base.<ShowSplitMenu2>g__Process|1();
+		}, true);
+		uicontextMenu.onDestroy = delegate()
+		{
+		};
+		uicontextMenu.Show();
+		if (CS$<>8__locals1.buttonBuy)
+		{
+			CS$<>8__locals1.buttonBuy.gameObject.AddComponent<CanvasGroup>();
+		}
+		CS$<>8__locals1.<ShowSplitMenu2>g__UpdateButton|0();
 	}
 
 	public void DoAct(Act act)

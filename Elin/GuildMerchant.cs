@@ -24,6 +24,6 @@ public class GuildMerchant : Guild
 		{
 			return a;
 		}
-		return a * 100 / (110 + this.relation.rank / 2);
+		return (int)((long)a * 100L / (long)(110 + this.relation.rank / 2));
 	}
 }

@@ -11,10 +11,17 @@ public class GoalIdle : Goal
 			this.owner.c_isPrayed = true;
 			if (altar != null)
 			{
-				yield return base.Do(new AI_Pray
+				if (this.owner.noMove)
 				{
-					altar = altar
-				}, null);
+					AI_Pray.Pray(this.owner, false);
+				}
+				else
+				{
+					yield return base.Do(new AI_Pray
+					{
+						altar = altar
+					}, null);
+				}
 			}
 		}
 		yield return base.DoIdle(3);

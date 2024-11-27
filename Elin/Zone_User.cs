@@ -52,6 +52,14 @@ public class Zone_User : Zone
 		}
 	}
 
+	public override bool RevealRoom
+	{
+		get
+		{
+			return true;
+		}
+	}
+
 	[JsonProperty]
 	public string path;
 }

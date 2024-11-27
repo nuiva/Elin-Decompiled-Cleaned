@@ -633,6 +633,7 @@ public class CoreDebug : EScriptable
 			{
 				Thing thing = ThingGen.Create("egg_fertilized", -1, -1);
 				thing.TryMakeRandomItem(40);
+				thing.SetEncLv(200);
 				EClass.pc.Pick(thing, true, true);
 			}
 			foreach (Chara message in EClass._map.deadCharas)
@@ -875,7 +876,7 @@ public class CoreDebug : EScriptable
 						Card t = enumerator2.Current;
 						EClass._zone.RemoveCard(t);
 					}
-					goto IL_BB6;
+					goto IL_BC2;
 				}
 			}
 			if (hitPoint.detail != null)
@@ -893,7 +894,7 @@ public class CoreDebug : EScriptable
 				}
 			}
 		}
-		IL_BB6:
+		IL_BC2:
 		if (Input.GetKeyDown(KeyCode.End) && hitPoint.detail != null)
 		{
 			for (int n = hitPoint.detail.things.Count - 1; n >= 0; n--)
@@ -1791,7 +1792,7 @@ public class CoreDebug : EScriptable
 		{
 			Chara chara2 = list[1];
 			chara2.homeBranch.BanishMember(chara2, false);
-			chara2.Die(null, null, AttackSource.None);
+			chara2.Destroy();
 			return "Demitas Removed!";
 		}
 		return "Not enough Demitas!";

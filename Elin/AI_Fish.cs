@@ -234,7 +234,7 @@ public class AI_Fish : AIAct
 			int num4 = 5;
 			if (EClass.Branch != null)
 			{
-				num4 += EClass.Branch.Evalue(3604) * 20 + EClass.Branch.Evalue(3706) * 25;
+				num4 += EClass.Branch.Evalue(3604) * 20 + EClass.Branch.Evalue(3605) * 20 + EClass.Branch.Evalue(3706) * 25;
 			}
 			if (num4 >= EClass.rnd(100))
 			{

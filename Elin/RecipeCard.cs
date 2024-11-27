@@ -194,15 +194,15 @@ public class RecipeCard : Recipe
 		return this._mold;
 	}
 
-	public override Thing Craft(BlessedState blessed, bool sound = false, List<Thing> ings = null, bool model = false)
+	public override Thing Craft(BlessedState blessed, bool sound = false, List<Thing> ings = null, TraitCrafter crafter = null, bool model = false)
 	{
 		string text = this.idCard;
 		int idMat = this.GetMainMaterial().id;
 		Element reqSkill = base.source.GetReqSkill();
 		int num = reqSkill.Value - EClass.pc.Evalue(reqSkill.id);
-		int qualityBonus = base.GetQualityBonus();
-		int num2 = this.renderRow.LV + qualityBonus;
-		bool flag = qualityBonus < 0;
+		int num2 = base.GetQualityBonus();
+		int num3 = this.renderRow.LV + num2;
+		bool flag = num2 < 0;
 		CardRow cardRow = EClass.sources.cards.map.TryGetValue(text, null);
 		bool flag2 = false;
 		if (ings != null)
@@ -269,24 +269,30 @@ public class RecipeCard : Recipe
 				}.RandomItem<string>();
 			}
 		}
-		if (!this.isDish && num2 < 1)
+		bool flag3 = EClass.sources.cards.map[text].tag.Contains("static_craft");
+		if (!this.isDish && num3 < 1)
 		{
-			num2 = 1;
+			num3 = 1;
 		}
 		if (EClass.sources.cards.map[text].tag.Contains("noQuality"))
 		{
-			num2 = -1;
+			num3 = -1;
 		}
 		if (EClass.sources.cards.map[text].tag.Contains("noMaterialChange"))
 		{
 			idMat = -1;
 		}
+		if (flag3)
+		{
+			num2 = 0;
+			flag = false;
+		}
 		CardBlueprint.Set(new CardBlueprint
 		{
-			qualityBonus = qualityBonus,
+			qualityBonus = num2,
 			rarity = (flag ? Rarity.Crude : Rarity.Normal)
 		});
-		Thing thing2 = ThingGen.Create(text, idMat, num2);
+		Thing thing2 = flag3 ? ThingGen.Create(text, -1, -1) : ThingGen.Create(text, idMat, num3);
 		if (thing2.trait.CraftNum > 1)
 		{
 			thing2.SetNum(thing2.trait.CraftNum);
@@ -294,30 +300,36 @@ public class RecipeCard : Recipe
 		thing2.idSkin = this.idSkin;
 		thing2.Identify(false, IDTSource.Identify);
 		thing2.isCrafted = true;
-		if (base.source.colorIng != 0)
+		if (!flag3)
 		{
-			thing2.Dye(this.GetColorMaterial());
-		}
-		if (thing2.IsContainer)
-		{
-			thing2.RemoveThings();
-			thing2.c_lockLv = 0;
-		}
-		thing2.SetBlessedState(blessed);
-		if (this.isDish)
-		{
-			if (!flag)
+			if (base.source.colorIng != 0)
 			{
-				this.MakeDish(thing2);
+				thing2.Dye(this.GetColorMaterial());
+			}
+			if (thing2.IsContainer)
+			{
+				thing2.RemoveThings();
+				thing2.c_lockLv = 0;
 			}
 		}
-		else
+		thing2.SetBlessedState(blessed);
+		if (!flag3)
 		{
-			this.MixIngredients(thing2);
-		}
-		if (this.isDish && flag2)
-		{
-			thing2.decay = thing2.MaxDecay + 1;
+			if (this.isDish)
+			{
+				if (!flag)
+				{
+					this.MakeDish(thing2);
+				}
+			}
+			else
+			{
+				this.MixIngredients(thing2);
+			}
+			if (this.isDish && flag2)
+			{
+				thing2.decay = thing2.MaxDecay + 1;
+			}
 		}
 		thing2.trait.OnCrafted(this);
 		if (thing2.IsAmmo && num < 0)
@@ -342,10 +354,21 @@ public class RecipeCard : Recipe
 		{
 			EClass.player.recipes.ComeUpWithRandomRecipe(thing2.category.id, 0);
 		}
-		if (this.isDish && (EClass.debug.enable || (EClass.player.flags.canComupWithFoodRecipe && EClass.rnd(30) == 0)))
+		if (this.isDish)
 		{
-			EClass.player.recipes.ComeUpWithRandomRecipe(thing2.category.id, 0);
-			EClass.player.flags.canComupWithFoodRecipe = false;
+			if (EClass.debug.enable || (EClass.player.flags.canComupWithFoodRecipe && EClass.rnd(30) == 0))
+			{
+				EClass.player.recipes.ComeUpWithRandomRecipe(thing2.category.id, 0);
+				EClass.player.flags.canComupWithFoodRecipe = false;
+			}
+			if (flag && crafter != null && crafter.CanTriggerFire && EClass.rnd(4) == 0)
+			{
+				Point point = crafter.ExistsOnMap ? crafter.owner.pos : EClass.pc.pos;
+				if (!point.cell.HasFire)
+				{
+					EClass._map.ModFire(point.x, point.z, 10);
+				}
+			}
 		}
 		return thing2;
 	}

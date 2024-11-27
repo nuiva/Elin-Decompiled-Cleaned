@@ -703,7 +703,7 @@ public class InvOwner : EClass
 		return true;
 	}
 
-	public bool OnDrag(DragItemCard.DragInfo from, DragItemCard.DragInfo to, bool execute, bool cancel = false)
+	public virtual bool OnDrag(DragItemCard.DragInfo from, DragItemCard.DragInfo to, bool execute, bool cancel = false)
 	{
 		if (cancel)
 		{

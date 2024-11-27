@@ -4,9 +4,14 @@ using System.Linq;
 
 public class TaskCullLife : Task
 {
+	public static bool CanCull(Card c)
+	{
+		return c.c_minionType == MinionType.Friend && !c.IsPCFaction;
+	}
+
 	public override bool CanPerform()
 	{
-		return Act.TP.FindChara((Chara c) => c.c_minionType == MinionType.Friend) != null;
+		return Act.TP.FindChara((Chara c) => TaskCullLife.CanCull(c)) != null;
 	}
 
 	public override bool CanManualCancel()
@@ -18,11 +23,11 @@ public class TaskCullLife : Task
 	{
 		for (;;)
 		{
-			TaskCullLife.<>c__DisplayClass3_0 CS$<>8__locals1 = new TaskCullLife.<>c__DisplayClass3_0();
+			TaskCullLife.<>c__DisplayClass4_0 CS$<>8__locals1 = new TaskCullLife.<>c__DisplayClass4_0();
 			Chara target = TaskCullLife.GetTarget();
 			if (this.dest != null)
 			{
-				target = this.dest.FindChara((Chara c) => c.c_minionType == MinionType.Friend);
+				target = this.dest.FindChara((Chara c) => TaskCullLife.CanCull(c));
 				this.dest = null;
 			}
 			if (target == null)
@@ -59,7 +64,7 @@ public class TaskCullLife : Task
 		List<Chara> list = new List<Chara>();
 		foreach (Chara chara in EClass._map.charas)
 		{
-			if (chara.c_minionType == MinionType.Friend)
+			if (TaskCullLife.CanCull(chara))
 			{
 				list.Add(chara);
 			}

@@ -434,6 +434,15 @@ public class FoodEffect : EClass
 					case 755:
 						CS$<>8__locals1.c.CureCondition<ConBleed>(element.Value);
 						break;
+					case 756:
+					{
+						Condition condition = CS$<>8__locals1.c.AddCondition<ConHotspring>(element.Value * 2, false);
+						if (condition != null)
+						{
+							condition.SetPerfume(3);
+						}
+						break;
+					}
 					}
 				}
 				else

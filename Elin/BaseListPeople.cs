@@ -36,6 +36,14 @@ public class BaseListPeople : ListOwner<Chara, ItemGeneral>
 		}
 	}
 
+	public virtual LayerPeople.ShowMode ShowMode
+	{
+		get
+		{
+			return this.layer.showMode;
+		}
+	}
+
 	public virtual bool ShowGoto
 	{
 		get
@@ -87,7 +95,7 @@ public class BaseListPeople : ListOwner<Chara, ItemGeneral>
 
 	public override void OnInstantiate(Chara a, ItemGeneral b)
 	{
-		BaseListPeople.<>c__DisplayClass16_0 CS$<>8__locals1 = new BaseListPeople.<>c__DisplayClass16_0();
+		BaseListPeople.<>c__DisplayClass18_0 CS$<>8__locals1 = new BaseListPeople.<>c__DisplayClass18_0();
 		CS$<>8__locals1.<>4__this = this;
 		CS$<>8__locals1.a = a;
 		this.SetSubText(CS$<>8__locals1.a, b);
@@ -125,7 +133,7 @@ public class BaseListPeople : ListOwner<Chara, ItemGeneral>
 				CS$<>8__locals1.<>4__this.layer.Close();
 			}, null, delegate(UITooltip t)
 			{
-				BaseListPeople.<>c__DisplayClass16_2 CS$<>8__locals3;
+				BaseListPeople.<>c__DisplayClass18_2 CS$<>8__locals3;
 				CS$<>8__locals3.t = t;
 				CS$<>8__locals3.t.note.Clear();
 				BaseArea roomWork;
@@ -179,7 +187,7 @@ public class BaseListPeople : ListOwner<Chara, ItemGeneral>
 				layerChara.SetChara(CS$<>8__locals1.a);
 			}, "charaInfo", null);
 		}
-		if (this.IsDisabled(CS$<>8__locals1.a) || CS$<>8__locals1.a.currentZone != EClass._zone)
+		if (this.IsDisabled(CS$<>8__locals1.a))
 		{
 			b.gameObject.AddComponent<CanvasGroup>().alpha = 0.6f;
 		}
@@ -187,7 +195,7 @@ public class BaseListPeople : ListOwner<Chara, ItemGeneral>
 
 	public virtual void SetSubText(Chara a, ItemGeneral b)
 	{
-		switch (this.layer.showMode)
+		switch (this.ShowMode)
 		{
 		case LayerPeople.ShowMode.Job:
 			b.SetSubText(a.job.GetName().ToTitleCase(true), 300, FontColor.Default, TextAnchor.MiddleLeft);
@@ -212,7 +220,7 @@ public class BaseListPeople : ListOwner<Chara, ItemGeneral>
 		{
 			if (c.currentZone != EClass._zone)
 			{
-				Msg.Say("isIn", c, (c.currentZone == null) ? "???" : c.currentZone.name, null, null);
+				Msg.Say("isIn", c, (c.currentZone == null) ? "???" : c.currentZone.Name, null, null);
 			}
 			SE.BeepSmall();
 			return;

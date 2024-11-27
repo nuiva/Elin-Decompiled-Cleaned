@@ -147,9 +147,13 @@ public class QuestDeliver : QuestDestZone
 		return false;
 	}
 
-	public List<Thing> ListDestThing()
+	public List<Thing> ListDestThing(bool onlyFirst = false)
 	{
 		List<Thing> list = EClass.pc.things.List((Thing t) => this.IsDestThing(t), false);
+		if (onlyFirst && list.Count > 0)
+		{
+			return list;
+		}
 		if (!this.IsDeliver && EClass._zone.IsPCFaction)
 		{
 			foreach (Thing thing in EClass._map.props.stocked.things)
@@ -157,15 +161,20 @@ public class QuestDeliver : QuestDestZone
 				if (this.IsDestThing(thing))
 				{
 					list.Add(thing);
+					if (onlyFirst)
+					{
+						return list;
+					}
 				}
 			}
+			return list;
 		}
 		return list;
 	}
 
 	public override Thing GetDestThing()
 	{
-		List<Thing> list = this.ListDestThing();
+		List<Thing> list = this.ListDestThing(true);
 		if (list.Count <= 0)
 		{
 			return null;

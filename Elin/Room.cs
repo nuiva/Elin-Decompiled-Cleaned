@@ -189,6 +189,7 @@ public class Room : BaseArea
 			}
 			this.data.group = this.plate.areaData.group;
 			this.data.atrium = this.plate.areaData.atrium;
+			this.data.accessType = this.plate.areaData.accessType;
 		}
 	}
 

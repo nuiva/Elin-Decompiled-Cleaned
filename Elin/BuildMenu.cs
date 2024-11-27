@@ -191,7 +191,7 @@ public class BuildMenu : EMono
 			}
 			foreach (Thing thing in EMono._map.Stocked.Things)
 			{
-				if (thing.source.name.Contains(s) || thing.source.name_JP.Contains(s))
+				if (EMono._map.Stocked.ShouldListAsResource(thing) && (thing.source.name.Contains(s) || thing.source.name_JP.Contains(s)))
 				{
 					Recipe recipe2 = Recipe.Create(thing);
 					if (recipe2 == null)
@@ -520,8 +520,7 @@ public class BuildMenu : EMono
 				{
 					foreach (Thing thing2 in EMono._map.Stocked.Things)
 					{
-						Card card = thing2.parent as Card;
-						if (!(thing2.parent is Chara) && !(thing2.trait is TraitChestMerchant) && (card == null || (!(card.trait is TraitChestMerchant) && !card.isSale)))
+						if (EMono._map.Stocked.ShouldListAsResource(thing2))
 						{
 							Dictionary<string, int> dictionary2 = this.counts;
 							string recipeCat = thing2.trait.RecipeCat;

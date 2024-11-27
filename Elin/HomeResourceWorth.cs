@@ -36,7 +36,7 @@ public class HomeResourceWorth : HomeResourceRate
 
 	public int GetPrice(Thing t, bool top = false)
 	{
-		int num = t.GetPrice(CurrencyType.Money, false, PriceType.Default, null);
+		int num = t.GetPrice(CurrencyType.Money, false, PriceType.Tourism, null);
 		if (t.noSell)
 		{
 			num /= 50;

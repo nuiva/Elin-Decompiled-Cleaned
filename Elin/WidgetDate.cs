@@ -61,6 +61,10 @@ public class WidgetDate : Widget
 		{
 			text += ("(" + (EMono._zone.idExport + "_" + EMono._zone.idCurrentSubset).lang() + ")").TagColor(this.colorFestival);
 		}
+		if (EMono._zone.isPeace)
+		{
+			text += "zone_peace".lang().TagColor(this.colorFestival);
+		}
 		if (EMono.debug.showExtra)
 		{
 			text = string.Concat(new string[]

@@ -193,7 +193,7 @@ public class CoreConfig : EClass
 		this.lang = id;
 	}
 
-	public void Save()
+	public void TryUpdatePlayedHour()
 	{
 		if (EClass.core.IsGameStarted)
 		{
@@ -201,8 +201,13 @@ public class CoreConfig : EClass
 			if (num > this.maxPlayedHours)
 			{
 				this.maxPlayedHours = num;
+				this.Save();
 			}
 		}
+	}
+
+	public void Save()
+	{
 		this.version = EClass.core.version;
 		IO.SaveFile(CoreConfig.path, this, false, IO.jsWriteConfig);
 		IO.SaveFile(CorePath.VersionFile, this.version, false, null);
@@ -251,6 +256,7 @@ public class CoreConfig : EClass
 		RenderObject.renderSetting = (RenderData.renderSetting = EClass.core.gameSetting.render);
 		TC._setting = EClass.core.gameSetting.render.tc;
 		UIScrollView.sensitivity = this.ui.ScrollSensitivity;
+		UIContextMenu.closeOnMouseLeave = this.ui.closePopupOnMouseLeave;
 		EClass.core.canvas.pixelPerfect = this.graphic.pixelperfectUI;
 		EClass.screen.RefreshScreenSize();
 		CharaRenderer._animeFrame = EClass.setting.render.anime.animeStep[this.test.animeFrame];
@@ -481,7 +487,8 @@ public class CoreConfig : EClass
 		Talk,
 		EmptyHand,
 		Fire,
-		SwitchHotbar
+		SwitchHotbar,
+		PropertySearch
 	}
 
 	public enum GameFuncBuild
@@ -816,6 +823,8 @@ public class CoreConfig : EClass
 		public bool showFloatButtons;
 
 		public bool balloonBG;
+
+		public bool closePopupOnMouseLeave;
 
 		public float scrollSens;
 

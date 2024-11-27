@@ -440,7 +440,7 @@ public class LayerCraft : LayerBaseCraft
 				list.Add(ingredient.thing);
 			}
 		}
-		Thing thing = this.recipe.Craft(BlessedState.Normal, false, list, true);
+		Thing thing = this.recipe.Craft(BlessedState.Normal, false, list, null, true);
 		thing.SetNum(this.inputNum.Num);
 		if (thing.sockets != null)
 		{

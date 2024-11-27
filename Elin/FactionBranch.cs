@@ -441,7 +441,7 @@ public class FactionBranch : EClass
 			{
 				if (!chara.IsPCParty && chara.memberType != FactionMemberType.Livestock && !chara.faith.IsEyth && !chara.c_isPrayed && branchMap.altarMap.Contains(chara.faith.id))
 				{
-					AI_Pray.Pray(chara);
+					AI_Pray.Pray(chara, true);
 				}
 			}
 		}

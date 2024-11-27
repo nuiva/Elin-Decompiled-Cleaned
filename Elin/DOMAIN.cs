@@ -16,7 +16,7 @@ public class DOMAIN
 
 	public const int domElement = 806;
 
-	public const int domHarvest = 808;
+	public const int domWind = 807;
 
 	public const int domMachine = 809;
 
@@ -26,11 +26,11 @@ public class DOMAIN
 
 	public const int domEarth = 812;
 
-	public const int domEyth = 814;
-
 	public const int domHarmony = 815;
 
-	public const int domWind = 807;
+	public const int domEyth = 814;
+
+	public const int domHarvest = 808;
 
 	public const int domOblivion = 813;
 
@@ -43,14 +43,14 @@ public class DOMAIN
 		804,
 		805,
 		806,
-		808,
+		807,
 		809,
 		810,
 		811,
 		812,
-		814,
 		815,
-		807,
+		814,
+		808,
 		813
 	};
 }

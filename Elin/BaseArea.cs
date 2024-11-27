@@ -173,23 +173,17 @@ public class BaseArea : EClass, IInspect
 				text = "changeName",
 				action = delegate()
 				{
-					List<string> list = new List<string>();
-					EClass.ui.AddLayer<LayerList>().SetStringList(delegate
+					Dialog.InputName("dialogChangeName", this.data.name.IsEmpty(this.GetRandomName(-1)), delegate(bool cancel, string text)
 					{
-						list.Clear();
-						for (int i = 0; i < 10; i++)
+						if (!cancel)
 						{
-							list.Add(this.GetRandomName(-1));
+							this.data.name = text;
+							if (this.plate != null)
+							{
+								this.plate.areaData.name = text;
+							}
 						}
-						return list;
-					}, delegate(int a, string b)
-					{
-						this.data.name = list[a];
-						if (this.plate != null)
-						{
-							this.plate.areaData.name = list[a];
-						}
-					}, true).SetSize(450f, -1f).EnableReroll();
+					}, Dialog.InputType.Default);
 				}
 			},
 			new BaseArea.Interaction

@@ -428,7 +428,15 @@ public class Scene : EMono
 					EMono.Sound.Play("dead_pc");
 					string[] list = Lang.GetList("lastWords");
 					string lastWord = list.RandomItem<string>();
+					if (EMono.game.Difficulty.deleteGameOnDeath)
+					{
+						GameIO.DeleteGame(Game.id, true);
+					}
 					EMono.ui.CloseLayers();
+					if (UIContextMenu.Current)
+					{
+						UIContextMenu.Current.Hide();
+					}
 					EInput.haltInput = false;
 					Dialog.InputName("dialogLastword", lastWord, delegate(bool cancel, string text)
 					{
@@ -504,13 +512,7 @@ public class Scene : EMono
 									}
 									else
 									{
-										string id = Game.id;
-										bool deleteGameOnDeath = EMono.game.Difficulty.deleteGameOnDeath;
 										EMono.game.GotoTitle(false);
-										if (deleteGameOnDeath)
-										{
-											GameIO.DeleteGame(id, true);
-										}
 									}
 									return true;
 								});
@@ -564,20 +566,20 @@ public class Scene : EMono
 							case ZoneTransition.EnterState.Moongate:
 								EMono.pc.PlayEffect("teleport", true, 0f, default(Vector3));
 								EMono.pc.PlaySound("return", 1f, true);
-								goto IL_8F0;
+								goto IL_922;
 							case ZoneTransition.EnterState.Elevator:
 								EMono.pc.PlaySound("elevator", 1f, true);
-								goto IL_8F0;
+								goto IL_922;
 							case ZoneTransition.EnterState.Fall:
 								EMono.pc.PlaySound("fall", 1f, true);
 								EMono.pc.PlayAnime(AnimeID.FallSky, false);
 								EMono.pc.DamageHP((20 + EMono.rnd(30) + ((EMono.player.lastTransition.lastZone is Zone_Casino) ? 1000 : 0)) / (EMono.pc.IsLevitating ? 10 : 1), AttackSource.Fall, null);
-								goto IL_8F0;
+								goto IL_922;
 							}
 							SE.MoveZone();
 						}
 					}
-					IL_8F0:
+					IL_922:
 					bool flag = (EMono.rnd(5) == 0 && EMono.pc.burden.GetPhase() >= 3) || EMono.pc.burden.GetPhase() >= 4;
 					if (EMono.player.lastTransition.lastZone is Region)
 					{

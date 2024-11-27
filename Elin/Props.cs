@@ -37,7 +37,7 @@ public class Props : EClass
 		}
 	}
 
-	public virtual List<Thing> Things
+	public List<Thing> Things
 	{
 		get
 		{
@@ -184,6 +184,12 @@ public class Props : EClass
 		}
 	}
 
+	public bool ShouldListAsResource(Thing t)
+	{
+		Card card = t.parent as Card;
+		return card != null && !card.isSale && card.IsContainer && card.c_lockLv == 0 && !(card.trait is TraitChestMerchant) && !t.c_isImportant;
+	}
+
 	public Thing GetAvailableThing(string id, int idMat)
 	{
 		PropSet propSet = this.cardMap.TryGetValue(id, null);
@@ -203,7 +209,7 @@ public class Props : EClass
 
 	public ThingStack ListThingStack(Recipe.Ingredient ing, StockSearchMode searchMode)
 	{
-		Props.<>c__DisplayClass27_0 CS$<>8__locals1 = new Props.<>c__DisplayClass27_0();
+		Props.<>c__DisplayClass28_0 CS$<>8__locals1 = new Props.<>c__DisplayClass28_0();
 		CS$<>8__locals1.<>4__this = this;
 		string id = ing.id;
 		CS$<>8__locals1.idMat = -1;

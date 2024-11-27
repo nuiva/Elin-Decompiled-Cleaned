@@ -1243,6 +1243,32 @@ public class ActionMode : EClass
 		WidgetHotbar.RefreshHighlights();
 	}
 
+	public bool IsFuncPressed(CoreConfig.GameFunc func)
+	{
+		CoreConfig.InputSetting input = EClass.core.config.input;
+		if (EInput.middleMouse.clicked)
+		{
+			return input.middleClick == func;
+		}
+		if (EInput.middleMouse.pressedLong)
+		{
+			return input.middlePressLong == func;
+		}
+		if (EInput.mouse3.clicked)
+		{
+			return input.mouse3Click == func;
+		}
+		if (EInput.mouse3.pressedLong)
+		{
+			return input.mouse3PressLong == func;
+		}
+		if (EInput.mouse4.clicked)
+		{
+			return input.mouse4Click == func;
+		}
+		return EInput.mouse4.pressedLong && input.mouse4PressLong == func;
+	}
+
 	public void DoFunc(CoreConfig.GameFunc func)
 	{
 		Chara targetChara = EClass.scene.mouseTarget.TargetChara;
@@ -1337,6 +1363,15 @@ public class ActionMode : EClass
 		case CoreConfig.GameFunc.SwitchHotbar:
 			WidgetCurrentTool.Instance.SwitchPage();
 			break;
+		case CoreConfig.GameFunc.PropertySearch:
+		{
+			Widget widget = EClass.ui.widgets.Toggle("Search");
+			if (widget != null)
+			{
+				widget.SoundActivate();
+			}
+			break;
+		}
 		default:
 			return;
 		}

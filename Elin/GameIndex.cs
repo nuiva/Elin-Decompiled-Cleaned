@@ -63,7 +63,7 @@ public class GameIndex : EClass
 			this.deepest = EClass.player.stats.deepest;
 			PCCData pccData = EClass.pc.pccData;
 			Color color = (pccData != null) ? pccData.GetHairColor(true) : Color.white;
-			this.color = ColorUtility.ToHtmlStringRGB(color);
+			this.color = ColorUtility.ToHtmlStringRGBA(color);
 		}
 		else
 		{

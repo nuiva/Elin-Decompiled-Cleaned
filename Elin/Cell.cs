@@ -569,6 +569,18 @@ public class Cell : WeightCell, IFloodCell
 		}
 	}
 
+	public bool crossWall
+	{
+		get
+		{
+			return this.bits2[5];
+		}
+		set
+		{
+			this.bits2[5] = value;
+		}
+	}
+
 	public bool HasObj
 	{
 		get
@@ -1189,7 +1201,7 @@ public class Cell : WeightCell, IFloodCell
 
 	public void Refresh()
 	{
-		Cell.<>c__DisplayClass311_0 CS$<>8__locals1;
+		Cell.<>c__DisplayClass314_0 CS$<>8__locals1;
 		CS$<>8__locals1.<>4__this = this;
 		Cell cell = (this.x > 0) ? Cell.cells[(int)(this.x - 1), (int)this.z] : Cell.Void;
 		Cell cell2 = ((int)(this.x + 1) < Cell.Size) ? Cell.cells[(int)(this.x + 1), (int)this.z] : Cell.Void;
@@ -1414,7 +1426,7 @@ public class Cell : WeightCell, IFloodCell
 		}
 		if (this.sourceFloor.autotile > 0)
 		{
-			this.autotile = (byte)(((!this.<Refresh>g__IsAutoTileEdge|311_0(cell4, ref CS$<>8__locals1) || (int)this.z == Cell.Size - 1) ? 0 : 1) + ((!this.<Refresh>g__IsAutoTileEdge|311_0(cell2, ref CS$<>8__locals1) || (int)this.x == Cell.Size - 1) ? 0 : 2) + ((!this.<Refresh>g__IsAutoTileEdge|311_0(cell3, ref CS$<>8__locals1) || this.z == 0) ? 0 : 4) + ((!this.<Refresh>g__IsAutoTileEdge|311_0(cell, ref CS$<>8__locals1) || this.x == 0) ? 0 : 8));
+			this.autotile = (byte)(((!this.<Refresh>g__IsAutoTileEdge|314_0(cell4, ref CS$<>8__locals1) || (int)this.z == Cell.Size - 1) ? 0 : 1) + ((!this.<Refresh>g__IsAutoTileEdge|314_0(cell2, ref CS$<>8__locals1) || (int)this.x == Cell.Size - 1) ? 0 : 2) + ((!this.<Refresh>g__IsAutoTileEdge|314_0(cell3, ref CS$<>8__locals1) || this.z == 0) ? 0 : 4) + ((!this.<Refresh>g__IsAutoTileEdge|314_0(cell, ref CS$<>8__locals1) || this.x == 0) ? 0 : 8));
 		}
 		else
 		{
@@ -1422,7 +1434,7 @@ public class Cell : WeightCell, IFloodCell
 		}
 		if (this._bridge != 0 && this.sourceBridge.autotile > 0)
 		{
-			this.autotileBridge = (byte)(((!this.<Refresh>g__IsBridgeAutoTileEdge|311_1(cell4, ref CS$<>8__locals1) || (int)this.z == Cell.Size - 1) ? 0 : 1) + ((!this.<Refresh>g__IsBridgeAutoTileEdge|311_1(cell2, ref CS$<>8__locals1) || (int)this.x == Cell.Size - 1) ? 0 : 2) + ((!this.<Refresh>g__IsBridgeAutoTileEdge|311_1(cell3, ref CS$<>8__locals1) || this.z == 0) ? 0 : 4) + ((!this.<Refresh>g__IsBridgeAutoTileEdge|311_1(cell, ref CS$<>8__locals1) || this.x == 0) ? 0 : 8));
+			this.autotileBridge = (byte)(((!this.<Refresh>g__IsBridgeAutoTileEdge|314_1(cell4, ref CS$<>8__locals1) || (int)this.z == Cell.Size - 1) ? 0 : 1) + ((!this.<Refresh>g__IsBridgeAutoTileEdge|314_1(cell2, ref CS$<>8__locals1) || (int)this.x == Cell.Size - 1) ? 0 : 2) + ((!this.<Refresh>g__IsBridgeAutoTileEdge|314_1(cell3, ref CS$<>8__locals1) || this.z == 0) ? 0 : 4) + ((!this.<Refresh>g__IsBridgeAutoTileEdge|314_1(cell, ref CS$<>8__locals1) || this.x == 0) ? 0 : 8));
 		}
 		else
 		{
@@ -1430,7 +1442,7 @@ public class Cell : WeightCell, IFloodCell
 		}
 		if (this.obj != 0 && this.sourceObj.autoTile)
 		{
-			this.autotileObj = (byte)(((!this.<Refresh>g__IsObjAutoTileEdge|311_2(cell4, ref CS$<>8__locals1) || (int)this.z == Cell.Size - 1) ? 0 : 1) + ((!this.<Refresh>g__IsObjAutoTileEdge|311_2(cell2, ref CS$<>8__locals1) || (int)this.x == Cell.Size - 1) ? 0 : 2) + ((!this.<Refresh>g__IsObjAutoTileEdge|311_2(cell3, ref CS$<>8__locals1) || this.z == 0) ? 0 : 4) + ((!this.<Refresh>g__IsObjAutoTileEdge|311_2(cell, ref CS$<>8__locals1) || this.x == 0) ? 0 : 8));
+			this.autotileObj = (byte)(((!this.<Refresh>g__IsObjAutoTileEdge|314_2(cell4, ref CS$<>8__locals1) || (int)this.z == Cell.Size - 1) ? 0 : 1) + ((!this.<Refresh>g__IsObjAutoTileEdge|314_2(cell2, ref CS$<>8__locals1) || (int)this.x == Cell.Size - 1) ? 0 : 2) + ((!this.<Refresh>g__IsObjAutoTileEdge|314_2(cell3, ref CS$<>8__locals1) || this.z == 0) ? 0 : 4) + ((!this.<Refresh>g__IsObjAutoTileEdge|314_2(cell, ref CS$<>8__locals1) || this.x == 0) ? 0 : 8));
 		}
 		else
 		{
@@ -1458,6 +1470,7 @@ public class Cell : WeightCell, IFloodCell
 		if (num >= num2)
 		{
 			num = 0;
+			this.crossWall = !this.crossWall;
 		}
 		this.blockDir = num;
 	}
@@ -1757,19 +1770,19 @@ public class Cell : WeightCell, IFloodCell
 	}
 
 	[CompilerGenerated]
-	private bool <Refresh>g__IsAutoTileEdge|311_0(Cell cell, ref Cell.<>c__DisplayClass311_0 A_2)
+	private bool <Refresh>g__IsAutoTileEdge|314_0(Cell cell, ref Cell.<>c__DisplayClass314_0 A_2)
 	{
 		return (cell.sourceFloor.autotilePriority <= this.sourceFloor.autotilePriority && (!this.sourceFloor.isBeach || !cell.sourceFloor.isBeach) && (cell._floor != this._floor || cell._floorMat != this._floorMat)) || (!A_2.isFloorWater && this.height != cell.height);
 	}
 
 	[CompilerGenerated]
-	private bool <Refresh>g__IsBridgeAutoTileEdge|311_1(Cell cell, ref Cell.<>c__DisplayClass311_0 A_2)
+	private bool <Refresh>g__IsBridgeAutoTileEdge|314_1(Cell cell, ref Cell.<>c__DisplayClass314_0 A_2)
 	{
 		return (cell.sourceBridge.autotilePriority <= this.sourceBridge.autotilePriority && (cell._bridge != this._bridge || cell._bridgeMat != this._bridgeMat)) || this.bridgeHeight != cell.bridgeHeight;
 	}
 
 	[CompilerGenerated]
-	private bool <Refresh>g__IsObjAutoTileEdge|311_2(Cell cell, ref Cell.<>c__DisplayClass311_0 A_2)
+	private bool <Refresh>g__IsObjAutoTileEdge|314_2(Cell cell, ref Cell.<>c__DisplayClass314_0 A_2)
 	{
 		return (cell.obj != this.obj && (this.obj != 31 || (cell.obj != 97 && cell.obj != 98))) || this.topHeight != cell.topHeight;
 	}

@@ -198,6 +198,7 @@ public class ContentConfigInput : ContentConfigGame
 				uilist.Add(keys.journal);
 				uilist.Add(keys.log);
 				uilist.Add(keys.report);
+				uilist.Add(keys.search);
 			}
 		};
 		this.listEtc.callbacks = new UIList.Callback<EInput.KeyMap, ItemKeymap>
@@ -212,6 +213,7 @@ public class ContentConfigInput : ContentConfigGame
 				UIList uilist = this.listEtc;
 				uilist.Add(keys.switchHotbar);
 				uilist.Add(keys.quickSave);
+				uilist.Add(keys.quickLoad);
 			}
 		};
 		this.listAdvanced.callbacks = new UIList.Callback<EInput.KeyMap, ItemKeymap>

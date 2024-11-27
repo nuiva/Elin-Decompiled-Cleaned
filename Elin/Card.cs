@@ -2993,6 +2993,10 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 		if (!this.IsPC)
 		{
 			a *= 2;
+			if (this.IsPCFaction)
+			{
+				a = a * Mathf.Clamp(100 + this.Chara.affinity.value / 10, 50, 100) / 100;
+			}
 		}
 		this.exp += a;
 		while (this.exp >= this.ExpToNext)
@@ -3881,7 +3885,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 					EClass.Sound.Play("atk_" + CS$<>8__locals1.e.source.alias);
 				});
 			}
-			if (!CS$<>8__locals1.e.source.aliasRef.IsEmpty())
+			if (!CS$<>8__locals1.e.source.aliasRef.IsEmpty() && attackSource != AttackSource.ManaBackfire)
 			{
 				CS$<>8__locals1.dmg = Element.GetResistDamage(CS$<>8__locals1.dmg, this.Evalue(CS$<>8__locals1.e.source.aliasRef));
 				CS$<>8__locals1.dmg = CS$<>8__locals1.dmg * 100 / (100 + Mathf.Clamp(this.Evalue(961) * 5, -50, 200));
@@ -3947,11 +3951,11 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 				}
 				if (this.IsPCParty)
 				{
-					CS$<>8__locals1.dmg = CS$<>8__locals1.dmg * 100 / Mathf.Max(100 + num * 5, 120);
+					CS$<>8__locals1.dmg = CS$<>8__locals1.dmg * 100 / Mathf.Min(100 + num * 5, 120);
 				}
 				else
 				{
-					CS$<>8__locals1.dmg = CS$<>8__locals1.dmg * Mathf.Max(100 + num2 * 5, 120) / 100;
+					CS$<>8__locals1.dmg = CS$<>8__locals1.dmg * Mathf.Min(100 + num2 * 5, 120) / 100;
 				}
 			}
 			if (this.IsPCParty && EClass.pc.ai is GoalAutoCombat)
@@ -4112,7 +4116,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 						if (EClass.player.invlunerable)
 						{
 							CS$<>8__locals1.<DamageHP>g__EvadeDeath|1();
-							goto IL_996;
+							goto IL_99C;
 						}
 					}
 					if (this.IsPC && this.Evalue(1220) > 0 && this.Chara.stamina.value >= this.Chara.stamina.max / 2)
@@ -4124,7 +4128,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 				}
 			}
 		}
-		IL_996:
+		IL_99C:
 		if (this.trait.CanBeAttacked)
 		{
 			this.renderer.PlayAnime(AnimeID.HitObj, default(Vector3), false);
@@ -4222,16 +4226,16 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 						q.OnKillChara(CS$<>8__locals1.<>4__this.Chara);
 					});
 					EClass.player.codex.AddKill(this.id);
-					if (this.rarity >= Rarity.Legendary && this.Chara.OriginalHostility == Hostility.Enemy)
+					if (Guild.Fighter.CanGiveContribution(this.Chara))
 					{
 						Guild.Fighter.AddContribution(5 + this.LV / 5);
-						if (Guild.Fighter.relation.rank >= 4 && this.uid % 2 == 0)
-						{
-							int a = EClass.rndHalf(200 + this.LV * 20);
-							Msg.Say("bounty", this.Chara, a.ToString() ?? "", null, null);
-							EClass.pc.ModCurrency(a, "money");
-							SE.Pay();
-						}
+					}
+					if (Guild.Fighter.HasBounty(this.Chara))
+					{
+						int a = EClass.rndHalf(200 + this.LV * 20);
+						Msg.Say("bounty", this.Chara, a.ToString() ?? "", null, null);
+						EClass.pc.ModCurrency(a, "money");
+						SE.Pay();
 					}
 				}
 				if (CS$<>8__locals1.origin.IsPCParty && EClass.pc.Evalue(1355) > 0)
@@ -4536,7 +4540,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 			this.Chara.Cure(CureType.Boss, 100, BlessedState.Normal);
 			this.Chara.HealHP(this.MaxHP / 2, HealSource.None);
 		}
-		if (CS$<>8__locals1.origin != null && CS$<>8__locals1.origin.isChara)
+		if (CS$<>8__locals1.origin != null && CS$<>8__locals1.origin.isChara && attackSource != AttackSource.Finish)
 		{
 			if (!AI_PlayMusic.ignoreDamage)
 			{
@@ -4579,7 +4583,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 				Msg.Say("destroyed", this, null, null, null);
 			}
 		}
-		if (_pos != null)
+		if (_pos != null && !EClass._zone.IsUserZone)
 		{
 			this.things.ForeachReverse(delegate(Thing t)
 			{
@@ -4839,6 +4843,33 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 					}
 				}
 			}
+			int num4 = 0;
+			foreach (Card card in list)
+			{
+				if (card.rarity >= Rarity.Legendary || card.IsContainer)
+				{
+					num4++;
+				}
+			}
+			Rand.SetSeed(this.uid);
+			if (num4 == 0 && !this.isBackerContent && !flag && this.rarity >= Rarity.Legendary && !this.IsUnique && this.c_bossType != BossType.Evolved)
+			{
+				if (EClass.rnd((EClass._zone.events.GetEvent<ZoneEventDefenseGame>() != null) ? 3 : 2) == 0)
+				{
+					Rarity rarity = (EClass.rnd(20) == 0) ? Rarity.Mythical : Rarity.Legendary;
+					CardBlueprint.Set(new CardBlueprint
+					{
+						rarity = rarity
+					});
+					Thing item = ThingGen.CreateFromFilter("eq", this.LV);
+					list.Add(item);
+				}
+				else if (EClass.rnd(3) == 0)
+				{
+					list.Add(ThingGen.Create("medal", -1, -1));
+				}
+			}
+			Rand.SetSeed(-1);
 		}
 		foreach (Thing thing6 in this.things)
 		{
@@ -4852,18 +4883,18 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 		{
 			nearestPoint = nearestPoint.GetNearestPoint(false, true, true, false);
 		}
-		foreach (Card card in list)
+		foreach (Card card2 in list)
 		{
-			card.isHidden = false;
-			card.SetInt(116, 0);
-			EClass._zone.AddCard(card, nearestPoint);
-			if (card.IsEquipmentOrRanged && card.rarity >= Rarity.Superior && !card.IsCursed)
+			card2.isHidden = false;
+			card2.SetInt(116, 0);
+			EClass._zone.AddCard(card2, nearestPoint);
+			if (card2.IsEquipmentOrRanged && card2.rarity >= Rarity.Superior && !card2.IsCursed)
 			{
 				foreach (Chara chara in EClass._map.charas)
 				{
 					if (chara.HasElement(1412, 1) && chara.Dist(nearestPoint) < 3)
 					{
-						card.Thing.TryLickEnchant(chara, true, null, null);
+						card2.Thing.TryLickEnchant(chara, true, null, null);
 						break;
 					}
 				}
@@ -5365,9 +5396,27 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 
 	public ref Color GetRandomColor()
 	{
-		Rand.UseSeed(EClass.game.seed + this.sourceCard._index + this.refVal, delegate
+		int num = EClass.game.seed + this.refVal;
+		num += (int)(this.id[0] % '✐');
+		if (this.id.Length > 1)
 		{
-			Card._randColor = EClass.sources.materials.rows.RandomItem<SourceMaterial.Row>().matColor;
+			num += (int)(this.id[1] % 'Ϩ');
+			if (this.id.Length > 2)
+			{
+				num += (int)(this.id[2] % 'Ϩ');
+				if (this.id.Length > 3)
+				{
+					num += (int)(this.id[3] % 'Ϩ');
+					if (this.id.Length > 4)
+					{
+						num += (int)(this.id[4] % 'Ϩ');
+					}
+				}
+			}
+		}
+		Rand.UseSeed(num, delegate
+		{
+			Card._randColor = EClass.sources.materials.rows[EClass.rnd(90)].matColor;
 		});
 		return ref Card._randColor;
 	}
@@ -6683,25 +6732,25 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 		{
 			c = EClass.pc;
 		}
-		float p = (float)value;
+		double p = (double)value;
 		Trait trait = this.trait;
 		if (!(trait is TraitBed))
 		{
 			TraitContainer traitContainer = trait as TraitContainer;
 			if (traitContainer != null)
 			{
-				p *= 1f + 4f * (float)(this.things.width - traitContainer.Width) + 4f * (float)(this.things.height - traitContainer.Height);
+				p *= (double)(1f + 4f * (float)(this.things.width - traitContainer.Width) + 4f * (float)(this.things.height - traitContainer.Height));
 			}
 		}
 		else
 		{
-			p *= 1f + 0.5f * (float)this.c_containerSize;
+			p *= (double)(1f + 0.5f * (float)this.c_containerSize);
 		}
-		p += (float)this.c_priceAdd;
+		p += (double)this.c_priceAdd;
 		if (this.c_priceFix != 0)
 		{
-			p = (float)((int)(p * (float)Mathf.Clamp(100 + this.c_priceFix, 0, 1000000) / 100f));
-			if (p == 0f)
+			p = (double)((int)((float)p * (float)Mathf.Clamp(100 + this.c_priceFix, 0, 1000000) / 100f));
+			if (p == 0.0)
 			{
 				return 0;
 			}
@@ -6710,200 +6759,212 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 		{
 			if (sell && priceType == PriceType.PlayerShop && EClass.Branch != null && EClass.Branch.policies.IsActive(2824, -1))
 			{
-				p = p * 100f / Mathf.Max(110f, 170f - Mathf.Sqrt((float)(EClass.Branch.Evalue(2824) * 5)));
+				p = p * 100.0 / (double)Mathf.Max(110f, 170f - Mathf.Sqrt((float)(EClass.Branch.Evalue(2824) * 5)));
 			}
 			else if (sell && Guild.Thief.IsMember)
 			{
-				p = (float)Guild.Thief.SellStolenPrice((int)p);
+				p = (double)Guild.Thief.SellStolenPrice((int)p);
 			}
 			else
 			{
-				p *= 0.5f;
+				p *= 0.5;
 			}
 		}
 		if (!sell && this.category.id == "spellbook")
 		{
-			p = (float)Guild.Mage.BuySpellbookPrice((int)p);
+			p = (double)Guild.Mage.BuySpellbookPrice((int)p);
 		}
 		int num2 = (priceType == PriceType.CopyShop) ? 5 : 1;
 		float num3 = 1f + Mathf.Min(0.01f * (float)this.Evalue(752), 1f) + Mathf.Min(0.01f * (float)this.Evalue(751), 1f) * (float)num2;
-		p *= num3;
-		p *= 0.2f;
+		p *= (double)num3;
+		p *= 0.20000000298023224;
 		if (sell)
 		{
-			p *= 0.2f;
+			p *= 0.20000000298023224;
 			if (currency == CurrencyType.Money && (this.category.IsChildOf("meal") || this.category.IsChildOf("preserved")))
 			{
-				p *= 0.5f;
+				p *= 0.5;
 			}
 			if (priceType - PriceType.Shipping <= 1 && (this.category.IsChildOf("vegi") || this.category.IsChildOf("fruit")))
 			{
-				p *= ((EClass.pc.faith == EClass.game.religions.Harvest) ? 3f : 2f);
+				p *= (double)((EClass.pc.faith == EClass.game.religions.Harvest) ? 3f : 2f);
 			}
 		}
 		if (this.id == "rod_wish")
 		{
-			p *= (sell ? 0.01f : 50f);
+			p *= (double)(sell ? 0.01f : 50f);
 		}
 		switch (currency)
 		{
 		case CurrencyType.Medal:
-			p *= 0.0002f;
-			goto IL_82C;
+			p *= 0.00019999999494757503;
+			goto IL_87C;
 		case CurrencyType.Ecopo:
 			if (this.trait is TraitSeed)
 			{
-				p *= 2f;
-				goto IL_82C;
+				p *= 2.0;
+				goto IL_87C;
 			}
 			if (this.trait is TraitEcoMark)
 			{
-				p *= 1f;
-				goto IL_82C;
+				p *= 1.0;
+				goto IL_87C;
 			}
-			p *= 0.2f;
-			goto IL_82C;
+			p *= 0.20000000298023224;
+			goto IL_87C;
 		case CurrencyType.Money2:
-			p *= 0.005f;
-			goto IL_82C;
+			p *= 0.004999999888241291;
+			goto IL_87C;
 		case CurrencyType.Influence:
-			p *= 0.002f;
-			goto IL_82C;
+			p *= 0.0020000000949949026;
+			goto IL_87C;
 		case CurrencyType.Casino_coin:
-			p *= 0.1f;
-			goto IL_82C;
+			p *= 0.10000000149011612;
+			goto IL_87C;
 		}
 		if (this.IsIdentified || (this.trait is TraitErohon && !sell))
 		{
 			if (this.blessedState == BlessedState.Blessed)
 			{
-				p *= 1.25f;
+				p *= 1.25;
 			}
 			else if (this.blessedState == BlessedState.Cursed)
 			{
-				p *= 0.5f;
+				p *= 0.5;
 			}
 			else if (this.blessedState == BlessedState.Doomed)
 			{
-				p *= 0.2f;
+				p *= 0.20000000298023224;
 			}
 			if (this.trait.HasCharges)
 			{
-				p = p * 0.05f + p * (0.5f + Mathf.Clamp(0.1f * (float)this.c_charges, 0f, 1.5f));
+				p = p * 0.05000000074505806 + p * (double)(0.5f + Mathf.Clamp(0.1f * (float)this.c_charges, 0f, 1.5f));
 			}
 			if (this.IsDecayed)
 			{
-				p *= 0.5f;
+				p *= 0.5;
 			}
 		}
 		else
 		{
 			Rand.UseSeed(this.uid, delegate
 			{
-				p = (float)(sell ? (1 + EClass.rnd(15)) : (50 + EClass.rnd(500)));
+				p = (double)(sell ? (1 + EClass.rnd(15)) : (50 + EClass.rnd(500)));
 			});
 		}
 		if (!sell)
 		{
-			p *= 1f + 0.2f * (float)c.Evalue(1406);
+			p *= (double)(1f + 0.2f * (float)c.Evalue(1406));
 		}
-		IL_82C:
+		IL_87C:
 		float num4 = Math.Clamp(Mathf.Sqrt((float)(c.Evalue(291) + ((!sell && EClass._zone.IsPCFaction) ? (EClass.Branch.Evalue(2800) * 2) : 0))), 0f, 25f);
-		if (priceType != PriceType.Shipping)
+		switch (priceType)
 		{
-			if (priceType == PriceType.PlayerShop)
+		case PriceType.Shipping:
+			if (sell)
 			{
-				if (sell)
+				p *= 1.100000023841858;
+			}
+			break;
+		case PriceType.PlayerShop:
+			if (sell)
+			{
+				float num5 = 1.25f;
+				if (EClass.Branch != null)
 				{
-					float num5 = 1.25f;
-					if (EClass.Branch != null)
+					if (EClass.Branch.policies.IsActive(2817, -1))
 					{
-						if (EClass.Branch.policies.IsActive(2817, -1))
+						num5 += 0.1f + 0.01f * Mathf.Sqrt((float)EClass.Branch.Evalue(2817));
+					}
+					if (EClass.Branch.policies.IsActive(2816, -1))
+					{
+						num5 += 0.2f + 0.02f * Mathf.Sqrt((float)EClass.Branch.Evalue(2816));
+					}
+					if (this.isChara)
+					{
+						if (EClass.Branch.policies.IsActive(2828, -1))
 						{
-							num5 += 0.1f + 0.01f * Mathf.Sqrt((float)EClass.Branch.Evalue(2817));
-						}
-						if (EClass.Branch.policies.IsActive(2816, -1))
-						{
-							num5 += 0.2f + 0.02f * Mathf.Sqrt((float)EClass.Branch.Evalue(2816));
-						}
-						if (this.isChara)
-						{
-							if (EClass.Branch.policies.IsActive(2828, -1))
-							{
-								num5 += 0.1f + 0.01f * Mathf.Sqrt((float)EClass.Branch.Evalue(2828));
-							}
-						}
-						else if (this.category.IsChildOf("food") || this.category.IsChildOf("drink"))
-						{
-							if (EClass.Branch.policies.IsActive(2818, -1))
-							{
-								num5 += 0.05f + 0.005f * Mathf.Sqrt((float)EClass.Branch.Evalue(2818));
-							}
-						}
-						else if (this.category.IsChildOf("furniture"))
-						{
-							if (EClass.Branch.policies.IsActive(2819, -1))
-							{
-								num5 += 0.05f + 0.005f * Mathf.Sqrt((float)EClass.Branch.Evalue(2819));
-							}
-						}
-						else if (EClass.Branch.policies.IsActive(2820, -1))
-						{
-							num5 += 0.05f + 0.005f * Mathf.Sqrt((float)EClass.Branch.Evalue(2820));
+							num5 += 0.1f + 0.01f * Mathf.Sqrt((float)EClass.Branch.Evalue(2828));
 						}
 					}
-					p *= num5;
+					else if (this.category.IsChildOf("food") || this.category.IsChildOf("drink"))
+					{
+						if (EClass.Branch.policies.IsActive(2818, -1))
+						{
+							num5 += 0.05f + 0.005f * Mathf.Sqrt((float)EClass.Branch.Evalue(2818));
+						}
+					}
+					else if (this.category.IsChildOf("furniture"))
+					{
+						if (EClass.Branch.policies.IsActive(2819, -1))
+						{
+							num5 += 0.05f + 0.005f * Mathf.Sqrt((float)EClass.Branch.Evalue(2819));
+						}
+					}
+					else if (EClass.Branch.policies.IsActive(2820, -1))
+					{
+						num5 += 0.05f + 0.005f * Mathf.Sqrt((float)EClass.Branch.Evalue(2820));
+					}
 				}
+				p *= (double)num5;
 			}
-		}
-		else if (sell)
-		{
-			p *= 1.1f;
+			break;
+		case PriceType.Tourism:
+			num4 = 0f;
+			break;
 		}
 		if (currency > CurrencyType.Money)
 		{
 			num4 = 0f;
 		}
-		p *= (sell ? (1f + num4 * 0.02f) : (1f - num4 * 0.02f));
+		p *= (double)(sell ? (1f + num4 * 0.02f) : (1f - num4 * 0.02f));
 		if (sell)
 		{
-			p = (float)EClass.curve((int)p, 10000, 10000, 80);
+			p = (double)EClass.curve((int)p, 10000, 10000, 80);
 		}
-		if (p < 1f)
+		if (p < 1.0)
 		{
-			p = (float)(sell ? 0 : 1);
+			p = (double)(sell ? 0 : 1);
 		}
 		if (!sell)
 		{
 			if (currency == CurrencyType.Casino_coin)
 			{
-				if (p > 100000f)
+				if (p > 100000.0)
 				{
-					p = (float)(Mathf.CeilToInt(p / 100000f) * 100000);
+					p = (double)(Mathf.CeilToInt((float)p / 100000f) * 100000);
 				}
-				else if (p > 10000f)
+				else if (p > 10000.0)
 				{
-					p = (float)(Mathf.CeilToInt(p / 10000f) * 10000);
+					p = (double)(Mathf.CeilToInt((float)p / 10000f) * 10000);
 				}
-				else if (p > 1000f)
+				else if (p > 1000.0)
 				{
-					p = (float)(Mathf.CeilToInt(p / 1000f) * 1000);
+					p = (double)(Mathf.CeilToInt((float)p / 1000f) * 1000);
 				}
-				else if (p > 100f)
+				else if (p > 100.0)
 				{
-					p = (float)(Mathf.CeilToInt(p / 100f) * 100);
+					p = (double)(Mathf.CeilToInt((float)p / 100f) * 100);
 				}
-				else if (p > 10f)
+				else if (p > 10.0)
 				{
-					p = (float)(Mathf.CeilToInt(p / 10f) * 10);
+					p = (double)(Mathf.CeilToInt((float)p / 10f) * 10);
 				}
 			}
 			if (this.trait is TraitDeed)
 			{
-				p *= Mathf.Pow(2f, (float)EClass.player.flags.landDeedBought);
+				p *= (double)Mathf.Pow(2f, (float)EClass.player.flags.landDeedBought);
 			}
 		}
-		return (int)p;
+		if (p <= (double)(sell ? 500000000 : 1000000000))
+		{
+			return (int)p;
+		}
+		if (!sell)
+		{
+			return 1000000000;
+		}
+		return 500000000;
 	}
 
 	public virtual string GetHoverText()
@@ -7017,7 +7078,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 		}
 		if (num == 0)
 		{
-			num = this.GetName(NameStyle.Full, 1).CompareTo(c.GetName(NameStyle.Full, 1));
+			num = Lang.comparer.Compare(this.GetName(NameStyle.Full, 1), c.GetName(NameStyle.Full, 1));
 		}
 		if (num == 0)
 		{

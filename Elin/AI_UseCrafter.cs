@@ -213,7 +213,7 @@ public class AI_UseCrafter : AIAct
 					{
 						for (int k = 0; k < CS$<>8__locals1.<>4__this.num; k++)
 						{
-							CS$<>8__locals1.<>4__this.recipe.Craft(CS$<>8__locals1.blessed, k == 0, CS$<>8__locals1.<>4__this.ings, false);
+							CS$<>8__locals1.<>4__this.recipe.Craft(CS$<>8__locals1.blessed, k == 0, CS$<>8__locals1.<>4__this.ings, CS$<>8__locals1.<>4__this.crafter, false);
 						}
 						EClass.Sound.Play("craft");
 						Point from = CS$<>8__locals1.<>4__this.crafter.owner.ExistsOnMap ? CS$<>8__locals1.<>4__this.crafter.owner.pos : CS$<>8__locals1.<>4__this.owner.pos;
@@ -268,6 +268,15 @@ public class AI_UseCrafter : AIAct
 						{
 							break;
 						}
+					}
+					Rand.SetSeed(-1);
+					if (CS$<>8__locals1.<>4__this.crafter is TraitCookerMicrowave && CS$<>8__locals1.<>4__this.recipe.id == "onsentamago" && EClass.rnd(3) != 0)
+					{
+						int power = EClass.curve((200 + CS$<>8__locals1.<>4__this.ings[0].Quality * 5) * (100 + EClass.pc.Evalue(287) * 10) / 100, 400, 100, 75);
+						ActEffect.ProcAt(EffectId.Explosive, power, BlessedState.Normal, CS$<>8__locals1.<>4__this.crafter.owner.ExistsOnMap ? CS$<>8__locals1.<>4__this.crafter.owner : EClass.pc, EClass.pc, EClass.pc.pos, true, new ActRef
+						{
+							aliasEle = "eleImpact"
+						});
 					}
 				}
 			}.SetDuration(CS$<>8__locals1.duration, 5);

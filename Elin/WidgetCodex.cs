@@ -95,7 +95,7 @@ public class WidgetCodex : Widget
 		this.list.dsv.OnResize();
 	}
 
-	private void Update()
+	protected void Update()
 	{
 		this.count++;
 		if (Input.GetKeyDown(KeyCode.Escape))

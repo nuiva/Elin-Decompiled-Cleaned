@@ -2,6 +2,8 @@
 
 public class ELEMENT
 {
+	public const int hotspring = 756;
+
 	public const int blood = 755;
 
 	public const int nerve = 754;
@@ -62,6 +64,7 @@ public class ELEMENT
 
 	public static readonly int[] IDS = new int[]
 	{
+		756,
 		755,
 		754,
 		753,

@@ -71,6 +71,11 @@ public class TraitGeneMachine : TraitStasisChamber
 
 	public override bool OnUse(Chara c)
 	{
+		if (EClass._zone.IsUserZone)
+		{
+			Msg.SayNothingHappen();
+			return false;
+		}
 		Chara target = this.GetTarget();
 		if (target == null)
 		{

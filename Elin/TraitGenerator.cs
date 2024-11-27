@@ -90,4 +90,12 @@ public class TraitGenerator : Trait
 		this.owner.Say("electricity_short", this.owner, null, null);
 		EClass._zone.RefreshElectricity();
 	}
+
+	public override void SetName(ref string s)
+	{
+		if (this.owner.isBroken)
+		{
+			s = "gen_broken".lang(s, null, null, null, null);
+		}
+	}
 }

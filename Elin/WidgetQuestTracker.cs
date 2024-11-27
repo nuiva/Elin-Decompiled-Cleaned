@@ -22,7 +22,7 @@ public class WidgetQuestTracker : Widget
 
 	public void Refresh()
 	{
-		if (EMono.game.isLoading || !EMono._zone.isStarted || LayerDrama.Instance)
+		if (EMono.game == null || LayerDrama.Instance)
 		{
 			return;
 		}

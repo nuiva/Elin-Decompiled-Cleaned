@@ -2,7 +2,9 @@
 
 public class ABILITY
 {
-	public const int AI_TendAnimal = 5043;
+	public const int ActKick = 5042;
+
+	public const int TaskMoveInstalled = 5036;
 
 	public const int ActNoItem = 5037;
 
@@ -14,9 +16,7 @@ public class ABILITY
 
 	public const int AI_Read = 5041;
 
-	public const int ActKick = 5042;
-
-	public const int ActWait = 5000;
+	public const int AI_TendAnimal = 5043;
 
 	public const int ActChat = 5044;
 
@@ -62,13 +62,15 @@ public class ABILITY
 
 	public const int ActPray = 6050;
 
-	public const int TaskMoveInstalled = 5036;
-
 	public const int TaskBuild = 5035;
 
 	public const int GoalIdle = 5034;
 
 	public const int ActCancelTask = 5033;
+
+	public const int AI_Equip = 5032;
+
+	public const int Melee = 5002;
 
 	public const int Ranged = 5003;
 
@@ -96,11 +98,11 @@ public class ABILITY
 
 	public const int TaskAttack = 5015;
 
-	public const int TaskTame = 5016;
-
 	public const int ActEscape = 6400;
 
-	public const int TaskTalk = 5017;
+	public const int TaskTame = 5016;
+
+	public const int TaskPick = 5018;
 
 	public const int TaskReadBoard = 5019;
 
@@ -128,11 +130,9 @@ public class ABILITY
 
 	public const int AI_Deconstruct = 5031;
 
-	public const int AI_Equip = 5032;
+	public const int TaskTalk = 5017;
 
-	public const int TaskPick = 5018;
-
-	public const int Melee = 5002;
+	public const int ActMelee = 5001;
 
 	public const int ActSuicide = 6410;
 
@@ -202,38 +202,38 @@ public class ABILITY
 
 	public const int ActGazeInsane = 6621;
 
-	public const int ActMelee = 5001;
-
-	public const int ActDrainBlood = 6626;
-
-	public const int ActThrowPotion = 6661;
-
 	public const int ActGazeMutation = 6622;
 
-	public const int ActNeckHunt = 6650;
-
-	public const int ActStealMoney = 6642;
-
-	public const int ActDropMine = 6660;
-
-	public const int ActSteal = 6640;
-
-	public const int ActScream = 6631;
+	public const int ActWait = 5000;
 
 	public const int ActInsult = 6630;
 
+	public const int ActScream = 6631;
+
+	public const int ActSteal = 6640;
+
 	public const int ActStealFood = 6641;
+
+	public const int ActStealMoney = 6642;
+
+	public const int ActNeckHunt = 6650;
+
+	public const int ActDropMine = 6660;
+
+	public const int ActThrowPotion = 6661;
+
+	public const int ActDrainBlood = 6626;
 
 	public static readonly int[] IDS = new int[]
 	{
-		5043,
+		5042,
+		5036,
 		5037,
 		5038,
 		5039,
 		5040,
 		5041,
-		5042,
-		5000,
+		5043,
 		5044,
 		5045,
 		5046,
@@ -256,10 +256,11 @@ public class ABILITY
 		6019,
 		6020,
 		6050,
-		5036,
 		5035,
 		5034,
 		5033,
+		5032,
+		5002,
 		5003,
 		5004,
 		5005,
@@ -273,9 +274,9 @@ public class ABILITY
 		5013,
 		5014,
 		5015,
-		5016,
 		6400,
-		5017,
+		5016,
+		5018,
 		5019,
 		5020,
 		5021,
@@ -289,9 +290,8 @@ public class ABILITY
 		5029,
 		5030,
 		5031,
-		5032,
-		5018,
-		5002,
+		5017,
+		5001,
 		6410,
 		6450,
 		6902,
@@ -326,16 +326,16 @@ public class ABILITY
 		6611,
 		6620,
 		6621,
-		5001,
-		6626,
-		6661,
 		6622,
-		6650,
-		6642,
-		6660,
-		6640,
-		6631,
+		5000,
 		6630,
-		6641
+		6631,
+		6640,
+		6641,
+		6642,
+		6650,
+		6660,
+		6661,
+		6626
 	};
 }

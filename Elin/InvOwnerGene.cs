@@ -85,5 +85,22 @@ public class InvOwnerGene : InvOwnerDraglet
 		condition.dateFinish = EClass.world.date.GetRaw(condition.duration);
 	}
 
+	public override void OnWriteNote(Thing t, UINote n)
+	{
+		if (!this.ShouldShowGuide(t))
+		{
+			return;
+		}
+		n.AddHeader("HeaderAdditionalTrait", "gene_hint", null);
+		CharaGenes c_genes = this.tg.c_genes;
+		int num = (c_genes == null) ? 0 : c_genes.items.Count;
+		int num2 = num + 1;
+		int maxGene = this.tg.MaxGene;
+		n.AddText("gene_hint_slot".lang(num.ToString() ?? "", num2.ToString() ?? "", maxGene.ToString() ?? "", null, null), (num2 <= maxGene) ? FontColor.Good : FontColor.Bad);
+		int cost = t.c_DNA.cost;
+		int num3 = this.tg.feat - cost;
+		n.AddText("gene_hint_cost".lang(this.tg.feat.ToString() ?? "", cost.ToString() + ((cost == t.c_DNA.cost) ? "" : ("(" + t.c_DNA.cost.ToString() + ")")), num3.ToString() ?? "", null, null), (num3 >= 0) ? FontColor.Good : FontColor.Bad);
+	}
+
 	public Chara tg;
 }

@@ -96,7 +96,10 @@ public class ButtonHotItem : ButtonGridDrag
 			return;
 		}
 		HotItem hotItem = this.item as HotItem;
-		hotItem.SetSubText(this.subText);
+		if (this.subText)
+		{
+			hotItem.SetSubText(this.subText);
+		}
 		if (hotItem.Thing != null)
 		{
 			this.card = hotItem.Thing;

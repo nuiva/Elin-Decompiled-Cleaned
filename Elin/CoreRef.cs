@@ -239,6 +239,8 @@ public class CoreRef : ScriptableObject
 
 		public Sprite home;
 
+		public Sprite bed;
+
 		public Sprite work;
 
 		public Sprite uniformM;

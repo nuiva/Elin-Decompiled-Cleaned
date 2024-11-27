@@ -210,7 +210,7 @@ public class WidgetMinimap : Widget, IPointerDownHandler, IEventSystemHandler, I
 		}
 		this.psAlly.Clear();
 		this.EmitParticle(EMono.pc, this.psAlly, this.colorAlly);
-		if (EMono._zone.instance != null)
+		if (EMono._zone.ShowEnemyOnMinimap)
 		{
 			foreach (Chara chara in EMono._map.charas)
 			{

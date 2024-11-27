@@ -64,6 +64,13 @@ public class TraitBed : Trait
 						SE.Play("jingle_embark");
 					}, true);
 				}
+				if (this.owner.c_bedType == BedType.resident || this.owner.c_bedType == BedType.residentOne)
+				{
+					uicontextMenu.AddButton("assignBed", delegate()
+					{
+						LayerPeople.CreateBed(this);
+					}, true);
+				}
 				using (List<BedType>.Enumerator enumerator = new List<BedType>
 				{
 					BedType.resident,

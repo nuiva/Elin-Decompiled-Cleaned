@@ -5,7 +5,7 @@ public class TaskDrawWater : TaskDesignation
 {
 	public override bool CanProgress()
 	{
-		return base.CanProgress() && this.pos.cell.IsTopWater && this.pot.owner.c_charges < this.pot.MaxCharge;
+		return base.CanProgress() && this.pos.cell.IsTopWater && this.pot.owner.c_charges < this.pot.MaxCharge && this.owner.Tool == this.pot.owner;
 	}
 
 	public override int destDist

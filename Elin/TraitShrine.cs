@@ -16,7 +16,7 @@ public class TraitShrine : TraitPowerStatue
 	{
 		get
 		{
-			return this.owner.isOn && this.owner.IsInstalled;
+			return this.owner.isOn && (this.owner.IsInstalled || this.owner.isRoofItem);
 		}
 	}
 

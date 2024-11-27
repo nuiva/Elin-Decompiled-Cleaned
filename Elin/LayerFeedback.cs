@@ -147,6 +147,9 @@ public class LayerFeedback : ELayer
 
 	public void CollectFiles()
 	{
+		ReportTitle.ignore = false;
+		ReportTitle.strAdd = "";
+		TextField.strAddText = "";
 		string str = Application.persistentDataPath + "/";
 		string text = str + "_temp";
 		string text2 = text + "/log.zip";
@@ -167,6 +170,7 @@ public class LayerFeedback : ELayer
 		int num = 0;
 		foreach (string c in new string[]
 		{
+			"シーラカンス",
 			"ナーフ",
 			"つまらない",
 			"面白くない",
@@ -179,6 +183,7 @@ public class LayerFeedback : ELayer
 			"糞",
 			"バカ",
 			"馬鹿",
+			"coelacanth",
 			"nerf",
 			"boring",
 			"please don't",
@@ -194,7 +199,18 @@ public class LayerFeedback : ELayer
 		}
 		if (num > 0)
 		{
-			ReportTitle.strAdd = "[" + num.ToString() + "]";
+			ReportTitle.strAdd = "[ignore:" + num.ToString() + "]";
+			ReportTitle.strAdd = string.Concat(new string[]
+			{
+				ReportTitle.strAdd,
+				" ",
+				LayerFeedback.steamName,
+				"/",
+				LayerFeedback.userName,
+				"/",
+				LayerFeedback.backerId
+			});
+			ReportTitle.ignore = true;
 		}
 		using (ZipFile zipFile = new ZipFile())
 		{

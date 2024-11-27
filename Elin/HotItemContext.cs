@@ -278,6 +278,10 @@ public class HotItemContext : HotItem
 			}
 		}
 		CS$<>8__locals1.m.Show(pos);
+		if (id == "system")
+		{
+			CS$<>8__locals1.m.hideOnMouseLeave = false;
+		}
 	}
 
 	[CompilerGenerated]

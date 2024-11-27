@@ -228,6 +228,7 @@ public class Core : BaseCore
 
 	public void Update()
 	{
+		this.frame++;
 		SoundManager.requestCount = 0;
 		InputModuleEX.UpdateEventData();
 		EInput.uiMousePosition = Input.mousePosition / this.ui.canvasScaler.scaleFactor;
@@ -248,6 +249,10 @@ public class Core : BaseCore
 		}
 		Core.avgDelta += (Time.smoothDeltaTime - Core.delta) * 0.1f;
 		Core.delta = Time.smoothDeltaTime;
+		if (Core.delta > 0.1f)
+		{
+			Core.delta = 0.1f;
+		}
 		EInput.delta = (ButtonState.delta = Core.delta);
 		bool? flag = this.lastFullScreen;
 		bool fullScreen = Screen.fullScreen;
@@ -314,6 +319,11 @@ public class Core : BaseCore
 		if (!this.initialized)
 		{
 			return;
+		}
+		if (UIButton.actionTooltip != null)
+		{
+			UIButton.actionTooltip();
+			UIButton.actionTooltip = null;
 		}
 		if (this.actionsLateUpdate.Count > 0)
 		{

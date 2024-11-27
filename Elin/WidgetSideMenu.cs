@@ -16,13 +16,8 @@ public class WidgetSideMenu : Widget
 	public void ChangeMode(WidgetSideMenu.Mode m)
 	{
 		this.mode = m;
-		this.track.SetActive(this.mode == WidgetSideMenu.Mode.Stock);
 		this.goMob.SetActive(this.mode == WidgetSideMenu.Mode.Mob);
 		this.goExp.SetActive(this.mode == WidgetSideMenu.Mode.Exp);
-		if (m == WidgetSideMenu.Mode.Stock)
-		{
-			this.track.OnActivate();
-		}
 	}
 
 	public override void OnSetContextMenu(UIContextMenu m)
@@ -40,8 +35,6 @@ public class WidgetSideMenu : Widget
 	public GameObject goMob;
 
 	public GameObject goExp;
-
-	public UIResourceTrack track;
 
 	public enum Mode
 	{

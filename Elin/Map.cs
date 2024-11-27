@@ -401,6 +401,7 @@ public class Map : MapBounds, IPathfindGrid
 				array10[num6] = array10[num6].SetBit(7, cell.isToggleWallPillar);
 				array11[num6] = array11[num6].SetBit(0, cell.isWatered);
 				array11[num6] = array11[num6].SetBit(1, cell.isObjDyed);
+				array11[num6] = array11[num6].SetBit(2, cell.crossWall);
 				if (cell.effect != null)
 				{
 					this.cellEffects[j * num4 + i] = cell.effect;
@@ -469,7 +470,7 @@ public class Map : MapBounds, IPathfindGrid
 							export.serializedCards.Add(thing);
 						}
 					}
-					goto IL_673;
+					goto IL_68A;
 				}
 			}
 			foreach (Thing thing2 in this.things)
@@ -479,7 +480,7 @@ public class Map : MapBounds, IPathfindGrid
 					export.serializedCards.Add(thing2);
 				}
 			}
-			IL_673:
+			IL_68A:
 			List<Thing> list = this.things;
 			this.things = new List<Thing>();
 			GameIO.SaveFile(path + "map", this);
@@ -614,7 +615,8 @@ public class Map : MapBounds, IPathfindGrid
 					isForceFloat = array10[num3].GetBit(6),
 					isToggleWallPillar = array10[num3].GetBit(7),
 					isWatered = array11[num3].GetBit(0),
-					isObjDyed = array11[num3].GetBit(1)
+					isObjDyed = array11[num3].GetBit(1),
+					crossWall = array11[num3].GetBit(2)
 				};
 				Critter.RebuildCritter(this.cells[i, j]);
 				num3++;

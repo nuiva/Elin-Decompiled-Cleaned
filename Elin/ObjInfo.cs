@@ -62,7 +62,7 @@ public class ObjInfo : BaseInspectPos
 				{
 					text = "growth_mature".lang(text, null, null, null, null);
 				}
-				if (this.pos.growth.NeedSunlight && !this.pos.growth.CanGrow(ObjInfo.TempDate))
+				if ((EClass._zone.IsPCFaction || EClass._zone is Zone_Tent) && this.pos.growth.NeedSunlight && !this.pos.growth.CanGrow(ObjInfo.TempDate))
 				{
 					text = "growth_nosun".lang(text, null, null, null, null);
 					if (this.pos.cell.HasRoof)

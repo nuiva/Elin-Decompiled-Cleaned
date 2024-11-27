@@ -1,9 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using UnityEngine;
 
 public class WidgetSearch : WidgetCodex
 {
+	public override object CreateExtra()
+	{
+		return new WidgetSearch.Extra();
+	}
+
+	public WidgetSearch.Extra extra
+	{
+		get
+		{
+			return base.config.extra as WidgetSearch.Extra;
+		}
+	}
+
 	public override WidgetCodex.SearchType type
 	{
 		get
@@ -17,7 +31,23 @@ public class WidgetSearch : WidgetCodex
 		base.OnActivate();
 		WidgetSearch.Instance = this;
 		WidgetSearch.selected = null;
+		if (this.extra.words == null)
+		{
+			this.extra.words = new List<WidgetSearch.Word>();
+			foreach (string text in Lang.GetList("search_words"))
+			{
+				this.extra.words.Add(new WidgetSearch.Word
+				{
+					text = text
+				});
+			}
+		}
+		this.RefreshWords();
 		this.RefreshList();
+		if (!this.extra.lastSearch.IsEmpty())
+		{
+			this.field.text = this.extra.lastSearch;
+		}
 	}
 
 	public override bool CheckClose()
@@ -25,8 +55,22 @@ public class WidgetSearch : WidgetCodex
 		return Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.F);
 	}
 
+	private new void Update()
+	{
+		if (EMono.scene.actionMode.IsFuncPressed(CoreConfig.GameFunc.PropertySearch))
+		{
+			EMono.ui.widgets.DeactivateWidget(this);
+			return;
+		}
+		base.Update();
+	}
+
 	public override void Search(string s)
 	{
+		if (!s.IsEmpty())
+		{
+			this.extra.lastSearch = s;
+		}
 		s = s.ToLower();
 		this.buttonClear.SetActive(this.field.text != "");
 		if (s == this.lastSearch)
@@ -101,6 +145,60 @@ public class WidgetSearch : WidgetCodex
 		this.lastSearch = s;
 	}
 
+	public void RefreshWords()
+	{
+		this.listWords.callbacks = new UIList.Callback<WidgetSearch.Word, UIItem>
+		{
+			onClick = delegate(WidgetSearch.Word a, UIItem b)
+			{
+				if (a.type != 1)
+				{
+					this.field.text = a.text;
+					SE.Tab();
+					return;
+				}
+				if (this.field.text.IsEmpty())
+				{
+					SE.BeepSmall();
+					return;
+				}
+				SE.ClickOk();
+				this.extra.words.Add(new WidgetSearch.Word
+				{
+					text = this.field.text
+				});
+				this.listWords.List(false);
+			},
+			onInstantiate = delegate(WidgetSearch.Word a, UIItem b)
+			{
+				b.button1.mainText.SetText(a.text);
+				b.button2.SetActive(a.type != 1);
+				b.button2.SetOnClick(delegate
+				{
+					this.extra.words.Remove(a);
+					SE.Trash();
+					this.listWords.List(false);
+				});
+			},
+			onList = delegate(UIList.SortMode m)
+			{
+				foreach (WidgetSearch.Word o in this.extra.words)
+				{
+					this.listWords.Add(o);
+				}
+				if (this.extra.words.Count < 10)
+				{
+					this.listWords.Add(new WidgetSearch.Word
+					{
+						text = "add_search_word".lang(),
+						type = 1
+					});
+				}
+			}
+		};
+		this.listWords.List(false);
+	}
+
 	public override void RefreshList()
 	{
 		LayerInventory.SetDirtyAll(false);
@@ -153,6 +251,10 @@ public class WidgetSearch : WidgetCodex
 	public override void OnDeactivate()
 	{
 		base.OnDeactivate();
+		if (this.field.text.IsEmpty())
+		{
+			this.extra.lastSearch = "";
+		}
 		LayerInventory.SetDirtyAll(false);
 	}
 
@@ -163,4 +265,24 @@ public class WidgetSearch : WidgetCodex
 	public static Card selected;
 
 	public CanvasGroup cgResult;
+
+	public UIList listWords;
+
+	public class Extra
+	{
+		[JsonProperty]
+		public string lastSearch;
+
+		[JsonProperty]
+		public List<WidgetSearch.Word> words;
+	}
+
+	public class Word
+	{
+		[JsonProperty]
+		public string text;
+
+		[JsonProperty]
+		public int type;
+	}
 }

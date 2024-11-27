@@ -274,6 +274,7 @@ public class ConSleep : BadCondition
 			}
 		}
 		EClass.pc.Pick(t, true, true);
+		LayerInventory.SetDirty(t);
 	}
 
 	public bool succubusChecked;

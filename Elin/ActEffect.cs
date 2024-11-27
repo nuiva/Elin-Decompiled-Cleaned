@@ -37,10 +37,9 @@ public class ActEffect : EClass
 		Point point = CC.pos.Copy();
 		List<Card> list = new List<Card>();
 		bool flag = false;
-		if (id == EffectId.Explosive)
+		if (id == EffectId.Explosive && actref.refThing != null)
 		{
 			power = power * actref.refThing.material.hardness / 10;
-			Debug.Log(power);
 		}
 		string text = id.ToString();
 		string text2 = EClass.sources.calc.map.ContainsKey(text) ? text : (text.ToLower() + "_");
@@ -50,38 +49,44 @@ public class ActEffect : EClass
 			{
 				Point p = enumerator.Current;
 				bool flag2 = true;
-				if (id <= EffectId.Meteor)
+				if (id <= EffectId.BallBubble)
 				{
-					if (id - EffectId.Explosive <= 1)
+					if (id == EffectId.Explosive)
 					{
 						text2 = "ball_";
-						goto IL_1CB;
+						flag = false;
+						goto IL_1DB;
 					}
-					if (id == EffectId.Meteor)
+					if (id == EffectId.BallBubble)
 					{
-						text2 = "SpMeteor";
-						goto IL_1CB;
+						text2 = "ball_";
+						goto IL_1DB;
 					}
 				}
 				else
 				{
+					if (id == EffectId.Meteor)
+					{
+						text2 = "SpMeteor";
+						goto IL_1DB;
+					}
 					if (id == EffectId.Earthquake)
 					{
 						text2 = "SpEarthquake";
 						flag2 = false;
 						flag = true;
-						goto IL_1CB;
+						goto IL_1DB;
 					}
 					if (id == EffectId.Suicide)
 					{
-						goto IL_1CB;
+						goto IL_1DB;
 					}
 				}
 				if (CC.isChara && p.Equals(CC.pos) && points.Count >= 2)
 				{
 					continue;
 				}
-				IL_1CB:
+				IL_1DB:
 				Effect effect = null;
 				Effect effect2 = flag2 ? Effect.Get("trail1") : null;
 				Point from = p;
@@ -236,14 +241,24 @@ public class ActEffect : EClass
 								{
 									if (num5 * 10 > EClass.rnd(num4 + 1))
 									{
-										CC.ModExp(302, CC.IsPC ? 10 : 50);
+										if (c == c.pos.FirstChara)
+										{
+											CC.ModExp(302, CC.IsPC ? 10 : 50);
+											continue;
+										}
 										continue;
 									}
-									num4 = EClass.rnd(num4 * 100 / (100 + num5 * 10 + 1));
-									CC.ModExp(302, CC.IsPC ? 20 : 100);
-									if (num4 == 0)
+									else
 									{
-										continue;
+										num4 = EClass.rnd(num4 * 100 / (100 + num5 * 10 + 1));
+										if (c == c.pos.FirstChara)
+										{
+											CC.ModExp(302, CC.IsPC ? 20 : 100);
+										}
+										if (num4 == 0)
+										{
+											continue;
+										}
 									}
 								}
 								if (CC.HasElement(1214, 1) || (!CC.IsPC && (CC.IsPCFaction || CC.IsPCFactionMinion) && EClass.pc.HasElement(1214, 1) && EClass.rnd(5) != 0))
@@ -264,8 +279,12 @@ public class ActEffect : EClass
 									CC.Say(lang + "_hit", CC, c, e.Name.ToLower(), null);
 								}
 							}
-							Chara chara = CC.isChara ? CC.Chara : EClass._map.FindChara(actref.refThing.c_uidRefCard);
+							Chara chara = CC.isChara ? CC.Chara : ((actref.refThing != null) ? EClass._map.FindChara(actref.refThing.c_uidRefCard) : null);
 							c.DamageHP(num4, e.id, power * num / 100, AttackSource.None, chara ?? CC, true);
+							if (id == EffectId.Explosive && CC.trait is TraitCookerMicrowave)
+							{
+								chara = EClass.pc;
+							}
 							if (chara != null && chara.IsAliveInCurrentZone)
 							{
 								chara.DoHostileAction(c, false);
@@ -276,8 +295,8 @@ public class ActEffect : EClass
 				}
 				if ((id == EffectId.Explosive || id == EffectId.Suicide) && ((id != EffectId.Suicide && id != EffectId.Meteor) || !EClass._zone.IsPCFaction))
 				{
-					int num6 = (id == EffectId.Meteor) ? (50 + power / 20) : ((id == EffectId.Suicide) ? (CC.LV / 3 + 40) : actref.refThing.material.hardness);
-					bool flag5 = EClass._zone.HasLaw && !EClass._zone.IsPCFaction && CC.IsPC && !(EClass._zone is Zone_Vernis);
+					int num6 = (id == EffectId.Meteor) ? (50 + power / 20) : ((id == EffectId.Suicide) ? (CC.LV / 3 + 40) : ((actref.refThing != null) ? actref.refThing.material.hardness : (30 + power / 20)));
+					bool flag5 = EClass._zone.HasLaw && !EClass._zone.IsPCFaction && (CC.IsPC || (id == EffectId.Explosive && actref.refThing == null)) && !(EClass._zone is Zone_Vernis);
 					if (p.HasObj && p.cell.matObj.hardness <= num6)
 					{
 						EClass._map.MineObj(p, null, null);
@@ -437,7 +456,7 @@ public class ActEffect : EClass
 			case EffectId.Debuff:
 			case EffectId.Weaken:
 			case EffectId.NeckHunt:
-				goto IL_DEA;
+				goto IL_DF7;
 			case EffectId.Summon:
 			{
 				CC.Say("summon_ally", CC, null, null);
@@ -643,7 +662,7 @@ public class ActEffect : EClass
 				}
 				if (id != EffectId.Earthquake)
 				{
-					goto IL_DEA;
+					goto IL_DF7;
 				}
 				List<Point> list5 = EClass._map.ListPointsInCircle(CC.pos, 12f, false, true);
 				if (list5.Count == 0)
@@ -661,7 +680,7 @@ public class ActEffect : EClass
 				}
 				EClass.Wait(1f, CC);
 				ActEffect.DamageEle(CC, id, power, element, list5, actRef, "spell_earthquake");
-				goto IL_DEA;
+				goto IL_DF7;
 			}
 			}
 		}
@@ -675,7 +694,7 @@ public class ActEffect : EClass
 			{
 				if (id != EffectId.Scream)
 				{
-					goto IL_DEA;
+					goto IL_DF7;
 				}
 				CC.PlaySound("scream", 1f, true);
 				CC.PlayEffect("scream", true, 0f, default(Vector3));
@@ -705,7 +724,11 @@ public class ActEffect : EClass
 		}
 		return;
 		IL_9C1:
-		float radius2 = (id == EffectId.Suicide) ? 3.5f : ((float)((id == EffectId.BallBubble) ? 2 : ((id == EffectId.Explosive) ? 2 : 5)));
+		float radius2 = (id == EffectId.Suicide) ? 3.5f : ((float)((id == EffectId.BallBubble) ? 2 : 5));
+		if (id == EffectId.Explosive && actRef.refThing != null)
+		{
+			radius2 = 2f;
+		}
 		if (id == EffectId.Suicide)
 		{
 			if (CC.MainElement != Element.Void)
@@ -739,7 +762,7 @@ public class ActEffect : EClass
 			CC.Die(null, null, AttackSource.None);
 		}
 		return;
-		IL_DEA:
+		IL_DF7:
 		List<Card> list8 = tp.ListCards(false).ToList<Card>();
 		list8.Reverse();
 		if (list8.Contains(CC))
@@ -814,7 +837,7 @@ public class ActEffect : EClass
 					if (flag)
 					{
 						CS$<>8__locals1.<Proc>g__Redirect|0(EffectId.ForgetItems, flag2 ? BlessedState.Cursed : BlessedState.Normal, default(ActRef));
-						goto IL_1283;
+						goto IL_12A0;
 					}
 					if (!CS$<>8__locals1.tc.isThing)
 					{
@@ -825,7 +848,7 @@ public class ActEffect : EClass
 					CS$<>8__locals1.cc.PlaySound("identify", 1f, true);
 					CS$<>8__locals1.cc.PlayEffect("identify", true, 0f, default(Vector3));
 					CS$<>8__locals1.tc.Thing.Identify(CS$<>8__locals1.cc.IsPCParty, flag2 ? IDTSource.SuperiorIdentify : IDTSource.Identify);
-					goto IL_1283;
+					goto IL_12A0;
 				}
 				case EffectId.Teleport:
 				case EffectId.TeleportShort:
@@ -847,11 +870,11 @@ public class ActEffect : EClass
 					if (CS$<>8__locals1.blessed)
 					{
 						CS$<>8__locals1.<Proc>g__Redirect|0(EffectId.Levitate, BlessedState.Normal, default(ActRef));
-						goto IL_1283;
+						goto IL_12A0;
 					}
-					goto IL_1283;
+					goto IL_12A0;
 				case EffectId.CreateWall:
-					goto IL_1283;
+					goto IL_12A0;
 				case EffectId.Return:
 				case EffectId.Evac:
 					if (!CS$<>8__locals1.cc.IsPC)
@@ -875,7 +898,7 @@ public class ActEffect : EClass
 							if (EClass.game.spatials.ListReturnLocations().Count == 0)
 							{
 								Msg.Say("returnNowhere");
-								goto IL_1283;
+								goto IL_12A0;
 							}
 							EClass.player.returnInfo = new Player.ReturnInfo
 							{
@@ -884,11 +907,11 @@ public class ActEffect : EClass
 							};
 						}
 						Msg.Say("returnBegin");
-						goto IL_1283;
+						goto IL_12A0;
 					}
 					EClass.player.returnInfo = null;
 					Msg.Say("returnAbort");
-					goto IL_1283;
+					goto IL_12A0;
 				case EffectId.ChangeMaterialLesser:
 				case EffectId.ChangeMaterial:
 				case EffectId.ChangeMaterialGreater:
@@ -958,15 +981,15 @@ public class ActEffect : EClass
 							CS$<>8__locals1.CC.Pick(CS$<>8__locals1.tc.Thing, false, true);
 						}
 						CS$<>8__locals1.CC.body.UnqeuipIfTooHeavy(CS$<>8__locals1.tc.Thing);
-						goto IL_1283;
+						goto IL_12A0;
 					}
-					goto IL_1283;
+					goto IL_12A0;
 				}
 				default:
 				{
 					if (id2 != EffectId.Uncurse)
 					{
-						goto IL_1283;
+						goto IL_12A0;
 					}
 					if (!CS$<>8__locals1.tc.isThing)
 					{
@@ -988,7 +1011,7 @@ public class ActEffect : EClass
 						rootCard.TryStack(thing);
 					}
 					LayerInventory.SetDirty(thing);
-					goto IL_1283;
+					goto IL_12A0;
 				}
 				}
 			}
@@ -1070,11 +1093,11 @@ public class ActEffect : EClass
 						CS$<>8__locals1.CC.Pick(CS$<>8__locals1.tc.Thing, false, true);
 					}
 					CS$<>8__locals1.CC.body.UnqeuipIfTooHeavy(CS$<>8__locals1.tc.Thing);
-					goto IL_1283;
+					goto IL_12A0;
 				}
 				case EffectId.Naming:
 				case EffectId.Faith:
-					goto IL_1283;
+					goto IL_12A0;
 				case EffectId.ForgetItems:
 				{
 					CS$<>8__locals1.TC.PlaySound("curse3", 1f, true);
@@ -1086,17 +1109,17 @@ public class ActEffect : EClass
 					{
 						source.RandomItem<Thing>().c_IDTState = 5;
 					}
-					goto IL_1283;
+					goto IL_12A0;
 				}
 				default:
 				{
 					if (id2 != EffectId.ModPotential)
 					{
-						goto IL_1283;
+						goto IL_12A0;
 					}
 					Element element = CS$<>8__locals1.cc.elements.ListElements((Element e) => e.HasTag("primary"), null).RandomItem<Element>();
 					CS$<>8__locals1.cc.elements.ModTempPotential(element.id, CS$<>8__locals1.power / 10, 0);
-					goto IL_1283;
+					goto IL_12A0;
 				}
 				}
 			}
@@ -1130,7 +1153,7 @@ public class ActEffect : EClass
 								chara.PlayEffect("vanish", true, 0f, default(Vector3));
 								chara.Die(null, null, AttackSource.None);
 							}
-							goto IL_1283;
+							goto IL_12A0;
 						}
 						break;
 					}
@@ -1138,12 +1161,12 @@ public class ActEffect : EClass
 					case EffectId.Boost:
 					case EffectId.RemoveHex:
 					case EffectId.RemoveHexAll:
-						goto IL_1283;
+						goto IL_12A0;
 					case EffectId.MagicMap:
 						if (!CS$<>8__locals1.CC.IsPC)
 						{
 							CS$<>8__locals1.CC.SayNothingHappans();
-							goto IL_1283;
+							goto IL_12A0;
 						}
 						if (flag)
 						{
@@ -1151,7 +1174,7 @@ public class ActEffect : EClass
 							CS$<>8__locals1.CC.PlaySound("curse3", 1f, true);
 							CS$<>8__locals1.CC.PlayEffect("curse", true, 0f, default(Vector3));
 							CS$<>8__locals1.CC.AddCondition<ConConfuse>(200, true);
-							goto IL_1283;
+							goto IL_12A0;
 						}
 						CS$<>8__locals1.CC.Say("abMagicMap", CS$<>8__locals1.CC, null, null);
 						CS$<>8__locals1.CC.PlayEffect("identify", true, 0f, default(Vector3));
@@ -1159,10 +1182,10 @@ public class ActEffect : EClass
 						if (CS$<>8__locals1.blessed)
 						{
 							EClass._map.RevealAll(true);
-							goto IL_1283;
+							goto IL_12A0;
 						}
 						EClass._map.Reveal(CS$<>8__locals1.CC.pos, CS$<>8__locals1.power);
-						goto IL_1283;
+						goto IL_12A0;
 					case EffectId.Escape:
 						if (CS$<>8__locals1.CC.IsPCFaction || (EClass._zone.Boss == CS$<>8__locals1.CC && EClass.rnd(30) != 0))
 						{
@@ -1175,7 +1198,7 @@ public class ActEffect : EClass
 							CS$<>8__locals1.CC.TryDropBossLoot();
 						}
 						CS$<>8__locals1.CC.Destroy();
-						goto IL_1283;
+						goto IL_12A0;
 					case EffectId.EnchantWeaponGreat:
 					case EffectId.EnchantArmorGreat:
 						goto IL_72A;
@@ -1190,10 +1213,10 @@ public class ActEffect : EClass
 						Chara t3 = CS$<>8__locals1.CC.Duplicate();
 						EClass._zone.AddCard(t3, randomPoint);
 						CS$<>8__locals1.CC.Say("split", CS$<>8__locals1.CC, null, null);
-						goto IL_1283;
+						goto IL_12A0;
 					}
 					default:
-						goto IL_1283;
+						goto IL_12A0;
 					}
 				}
 				else
@@ -1206,16 +1229,16 @@ public class ActEffect : EClass
 					if (CS$<>8__locals1.TC.IsPC)
 					{
 						CS$<>8__locals1.CC.Say("absorbMana", CS$<>8__locals1.CC, null, null);
-						goto IL_1283;
+						goto IL_12A0;
 					}
-					goto IL_1283;
+					goto IL_12A0;
 				}
 			}
 			else if (id2 != EffectId.Reconstruction)
 			{
 				if (id2 != EffectId.DropMine)
 				{
-					goto IL_1283;
+					goto IL_12A0;
 				}
 			}
 			else
@@ -1232,6 +1255,7 @@ public class ActEffect : EClass
 				CS$<>8__locals1.cc.PlaySound("mutation", 1f, true);
 				CS$<>8__locals1.cc.PlayEffect("identify", true, 0f, default(Vector3));
 				CS$<>8__locals1.cc.Say("reconstruct", CS$<>8__locals1.cc, CS$<>8__locals1.tc, null, null);
+				EClass.game.cards.uidNext += EClass.rnd(30);
 				Thing thing2 = ThingGen.Create(CS$<>8__locals1.tc.id, -1, CS$<>8__locals1.tc.LV * CS$<>8__locals1.power / 100);
 				thing2.SetBlessedState(state);
 				CS$<>8__locals1.tc.Destroy();
@@ -1239,9 +1263,9 @@ public class ActEffect : EClass
 				if (!CS$<>8__locals1.CC.IsPC)
 				{
 					CS$<>8__locals1.CC.TryEquip(thing2, false);
-					goto IL_1283;
+					goto IL_12A0;
 				}
-				goto IL_1283;
+				goto IL_12A0;
 			}
 			if (CS$<>8__locals1.CC.pos.Installed != null || EClass._zone.IsPCFaction)
 			{
@@ -1251,7 +1275,7 @@ public class ActEffect : EClass
 			thing3.c_idRefCard = "dog_mine";
 			Zone.ignoreSpawnAnime = true;
 			EClass._zone.AddCard(thing3, CS$<>8__locals1.CC.pos).Install();
-			goto IL_1283;
+			goto IL_12A0;
 		}
 		IL_72A:
 		bool armor = CS$<>8__locals1.id == EffectId.EnchantArmor || CS$<>8__locals1.id == EffectId.EnchantArmorGreat;
@@ -1281,7 +1305,7 @@ public class ActEffect : EClass
 				CS$<>8__locals1.tc.ModEncLv(1);
 			}
 		}
-		IL_1283:
+		IL_12A0:
 		if (CS$<>8__locals1.TC == null)
 		{
 			return;
@@ -1376,7 +1400,7 @@ public class ActEffect : EClass
 			switch (id2)
 			{
 			case EffectId.Heal:
-				goto IL_285C;
+				goto IL_2879;
 			case EffectId.RestoreBody:
 			case EffectId.RestoreMind:
 			{
@@ -2004,7 +2028,7 @@ public class ActEffect : EClass
 					CS$<>8__locals1.TC.Say("heal_jure", CS$<>8__locals1.TC, null, null);
 					return;
 				case EffectId.JureHeal:
-					goto IL_285C;
+					goto IL_2879;
 				case EffectId.KizuamiTrick:
 				{
 					EClass.game.religions.Trickery.Talk("ability", null, null);
@@ -2249,7 +2273,7 @@ public class ActEffect : EClass
 				return;
 			}
 			break;
-			IL_285C:
+			IL_2879:
 			if (CS$<>8__locals1.id == EffectId.JureHeal)
 			{
 				EClass.game.religions.Healing.Talk("ability", null, null);

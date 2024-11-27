@@ -60,7 +60,7 @@ public class FEAT
 
 	public const int featModelBeliever = 1655;
 
-	public const int featDreamWaker = 1653;
+	public const int featHeavyCasting = 1654;
 
 	public const int featRapidArrow = 1652;
 
@@ -100,7 +100,7 @@ public class FEAT
 
 	public const int featReboot = 1410;
 
-	public const int featHeavyCasting = 1654;
+	public const int featDreamWaker = 1653;
 
 	public const int featPaladin2 = 1408;
 
@@ -249,7 +249,7 @@ public class FEAT
 		1657,
 		1656,
 		1655,
-		1653,
+		1654,
 		1652,
 		1651,
 		1650,
@@ -269,7 +269,7 @@ public class FEAT
 		1632,
 		1646,
 		1410,
-		1654,
+		1653,
 		1408,
 		1223,
 		1224,

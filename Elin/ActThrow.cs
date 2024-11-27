@@ -68,7 +68,7 @@ public class ActThrow : ActBaseAttack
 		return true;
 	}
 
-	public static bool CanThrow(Chara c, Thing t, Chara target, Point p = null)
+	public static bool CanThrow(Chara c, Thing t, Card target, Point p = null)
 	{
 		if (t == null)
 		{
@@ -351,6 +351,14 @@ public class ActThrow : ActBaseAttack
 			{
 				c.Chara.stamina.Mod(-1);
 			}
+		}
+		if (t.HasElement(410, 1) && Act.TC != null && Act.CC == EClass.pc && !(Act.CC.ai is AI_PracticeDummy) && (Act.TC.trait is TraitTrainingDummy || Act.TC.IsRestrainedResident) && Act.CC.stamina.value > 0)
+		{
+			Act.CC.SetAI(new AI_PracticeDummy
+			{
+				target = Act.TC,
+				throwItem = t
+			});
 		}
 		return result;
 	}

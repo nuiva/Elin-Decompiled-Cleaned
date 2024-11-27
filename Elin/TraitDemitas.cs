@@ -15,7 +15,7 @@ public class TraitDemitas : TraitUniqueChara
 	{
 		get
 		{
-			return EClass.game.quests.IsCompleted("demitas_spellwriter");
+			return EClass.debug.enable || EClass.game.quests.IsCompleted("demitas_spellwriter");
 		}
 	}
 

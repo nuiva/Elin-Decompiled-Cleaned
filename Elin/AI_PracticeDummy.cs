@@ -40,7 +40,16 @@ public class AI_PracticeDummy : AIAct
 		};
 		progress_Custom.onProgress = delegate(Progress_Custom p)
 		{
-			if (this.range && this.owner.GetCondition<ConReload>() == null)
+			if (this.throwItem != null)
+			{
+				if (!ActThrow.CanThrow(EClass.pc, this.throwItem, this.target, null))
+				{
+					p.Cancel();
+					return;
+				}
+				ActThrow.Throw(EClass.pc, this.target.pos, this.target, this.throwItem, ThrowMethod.Default);
+			}
+			else if (this.range && this.owner.GetCondition<ConReload>() == null)
 			{
 				if (!ACT.Ranged.CanPerform(this.owner, this.target, this.target.pos))
 				{
@@ -72,6 +81,8 @@ public class AI_PracticeDummy : AIAct
 	}
 
 	public Card target;
+
+	public Thing throwItem;
 
 	public bool range;
 }

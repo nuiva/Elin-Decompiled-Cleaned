@@ -5,7 +5,7 @@ public class TaskPourWater : TaskDesignation
 {
 	public override bool CanProgress()
 	{
-		return base.CanProgress() && !this.pos.HasBridge && this.pos.cell.sourceSurface.alias != "floor_water_deep" && this.pot.owner.c_charges > 0;
+		return base.CanProgress() && !this.pos.HasBridge && this.pos.cell.sourceSurface.alias != "floor_water_deep" && this.pot.owner.c_charges > 0 && this.owner.Tool == this.pot.owner;
 	}
 
 	public override int destDist

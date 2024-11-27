@@ -99,7 +99,7 @@ public class AI_Shear : AI_TargetCard
 				this.target.c_fur = -5;
 				this.owner.Say("shear_end", this.owner, this.target, thing.Name, null);
 				this.owner.Pick(thing, false, true);
-				this.owner.elements.ModExp(237, 50, false);
+				this.owner.elements.ModExp(237, 50 * furLv, false);
 				EClass.pc.stamina.Mod(-1);
 				this.target.Chara.ModAffinity(this.owner, 1, true);
 			}

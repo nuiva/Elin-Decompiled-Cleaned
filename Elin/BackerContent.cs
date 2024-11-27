@@ -9,6 +9,10 @@ public class BackerContent : EClass
 
 	public static void GakiConvert(ref string text, string idLang = "zako")
 	{
+		if (text.IsEmpty())
+		{
+			return;
+		}
 		if (!text.StartsWith("("))
 		{
 			text = idLang.lang().Split(',', StringSplitOptions.None).RandomItem<string>() + " (" + text + ")";

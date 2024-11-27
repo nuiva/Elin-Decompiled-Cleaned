@@ -65,7 +65,6 @@ public class ListOwner : EClass
 		if (Lang.GetList(this.IdTitle) != null)
 		{
 			this.window.SetTitles(this.IdTitle, this.IdHeaderRow);
-			return;
 		}
 		if (!this.textHeader.IsEmpty())
 		{

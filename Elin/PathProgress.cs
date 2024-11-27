@@ -19,13 +19,6 @@ public class PathProgress
 
 	public void RequestPath(Point _startPoint, Point _destPoint, int _destDist, bool _ignoreConnection, int _searchLimit = -1)
 	{
-		if (_startPoint.cell.isSurrounded4d || _destPoint.cell.isSurrounded4d)
-		{
-			this.state = PathProgress.State.Fail;
-			this.nodeIndex = 0;
-			this.nodes.Clear();
-			return;
-		}
 		this.startPoint.Set(_startPoint);
 		this.destPoint.Set(_destPoint);
 		this.destDist = _destDist;
@@ -36,13 +29,6 @@ public class PathProgress
 
 	public void RequestPathImmediate(Point _startPoint, Point _destPoint, int _destDist, bool _ignoreConnection, int _searchLimit = -1)
 	{
-		if (_startPoint.cell.isSurrounded4d || _destPoint.cell.isSurrounded4d)
-		{
-			this.state = PathProgress.State.Fail;
-			this.nodeIndex = 0;
-			this.nodes.Clear();
-			return;
-		}
 		this.startPoint.Set(_startPoint);
 		this.destPoint.Set(_destPoint);
 		this.destDist = _destDist;

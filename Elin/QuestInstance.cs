@@ -49,15 +49,19 @@ public class QuestInstance : QuestRandom
 		return new ZoneEventQuest();
 	}
 
+	public virtual ZoneInstanceRandomQuest CreateInstance()
+	{
+		return new ZoneInstanceRandomQuest();
+	}
+
 	public override Zone CreateInstanceZone(Chara c)
 	{
 		ZoneEventQuest zoneEventQuest = this.CreateEvent();
 		zoneEventQuest.uidQuest = this.uid;
-		Zone zone = SpatialGen.CreateInstance(this.IdZone, new ZoneInstanceRandomQuest
-		{
-			uidClient = c.uid,
-			uidQuest = this.uid
-		});
+		ZoneInstanceRandomQuest zoneInstanceRandomQuest = this.CreateInstance();
+		zoneInstanceRandomQuest.uidClient = c.uid;
+		zoneInstanceRandomQuest.uidQuest = this.uid;
+		Zone zone = SpatialGen.CreateInstance(this.IdZone, zoneInstanceRandomQuest);
 		this.deadline = 0;
 		zone.events.Add(zoneEventQuest, false);
 		string[] array = new string[6];

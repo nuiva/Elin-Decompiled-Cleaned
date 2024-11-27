@@ -246,7 +246,7 @@ public class SerializedCards : EClass
 				else
 				{
 					PlaceState placeState = data.placeState.ToEnum<PlaceState>();
-					if (isUserZone && placeState != PlaceState.installed)
+					if (isUserZone && placeState != PlaceState.installed && !data.bits1.IsOn(13))
 					{
 						continue;
 					}
@@ -280,6 +280,10 @@ public class SerializedCards : EClass
 				card2.refVal = data.refVal;
 				card2.idSkin = data.idSkin;
 				card2.c_idDeity = data.idDeity;
+				if (isUserZone)
+				{
+					bool isRoofItem = card2.isRoofItem;
+				}
 				if (data.idBacker != 0)
 				{
 					Debug.Log(data.idBacker);

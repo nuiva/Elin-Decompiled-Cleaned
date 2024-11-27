@@ -273,6 +273,14 @@ public class LayerConfig : ELayer
 			ELayer.config.ui.openLastTab = on;
 			ELayer.config.Apply();
 		});
+		if (this.toggleClosePopupOnMouseLeave)
+		{
+			this.toggleClosePopupOnMouseLeave.SetToggle(ELayer.config.ui.closePopupOnMouseLeave, delegate(bool on)
+			{
+				ELayer.config.ui.closePopupOnMouseLeave = on;
+				ELayer.config.Apply();
+			});
+		}
 		this.toggleBalloon.SetToggle(ELayer.config.ui.balloonBG, delegate(bool on)
 		{
 			ELayer.config.ui.balloonBG = on;
@@ -486,6 +494,8 @@ public class LayerConfig : ELayer
 	public UIButton toggleFixedResolution;
 
 	public UIButton toggleOpenLastTab;
+
+	public UIButton toggleClosePopupOnMouseLeave;
 
 	public UIButton toggleRightClickClose;
 

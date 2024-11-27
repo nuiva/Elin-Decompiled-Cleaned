@@ -5,12 +5,12 @@ public class CalcMoney : EClass
 {
 	public static int Negotiate(int a, float mod = 1.5f)
 	{
-		return Mathf.Max(a * 100 / (int)(100f + (float)Mathf.Max(0, EClass.pc.CHA / 2 + EClass.pc.Evalue(291)) * mod), 1);
+		return (int)Mathf.Max((float)((long)a * 100L / (long)(100f + (float)Mathf.Max(0, EClass.pc.CHA / 2 + EClass.pc.Evalue(291)) * mod)), 1f);
 	}
 
 	public static int Invest(int a, float mod = 2f)
 	{
-		return Mathf.Max(a * 100 / (int)(100f + (float)Mathf.Max(0, EClass.pc.CHA / 2 + EClass.pc.Evalue(292)) * mod), 1);
+		return (int)Mathf.Max((float)((long)a * 100L / (long)(100f + (float)Mathf.Max(0, EClass.pc.CHA / 2 + EClass.pc.Evalue(292)) * mod)), 1f);
 	}
 
 	public static int Meal(Chara c)
@@ -60,6 +60,6 @@ public class CalcMoney : EClass
 
 	public static int InvestZone(Chara c)
 	{
-		return CalcMoney.Invest(Mathf.Max(EClass._zone.development * 50, EClass._zone.development * EClass._zone.development / 4) + 500, 2f);
+		return CalcMoney.Invest((int)Mathf.Max((float)((long)EClass._zone.development * 50L), (float)(EClass._zone.development * EClass._zone.development / 4)) + 500, 2f);
 	}
 }

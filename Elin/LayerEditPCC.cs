@@ -134,6 +134,7 @@ public class LayerEditPCC : ELayer
 			return;
 		}
 		List<ModItem<Sprite>> list = Portrait.ListPlayerPortraits(this.chara.bio.gender, this.chara != ELayer.pc);
+		list.Sort((ModItem<Sprite> a, ModItem<Sprite> b) => Lang.comparer.Compare(a.id, b.id));
 		this.sliderPortrait.SetList<ModItem<Sprite>>(list.Find((ModItem<Sprite> a) => a.id == this.chara.c_idPortrait), list, delegate(int a, ModItem<Sprite> b)
 		{
 			this.chara.c_idPortrait = b.id;

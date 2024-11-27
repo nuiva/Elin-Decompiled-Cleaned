@@ -141,6 +141,16 @@ public class CraftUtil : EClass
 				CS$<>8__locals1.product.elements.SetTo(element.id, 0);
 			}
 		}
+		if (CS$<>8__locals1.product.HasTag(CTAG.dish_bonus))
+		{
+			foreach (Element element2 in CS$<>8__locals1.product.sourceCard.model.elements.dict.Values)
+			{
+				if (element2.IsFoodTraitMain)
+				{
+					CS$<>8__locals1.product.elements.ModBase(element2.id, element2.Value);
+				}
+			}
+		}
 		if (CS$<>8__locals1.isFood)
 		{
 			CS$<>8__locals1.product.elements.SetTo(10, 5);
@@ -188,9 +198,9 @@ public class CraftUtil : EClass
 					num3 *= thing2.Thing.material.hardness / 20 + 2;
 				}
 			}
-			if (num3 > EClass.player.stats.deepest + 10 - 1)
+			if (num3 > EClass.pc.FameLv + 10 - 1)
 			{
-				num3 = EClass.player.stats.deepest + 10 - 1;
+				num3 = EClass.pc.FameLv + 10 - 1;
 			}
 			CS$<>8__locals1.product.SetInt(25, num3);
 		}

@@ -458,7 +458,7 @@ public class Recipe : EClass
 		}
 	}
 
-	public virtual Thing Craft(BlessedState blessed, bool sound = false, List<Thing> ings = null, bool model = false)
+	public virtual Thing Craft(BlessedState blessed, bool sound = false, List<Thing> ings = null, TraitCrafter crafter = null, bool model = false)
 	{
 		string type = this.source.type;
 		Thing thing;

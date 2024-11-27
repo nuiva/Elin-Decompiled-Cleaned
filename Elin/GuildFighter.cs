@@ -26,4 +26,19 @@ public class GuildFighter : Guild
 		}
 		return a * 100 / (125 + this.relation.rank * 2);
 	}
+
+	public bool CanGiveContribution(Chara c)
+	{
+		return !c.IsUnique && c.rarity >= Rarity.Legendary && (c.Chara.OriginalHostility == Hostility.Enemy || c.c_bossType == BossType.Evolved);
+	}
+
+	public bool ShowBounty(Chara c)
+	{
+		return false;
+	}
+
+	public bool HasBounty(Chara c)
+	{
+		return this.CanGiveContribution(c) && this.relation.rank >= 4 && c.uid % 2 == 0;
+	}
 }

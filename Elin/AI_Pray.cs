@@ -26,31 +26,33 @@ public class AI_Pray : AIAct
 	public override IEnumerable<AIAct.Status> Run()
 	{
 		yield return base.DoGoto(this.altar.owner, 1, null);
-		Progress_Custom seq = new Progress_Custom
+		Progress_Custom progress_Custom = new Progress_Custom();
+		progress_Custom.cancelWhenMoved = false;
+		progress_Custom.canProgress = (() => this.IsValid());
+		progress_Custom.onProgressBegin = delegate()
 		{
-			cancelWhenMoved = false,
-			canProgress = (() => this.IsValid()),
-			onProgressBegin = delegate()
-			{
-				this.owner.Say("pray2", this.owner, this.owner.faith.Name, null);
-			},
-			onProgress = delegate(Progress_Custom p)
-			{
-				this.owner.PlayAnime(AnimeID.Shiver, false);
-			},
-			onProgressComplete = delegate()
-			{
-				this.owner.PlaySound("pray", 1f, true);
-				this.owner.PlayEffect("revive", true, 0f, default(Vector3));
-				AI_Pray.Pray(this.owner);
-			}
-		}.SetDuration(30, 5);
+		};
+		progress_Custom.onProgress = delegate(Progress_Custom p)
+		{
+			this.owner.PlayAnime(AnimeID.Shiver, false);
+		};
+		progress_Custom.onProgressComplete = delegate()
+		{
+			AI_Pray.Pray(this.owner, false);
+		};
+		Progress_Custom seq = progress_Custom.SetDuration(30, 5);
 		yield return base.Do(seq, null);
 		yield break;
 	}
 
-	public static void Pray(Chara c)
+	public static void Pray(Chara c, bool silent = false)
 	{
+		if (!silent)
+		{
+			c.Say("pray2", c, c.faith.Name, null);
+			c.PlaySound("pray", 1f, true);
+			c.PlayEffect("revive", true, 0f, default(Vector3));
+		}
 		c.ModExp(306, 200);
 	}
 

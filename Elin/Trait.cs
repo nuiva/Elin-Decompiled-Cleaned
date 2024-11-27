@@ -1790,7 +1790,7 @@ public class Trait : EClass
 	{
 		get
 		{
-			return EClass._zone.development / 10 + this.owner.c_invest + 1;
+			return Mathf.Max(1, EClass._zone.development / 10 + this.owner.c_invest + 1);
 		}
 	}
 
@@ -2290,27 +2290,27 @@ public class Trait : EClass
 				if (shopType == ShopType.GeneralExotic)
 				{
 					this.<OnBarter>g__Add|347_0("tool_talisman", 1, 0, ref CS$<>8__locals1);
-					goto IL_128C;
+					goto IL_12B8;
 				}
 				if (shopType != ShopType.Magic)
 				{
-					goto IL_128C;
+					goto IL_12B8;
 				}
 				if ((EClass._zone.id == "lumiest" && EClass._zone.lv == 0) || (EClass._zone.id != "lumiest" && EClass.rnd(4) == 0))
 				{
 					CS$<>8__locals1.t.AddThing(ThingGen.Create("letter_trial", -1, -1), true, -1, -1);
-					goto IL_128C;
+					goto IL_12B8;
 				}
-				goto IL_128C;
+				goto IL_12B8;
 			}
 			else if (shopType != ShopType.Junk)
 			{
 				if (shopType != ShopType.Food)
 				{
-					goto IL_128C;
+					goto IL_12B8;
 				}
 				this.<OnBarter>g__Add|347_0("ration", 2 + EClass.rnd(4), 0, ref CS$<>8__locals1);
-				goto IL_128C;
+				goto IL_12B8;
 			}
 		}
 		else if (shopType <= ShopType.Gun)
@@ -2319,25 +2319,25 @@ public class Trait : EClass
 			{
 				if (shopType != ShopType.Gun)
 				{
-					goto IL_128C;
+					goto IL_12B8;
 				}
 				this.<OnBarter>g__Add|347_0("bullet", 1, 0, ref CS$<>8__locals1).SetNum(300 + EClass.rnd(100)).ChangeMaterial("iron");
 				this.<OnBarter>g__Add|347_0("bullet_energy", 1, 0, ref CS$<>8__locals1).SetNum(100 + EClass.rnd(100)).ChangeMaterial("iron");
-				goto IL_128C;
+				goto IL_12B8;
 			}
 			else
 			{
 				if (!EClass._zone.IsFestival)
 				{
-					goto IL_128C;
+					goto IL_12B8;
 				}
 				this.<OnBarter>g__Add|347_0("1085", 1, 0, ref CS$<>8__locals1);
 				if (EClass._zone.id == "noyel")
 				{
 					this.<OnBarter>g__Add|347_0("holyFeather", 1, 0, ref CS$<>8__locals1);
-					goto IL_128C;
+					goto IL_12B8;
 				}
-				goto IL_128C;
+				goto IL_12B8;
 			}
 		}
 		else
@@ -2347,7 +2347,7 @@ public class Trait : EClass
 				this.<OnBarter>g__AddThing|347_1(ThingGen.CreatePotion(8400, 1).SetNum(4 + EClass.rnd(6)), ref CS$<>8__locals1);
 				this.<OnBarter>g__AddThing|347_1(ThingGen.CreatePotion(8401, 1).SetNum(2 + EClass.rnd(4)), ref CS$<>8__locals1);
 				this.<OnBarter>g__AddThing|347_1(ThingGen.CreatePotion(8402, 1).SetNum(1 + EClass.rnd(3)), ref CS$<>8__locals1);
-				goto IL_128C;
+				goto IL_12B8;
 			}
 			switch (shopType)
 			{
@@ -2355,24 +2355,28 @@ public class Trait : EClass
 				this.<OnBarter>g__Add|347_0("ecomark", 5, 0, ref CS$<>8__locals1);
 				this.<OnBarter>g__Add|347_0("1165", 1, 0, ref CS$<>8__locals1);
 				this.<OnBarter>g__AddThing|347_1(ThingGen.CreateScroll(9160, 1).SetNum(5), ref CS$<>8__locals1);
-				goto IL_128C;
+				goto IL_12B8;
 			case ShopType.Copy:
 			case ShopType.Plat:
-				goto IL_128C;
+				goto IL_12B8;
 			case ShopType.LoytelMart:
 				break;
 			case ShopType.StrangeGirl:
 			{
-				int num5 = EClass._zone.development / 10;
+				int num5 = EClass.debug.enable ? 20 : (EClass._zone.development / 10);
 				if (num5 > 0)
 				{
 					this.<OnBarter>g__Add|347_0("syringe_gene", num5, 0, ref CS$<>8__locals1);
-					goto IL_128C;
 				}
-				goto IL_128C;
+				if (num5 > 10)
+				{
+					this.<OnBarter>g__Add|347_0("syringe_heaven", num5 / 5, 0, ref CS$<>8__locals1);
+					goto IL_12B8;
+				}
+				goto IL_12B8;
 			}
 			default:
-				goto IL_128C;
+				goto IL_12B8;
 			}
 		}
 		if (this.ShopType == ShopType.LoytelMart)
@@ -2396,7 +2400,7 @@ public class Trait : EClass
 				this.<OnBarter>g__AddThing|347_1(thing7, ref CS$<>8__locals1);
 			}
 		}
-		IL_128C:
+		IL_12B8:
 		shopType = this.ShopType;
 		if (shopType == ShopType.General || shopType == ShopType.Food || shopType == ShopType.Festival)
 		{

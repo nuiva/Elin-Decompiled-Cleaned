@@ -179,7 +179,7 @@ public class RecipeManager : EClass
 	{
 		int slept = EClass.player.stats.slept;
 		Rand.SetSeed(EClass.game.seed + slept);
-		if (slept > 3 && EClass.rnd(3) == 0)
+		if (slept > 3 && EClass.rnd(ehe ? 777 : 3) == 0)
 		{
 			return;
 		}

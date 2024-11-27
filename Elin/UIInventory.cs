@@ -905,6 +905,7 @@ public class UIInventory : EMono
 					uicontextMenu20.AddSlider(text4, textFunc4, value4, action18, 100f, 150f, true, false, false);
 				}
 				uicontextMenu.Show();
+				uicontextMenu.hideOnMouseLeave = false;
 			});
 		}
 		CS$<>8__locals1.b = this.window.buttonQuickSort;

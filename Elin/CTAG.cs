@@ -32,5 +32,6 @@ public enum CTAG
 	tourism,
 	staticSkin,
 	godArtifact,
-	noWish
+	noWish,
+	dish_bonus
 }

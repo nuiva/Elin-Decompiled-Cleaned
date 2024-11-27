@@ -9,6 +9,26 @@ public class UIDragGridIngredients : EMono
 		bool activeSelf = this.goList.activeSelf;
 		bool isNoGoal = EMono.pc.ai.IsNoGoal;
 		this.goList.SetActive(isNoGoal);
+		if (activeSelf != isNoGoal)
+		{
+			this.Refresh();
+		}
+		if (EInput.middleMouse.down)
+		{
+			ButtonGrid componentOf = InputModuleEX.GetComponentOf<ButtonGrid>();
+			if (componentOf && componentOf.GetComponentInParent<UIDragGridIngredients>())
+			{
+				Thing t = componentOf.card.Thing;
+				t.ShowSplitMenu2(componentOf, "actPutIn", delegate(int n)
+				{
+					Thing thing = t.Split(n);
+					thing = EMono.pc.Pick(thing, true, false);
+					int currentIndex = this.layer.currentIndex;
+					this.layer.buttons[currentIndex].SetCardGrid(thing, this.layer.owner);
+					this.layer.owner.OnProcess(thing);
+				});
+			}
+		}
 	}
 
 	public void Refresh()
@@ -20,7 +40,7 @@ public class UIDragGridIngredients : EMono
 		{
 			foreach (Thing thing in EMono._map.Stocked.Things)
 			{
-				if (this.layer.owner.ShouldShowGuide(thing) && !thing.c_isImportant && thing.parentCard != null && thing.parentCard.c_lockLv == 0 && !(thing.parentCard.trait is TraitChestMerchant))
+				if (this.layer.owner.ShouldShowGuide(thing) && EMono._map.Stocked.ShouldListAsResource(thing))
 				{
 					Window.SaveData windowSaveData = thing.parentCard.GetWindowSaveData();
 					if (windowSaveData == null || !windowSaveData.excludeCraft)

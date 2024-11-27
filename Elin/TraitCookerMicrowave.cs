@@ -2,6 +2,14 @@
 
 public class TraitCookerMicrowave : TraitCooker
 {
+	public override bool CanTriggerFire
+	{
+		get
+		{
+			return true;
+		}
+	}
+
 	public override ToggleType ToggleType
 	{
 		get

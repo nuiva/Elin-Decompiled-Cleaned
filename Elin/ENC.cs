@@ -26,7 +26,7 @@ public class ENC
 
 	public const int onlyPet = 655;
 
-	public const int convertImpact = 865;
+	public const int convertLightning = 852;
 
 	public const int absorbHP = 660;
 
@@ -42,13 +42,13 @@ public class ENC
 
 	public const int meleeDistance = 666;
 
+	public const int convertImpact = 865;
+
 	public const int mod_ammo_knockback = 603;
 
 	public const int convertFire = 850;
 
 	public const int convertCold = 851;
-
-	public const int convertLightning = 852;
 
 	public const int permaCurse = 656;
 
@@ -57,6 +57,8 @@ public class ENC
 	public const int sustain_WIL = 445;
 
 	public const int mod_ammo = 600;
+
+	public const int allNeckHunt = 428;
 
 	public const int negateNeckHunt = 427;
 
@@ -78,9 +80,9 @@ public class ENC
 
 	public const int slowCorruption = 412;
 
-	public const int allNeckHunt = 428;
-
 	public const int encSpell = 411;
+
+	public const int throwReturn = 410;
 
 	public const int corruption = 409;
 
@@ -102,13 +104,13 @@ public class ENC
 
 	public const int negateTeleport = 400;
 
-	public const int throwReturn = 410;
-
 	public const int breathing = 429;
+
+	public const int sustain_STR = 440;
 
 	public const int negateFear = 423;
 
-	public const int bane_fish = 467;
+	public const int bane_all = 468;
 
 	public const int optimizeMana = 483;
 
@@ -118,7 +120,7 @@ public class ENC
 
 	public const int strongStomach = 480;
 
-	public const int bane_all = 468;
+	public const int bane_fish = 467;
 
 	public const int bane_god = 466;
 
@@ -134,21 +136,19 @@ public class ENC
 
 	public const int bane_dragon = 460;
 
-	public const int sustain_CHA = 447;
-
 	public const int mod_reload = 601;
+
+	public const int sustain_MAG = 446;
 
 	public const int sustain_LER = 444;
 
 	public const int sustain_PER = 443;
 
-	public const int sustain_MAG = 446;
-
 	public const int sustain_DEX = 442;
 
 	public const int sustain_END = 441;
 
-	public const int sustain_STR = 440;
+	public const int sustain_CHA = 447;
 
 	public static readonly int[] IDS = new int[]
 	{
@@ -164,7 +164,7 @@ public class ENC
 		654,
 		640,
 		655,
-		865,
+		852,
 		660,
 		661,
 		662,
@@ -172,14 +172,15 @@ public class ENC
 		664,
 		665,
 		666,
+		865,
 		603,
 		850,
 		851,
-		852,
 		656,
 		602,
 		445,
 		600,
+		428,
 		427,
 		426,
 		425,
@@ -190,8 +191,8 @@ public class ENC
 		416,
 		415,
 		412,
-		428,
 		411,
+		410,
 		409,
 		408,
 		407,
@@ -202,15 +203,15 @@ public class ENC
 		402,
 		401,
 		400,
-		410,
 		429,
+		440,
 		423,
-		467,
+		468,
 		483,
 		482,
 		481,
 		480,
-		468,
+		467,
 		466,
 		465,
 		464,
@@ -218,13 +219,12 @@ public class ENC
 		462,
 		461,
 		460,
-		447,
 		601,
+		446,
 		444,
 		443,
-		446,
 		442,
 		441,
-		440
+		447
 	};
 }

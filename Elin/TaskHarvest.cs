@@ -178,6 +178,10 @@ public class TaskHarvest : BaseTaskHarvest
 
 	public override bool CanProgress()
 	{
+		if (this.tool != null && this.tool.trait is TraitToolSickle && !this.pos.cell.CanReapSeed())
+		{
+			return false;
+		}
 		if (this.IsObj)
 		{
 			base.SetTarget(this.owner ?? EClass.pc, null);
@@ -511,10 +515,10 @@ public class TaskHarvest : BaseTaskHarvest
 			text = this.target.material.thing;
 		}
 		float num = (float)this.target.Num;
-		float num2 = 1.1f;
+		float num2 = 1.0999999f;
 		if (text == "log" || text == "rock")
 		{
-			num2 = 2.2f;
+			num2 = 2.1999998f;
 		}
 		if (this.target.trait is TraitAmmo)
 		{

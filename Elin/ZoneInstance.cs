@@ -35,6 +35,14 @@ public class ZoneInstance : EClass
 	{
 	}
 
+	public virtual bool ShowEnemyOnMinimap
+	{
+		get
+		{
+			return false;
+		}
+	}
+
 	[JsonProperty]
 	public int uidZone;
 

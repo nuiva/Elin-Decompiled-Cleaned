@@ -190,7 +190,7 @@ public class Portrait : UIButton
 		{
 			this.<SetPortrait>g__FixTexture|29_0(spriteOverlay, ref CS$<>8__locals1);
 			this.overlay.sprite = spriteOverlay;
-			this.overlay.color = colorOverlay.SetAlpha(Core.Instance.gameSetting.render.alphaHair);
+			this.overlay.color = new Color(colorOverlay.r * 1.1f, colorOverlay.g * 1.1f, colorOverlay.b * 1.1f, colorOverlay.a);
 			this.overlay.SetActive(spriteOverlay);
 		}
 		if (this.enableFull && this.imageFull)

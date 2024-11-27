@@ -533,6 +533,14 @@ public class Zone : Spatial, ICardParent, IInspect
 		}
 	}
 
+	public bool ShowEnemyOnMinimap
+	{
+		get
+		{
+			return this.instance != null && this.instance.ShowEnemyOnMinimap;
+		}
+	}
+
 	public virtual int RespawnPerHour
 	{
 		get
@@ -1879,7 +1887,7 @@ public class Zone : Spatial, ICardParent, IInspect
 		{
 			spawnPosPC = spawnPosPC.GetNearestPoint(false, true, true, false);
 		}
-		spawnPosPC = spawnPosPC.Clamp(true).GetNearestPoint(false, false, true, false);
+		spawnPosPC = spawnPosPC.Clamp(true).GetNearestPoint(false, true, true, false);
 		using (Dictionary<int, Chara>.ValueCollection.Enumerator enumerator = EClass.game.cards.globalCharas.Values.GetEnumerator())
 		{
 			while (enumerator.MoveNext())
@@ -1892,39 +1900,43 @@ public class Zone : Spatial, ICardParent, IInspect
 						Chara chara = c.parent as Chara;
 						c.currentZone = chara.currentZone;
 					}
-					else if (!c.isDead)
+					else
 					{
-						if (c.global.transition != null)
+						c.isRestrained = false;
+						if (!c.isDead)
 						{
-							Point pos = c.IsPC ? spawnPosPC : (c.IsPCParty ? spawnPosPC.GetNearestPoint(false, false, true, true) : this.GetSpawnPos(c, ZoneTransition.EnterState.Auto));
-							if (c.IsPCParty && !c.IsPC)
+							if (c.global.transition != null)
 							{
-								if (c.host == EClass.pc)
+								Point pos = c.IsPC ? spawnPosPC : (c.IsPCParty ? spawnPosPC.GetNearestPoint(false, false, true, true) : this.GetSpawnPos(c, ZoneTransition.EnterState.Auto));
+								if (c.IsPCParty && !c.IsPC)
 								{
-									pos.Set(spawnPosPC);
-								}
-								else if (pos.Equals(spawnPosPC) || !PathManager.Instance.IsPathClear(spawnPosPC, pos, c, 5))
-								{
-									c.pos.Set(spawnPosPC);
-									if (!spawnPosPC.ForeachNearestPoint(delegate(Point p)
-									{
-										if (PathManager.Instance.IsPathClear(spawnPosPC, p, c, 5) && !p.Equals(spawnPosPC))
-										{
-											pos.Set(p);
-											return true;
-										}
-										return false;
-									}, false, false, true, true))
+									if (c.host == EClass.pc)
 									{
 										pos.Set(spawnPosPC);
 									}
+									else if (pos.Equals(spawnPosPC) || !PathManager.Instance.IsPathClear(spawnPosPC, pos, c, 5))
+									{
+										c.pos.Set(spawnPosPC);
+										if (!spawnPosPC.ForeachNearestPoint(delegate(Point p)
+										{
+											if (PathManager.Instance.IsPathClear(spawnPosPC, p, c, 5) && !p.Equals(spawnPosPC))
+											{
+												pos.Set(p);
+												return true;
+											}
+											return false;
+										}, false, EClass.pc.party.members.Count >= 12, true, true))
+										{
+											pos.Set(spawnPosPC);
+										}
+									}
 								}
+								c.pos.Set(pos);
+								c.global.transition = null;
 							}
-							c.pos.Set(pos);
-							c.global.transition = null;
+							this.map.charas.Add(c);
+							this.map.AddCardOnActivate(c);
 						}
-						this.map.charas.Add(c);
-						this.map.AddCardOnActivate(c);
 					}
 				}
 			}
@@ -2324,7 +2336,7 @@ public class Zone : Spatial, ICardParent, IInspect
 
 	public List<Thing> TryListThingsInSpot<T>(Func<Thing, bool> func = null) where T : TraitSpot
 	{
-		Zone.<>c__DisplayClass253_0<T> CS$<>8__locals1 = new Zone.<>c__DisplayClass253_0<T>();
+		Zone.<>c__DisplayClass255_0<T> CS$<>8__locals1 = new Zone.<>c__DisplayClass255_0<T>();
 		CS$<>8__locals1.func = func;
 		List<T> list = new List<T>();
 		List<Thing> list2 = new List<Thing>();
@@ -2372,7 +2384,7 @@ public class Zone : Spatial, ICardParent, IInspect
 
 	public bool TryAddThingInSharedContainer(Thing t, List<Thing> containers = null, bool add = true, bool msg = false, Chara chara = null, bool sharedOnly = true)
 	{
-		Zone.<>c__DisplayClass254_0 CS$<>8__locals1;
+		Zone.<>c__DisplayClass256_0 CS$<>8__locals1;
 		CS$<>8__locals1.containers = containers;
 		CS$<>8__locals1.sharedOnly = sharedOnly;
 		CS$<>8__locals1.add = add;
@@ -2390,7 +2402,7 @@ public class Zone : Spatial, ICardParent, IInspect
 		{
 			CS$<>8__locals1.containers = EClass._map.props.installed.containers;
 		}
-		if (Zone.<TryAddThingInSharedContainer>g__SearchDest|254_0(ref CS$<>8__locals1) != null)
+		if (Zone.<TryAddThingInSharedContainer>g__SearchDest|256_0(ref CS$<>8__locals1) != null)
 		{
 			return true;
 		}
@@ -2453,7 +2465,7 @@ public class Zone : Spatial, ICardParent, IInspect
 
 	public Thing TryGetRestock<T>(string idCat) where T : TraitSpot
 	{
-		Zone.<>c__DisplayClass257_0<T> CS$<>8__locals1 = new Zone.<>c__DisplayClass257_0<T>();
+		Zone.<>c__DisplayClass259_0<T> CS$<>8__locals1 = new Zone.<>c__DisplayClass259_0<T>();
 		CS$<>8__locals1.idCat = idCat;
 		List<T> list = new List<T>();
 		foreach (Thing thing in EClass._map.things)
@@ -2668,7 +2680,7 @@ public class Zone : Spatial, ICardParent, IInspect
 		{
 			foreach (Chara chara in EClass._map.charas)
 			{
-				if (!chara.IsGlobal && chara.hostility < Hostility.Neutral)
+				if (!chara.IsGlobal && chara.hostility < Hostility.Neutral && chara.OriginalHostility < Hostility.Friend)
 				{
 					chara.hostility = (chara.c_originalHostility = Hostility.Neutral);
 				}
@@ -2791,6 +2803,10 @@ public class Zone : Spatial, ICardParent, IInspect
 	{
 		foreach (Chara chara in EClass._map.charas)
 		{
+			if (!chara.source.hostility.IsEmpty() && chara.source.hostility.ToEnum(true) >= Hostility.Friend && !chara.IsPCFactionOrMinion)
+			{
+				chara.c_originalHostility = (Hostility)0;
+			}
 			chara.hostility = chara.OriginalHostility;
 			if (chara.enemy != null && (chara.enemy.IsPCFaction || chara.IsPCFaction))
 			{
@@ -3385,7 +3401,7 @@ public class Zone : Spatial, ICardParent, IInspect
 
 	public void GrowPlants(VirtualDate date)
 	{
-		Zone.<>c__DisplayClass299_0 CS$<>8__locals1 = new Zone.<>c__DisplayClass299_0();
+		Zone.<>c__DisplayClass301_0 CS$<>8__locals1 = new Zone.<>c__DisplayClass301_0();
 		CS$<>8__locals1.date = date;
 		CS$<>8__locals1.<>4__this = this;
 		bool flag = EClass.player.isAutoFarming = (this.IsPCFaction && EClass.Branch.policies.IsActive(2707, -1));
@@ -3478,7 +3494,7 @@ public class Zone : Spatial, ICardParent, IInspect
 		{
 			if (chara.trait.IsCitizen && !chara.IsGlobal && !chara.isSubsetCard)
 			{
-				this.dictCitizen.Add(chara.uid, chara.Name);
+				this.dictCitizen[chara.uid] = chara.Name;
 			}
 		}
 	}
@@ -3629,7 +3645,7 @@ public class Zone : Spatial, ICardParent, IInspect
 	{
 		for (int i = 0; i < 2 + EClass.rnd(4); i++)
 		{
-			Point point = Zone.<SpawnLostItems>g__GetPos|309_0();
+			Point point = Zone.<SpawnLostItems>g__GetPos|311_0();
 			if (point != null)
 			{
 				if (EClass.rnd(30) == 0)
@@ -3705,7 +3721,7 @@ public class Zone : Spatial, ICardParent, IInspect
 	}
 
 	[CompilerGenerated]
-	internal static Thing <TryAddThingInSharedContainer>g__SearchDest|254_0(ref Zone.<>c__DisplayClass254_0 A_0)
+	internal static Thing <TryAddThingInSharedContainer>g__SearchDest|256_0(ref Zone.<>c__DisplayClass256_0 A_0)
 	{
 		foreach (Thing thing in A_0.containers)
 		{
@@ -3778,7 +3794,7 @@ public class Zone : Spatial, ICardParent, IInspect
 	}
 
 	[CompilerGenerated]
-	internal static Point <SpawnLostItems>g__GetPos|309_0()
+	internal static Point <SpawnLostItems>g__GetPos|311_0()
 	{
 		for (int i = 0; i < 10; i++)
 		{

@@ -657,167 +657,9 @@ public class AM_Adv : AM_BaseGameMode
 				return;
 			}
 			EAction action = EInput.action;
-			if (action != EAction.Wait)
+			switch (action)
 			{
-				if (action != EAction.Fire)
-				{
-					switch (action)
-					{
-					case EAction.Report:
-						if (!EClass.debug.enable)
-						{
-							EClass.ui.ToggleFeedback();
-							return;
-						}
-						break;
-					case EAction.QuickSave:
-						if (EClass.debug.enable || EClass.game.Difficulty.allowManualSave)
-						{
-							if (!EClass.pc.HasNoGoal)
-							{
-								SE.Beep();
-								return;
-							}
-							EClass.game.Save(false, null, false);
-							return;
-						}
-						break;
-					case EAction.QuickLoad:
-						if (EClass.debug.enable || EClass.game.Difficulty.allowManualSave)
-						{
-							EClass.core.WaitForEndOfFrame(delegate
-							{
-								string id = Game.id;
-								EClass.scene.Init(Scene.Mode.None);
-								Game.Load(id);
-							});
-							return;
-						}
-						break;
-					case EAction.AutoCombat:
-						if (EClass.scene.mouseTarget.isValid && EClass.player.CanAcceptInput())
-						{
-							List<Chara> list2 = EClass.scene.mouseTarget.pos.ListCharas();
-							list2.Sort((Chara a, Chara b) => a.hostility - b.hostility);
-							foreach (Chara chara in list2)
-							{
-								if (chara.hostility < Hostility.Friend)
-								{
-									EClass.pc.SetAIImmediate(new GoalAutoCombat(chara));
-									return;
-								}
-							}
-							Msg.Say("noTargetFound");
-							return;
-						}
-						break;
-					case EAction.EmptyHand:
-						if (WidgetCurrentTool.Instance)
-						{
-							WidgetCurrentTool.Instance.Select(-1, false);
-							return;
-						}
-						break;
-					case EAction.SwitchHotbar:
-					case EAction.Examine:
-					case EAction.GetAll:
-					case EAction.CancelUI:
-					case EAction.Mute:
-						break;
-					case EAction.Dump:
-						TaskDump.TryPerform();
-						return;
-					case EAction.Meditate:
-						if (EClass.pc.HasNoGoal)
-						{
-							EClass.pc.UseAbility("AI_Meditate", EClass.pc, null, false);
-							return;
-						}
-						break;
-					default:
-						return;
-					}
-				}
-				else
-				{
-					if (!EClass.player.HasValidRangedTarget() || EInput.isShiftDown)
-					{
-						EClass.player.TargetRanged();
-						if (EClass.player.HasValidRangedTarget())
-						{
-							SE.Play("lock_on");
-						}
-						if (EInput.keyFire.IsRepeating)
-						{
-							EInput.keyFire.Consume();
-							return;
-						}
-					}
-					else if (EClass.pc.HasNoGoal)
-					{
-						Thing thing = EClass.player.currentHotItem.Thing;
-						bool reloading = EClass.pc.HasCondition<ConReload>();
-						if (thing == null || !thing.CanAutoFire(EClass.pc, EClass.player.target, reloading))
-						{
-							foreach (UIList.ButtonPair buttonPair in WidgetCurrentTool.Instance.list.buttons)
-							{
-								Thing thing2 = buttonPair.obj as Thing;
-								if (thing2 != null && thing2.CanAutoFire(EClass.pc, EClass.player.target, reloading))
-								{
-									thing = thing2;
-									break;
-								}
-							}
-						}
-						if (thing == null || !thing.CanAutoFire(EClass.pc, EClass.player.target, reloading))
-						{
-							thing = EClass.pc.things.Find((Thing _t) => _t.isEquipped && _t.CanAutoFire(EClass.pc, EClass.player.target, reloading), true);
-						}
-						if (thing != null && thing.CanAutoFire(EClass.pc, EClass.player.target, reloading))
-						{
-							if (thing.HasTag(CTAG.throwWeapon))
-							{
-								Point pos = EClass.player.target.pos;
-								if (ActThrow.CanThrow(EClass.pc, thing, EClass.player.target, null))
-								{
-									ACT.Throw.target = thing;
-									ACT.Throw.Perform(EClass.pc, EClass.player.target, EClass.player.target.pos);
-									EClass.player.EndTurn(false);
-									this.SetTurbo(-1);
-									return;
-								}
-							}
-							else
-							{
-								TraitAbility traitAbility = thing.trait as TraitAbility;
-								if (traitAbility != null)
-								{
-									if (traitAbility.act.CanPerform(EClass.pc, EClass.player.target, EClass.player.target.pos) && EClass.pc.UseAbility(traitAbility.act.source.alias, EClass.player.target, EClass.player.target.pos, false))
-									{
-										EClass.player.EndTurn(false);
-										return;
-									}
-								}
-								else if (thing.trait is TraitToolRange)
-								{
-									EClass.pc.ranged = thing;
-									if (ACT.Ranged.CanPerform(EClass.pc, EClass.player.target, null))
-									{
-										EClass.player.renderThing = thing;
-										if (ACT.Ranged.Perform(EClass.pc, EClass.player.target, null))
-										{
-											EClass.player.EndTurn(false);
-											this.SetTurbo(-1);
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-			else
-			{
+			case EAction.Wait:
 				if (EClass.debug.boradcast)
 				{
 					EClass.debug.BroadcastNext();
@@ -849,6 +691,175 @@ public class AM_Adv : AM_BaseGameMode
 					EClass.player.EndTurn(true);
 					return;
 				}
+				break;
+			case EAction.Interact:
+			case EAction.Pick:
+				break;
+			case EAction.Search:
+			{
+				Widget widget2 = EClass.ui.widgets.Toggle("Search");
+				if (widget2 == null)
+				{
+					return;
+				}
+				widget2.SoundActivate();
+				return;
+			}
+			case EAction.Fire:
+				if (!EClass.player.HasValidRangedTarget() || EInput.isShiftDown)
+				{
+					EClass.player.TargetRanged();
+					if (EClass.player.HasValidRangedTarget())
+					{
+						SE.Play("lock_on");
+					}
+					if (EInput.keyFire.IsRepeating)
+					{
+						EInput.keyFire.Consume();
+						return;
+					}
+				}
+				else if (EClass.pc.HasNoGoal)
+				{
+					Thing thing = EClass.player.currentHotItem.Thing;
+					bool reloading = EClass.pc.HasCondition<ConReload>();
+					if (thing == null || !thing.CanAutoFire(EClass.pc, EClass.player.target, reloading))
+					{
+						foreach (UIList.ButtonPair buttonPair in WidgetCurrentTool.Instance.list.buttons)
+						{
+							Thing thing2 = buttonPair.obj as Thing;
+							if (thing2 != null && thing2.CanAutoFire(EClass.pc, EClass.player.target, reloading))
+							{
+								thing = thing2;
+								break;
+							}
+						}
+					}
+					if (thing == null || !thing.CanAutoFire(EClass.pc, EClass.player.target, reloading))
+					{
+						thing = EClass.pc.things.Find((Thing _t) => _t.isEquipped && _t.CanAutoFire(EClass.pc, EClass.player.target, reloading), true);
+					}
+					if (thing != null && thing.CanAutoFire(EClass.pc, EClass.player.target, reloading))
+					{
+						if (thing.HasTag(CTAG.throwWeapon))
+						{
+							Point pos = EClass.player.target.pos;
+							if (ActThrow.CanThrow(EClass.pc, thing, EClass.player.target, null))
+							{
+								ACT.Throw.target = thing;
+								ACT.Throw.Perform(EClass.pc, EClass.player.target, EClass.player.target.pos);
+								EClass.player.EndTurn(false);
+								this.SetTurbo(-1);
+								return;
+							}
+						}
+						else
+						{
+							TraitAbility traitAbility = thing.trait as TraitAbility;
+							if (traitAbility != null)
+							{
+								if (traitAbility.act.CanPerform(EClass.pc, EClass.player.target, EClass.player.target.pos) && EClass.pc.UseAbility(traitAbility.act.source.alias, EClass.player.target, EClass.player.target.pos, false))
+								{
+									EClass.player.EndTurn(false);
+									return;
+								}
+							}
+							else if (thing.trait is TraitToolRange)
+							{
+								EClass.pc.ranged = thing;
+								if (ACT.Ranged.CanPerform(EClass.pc, EClass.player.target, null))
+								{
+									EClass.player.renderThing = thing;
+									if (ACT.Ranged.Perform(EClass.pc, EClass.player.target, null))
+									{
+										EClass.player.EndTurn(false);
+										this.SetTurbo(-1);
+									}
+								}
+							}
+						}
+					}
+				}
+				break;
+			default:
+				switch (action)
+				{
+				case EAction.Report:
+					if (!EClass.debug.enable)
+					{
+						EClass.ui.ToggleFeedback();
+						return;
+					}
+					break;
+				case EAction.QuickSave:
+					if (EClass.debug.enable || EClass.game.Difficulty.allowManualSave)
+					{
+						if (!EClass.pc.HasNoGoal)
+						{
+							SE.Beep();
+							return;
+						}
+						EClass.game.Save(false, null, false);
+						return;
+					}
+					break;
+				case EAction.QuickLoad:
+					if (!EClass.debug.enable && !EClass.game.Difficulty.allowManualSave)
+					{
+						SE.Beep();
+						return;
+					}
+					EClass.core.WaitForEndOfFrame(delegate
+					{
+						string id = Game.id;
+						EClass.scene.Init(Scene.Mode.None);
+						Game.Load(id);
+					});
+					return;
+				case EAction.AutoCombat:
+					if (EClass.scene.mouseTarget.isValid && EClass.player.CanAcceptInput())
+					{
+						List<Chara> list2 = EClass.scene.mouseTarget.pos.ListCharas();
+						list2.Sort((Chara a, Chara b) => a.hostility - b.hostility);
+						foreach (Chara chara in list2)
+						{
+							if (chara.hostility < Hostility.Friend)
+							{
+								EClass.pc.SetAIImmediate(new GoalAutoCombat(chara));
+								return;
+							}
+						}
+						Msg.Say("noTargetFound");
+						return;
+					}
+					break;
+				case EAction.EmptyHand:
+					if (WidgetCurrentTool.Instance)
+					{
+						WidgetCurrentTool.Instance.Select(-1, false);
+						return;
+					}
+					break;
+				case EAction.SwitchHotbar:
+				case EAction.Examine:
+				case EAction.GetAll:
+				case EAction.CancelUI:
+				case EAction.Mute:
+					break;
+				case EAction.Dump:
+					TaskDump.TryPerform();
+					return;
+				case EAction.Meditate:
+					if (EClass.pc.HasNoGoal)
+					{
+						EClass.pc.UseAbility("AI_Meditate", EClass.pc, null, false);
+						return;
+					}
+					break;
+				default:
+					return;
+				}
+				break;
 			}
 			return;
 		}

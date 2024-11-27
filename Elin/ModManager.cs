@@ -148,7 +148,7 @@ public class ModManager : BaseModManager
 				LoadingScreen loadingScreen = loading;
 				if (loadingScreen != null)
 				{
-					loadingScreen.Log("Fetching subscripted Mods...(Hit ESC to cancel)");
+					loadingScreen.Log("Fetching subscribed Mods...(Hit ESC to cancel)");
 				}
 				while (activeQuery.handle != UGCQueryHandle_t.Invalid && !UnityEngine.Input.GetKey(KeyCode.Escape))
 				{

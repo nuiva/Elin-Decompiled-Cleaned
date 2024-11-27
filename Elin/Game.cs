@@ -145,6 +145,7 @@ public class Game : EClass
 				EClass.ui.ToggleAbility(false);
 			}
 			SoundManager.ignoreSounds = false;
+			TooltipManager.Instance.HideTooltips(true);
 		}
 		EClass.game.isLoading = false;
 	}
@@ -660,6 +661,7 @@ public class Game : EClass
 		{
 			this.backupTime = 0.0;
 		}
+		EClass.core.config.TryUpdatePlayedHour();
 		this.countLoadedMaps = 0;
 		this.player.pref.layerInventory = EClass.ui.layerFloat.GetLayer<LayerInventory>(false);
 		if (this.player.pref.layerInventory)

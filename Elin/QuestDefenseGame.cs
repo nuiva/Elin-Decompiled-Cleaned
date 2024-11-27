@@ -25,6 +25,11 @@ public class QuestDefenseGame : QuestInstance
 		return new ZoneEventDefenseGame();
 	}
 
+	public override ZoneInstanceRandomQuest CreateInstance()
+	{
+		return new ZoneInstanceDefense();
+	}
+
 	public override string RewardSuffix
 	{
 		get

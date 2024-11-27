@@ -785,20 +785,20 @@ public class BaseTileMap : EMono
 				{
 					return;
 				}
-				goto IL_7A49;
+				goto IL_7A63;
 			}
 			else if (!isRoomEdge)
 			{
 				if (this.detail != null && EMono.pc.hasTelepathy)
 				{
-					goto IL_7A49;
+					goto IL_7A63;
 				}
 				if (this.noRoofMode || this.detail == null)
 				{
 					return;
 				}
 				this.fogged = true;
-				goto IL_7A49;
+				goto IL_7A63;
 			}
 		}
 		if (this.cell.isSlopeEdge)
@@ -1884,7 +1884,7 @@ public class BaseTileMap : EMono
 						}
 					}
 					Cell left = this.cell.Left;
-					if (blockDir == 2 && left.sourceBlock.tileType.IsWallOrFence)
+					if (blockDir == 2 && left.sourceBlock.tileType.IsWallOrFence && !this.cell.crossWall)
 					{
 						this._sourceBlock = left.sourceBlock;
 						this.param.mat = left.matBlock;
@@ -2020,7 +2020,7 @@ public class BaseTileMap : EMono
 						}
 					}
 					Cell back = this.cell.Back;
-					if (blockDir == 2 && back.sourceBlock.tileType.IsWallOrFence)
+					if (blockDir == 2 && back.sourceBlock.tileType.IsWallOrFence && !this.cell.crossWall)
 					{
 						this._sourceBlock = back.sourceBlock;
 						this.param.mat = back.matBlock;
@@ -2364,7 +2364,7 @@ public class BaseTileMap : EMono
 			this.param.matColor = 104025f;
 			this.renderFootmark.Draw(this.param);
 		}
-		IL_7A49:
+		IL_7A63:
 		if (this.detail.things.Count == 0 && this.detail.charas.Count == 0)
 		{
 			return;
@@ -2568,7 +2568,7 @@ public class BaseTileMap : EMono
 						{
 							if (this.noRoofMode && this.currentRoom == null && t.altitude >= this.lowWallObjAltitude)
 							{
-								goto IL_8CF5;
+								goto IL_8D0F;
 							}
 							if (this.hideHang)
 							{
@@ -2580,16 +2580,16 @@ public class BaseTileMap : EMono
 									{
 										if (room26 == null)
 										{
-											goto IL_8CF5;
+											goto IL_8D0F;
 										}
 										if (!room26.data.showWallItem)
 										{
-											goto IL_8CF5;
+											goto IL_8D0F;
 										}
 									}
 									else if (t.altitude >= this.lowWallObjAltitude)
 									{
-										goto IL_8CF5;
+										goto IL_8D0F;
 									}
 								}
 							}
@@ -2617,7 +2617,7 @@ public class BaseTileMap : EMono
 								Room room27 = this.cell.room;
 								if (((room27 != null) ? room27.lot : null) != this.currentLot || (!this.cell.lotWall && this.cell.room != this.currentRoom))
 								{
-									goto IL_8CF5;
+									goto IL_8D0F;
 								}
 							}
 						}
@@ -2685,12 +2685,12 @@ public class BaseTileMap : EMono
 									CS$<>8__locals1.<>4__this._actorPos.z = EMono.pc.renderer.position.z + 0.02f;
 									t.renderer.Draw(_param, ref CS$<>8__locals1.<>4__this._actorPos, !t.noShadow && (CS$<>8__locals1.shadow || tileType.AlwaysShowShadow));
 								});
-								goto IL_8C6A;
+								goto IL_8C84;
 							}
 						}
 						t.renderer.Draw(this.param, ref this._actorPos, !t.noShadow && (CS$<>8__locals1.shadow || tileType.AlwaysShowShadow));
 					}
-					IL_8C6A:
+					IL_8C84:
 					if (isInstalled)
 					{
 						num27 += pref.stackX * (float)(t.flipX ? -1 : 1);
@@ -2705,7 +2705,7 @@ public class BaseTileMap : EMono
 						this.liquidLv = 0;
 					}
 				}
-				IL_8CF5:;
+				IL_8D0F:;
 			}
 		}
 		this.orgY += num28;
@@ -2743,7 +2743,7 @@ public class BaseTileMap : EMono
 								chara.renderer.SetFirst(true);
 								chara.renderer.Draw(this.param, ref this._actorPos, true);
 								this.param.shadowFix = 0f;
-								goto IL_92B7;
+								goto IL_92D1;
 							}
 						}
 					}
@@ -2801,7 +2801,7 @@ public class BaseTileMap : EMono
 					this.param.y = this.orgY;
 					this.param.z = this.orgZ;
 				}
-				IL_92B7:;
+				IL_92D1:;
 			}
 		}
 	}

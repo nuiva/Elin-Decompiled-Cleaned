@@ -97,6 +97,10 @@ public class TraitWrench : Trait
 			{
 				int c_containerSize = t.c_containerSize;
 				t.c_containerSize = c_containerSize + 1;
+				if (EClass.debug.enable)
+				{
+					t.c_containerSize += 1000;
+				}
 			}
 		}
 		else

@@ -62,6 +62,10 @@ public class WidgetStatsBar : Widget
 			}
 			this.Add(EMono.pc.elements.GetElement(79), "", null, null, null, null);
 		}
+		if (this.extra.dv)
+		{
+			this.Add(null, "dvpv", this.iconDvPv, () => EMono.pc.DV.ToString() + "/" + EMono.pc.PV.ToString(), null, null);
+		}
 		if (this.extra.maxAlly)
 		{
 			this.Add(null, "maxAlly", this.iconMaxAlly, () => (EMono.pc.party.members.Count - 1).ToString() + "/" + EMono.player.MaxAlly.ToString(), delegate
@@ -248,6 +252,11 @@ public class WidgetStatsBar : Widget
 			this.extra.attributes = a;
 			this.Build();
 		});
+		uicontextMenu.AddToggle("dvpv", this.extra.dv, delegate(bool a)
+		{
+			this.extra.dv = a;
+			this.Build();
+		});
 		uicontextMenu.AddToggle("maxAlly", this.extra.maxAlly, delegate(bool a)
 		{
 			this.extra.maxAlly = a;
@@ -350,6 +359,8 @@ public class WidgetStatsBar : Widget
 
 	public Sprite iconFame;
 
+	public Sprite iconDvPv;
+
 	private UIItem mold;
 
 	public class Item
@@ -398,5 +409,7 @@ public class WidgetStatsBar : Widget
 		public bool tourism_value;
 
 		public bool fame;
+
+		public bool dv;
 	}
 }

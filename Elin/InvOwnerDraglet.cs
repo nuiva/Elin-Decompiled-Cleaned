@@ -170,6 +170,10 @@ public class InvOwnerDraglet : InvOwner
 		return "invInteraction2".lang(num.ToString() ?? "", this.langTransfer.lang(), null, null, null) + ((num2 == 0) ? "" : "invInteraction3".lang(num2.ToString() ?? "", EClass.sources.things.map[base.IDCurrency].GetName(), null, null, null));
 	}
 
+	public virtual void OnWriteNote(Thing t, UINote n)
+	{
+	}
+
 	public sealed override void OnProcess(Thing t)
 	{
 		if (!this.dragGrid.IsAllGridSet())
@@ -201,11 +205,11 @@ public class InvOwnerDraglet : InvOwner
 						EInput.haltInput = false;
 					});
 				}
-				goto IL_DC;
+				goto IL_DB;
 			}
 		}
 		this.RedrawButton();
-		IL_DC:
+		IL_DB:
 		this.dragGrid.uiIngredients.Refresh();
 		if (this.count > 0)
 		{

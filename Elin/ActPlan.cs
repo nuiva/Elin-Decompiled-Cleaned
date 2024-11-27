@@ -418,17 +418,25 @@ public class ActPlan : EClass
 			{
 				return;
 			}
-			if (!EClass.pc.isBlind && !chara.IsHostile() && (this.input == ActInput.AllAction || !((chara.IsPCParty || chara.IsMinion) | isKey)) && (this.input == ActInput.AllAction || !chara.IsNeutral() || chara.quest != null || EClass.game.quests.IsDeliverTarget(chara)) && chara.isSynced && num <= 2 && ((!chara.HasCondition<ConSuspend>() && (!chara.isRestrained || !chara.IsPCFaction)) || this.altAction))
+			if (!EClass.pc.isBlind && !chara.IsHostile() && (this.input == ActInput.AllAction || !((chara.IsPCParty || chara.IsMinion) | isKey)) && (this.input == ActInput.AllAction || !chara.IsNeutral() || chara.quest != null || EClass.game.quests.IsDeliverTarget(chara)) && chara.isSynced && num <= 2)
 			{
-				if (EClass.pc.HasElement(1216, 1) && chara.HasCondition<ConSleep>())
+				bool flag3 = !chara.HasCondition<ConSuspend>() && (!chara.isRestrained || !chara.IsPCFaction);
+				if (EClass._zone.instance is ZoneInstanceMusic && !chara.IsPCFactionOrMinion)
 				{
-					this.TrySetAct(new AI_Fuck
-					{
-						target = chara,
-						succubus = true
-					}, chara);
+					flag3 = false;
 				}
-				this.TrySetAct(ACT.Chat, chara);
+				if (flag3 || this.altAction)
+				{
+					if (EClass.pc.HasElement(1216, 1) && chara.HasCondition<ConSleep>())
+					{
+						this.TrySetAct(new AI_Fuck
+						{
+							target = chara,
+							succubus = true
+						}, chara);
+					}
+					this.TrySetAct(ACT.Chat, chara);
+				}
 			}
 			if (chara.host != EClass.pc)
 			{

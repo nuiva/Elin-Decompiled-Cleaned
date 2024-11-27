@@ -35,21 +35,22 @@ public class SourceRace : SourceDataString<SourceRace.Row>
 			elements = Core.ParseElements(SourceData.GetStr(26, false)),
 			skill = SourceData.GetString(27),
 			figure = SourceData.GetString(28),
-			material = SourceData.GetString(29),
-			corpse = SourceData.GetStringArray(30),
-			loot = SourceData.GetStringArray(31),
-			blood = SourceData.GetInt(32),
-			meleeStyle = SourceData.GetString(33),
-			castStyle = SourceData.GetString(34),
-			EQ = SourceData.GetStringArray(35),
-			sex = SourceData.GetInt(36),
-			age = SourceData.GetIntArray(37),
-			height = SourceData.GetInt(38),
-			breeder = SourceData.GetInt(39),
-			food = SourceData.GetStringArray(40),
-			fur = SourceData.GetString(41),
-			detail_JP = SourceData.GetString(42),
-			detail = SourceData.GetString(43)
+			geneCap = SourceData.GetInt(29),
+			material = SourceData.GetString(30),
+			corpse = SourceData.GetStringArray(31),
+			loot = SourceData.GetStringArray(32),
+			blood = SourceData.GetInt(33),
+			meleeStyle = SourceData.GetString(34),
+			castStyle = SourceData.GetString(35),
+			EQ = SourceData.GetStringArray(36),
+			sex = SourceData.GetInt(37),
+			age = SourceData.GetIntArray(38),
+			height = SourceData.GetInt(39),
+			breeder = SourceData.GetInt(40),
+			food = SourceData.GetStringArray(41),
+			fur = SourceData.GetString(42),
+			detail_JP = SourceData.GetString(43),
+			detail = SourceData.GetString(44)
 		};
 	}
 
@@ -262,6 +263,8 @@ public class SourceRace : SourceDataString<SourceRace.Row>
 		public string skill;
 
 		public string figure;
+
+		public int geneCap;
 
 		public string material;
 

@@ -10,6 +10,14 @@ public class ListPeopleBuySlave : BaseListPeople
 		}
 	}
 
+	public override LayerPeople.ShowMode ShowMode
+	{
+		get
+		{
+			return LayerPeople.ShowMode.Work;
+		}
+	}
+
 	public override bool IsDisabled(Chara c)
 	{
 		return false;

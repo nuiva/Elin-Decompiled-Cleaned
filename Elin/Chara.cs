@@ -931,7 +931,7 @@ public class Chara : Card, IPathfindWalker
 	{
 		get
 		{
-			return 3;
+			return this.race.geneCap;
 		}
 	}
 
@@ -2187,9 +2187,9 @@ public class Chara : Card, IPathfindWalker
 			return Card.MoveResult.Fail;
 		}
 		Chara._sharedPos.Set(p);
-		if (this.CanDestroyPath())
+		if (this.CanDestroyPath() && this.TryMove(this.pos.GetPointTowards(Chara._sharedPos), true) == Card.MoveResult.Success)
 		{
-			this.TryMove(this.pos.GetPointTowards(Chara._sharedPos), true);
+			return Card.MoveResult.Success;
 		}
 		int num = this.pos.Distance(p);
 		PathProgress pathProgress = PathManager.Instance.RequestPathImmediate(this.pos, p, this, PathManager.MoveType.Default, num + 4, 1);
@@ -2817,7 +2817,7 @@ public class Chara : Card, IPathfindWalker
 			{
 				return true;
 			}
-			if (this.IsPCFaction && c.IsPCFaction && !c.IsPCParty)
+			if (this.IsPCFaction && !c.IsPCParty)
 			{
 				return true;
 			}
@@ -3755,39 +3755,7 @@ public class Chara : Card, IPathfindWalker
 				t.TryStackTo(dest.stack);
 				return dest.stack;
 			}
-			if (t.trait is TraitRod && EClass.rnd(2) == 0 && t.c_charges > 0 && base.HasElement(1564, 1))
-			{
-				base.Say("absorbRod", this, t, null, null);
-				TraitRod rod = t.trait as TraitRod;
-				bool flag = false;
-				if (rod.source != null)
-				{
-					IEnumerable<SourceElement.Row> rows = EClass.sources.elements.rows;
-					Func<SourceElement.Row, bool> predicate;
-					Func<SourceElement.Row, bool> <>9__0;
-					if ((predicate = <>9__0) == null)
-					{
-						predicate = (<>9__0 = ((SourceElement.Row a) => a.id == rod.source.id));
-					}
-					using (IEnumerator<SourceElement.Row> enumerator = rows.Where(predicate).GetEnumerator())
-					{
-						if (enumerator.MoveNext())
-						{
-							SourceElement.Row row = enumerator.Current;
-							if (this.IsPC)
-							{
-								this.GainAbility(row.id, t.c_charges * 100);
-								flag = true;
-							}
-						}
-					}
-				}
-				if (!flag)
-				{
-					this.mana.Mod(-50 * t.c_charges);
-				}
-				t.c_charges = 0;
-			}
+			this.TryAbsorbRod(t);
 			if (t.trait is TraitPotion && t.id != "1165" && !t.source.tag.Contains("neg") && EClass.rnd(2) == 0 && base.HasElement(1565, 1))
 			{
 				string id = (from a in EClass.sources.things.rows
@@ -3805,6 +3773,48 @@ public class Chara : Card, IPathfindWalker
 			}
 			this.TryReservePickupTutorial(t);
 			return dest.container.AddThing(t, tryStack, -1, -1);
+		}
+	}
+
+	public void TryAbsorbRod(Thing t)
+	{
+		if (!this.IsPC)
+		{
+			return;
+		}
+		if (t.trait is TraitRod && t.c_charges > 0 && base.HasElement(1564, 1))
+		{
+			base.Say("absorbRod", this, t, null, null);
+			TraitRod rod = t.trait as TraitRod;
+			bool flag = false;
+			if (rod.source != null)
+			{
+				IEnumerable<SourceElement.Row> rows = EClass.sources.elements.rows;
+				Func<SourceElement.Row, bool> predicate;
+				Func<SourceElement.Row, bool> <>9__0;
+				if ((predicate = <>9__0) == null)
+				{
+					predicate = (<>9__0 = ((SourceElement.Row a) => a.id == rod.source.id));
+				}
+				using (IEnumerator<SourceElement.Row> enumerator = rows.Where(predicate).GetEnumerator())
+				{
+					if (enumerator.MoveNext())
+					{
+						SourceElement.Row row = enumerator.Current;
+						if (this.IsPC)
+						{
+							this.GainAbility(row.id, t.c_charges * 100);
+							flag = true;
+						}
+					}
+				}
+			}
+			if (!flag)
+			{
+				this.mana.Mod(-50 * t.c_charges);
+			}
+			t.c_charges = 0;
+			LayerInventory.SetDirty(t);
 		}
 	}
 
@@ -4435,12 +4445,12 @@ public class Chara : Card, IPathfindWalker
 		string id = this.id;
 		if (id == "fiama")
 		{
-			this.<RestockInventory>g__Restock|359_0("book_story", 1);
+			this.<RestockInventory>g__Restock|360_0("book_story", 1);
 			return;
 		}
 		if (id == "rock_thrower")
 		{
-			this.<RestockInventory>g__Restock|359_0("stone", 10 + EClass.rnd(10));
+			this.<RestockInventory>g__Restock|360_0("stone", 10 + EClass.rnd(10));
 			return;
 		}
 		if (!(id == "giant"))
@@ -4451,11 +4461,11 @@ public class Chara : Card, IPathfindWalker
 				{
 					return;
 				}
-				this.<RestockInventory>g__Restock|359_0("lute", 1);
+				this.<RestockInventory>g__Restock|360_0("lute", 1);
 			}
 			return;
 		}
-		this.<RestockInventory>g__Restock|359_0("rock", 2 + EClass.rnd(10));
+		this.<RestockInventory>g__Restock|360_0("rock", 2 + EClass.rnd(10));
 	}
 
 	private void SetEQQuality()
@@ -4602,7 +4612,7 @@ public class Chara : Card, IPathfindWalker
 			List<Thing> dropList = new List<Thing>();
 			EClass.pc.things.Foreach(delegate(Thing t)
 			{
-				if (!t.IsContainer && t.SelfWeight > EClass.pc.WeightLimit && t.trait.CanBeDropped)
+				if (!t.IsContainer && t.SelfWeight > EClass.pc.WeightLimit && t.trait.CanBeDropped && (t.parentCard.c_lockLv == 0 || t.parentCard.trait is TraitChestPractice))
 				{
 					t.ignoreAutoPick = true;
 					dropList.Add(t);
@@ -4758,12 +4768,24 @@ public class Chara : Card, IPathfindWalker
 				base.Destroy();
 				return;
 			}
-			Effect.Get("blood").Play((this.parent is Chara) ? (this.parent as Chara).pos : this.pos, 0f, null, null).SetParticleColor(EClass.Colors.matColors[base.material.alias].main).Emit(50);
-			base.AddBlood(2 + EClass.rnd(2), -1);
+			if (attackSource == AttackSource.DeathSentense)
+			{
+				if (this.trait is TraitLittleOne)
+				{
+					this.MakeEgg(true, 1, true);
+				}
+				base.PlayEffect("revive", true, 0f, default(Vector3));
+				base.PlaySound("chime_angel", 1f, true);
+			}
+			else
+			{
+				Effect.Get("blood").Play((this.parent is Chara) ? (this.parent as Chara).pos : this.pos, 0f, null, null).SetParticleColor(EClass.Colors.matColors[base.material.alias].main).Emit(50);
+				base.AddBlood(2 + EClass.rnd(2), -1);
+				base.PlaySound(base.material.GetSoundDead(this.source), 1f, true);
+			}
 			this.renderer.RefreshSprite();
 			this.renderer.RefreshStateIcon();
 			base.ClearFOV();
-			base.PlaySound(base.material.GetSoundDead(this.source), 1f, true);
 		}
 		string text = "";
 		"dead_in".langGame(EClass._zone.Name, null, null, null);
@@ -4803,22 +4825,29 @@ public class Chara : Card, IPathfindWalker
 		}
 		if (isInActiveZone)
 		{
-			if (origin == null || !origin.isSynced || (attackSource != AttackSource.Melee && attackSource != AttackSource.Range))
+			if (attackSource == AttackSource.DeathSentense)
 			{
-				Msg.Say(text, this, "", text2, null);
+				Msg.Say("goto_heaven", this, null, null, null);
 			}
-			string text3 = this.TalkTopic("dead");
-			if (!text3.IsEmpty())
+			else
 			{
-				text3 = text3.StripBrackets();
+				if (origin == null || !origin.isSynced || (attackSource != AttackSource.Melee && attackSource != AttackSource.Range))
+				{
+					Msg.Say(text, this, "", text2, null);
+				}
+				string text3 = this.TalkTopic("dead");
+				if (!text3.IsEmpty())
+				{
+					text3 = text3.StripBrackets();
+				}
+				bool flag = base.rarity >= Rarity.Legendary && !this.IsPCFaction;
+				if (!this.IsPC && flag)
+				{
+					this.MakeGrave(text3);
+				}
+				Msg.SetColor();
+				base.SpawnLoot(origin);
 			}
-			bool flag = base.rarity >= Rarity.Legendary && !this.IsPCFaction;
-			if (!this.IsPC && flag)
-			{
-				this.MakeGrave(text3);
-			}
-			Msg.SetColor();
-			base.SpawnLoot(origin);
 			if (this.held != null && this.held.trait.CanOnlyCarry)
 			{
 				this.DropHeld(null);
@@ -5173,7 +5202,7 @@ public class Chara : Card, IPathfindWalker
 
 	public bool UseAbility(Act a, Card tc = null, Point pos = null, bool pt = false)
 	{
-		Chara.<>c__DisplayClass376_0 CS$<>8__locals1 = new Chara.<>c__DisplayClass376_0();
+		Chara.<>c__DisplayClass377_0 CS$<>8__locals1 = new Chara.<>c__DisplayClass377_0();
 		CS$<>8__locals1.<>4__this = this;
 		CS$<>8__locals1.tc = tc;
 		CS$<>8__locals1.a = a;
@@ -5205,6 +5234,13 @@ public class Chara : Card, IPathfindWalker
 				int n = CS$<>8__locals1.n;
 				CS$<>8__locals1.n = n + 1;
 			});
+		}
+		if (CS$<>8__locals1.a is Spell && this.IsPC && CS$<>8__locals1.a.vPotential < CS$<>8__locals1.n)
+		{
+			CS$<>8__locals1.n = 1;
+			Chara._pts.Clear();
+			Chara._pts.Add(this);
+			CS$<>8__locals1.pt = false;
 		}
 		int num3 = 100;
 		if (!CS$<>8__locals1.a.TargetType.ForceParty && CS$<>8__locals1.n > 1)
@@ -5276,12 +5312,6 @@ public class Chara : Card, IPathfindWalker
 			if (this.IsPC)
 			{
 				int num5 = (CS$<>8__locals1.n + 1) / 2;
-				if (CS$<>8__locals1.a.vPotential < CS$<>8__locals1.n)
-				{
-					CS$<>8__locals1.n = 1;
-					Chara._pts.Clear();
-					Chara._pts.Add(this);
-				}
 				if (CS$<>8__locals1.a.vPotential < CS$<>8__locals1.n)
 				{
 					Msg.Say("noSpellStock");
@@ -5720,7 +5750,10 @@ public class Chara : Card, IPathfindWalker
 				{
 					if (flag3 && EClass.rnd(chara.Evalue(152) + 5) * (100 + num2 * num2 * 10) / 100 > EClass.rnd(num))
 					{
-						chara.ModExp(152, Mathf.Clamp((num - chara.Evalue(152)) / 2, 1, Mathf.Max(30 - this.stealthSeen * 2, 1)));
+						if (this == this.pos.FirstChara)
+						{
+							chara.ModExp(152, Mathf.Clamp((num - chara.Evalue(152)) / 2, 1, Mathf.Max(30 - this.stealthSeen * 2, 1)));
+						}
 						this.stealthSeen++;
 					}
 					else if (Los.IsVisible(this.pos.x, chara.pos.x, this.pos.z, chara.pos.z, null, true) && (!flag2 || EClass.pc.isBlind || EClass.pc.CanSeeLos(chara, -1, false)))
@@ -5730,7 +5763,7 @@ public class Chara : Card, IPathfindWalker
 							AI_Shear ai_Shear = EClass.pc.ai as AI_Shear;
 							if (ai_Shear != null && ai_Shear.target == chara)
 							{
-								goto IL_209;
+								goto IL_217;
 							}
 						}
 						this.DoHostileAction(chara, false);
@@ -5739,7 +5772,7 @@ public class Chara : Card, IPathfindWalker
 					}
 				}
 			}
-			IL_209:;
+			IL_217:;
 		}
 		return false;
 	}
@@ -5820,7 +5853,7 @@ public class Chara : Card, IPathfindWalker
 
 	public bool IsInHomeZone()
 	{
-		return EClass.game.activeZone == this.homeZone;
+		return EClass.game.activeZone == this.currentZone;
 	}
 
 	public bool IsInSpot<T>() where T : TraitSpot
@@ -6025,6 +6058,10 @@ public class Chara : Card, IPathfindWalker
 		if (base.Evalue(1232) > 0)
 		{
 			text2 = "milkBaby".lang().TagSize(14) + text2;
+		}
+		if (Guild.Fighter.ShowBounty(this) && Guild.Fighter.HasBounty(this))
+		{
+			text2 = "hasBounty".lang().TagSize(14) + text2;
 		}
 		if (EClass.pc.HasElement(481, 1))
 		{
@@ -6885,7 +6922,7 @@ public class Chara : Card, IPathfindWalker
 
 	public Thing TryGetThrowable()
 	{
-		Chara.<>c__DisplayClass437_0 CS$<>8__locals1 = new Chara.<>c__DisplayClass437_0();
+		Chara.<>c__DisplayClass438_0 CS$<>8__locals1 = new Chara.<>c__DisplayClass438_0();
 		CS$<>8__locals1.<>4__this = this;
 		CS$<>8__locals1.dest = null;
 		if (!this.IsPC)
@@ -7282,7 +7319,7 @@ public class Chara : Card, IPathfindWalker
 
 	public bool CanAcceptItem(Card t, int num = -1)
 	{
-		return this.IsValidGiftWeight(t, num) && !t.c_isImportant && ((!t.category.IsChildOf("furniture") && !t.category.IsChildOf("junk")) || base.HasElement(1411, 1));
+		return EClass.debug.enable || (this.IsValidGiftWeight(t, num) && !t.c_isImportant && ((!t.category.IsChildOf("furniture") && !t.category.IsChildOf("junk")) || base.HasElement(1411, 1)));
 	}
 
 	public bool CanAcceptGift(Chara c, Card t)
@@ -8001,11 +8038,11 @@ public class Chara : Card, IPathfindWalker
 		}
 		foreach (Hobby h in this.ListHobbies(true))
 		{
-			this.<RefreshWorkElements>g__TryAdd|491_0(h);
+			this.<RefreshWorkElements>g__TryAdd|492_0(h);
 		}
 		foreach (Hobby h2 in this.ListWorks(true))
 		{
-			this.<RefreshWorkElements>g__TryAdd|491_0(h2);
+			this.<RefreshWorkElements>g__TryAdd|492_0(h2);
 		}
 		if (this.workElements != null)
 		{
@@ -8145,7 +8182,7 @@ public class Chara : Card, IPathfindWalker
 
 	public void PerformWork(WorkSession session, bool isHobby = false, bool IsRealTime = false)
 	{
-		Chara.<>c__DisplayClass502_0 CS$<>8__locals1;
+		Chara.<>c__DisplayClass503_0 CS$<>8__locals1;
 		CS$<>8__locals1.session = session;
 		Hobby hobby = new Hobby();
 		hobby.id = CS$<>8__locals1.session.id;
@@ -8155,10 +8192,10 @@ public class Chara : Card, IPathfindWalker
 		{
 			workSummary.progress += EClass.rnd(5) + 5;
 		}
-		int num = Chara.<PerformWork>g__PerformWork|502_0(hobby, 0, isHobby, ref CS$<>8__locals1);
-		int num2 = Chara.<PerformWork>g__PerformWork|502_0(hobby, 1, isHobby, ref CS$<>8__locals1);
-		int num3 = Chara.<PerformWork>g__PerformWork|502_0(hobby, 2, isHobby, ref CS$<>8__locals1);
-		int num4 = Chara.<PerformWork>g__PerformWork|502_0(hobby, 3, isHobby, ref CS$<>8__locals1);
+		int num = Chara.<PerformWork>g__PerformWork|503_0(hobby, 0, isHobby, ref CS$<>8__locals1);
+		int num2 = Chara.<PerformWork>g__PerformWork|503_0(hobby, 1, isHobby, ref CS$<>8__locals1);
+		int num3 = Chara.<PerformWork>g__PerformWork|503_0(hobby, 2, isHobby, ref CS$<>8__locals1);
+		int num4 = Chara.<PerformWork>g__PerformWork|503_0(hobby, 3, isHobby, ref CS$<>8__locals1);
 		workSummary.money += num;
 		workSummary.food += num2;
 		workSummary.knowledge += num3;
@@ -9140,7 +9177,7 @@ public class Chara : Card, IPathfindWalker
 
 	public void CureTempElements(int p, bool body, bool mind)
 	{
-		Chara.<>c__DisplayClass561_0 CS$<>8__locals1;
+		Chara.<>c__DisplayClass562_0 CS$<>8__locals1;
 		CS$<>8__locals1.<>4__this = this;
 		CS$<>8__locals1.p = p;
 		if (this.tempElements == null)
@@ -9149,16 +9186,16 @@ public class Chara : Card, IPathfindWalker
 		}
 		if (body)
 		{
-			this.<CureTempElements>g__Cure|561_0(Element.List_Body, ref CS$<>8__locals1);
+			this.<CureTempElements>g__Cure|562_0(Element.List_Body, ref CS$<>8__locals1);
 		}
 		if (mind)
 		{
-			this.<CureTempElements>g__Cure|561_0(Element.List_Mind, ref CS$<>8__locals1);
+			this.<CureTempElements>g__Cure|562_0(Element.List_Mind, ref CS$<>8__locals1);
 		}
 	}
 
 	[CompilerGenerated]
-	private void <RestockInventory>g__Restock|359_0(string id, int num)
+	private void <RestockInventory>g__Restock|360_0(string id, int num)
 	{
 		if (this.things.Find(id, -1, -1) == null)
 		{
@@ -9167,7 +9204,7 @@ public class Chara : Card, IPathfindWalker
 	}
 
 	[CompilerGenerated]
-	private void <RefreshWorkElements>g__TryAdd|491_0(Hobby h)
+	private void <RefreshWorkElements>g__TryAdd|492_0(Hobby h)
 	{
 		if (h.source.elements.IsEmpty())
 		{
@@ -9202,7 +9239,7 @@ public class Chara : Card, IPathfindWalker
 	}
 
 	[CompilerGenerated]
-	internal static int <PerformWork>g__PerformWork|502_0(Hobby work, int idx, bool isHobby, ref Chara.<>c__DisplayClass502_0 A_3)
+	internal static int <PerformWork>g__PerformWork|503_0(Hobby work, int idx, bool isHobby, ref Chara.<>c__DisplayClass503_0 A_3)
 	{
 		if (idx >= work.source.resources.Length)
 		{
@@ -9220,7 +9257,7 @@ public class Chara : Card, IPathfindWalker
 	}
 
 	[CompilerGenerated]
-	private void <CureTempElements>g__Cure|561_0(int[] eles, ref Chara.<>c__DisplayClass561_0 A_2)
+	private void <CureTempElements>g__Cure|562_0(int[] eles, ref Chara.<>c__DisplayClass562_0 A_2)
 	{
 		foreach (int num in eles)
 		{

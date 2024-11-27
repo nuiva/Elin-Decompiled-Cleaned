@@ -243,7 +243,19 @@ public class HotItemHeld : HotItemThing
 					build.recipe = HotItemHeld.taskBuild.recipe;
 					build.mold = HotItemHeld.taskBuild;
 					build.SetAltitude(HotItemHeld.recipe.tileType.AltitudeAsDir ? HotItemHeld.recipe._dir : build.altitude);
-					p.TrySetAct(HotItemHeld.taskBuild, null);
+					if (HotItemHeld.recipe.IsBlock && this.thing.trait is TraitBlock && p.pos.HasBlock && !this.thing.trait.IsDoor)
+					{
+						p.TrySetAct("actRotateWall", delegate()
+						{
+							SE.Rotate();
+							p.pos.cell.RotateBlock(1);
+							return false;
+						}, null, 1);
+					}
+					else
+					{
+						p.TrySetAct(HotItemHeld.taskBuild, null);
+					}
 				}
 			}
 		}

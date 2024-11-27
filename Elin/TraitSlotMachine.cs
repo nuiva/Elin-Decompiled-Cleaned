@@ -2,6 +2,11 @@
 
 public class TraitSlotMachine : TraitGamble
 {
+	public override bool CanUse(Chara c)
+	{
+		return this.owner.isOn;
+	}
+
 	public override string idMsg
 	{
 		get

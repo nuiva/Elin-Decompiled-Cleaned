@@ -518,7 +518,7 @@ public class Point : EClass
 	{
 		foreach (Thing thing in EClass._map.things)
 		{
-			if (thing.trait is TraitSpot)
+			if (thing.trait is T)
 			{
 				foreach (Point obj in thing.trait.ListPoints(null, true))
 				{

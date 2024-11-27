@@ -97,7 +97,7 @@ public class DramaCustomSequence : EClass
 			if (quest.CanDeliverToClient(CS$<>8__locals1.c))
 			{
 				QuestDeliver questDeliver = _quest as QuestDeliver;
-				using (List<Thing>.Enumerator enumerator2 = questDeliver.ListDestThing().GetEnumerator())
+				using (List<Thing>.Enumerator enumerator2 = questDeliver.ListDestThing(false).GetEnumerator())
 				{
 					while (enumerator2.MoveNext())
 					{
@@ -123,9 +123,9 @@ public class DramaCustomSequence : EClass
 				{
 					this.Choice2("daMakeHome", "_makeHome");
 				}
-				if (CS$<>8__locals1.c.host == null)
+				if (CS$<>8__locals1.c.host == null && CS$<>8__locals1.c.homeZone != null)
 				{
-					this.Choice2("daLeaveParty", "_leaveParty");
+					this.Choice2("daLeaveParty".lang(CS$<>8__locals1.c.homeZone.Name, null, null, null, null), "_leaveParty");
 				}
 			}
 		}
@@ -252,7 +252,7 @@ public class DramaCustomSequence : EClass
 				{
 					CS$<>8__locals1.c.elements.SetBase(280, 20, 0);
 				}
-				foreach (Thing t2 in EClass.pc.things.List((Thing a) => a.c_lockLv > 0, false))
+				foreach (Thing t2 in EClass.pc.things.List((Thing a) => a.c_lockLv > 0, true))
 				{
 					Thing _t = t2;
 					this.Choice2("daPicklock".lang(_t.Name, null, null, null, null), "_picklock").SetOnClick(delegate
@@ -376,7 +376,7 @@ public class DramaCustomSequence : EClass
 		this.Method(delegate
 		{
 			EClass.pc.party.RemoveMember(CS$<>8__locals1.c);
-			if (EClass.game.activeZone != CS$<>8__locals1.c.homeZone && CS$<>8__locals1.c.homeZone != null)
+			if (EClass.game.activeZone != CS$<>8__locals1.c.homeZone)
 			{
 				EClass.pc.Say("tame_send", CS$<>8__locals1.c, CS$<>8__locals1.c.homeZone.Name, null);
 				CS$<>8__locals1.c.MoveZone(CS$<>8__locals1.c.homeZone, ZoneTransition.EnterState.Auto);
@@ -410,7 +410,7 @@ public class DramaCustomSequence : EClass
 			{
 				onKill = (CS$<>8__locals1.<>9__100 = delegate()
 				{
-					EClass.Branch.BanishMember(CS$<>8__locals1.c, false);
+					CS$<>8__locals1.c.homeBranch.BanishMember(CS$<>8__locals1.c, false);
 				});
 			}
 			instance.SetOnKill(onKill);
@@ -503,7 +503,7 @@ public class DramaCustomSequence : EClass
 			QuestSupply supply = CS$<>8__locals1.c.quest as QuestSupply;
 			if (supply != null)
 			{
-				foreach (Thing t3 in supply.ListDestThing())
+				foreach (Thing t3 in supply.ListDestThing(false))
 				{
 					Thing _t = t3;
 					this.Choice("daDeliver".lang(supply.GetTitle() ?? "", _t.GetName(NameStyle.Full, supply.num), null, null, null), "_deliver", false).SetOnClick(delegate

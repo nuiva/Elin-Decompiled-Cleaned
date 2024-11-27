@@ -608,17 +608,6 @@ public class UI : ELayer
 
 	public void ToggleFeedback()
 	{
-		if (ELayer.core.IsGameStarted && !ELayer.ui.GetLayer<LayerFeedback>(false) && ELayer.pc.HasCondition<ConHallucination>())
-		{
-			SE.Play("wow");
-			Msg.Say("bug_hal");
-			return;
-		}
-		if (!Application.isEditor && (ELayer.debug.enable || (ELayer.core.IsGameStarted && ELayer.player.flags.debugEnabled)))
-		{
-			Dialog.Ok("dialog_debugFeedback", null);
-			return;
-		}
 		string text = "";
 		if (Application.isEditor)
 		{
@@ -646,18 +635,48 @@ public class UI : ELayer
 			Dialog.Ok("dialog_needToLogOn", null);
 			return;
 		}
-		string backerId = "";
+		string text2 = "";
 		try
 		{
 			if (!ELayer.config.rewardCode.IsEmpty())
 			{
-				backerId = "backer";
-				backerId = ElinEncoder.GetID(ELayer.config.rewardCode);
+				text2 = "backer";
+				text2 = ElinEncoder.GetID(ELayer.config.rewardCode);
 			}
 		}
 		catch (Exception message)
 		{
+			text2 = "";
 			Debug.Log(message);
+		}
+		if (text2.IsEmpty())
+		{
+			string text3 = "public";
+			try
+			{
+				if (!SteamApps.GetCurrentBetaName(out text3, 128) || !(text3 == "nightly"))
+				{
+					Dialog.Ok("dialog_feedbackTooMany", null);
+					return;
+				}
+				Debug.Log(text3);
+			}
+			catch
+			{
+				Dialog.Ok("dialog_feedbackTooMany", null);
+				return;
+			}
+		}
+		if (ELayer.core.IsGameStarted && !ELayer.ui.GetLayer<LayerFeedback>(false) && ELayer.pc.HasCondition<ConHallucination>())
+		{
+			SE.Play("wow");
+			Msg.Say("bug_hal");
+			return;
+		}
+		if (!Application.isEditor && (ELayer.debug.enable || (ELayer.core.IsGameStarted && ELayer.player.flags.debugEnabled)))
+		{
+			Dialog.Ok("dialog_debugFeedback", null);
+			return;
 		}
 		string userName = "Unknown";
 		string[] array = Application.persistentDataPath.Split('/', StringSplitOptions.None);
@@ -667,7 +686,7 @@ public class UI : ELayer
 		}
 		LayerFeedback.userName = userName;
 		LayerFeedback.playedHours = ELayer.config.maxPlayedHours;
-		LayerFeedback.backerId = backerId;
+		LayerFeedback.backerId = text2;
 		LayerFeedback.steamName = text;
 		ELayer.ui.ToggleLayer<LayerFeedback>(null);
 		SE.Tab();

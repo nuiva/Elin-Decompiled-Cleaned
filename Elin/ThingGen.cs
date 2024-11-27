@@ -339,7 +339,7 @@ public class ThingGen : CardGen
 	{
 		foreach (Chara chara in EClass._map.charas)
 		{
-			if (chara.HasElement(1412, 1) && chara.Dist(chest) < 4)
+			if (chara.HasElement(1412, 1) && chara.Dist(chest) < 5)
 			{
 				chara.Say("lick", chara, chest, null, null);
 				chest.PlaySound("offering", 1f, true);

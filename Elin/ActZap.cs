@@ -29,6 +29,10 @@ public class ActZap : Act
 
 	public override bool Perform()
 	{
+		if (Act.CC.IsPC)
+		{
+			Act.CC.TryAbsorbRod(this.trait.owner.Thing);
+		}
 		Act.CC.Say("zapRod", Act.CC, this.trait.owner.Name, null);
 		if (this.trait.owner.c_charges > 0)
 		{

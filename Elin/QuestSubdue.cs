@@ -31,6 +31,11 @@ public class QuestSubdue : QuestInstance
 		return new ZoneEventSubdue();
 	}
 
+	public override ZoneInstanceRandomQuest CreateInstance()
+	{
+		return new ZoneInstanceSubdue();
+	}
+
 	public override string GetTextProgress()
 	{
 		ZoneEventSubdue @event = EClass._zone.events.GetEvent<ZoneEventSubdue>();

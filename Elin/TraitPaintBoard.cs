@@ -50,7 +50,7 @@ public class TraitPaintBoard : TraitItem
 	{
 		get
 		{
-			return this.owner.refVal != 0;
+			return this.owner.refVal != 0 && (this.owner.IsInstalled || this.owner.isRoofItem);
 		}
 	}
 

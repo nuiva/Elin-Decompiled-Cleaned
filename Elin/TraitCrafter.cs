@@ -117,6 +117,14 @@ public class TraitCrafter : Trait
 		}
 	}
 
+	public virtual bool CanTriggerFire
+	{
+		get
+		{
+			return base.IsRequireFuel;
+		}
+	}
+
 	public virtual bool AutoTurnOff
 	{
 		get
@@ -361,7 +369,7 @@ public class TraitCrafter : Trait
 		string text = source.thing;
 		TraitCrafter.MixType mixType = source.type.ToEnum(true);
 		int num = source.num.Calc(0, 0, 0);
-		TraitCrafter.<>c__DisplayClass47_0 CS$<>8__locals1;
+		TraitCrafter.<>c__DisplayClass49_0 CS$<>8__locals1;
 		CS$<>8__locals1.t = null;
 		switch (mixType)
 		{
@@ -425,14 +433,14 @@ public class TraitCrafter : Trait
 		}
 		case TraitCrafter.MixType.Scratch:
 		{
-			TraitCrafter.<>c__DisplayClass47_1 CS$<>8__locals2;
+			TraitCrafter.<>c__DisplayClass49_1 CS$<>8__locals2;
 			CS$<>8__locals2.claimed = false;
-			TraitCrafter.<Craft>g__Prize|47_2(20, "medal", "save", false, ref CS$<>8__locals1, ref CS$<>8__locals2);
-			TraitCrafter.<Craft>g__Prize|47_2(10, "plat", "save", false, ref CS$<>8__locals1, ref CS$<>8__locals2);
-			TraitCrafter.<Craft>g__Prize|47_2(10, "furniture", "nice", true, ref CS$<>8__locals1, ref CS$<>8__locals2);
-			TraitCrafter.<Craft>g__Prize|47_2(4, "plamo_box", "nice", false, ref CS$<>8__locals1, ref CS$<>8__locals2);
-			TraitCrafter.<Craft>g__Prize|47_2(4, "food", "", false, ref CS$<>8__locals1, ref CS$<>8__locals2);
-			TraitCrafter.<Craft>g__Prize|47_2(1, "casino_coin", "", false, ref CS$<>8__locals1, ref CS$<>8__locals2);
+			TraitCrafter.<Craft>g__Prize|49_2(20, "medal", "save", false, ref CS$<>8__locals1, ref CS$<>8__locals2);
+			TraitCrafter.<Craft>g__Prize|49_2(10, "plat", "save", false, ref CS$<>8__locals1, ref CS$<>8__locals2);
+			TraitCrafter.<Craft>g__Prize|49_2(10, "furniture", "nice", true, ref CS$<>8__locals1, ref CS$<>8__locals2);
+			TraitCrafter.<Craft>g__Prize|49_2(4, "plamo_box", "nice", false, ref CS$<>8__locals1, ref CS$<>8__locals2);
+			TraitCrafter.<Craft>g__Prize|49_2(4, "food", "", false, ref CS$<>8__locals1, ref CS$<>8__locals2);
+			TraitCrafter.<Craft>g__Prize|49_2(1, "casino_coin", "", false, ref CS$<>8__locals1, ref CS$<>8__locals2);
 			break;
 		}
 		case TraitCrafter.MixType.Incubator:
@@ -529,7 +537,7 @@ public class TraitCrafter : Trait
 	}
 
 	[CompilerGenerated]
-	internal static void <Craft>g__Prize|47_2(int chance, string s, string col, bool cat, ref TraitCrafter.<>c__DisplayClass47_0 A_4, ref TraitCrafter.<>c__DisplayClass47_1 A_5)
+	internal static void <Craft>g__Prize|49_2(int chance, string s, string col, bool cat, ref TraitCrafter.<>c__DisplayClass49_0 A_4, ref TraitCrafter.<>c__DisplayClass49_1 A_5)
 	{
 		if (A_5.claimed || EClass.rnd(chance) != 0)
 		{

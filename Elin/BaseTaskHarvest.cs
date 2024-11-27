@@ -118,16 +118,17 @@ public class BaseTaskHarvest : TaskDesignation
 		return tool;
 	}
 
-	public void SetTarget(Chara c, Thing tool = null)
+	public void SetTarget(Chara c, Thing _tool = null)
 	{
 		if (c == null)
 		{
 			c = EClass.pc;
 		}
-		if (tool == null)
+		if (_tool == null)
 		{
-			tool = c.Tool;
+			_tool = c.Tool;
 		}
+		this.tool = _tool;
 		string[] array = null;
 		SourceMaterial.Row row = null;
 		switch (this.harvestType)
@@ -199,11 +200,11 @@ public class BaseTaskHarvest : TaskDesignation
 		this.reqLv = this.matHardness + num;
 		this.isToolRequired = (!this.IsHarvest && this.idEle != 250);
 		this.toolLv = 0;
-		if (tool != null)
+		if (this.tool != null)
 		{
-			int num2 = (this.idEle == 220 || this.idEle == 225) ? this.GetToolEfficiency(tool, row) : 100;
-			this.toolLv += tool.material.hardness * num2 / 100;
-			this.toolLv = (int)(this.toolLv + (tool.encLV + tool.blessedState));
+			int num2 = (this.idEle == 220 || this.idEle == 225) ? this.GetToolEfficiency(this.tool, row) : 100;
+			this.toolLv += this.tool.material.hardness * num2 / 100;
+			this.toolLv = (int)(this.toolLv + (this.tool.encLV + this.tool.blessedState));
 		}
 		this.toolLv += c.Evalue(this.idEle) * 3 / 2;
 		if (this.toolLv < 0)
@@ -271,6 +272,11 @@ public class BaseTaskHarvest : TaskDesignation
 			}
 		}
 		return num;
+	}
+
+	public override bool CanProgress()
+	{
+		return this.tool == this.owner.Tool && base.CanProgress();
 	}
 
 	public int[] GetToolEfficiency(SourceMaterial.Row mat)
@@ -461,6 +467,8 @@ public class BaseTaskHarvest : TaskDesignation
 	public int effectFrame = 1;
 
 	public bool isToolRequired;
+
+	public Thing tool;
 
 	public enum HarvestType
 	{
