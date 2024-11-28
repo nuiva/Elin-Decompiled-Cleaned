@@ -8025,6 +8025,26 @@ public class Chara : Card, IPathfindWalker
 		return null;
 	}
 
+	public ElementContainer baseWorkElements
+	{
+		get
+		{
+			if (this._baseWorkElements == null)
+			{
+				this._baseWorkElements = new ElementContainer();
+				foreach (Hobby h in this.ListHobbies(true))
+				{
+					this.<get_baseWorkElements>g__Build|494_0(h);
+				}
+				foreach (Hobby h2 in this.ListWorks(true))
+				{
+					this.<get_baseWorkElements>g__Build|494_0(h2);
+				}
+			}
+			return this._baseWorkElements;
+		}
+	}
+
 	public void RefreshWorkElements(ElementContainer parent = null)
 	{
 		if (this.workElements != null)
@@ -8038,11 +8058,11 @@ public class Chara : Card, IPathfindWalker
 		}
 		foreach (Hobby h in this.ListHobbies(true))
 		{
-			this.<RefreshWorkElements>g__TryAdd|492_0(h);
+			this.<RefreshWorkElements>g__TryAdd|495_0(h);
 		}
 		foreach (Hobby h2 in this.ListWorks(true))
 		{
-			this.<RefreshWorkElements>g__TryAdd|492_0(h2);
+			this.<RefreshWorkElements>g__TryAdd|495_0(h2);
 		}
 		if (this.workElements != null)
 		{
@@ -8182,7 +8202,7 @@ public class Chara : Card, IPathfindWalker
 
 	public void PerformWork(WorkSession session, bool isHobby = false, bool IsRealTime = false)
 	{
-		Chara.<>c__DisplayClass503_0 CS$<>8__locals1;
+		Chara.<>c__DisplayClass506_0 CS$<>8__locals1;
 		CS$<>8__locals1.session = session;
 		Hobby hobby = new Hobby();
 		hobby.id = CS$<>8__locals1.session.id;
@@ -8192,10 +8212,10 @@ public class Chara : Card, IPathfindWalker
 		{
 			workSummary.progress += EClass.rnd(5) + 5;
 		}
-		int num = Chara.<PerformWork>g__PerformWork|503_0(hobby, 0, isHobby, ref CS$<>8__locals1);
-		int num2 = Chara.<PerformWork>g__PerformWork|503_0(hobby, 1, isHobby, ref CS$<>8__locals1);
-		int num3 = Chara.<PerformWork>g__PerformWork|503_0(hobby, 2, isHobby, ref CS$<>8__locals1);
-		int num4 = Chara.<PerformWork>g__PerformWork|503_0(hobby, 3, isHobby, ref CS$<>8__locals1);
+		int num = Chara.<PerformWork>g__PerformWork|506_0(hobby, 0, isHobby, ref CS$<>8__locals1);
+		int num2 = Chara.<PerformWork>g__PerformWork|506_0(hobby, 1, isHobby, ref CS$<>8__locals1);
+		int num3 = Chara.<PerformWork>g__PerformWork|506_0(hobby, 2, isHobby, ref CS$<>8__locals1);
+		int num4 = Chara.<PerformWork>g__PerformWork|506_0(hobby, 3, isHobby, ref CS$<>8__locals1);
 		workSummary.money += num;
 		workSummary.food += num2;
 		workSummary.knowledge += num3;
@@ -8913,6 +8933,15 @@ public class Chara : Card, IPathfindWalker
 		for (int i = 0; i < tries; i++)
 		{
 			SourceElement.Row row = ie.RandomItem<SourceElement.Row>();
+			if (((i == 0 && vec < 0) & ether) && base.c_corruptionHistory != null && base.c_corruptionHistory.Count > 0)
+			{
+				row = EClass.sources.elements.map[base.c_corruptionHistory.LastItem<int>()];
+				base.c_corruptionHistory.RemoveAt(base.c_corruptionHistory.Count - 1);
+				if (base.c_corruptionHistory.Count == 0)
+				{
+					base.c_corruptionHistory = null;
+				}
+			}
 			Element element = this.elements.GetElement(row.id);
 			int num = 1;
 			if ((vec <= 0 || ((row.id != 1563 || this.corruption >= 300) && (row.id != 1562 || this.corruption >= 1000 || !base.IsPowerful))) && (vec >= 0 || (element != null && element.Value > 0)) && (vec <= 0 || element == null || element.Value < row.max))
@@ -8927,16 +8956,16 @@ public class Chara : Card, IPathfindWalker
 				{
 					if (state >= BlessedState.Blessed && flag)
 					{
-						goto IL_3B6;
+						goto IL_44F;
 					}
 					if (state <= BlessedState.Cursed && !flag)
 					{
-						goto IL_3B6;
+						goto IL_44F;
 					}
 				}
 				else if (vec < 0 && ((state >= BlessedState.Blessed && !flag) || (state <= BlessedState.Cursed && flag)))
 				{
-					goto IL_3B6;
+					goto IL_44F;
 				}
 				bool flag2 = true;
 				if (element != null)
@@ -8950,13 +8979,18 @@ public class Chara : Card, IPathfindWalker
 					flag2 = (num > element.Value);
 					if (vec > 0 && !flag2)
 					{
-						goto IL_3B6;
+						goto IL_44F;
 					}
 				}
 				base.Say(flag2 ? "mutation_gain" : "mutation_loose", this, null, null);
 				this.SetFeat(row.id, num, false);
 				if (flag2 & ether)
 				{
+					if (base.c_corruptionHistory == null)
+					{
+						base.c_corruptionHistory = new List<int>();
+					}
+					base.c_corruptionHistory.Add(row.id);
 					if (this.IsPCFaction)
 					{
 						Element element2 = this.elements.GetElement(row.id);
@@ -8986,7 +9020,7 @@ public class Chara : Card, IPathfindWalker
 				}
 				return true;
 			}
-			IL_3B6:;
+			IL_44F:;
 		}
 		base.Say("nothingHappens", null, null);
 		return false;
@@ -9177,7 +9211,7 @@ public class Chara : Card, IPathfindWalker
 
 	public void CureTempElements(int p, bool body, bool mind)
 	{
-		Chara.<>c__DisplayClass562_0 CS$<>8__locals1;
+		Chara.<>c__DisplayClass565_0 CS$<>8__locals1;
 		CS$<>8__locals1.<>4__this = this;
 		CS$<>8__locals1.p = p;
 		if (this.tempElements == null)
@@ -9186,11 +9220,11 @@ public class Chara : Card, IPathfindWalker
 		}
 		if (body)
 		{
-			this.<CureTempElements>g__Cure|562_0(Element.List_Body, ref CS$<>8__locals1);
+			this.<CureTempElements>g__Cure|565_0(Element.List_Body, ref CS$<>8__locals1);
 		}
 		if (mind)
 		{
-			this.<CureTempElements>g__Cure|562_0(Element.List_Mind, ref CS$<>8__locals1);
+			this.<CureTempElements>g__Cure|565_0(Element.List_Mind, ref CS$<>8__locals1);
 		}
 	}
 
@@ -9204,7 +9238,22 @@ public class Chara : Card, IPathfindWalker
 	}
 
 	[CompilerGenerated]
-	private void <RefreshWorkElements>g__TryAdd|492_0(Hobby h)
+	private void <get_baseWorkElements>g__Build|494_0(Hobby h)
+	{
+		if (h.source.elements.IsEmpty())
+		{
+			return;
+		}
+		for (int i = 0; i < h.source.elements.Length; i += 2)
+		{
+			int ele = h.source.elements[i];
+			int v = h.source.elements[i + 1];
+			this._baseWorkElements.ModBase(ele, v);
+		}
+	}
+
+	[CompilerGenerated]
+	private void <RefreshWorkElements>g__TryAdd|495_0(Hobby h)
 	{
 		if (h.source.elements.IsEmpty())
 		{
@@ -9220,26 +9269,26 @@ public class Chara : Card, IPathfindWalker
 			int num = h.source.elements[i];
 			int num2 = h.source.elements[i + 1];
 			int num3 = 100;
-			if (num == 2115)
+			if (num == 2115 || num == 2207)
 			{
-				goto IL_6E;
+				goto IL_79;
 			}
 			num3 = h.GetEfficiency(this) * this.homeBranch.efficiency / 100;
 			if (num3 > 0)
 			{
-				goto IL_6E;
+				goto IL_79;
 			}
-			IL_A2:
+			IL_AD:
 			i += 2;
 			continue;
-			IL_6E:
+			IL_79:
 			this.workElements.ModBase(num, (num2 < 0) ? (num2 / 10) : Mathf.Max(1, h.source.elements[i + 1] * num3 / 1000));
-			goto IL_A2;
+			goto IL_AD;
 		}
 	}
 
 	[CompilerGenerated]
-	internal static int <PerformWork>g__PerformWork|503_0(Hobby work, int idx, bool isHobby, ref Chara.<>c__DisplayClass503_0 A_3)
+	internal static int <PerformWork>g__PerformWork|506_0(Hobby work, int idx, bool isHobby, ref Chara.<>c__DisplayClass506_0 A_3)
 	{
 		if (idx >= work.source.resources.Length)
 		{
@@ -9257,7 +9306,7 @@ public class Chara : Card, IPathfindWalker
 	}
 
 	[CompilerGenerated]
-	private void <CureTempElements>g__Cure|562_0(int[] eles, ref Chara.<>c__DisplayClass562_0 A_2)
+	private void <CureTempElements>g__Cure|565_0(int[] eles, ref Chara.<>c__DisplayClass565_0 A_2)
 	{
 		foreach (int num in eles)
 		{
@@ -9454,6 +9503,8 @@ public class Chara : Card, IPathfindWalker
 	public GoalList goalList = new GoalList();
 
 	public AIAct ai = new NoGoal();
+
+	public ElementContainer _baseWorkElements;
 
 	private static GoalWork _goalWork = new GoalWork();
 

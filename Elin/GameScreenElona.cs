@@ -111,7 +111,7 @@ public class GameScreenElona : BaseGameScreen
 		this.camPos.z = -500f;
 		EMono.scene.cam.transform.localPosition = this.camPos;
 		this.camPos.z = 0f;
-		EMono.scene.transAudio.position = this.camPos;
+		EMono.scene.transAudio.position = this.camPos + EMono.scene.posAudioListener;
 		if (WidgetMinimap.Instance)
 		{
 			WidgetMinimap.Instance.OnUpdate();

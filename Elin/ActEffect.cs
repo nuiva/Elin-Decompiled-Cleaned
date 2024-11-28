@@ -2064,7 +2064,7 @@ public class ActEffect : EClass
 						return;
 					}
 					CS$<>8__locals1.TC.Say("cureCorruption", CS$<>8__locals1.TC, null, null);
-					CS$<>8__locals1.TC.ModCorruption(-CS$<>8__locals1.power * 2);
+					CS$<>8__locals1.TC.ModCorruption(-CS$<>8__locals1.power * (CS$<>8__locals1.blessed ? 150 : 200) / 100);
 					return;
 				case EffectId.Headpat:
 					CS$<>8__locals1.CC.Cuddle(CS$<>8__locals1.TC, true);

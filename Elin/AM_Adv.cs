@@ -250,11 +250,7 @@ public class AM_Adv : AM_BaseGameMode
 			}
 			else if (HotItemHeld.CanRotate())
 			{
-				this.planAll.Update(this.mouseTarget);
-				if (!this.planAll.HasAct)
-				{
-					this.textMiddle = "textMiddle_rotate".lang(EInput.keys.mouseMiddle.key.ToString() ?? "", null, null, null, null);
-				}
+				this.textMiddle = "textMiddle_rotate".lang(EInput.keys.mouseMiddle.key.ToString() ?? "", null, null, null, null);
 			}
 			EClass.ui.hud.textWheel.SetText(this.textWheel.IsEmpty(""));
 			EClass.ui.hud.textMiddle.SetText(this.textMiddle.IsEmpty(""));
@@ -579,11 +575,9 @@ public class AM_Adv : AM_BaseGameMode
 			}
 			if ((EInput.middleMouse.down || EInput.middleMouse.clicked || EInput.middleMouse.pressedLong) && !EClass.ui.contextMenu.isActive)
 			{
-				this.planAll.Update(this.mouseTarget);
-				bool flag = EClass.pc.held != null && HotItemHeld.taskBuild != null && (HotItemHeld.taskBuild.CanPerform() || !this.planAll.HasAct);
 				if (EInput.middleMouse.clicked)
 				{
-					if (flag)
+					if (HotItemHeld.CanRotate())
 					{
 						HotItemHeld.taskBuild.recipe.Rotate();
 						SE.Rotate();

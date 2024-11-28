@@ -649,7 +649,7 @@ public class UI : ELayer
 			text2 = "";
 			Debug.Log(message);
 		}
-		if (text2.IsEmpty())
+		if (!Application.isEditor && text2.IsEmpty())
 		{
 			string text3 = "public";
 			try
