@@ -10,7 +10,32 @@ public class HotItemHeld : HotItemThing
 
 	public static bool CanRotate()
 	{
-		return !EClass._zone.IsRegion && EClass.pc.held != null && (EClass._zone is Zone_Tent || EClass._zone.IsPCFaction || !EClass.pc.held.trait.CanBeOnlyBuiltInHome) && (!EClass._zone.RestrictBuild || EClass.pc.held.trait.CanBuildInTown) && (EClass.pc.held.trait is TraitTile || (HotItemHeld.taskBuild != null && (HotItemHeld.taskBuild.CanPerform() || !ActionMode.Adv.planAll.HasAct)));
+		if (EClass._zone.IsRegion || EClass.pc.held == null)
+		{
+			return false;
+		}
+		if (!(EClass._zone is Zone_Tent) && !EClass._zone.IsPCFaction && EClass.pc.held.trait.CanBeOnlyBuiltInHome)
+		{
+			return false;
+		}
+		if (EClass._zone.RestrictBuild && !EClass.pc.held.trait.CanBuildInTown)
+		{
+			return false;
+		}
+		if (EClass.pc.held.trait is TraitTile)
+		{
+			return true;
+		}
+		if (HotItemHeld.taskBuild == null)
+		{
+			return false;
+		}
+		if (!HotItemHeld.taskBuild.CanPerform())
+		{
+			return false;
+		}
+		ActionMode.Adv.planAll.Update(EClass.scene.mouseTarget);
+		return !ActionMode.Adv.planAll.HasAct;
 	}
 
 	public override Act act

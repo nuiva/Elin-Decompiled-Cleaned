@@ -646,7 +646,7 @@ public class AI_PlayMusic : AIAct
 					thing.Destroy();
 					return;
 				}
-				if (this.owner.GetCurrency("money") >= (this.owner.Evalue(241) * 10 + 100) / ((this.owner.memberType == FactionMemberType.Default) ? 1 : 10))
+				if (this.owner.GetCurrency("money") >= (this.owner.Evalue(241) * 10 + 100) / ((this.owner.IsPCFaction && this.owner.memberType == FactionMemberType.Default) ? 1 : 10))
 				{
 					this.owner.c_allowance += num;
 					this.owner.ModCurrency(-num, "money");

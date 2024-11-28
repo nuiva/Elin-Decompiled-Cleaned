@@ -1142,7 +1142,7 @@ public class Map : MapBounds, IPathfindGrid
 	public void ModFire(int x, int z, int amount)
 	{
 		Cell cell = this.cells[x, z];
-		if (cell.IsTopWaterAndNoSnow)
+		if (cell.IsTopWaterAndNoSnow || cell.IsSnowTile)
 		{
 			return;
 		}

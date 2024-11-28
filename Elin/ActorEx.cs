@@ -113,6 +113,7 @@ public class ActorEx : Actor
 		}
 		Vector3 vector = *this.owner.pos.PositionCenter();
 		vector.z = 0f;
+		vector.x -= 0.64f;
 		if (this.audioSource)
 		{
 			base.transform.position = vector;

@@ -385,7 +385,7 @@ public class BaseGameScreen : EMono
 		this._camPos.z = this.camPos.z;
 		EMono.scene.cam.transform.localPosition = this._camPos;
 		this.camPos.z = 0f;
-		EMono.scene.transAudio.position = this.camPos;
+		EMono.scene.transAudio.position = this.camPos + EMono.scene.posAudioListener;
 		if (WidgetMinimap.Instance)
 		{
 			WidgetMinimap.Instance.OnUpdate();

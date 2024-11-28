@@ -123,9 +123,29 @@ public class FactionBranch : EClass
 	{
 		int num = 100;
 		int num2 = this.CountMembers(FactionMemberType.Default, false);
+		FactionBranch.<>c__DisplayClass52_0 CS$<>8__locals1;
+		CS$<>8__locals1.ration = 0;
+		foreach (Chara chara in this.members)
+		{
+			if (chara.memberType == FactionMemberType.Default)
+			{
+				if (chara.IsPCParty || chara.homeBranch == null || chara.homeBranch.owner == null)
+				{
+					return;
+				}
+				foreach (Hobby h in chara.ListHobbies(true))
+				{
+					FactionBranch.<RefreshEfficiency>g__TryAdd|52_0(h, ref CS$<>8__locals1);
+				}
+				foreach (Hobby h2 in chara.ListWorks(true))
+				{
+					FactionBranch.<RefreshEfficiency>g__TryAdd|52_0(h2, ref CS$<>8__locals1);
+				}
+			}
+		}
 		if (num2 > this.MaxPopulation)
 		{
-			num -= (num2 - this.MaxPopulation) * (2000 / (100 + 20 * (int)Mathf.Sqrt((float)this.Evalue(2207))));
+			num -= (num2 - this.MaxPopulation) * 20 * 100 / (100 + 20 * (int)Mathf.Sqrt((float)CS$<>8__locals1.ration));
 		}
 		this.efficiency = num;
 	}
@@ -1116,12 +1136,12 @@ public class FactionBranch : EClass
 		}
 		this.members.Add(c);
 		EClass.pc.faction.charaElements.OnAddMemeber(c);
+		this.RefreshEfficiency();
 		c.RefreshWorkElements(this.elements);
 		if (this.uidMaid == 0 && c.id == "maid")
 		{
 			this.uidMaid = c.uid;
 		}
-		this.RefreshEfficiency();
 	}
 
 	public void ChangeMemberType(Chara c, FactionMemberType type)
@@ -1203,8 +1223,8 @@ public class FactionBranch : EClass
 			Point point = ((random != null) ? random.GetPoint() : null) ?? EClass.pc.pos;
 			EClass._zone.AddCard(c, point);
 		}
-		c.RefreshWorkElements(null);
 		this.RefreshEfficiency();
+		c.RefreshWorkElements(null);
 		Msg.Say("hire".langGame(c.Name, null, null, null));
 	}
 
@@ -1476,6 +1496,22 @@ public class FactionBranch : EClass
 		Msg.alwaysVisible = false;
 		Msg.SetColor();
 		return text;
+	}
+
+	[CompilerGenerated]
+	internal static void <RefreshEfficiency>g__TryAdd|52_0(Hobby h, ref FactionBranch.<>c__DisplayClass52_0 A_1)
+	{
+		if (h.source.elements.IsEmpty())
+		{
+			return;
+		}
+		for (int i = 0; i < h.source.elements.Length; i += 2)
+		{
+			if (h.source.elements[i] == 2207)
+			{
+				A_1.ration += h.source.elements[i + 1];
+			}
+		}
 	}
 
 	[CompilerGenerated]

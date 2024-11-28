@@ -31,4 +31,6 @@ public class COBJ
 	public const int dna = 14;
 
 	public const int charaGenes = 15;
+
+	public const int corruptionHistory = 16;
 }

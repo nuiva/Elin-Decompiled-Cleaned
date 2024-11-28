@@ -687,14 +687,14 @@ public class Scene : EMono
 		{
 			return;
 		}
-		Scene.<>c__DisplayClass72_0 CS$<>8__locals1;
+		Scene.<>c__DisplayClass73_0 CS$<>8__locals1;
 		CS$<>8__locals1.conf = EMono._map.config;
 		LiquidProfile.Apply(CS$<>8__locals1.conf.idLiquid);
 		RefractionProfile.Apply(CS$<>8__locals1.conf.idRefraction);
 		BaseTileMap tileMap = this.screenElin.tileMap;
-		Scene.<ApplyZoneConfig>g__SetOcean|72_0(tileMap.passLiquid.mat, ref CS$<>8__locals1);
-		Scene.<ApplyZoneConfig>g__SetOcean|72_0(tileMap.passFloorWater.mat, ref CS$<>8__locals1);
-		Scene.<ApplyZoneConfig>g__SetOcean|72_0(tileMap.passAutoTileWater.mat, ref CS$<>8__locals1);
+		Scene.<ApplyZoneConfig>g__SetOcean|73_0(tileMap.passLiquid.mat, ref CS$<>8__locals1);
+		Scene.<ApplyZoneConfig>g__SetOcean|73_0(tileMap.passFloorWater.mat, ref CS$<>8__locals1);
+		Scene.<ApplyZoneConfig>g__SetOcean|73_0(tileMap.passAutoTileWater.mat, ref CS$<>8__locals1);
 		ScreenGrading grading = this.camSupport.grading;
 		ScreenGradingProfile.Lut lut = grading.lut;
 		grading.profile.funcOverlay = (() => EMono.scene.profile.overlay);
@@ -967,7 +967,7 @@ public class Scene : EMono
 	}
 
 	[CompilerGenerated]
-	internal static void <ApplyZoneConfig>g__SetOcean|72_0(Material m, ref Scene.<>c__DisplayClass72_0 A_1)
+	internal static void <ApplyZoneConfig>g__SetOcean|73_0(Material m, ref Scene.<>c__DisplayClass73_0 A_1)
 	{
 		m.SetFloat("_GradientWater", EMono.core.config.graphic.gradientWater ? EMono.core.config.graphic.gradientWaterLevel : 0f);
 		if (A_1.conf.seaDir != 0)
@@ -1001,6 +1001,8 @@ public class Scene : EMono
 	public Transform transBlizzard;
 
 	public Transform transAudio;
+
+	public Vector3 posAudioListener;
 
 	public AudioListener audioListener;
 
