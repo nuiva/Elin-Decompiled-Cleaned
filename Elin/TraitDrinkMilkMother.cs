@@ -26,8 +26,13 @@ public class TraitDrinkMilkMother : TraitDrinkMilk
 		if (c.Evalue(1232) > 0)
 		{
 			c.SetFeat(1232, c.Evalue(1232) - 1, false);
+			int uidNext = EClass.game.cards.uidNext;
+			EClass.game.cards.uidNext = 1;
+			Rand.SetSeed(1);
 			Chara chara = CharaGen.Create(this.owner.c_idRefCard, -1);
 			chara.SetLv(Mathf.Clamp(5 + this.owner.encLV * 5, 1, 20 + EClass.pc.Evalue(237)));
+			Rand.SetSeed(-1);
+			EClass.game.cards.uidNext = uidNext;
 			Debug.Log(chara.id + "/" + chara.LV.ToString());
 			List<Element> list = chara.elements.ListBestAttributes();
 			List<Element> list2 = chara.elements.ListBestSkills();

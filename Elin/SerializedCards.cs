@@ -246,7 +246,7 @@ public class SerializedCards : EClass
 				else
 				{
 					PlaceState placeState = data.placeState.ToEnum<PlaceState>();
-					if (isUserZone && placeState != PlaceState.installed && !data.bits1.IsOn(13))
+					if (isUserZone && ((placeState != PlaceState.installed && !data.bits1.IsOn(13)) || text == "medal"))
 					{
 						continue;
 					}

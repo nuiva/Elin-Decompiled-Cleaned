@@ -148,7 +148,10 @@ public class ContentCodex : EContent
 		codexCreature.numCard = numCard - 1;
 		Thing thing = ThingGen.Create("figure3", -1, -1);
 		thing.MakeFigureFrom(this.currentCodex.id);
+		bool autoCollectCard = EClass.game.config.autoCollectCard;
+		EClass.game.config.autoCollectCard = false;
 		EClass.pc.Pick(thing, true, true);
+		EClass.game.config.autoCollectCard = autoCollectCard;
 		if (this.currentCodex.numCard == 0)
 		{
 			this.RefreshList();

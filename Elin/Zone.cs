@@ -1964,13 +1964,33 @@ public class Zone : Spatial, ICardParent, IInspect
 					list.Add(thing);
 				}
 			}
+			if (this is Zone_Tent)
+			{
+				foreach (Thing thing2 in this.map.props.stocked.Things.Concat(this.map.props.roaming.Things))
+				{
+					if (thing2.IsContainer)
+					{
+						foreach (Thing thing3 in thing2.things)
+						{
+							if (thing3.trait is TraitTent)
+							{
+								list.Add(thing3);
+							}
+						}
+					}
+					if (thing2.trait is TraitTent)
+					{
+						list.Add(thing2);
+					}
+				}
+			}
 			if (list.Count > 0)
 			{
 				Msg.Say("pick_valuable");
-				foreach (Thing thing2 in list)
+				foreach (Thing thing4 in list)
 				{
-					Msg.Say("pick_valuable2", thing2, null, null, null);
-					EClass.pc.AddCard(thing2);
+					Msg.Say("pick_valuable2", thing4, null, null, null);
+					EClass.pc.AddCard(thing4);
 				}
 			}
 		}
@@ -3277,6 +3297,19 @@ public class Zone : Spatial, ICardParent, IInspect
 	{
 	}
 
+	public int GetSortVal()
+	{
+		if (this.IsPCFaction)
+		{
+			return -100000 + base.uid;
+		}
+		if (this is Zone_Civilized)
+		{
+			return -90000 + base.uid;
+		}
+		return base.uid;
+	}
+
 	public Chara AddRandomVisitor(bool guest = false)
 	{
 		Trait random = this.map.Installed.traits.GetTraitSet<TraitSpotExit>().GetRandom();
@@ -3401,7 +3434,7 @@ public class Zone : Spatial, ICardParent, IInspect
 
 	public void GrowPlants(VirtualDate date)
 	{
-		Zone.<>c__DisplayClass301_0 CS$<>8__locals1 = new Zone.<>c__DisplayClass301_0();
+		Zone.<>c__DisplayClass302_0 CS$<>8__locals1 = new Zone.<>c__DisplayClass302_0();
 		CS$<>8__locals1.date = date;
 		CS$<>8__locals1.<>4__this = this;
 		bool flag = EClass.player.isAutoFarming = (this.IsPCFaction && EClass.Branch.policies.IsActive(2707, -1));
@@ -3645,7 +3678,7 @@ public class Zone : Spatial, ICardParent, IInspect
 	{
 		for (int i = 0; i < 2 + EClass.rnd(4); i++)
 		{
-			Point point = Zone.<SpawnLostItems>g__GetPos|311_0();
+			Point point = Zone.<SpawnLostItems>g__GetPos|312_0();
 			if (point != null)
 			{
 				if (EClass.rnd(30) == 0)
@@ -3794,7 +3827,7 @@ public class Zone : Spatial, ICardParent, IInspect
 	}
 
 	[CompilerGenerated]
-	internal static Point <SpawnLostItems>g__GetPos|311_0()
+	internal static Point <SpawnLostItems>g__GetPos|312_0()
 	{
 		for (int i = 0; i < 10; i++)
 		{

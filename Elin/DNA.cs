@@ -140,7 +140,7 @@ public class DNA : EClass
 				}
 				else
 				{
-					c.SetFeat(num, c.elements.ValueWithoutLink(num) + (reverse ? -1 : 1), true);
+					c.SetFeat(num, c.elements.ValueWithoutLink(num) + (reverse ? -1 : 1), !reverse);
 				}
 			}
 			else

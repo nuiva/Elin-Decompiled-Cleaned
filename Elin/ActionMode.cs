@@ -945,7 +945,7 @@ public class ActionMode : EClass
 			{
 				this.InputMovement();
 			}
-			if (!EClass.ui.canvas.enabled && EInput.IsAnyKeyDown(true))
+			if (!EClass.ui.canvas.enabled && EInput.IsAnyKeyDown(true, true))
 			{
 				EClass.ui.canvas.enabled = true;
 				EInput.Consume(false, 1);

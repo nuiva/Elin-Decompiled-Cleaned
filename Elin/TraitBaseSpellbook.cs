@@ -155,6 +155,7 @@ public class TraitBaseSpellbook : TraitScroll
 	{
 		bool flag = this.BookType == TraitBaseSpellbook.Type.Spell || this.BookType == TraitBaseSpellbook.Type.RandomSpell;
 		int a = -1;
+		string name = this.owner.Name;
 		if (c.IsPCParty)
 		{
 			Thing thing = this.owner.Thing;
@@ -167,7 +168,7 @@ public class TraitBaseSpellbook : TraitScroll
 		switch (this.BookType)
 		{
 		case TraitBaseSpellbook.Type.Ancient:
-			c.Say("book_decode", c, this.owner, null, null);
+			c.Say("book_decode", c, name, null);
 			if (!c.IsPC)
 			{
 				this.ModCharge(c, -this.owner.c_charges);

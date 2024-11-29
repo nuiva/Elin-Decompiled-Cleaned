@@ -1430,6 +1430,7 @@ public class Chara : Card, IPathfindWalker
 		chara.SetFaith(this.faith);
 		chara.bio = IO.DeepCopy<Biography>(this.bio);
 		chara.hp = Mathf.Max(0, (int)((float)chara.MaxHP * ((float)base.hp / (float)this.MaxHP) * 0.99f));
+		chara.LV = base.LV;
 		chara.isCopy = true;
 		if (base.HaveFur())
 		{
@@ -5017,7 +5018,7 @@ public class Chara : Card, IPathfindWalker
 				}
 			}
 		}
-		else
+		else if (attackSource != AttackSource.DeathSentense)
 		{
 			EClass.player.flags.little_killed = true;
 			EClass.player.little_dead++;

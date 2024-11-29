@@ -1148,6 +1148,7 @@ public class FactionBranch : EClass
 	{
 		c.ClearBed(null);
 		c.memberType = type;
+		this.RefreshEfficiency();
 		c.RefreshWorkElements(this.elements);
 		this.policies.Validate();
 	}

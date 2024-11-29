@@ -14,24 +14,29 @@ public class ZonePreEnterOnCompleteQuestInstance : ZonePreEnterEvent
 		Chara chara = EClass._map.FindChara(this.uidClient);
 		if (chara == null)
 		{
-			string[] array = new string[7];
-			array[0] = this.uidClient.ToString();
-			array[1] = "/";
-			array[2] = this.uidQuest.ToString();
-			array[3] = "/";
-			array[4] = this.fail.ToString();
-			array[5] = "/";
-			int num = 6;
-			Quest quest2 = quest;
-			array[num] = ((quest2 != null) ? quest2.ToString() : null);
-			Debug.Log(string.Concat(array));
-			string str = "exception: quest not found:";
-			Chara chara2 = chara;
-			string str2 = (chara2 != null) ? chara2.ToString() : null;
-			string str3 = "/";
-			Quest quest3 = (chara != null) ? chara.quest : null;
-			Debug.LogError(str + str2 + str3 + ((quest3 != null) ? quest3.ToString() : null));
-			return;
+			chara = EClass._map.deadCharas.Find((Chara c) => c.uid == this.uidClient);
+			if (chara == null)
+			{
+				string[] array = new string[7];
+				array[0] = this.uidClient.ToString();
+				array[1] = "/";
+				array[2] = this.uidQuest.ToString();
+				array[3] = "/";
+				array[4] = this.fail.ToString();
+				array[5] = "/";
+				int num = 6;
+				Quest quest2 = quest;
+				array[num] = ((quest2 != null) ? quest2.ToString() : null);
+				Debug.Log(string.Concat(array));
+				string str = "exception: quest not found:";
+				Chara chara2 = chara;
+				string str2 = (chara2 != null) ? chara2.ToString() : null;
+				string str3 = "/";
+				Quest quest3 = (chara != null) ? chara.quest : null;
+				Debug.LogError(str + str2 + str3 + ((quest3 != null) ? quest3.ToString() : null));
+				return;
+			}
+			chara.Revive(null, false);
 		}
 		if (chara.quest == null)
 		{

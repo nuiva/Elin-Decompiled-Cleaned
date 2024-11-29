@@ -39,7 +39,7 @@ public class TraitFigure : Trait
 		{
 			return;
 		}
-		RenderRow renderRow = EClass.sources.charas.map[this.owner.c_idRefCard];
+		RenderRow renderRow = EClass.sources.charas.map.TryGetValue(this.owner.c_idRefCard, null) ?? EClass.sources.charas.map["putty"];
 		Transform transform = b.Attach<Transform>("figure", false);
 		renderRow.SetImage(transform.GetChild(0).GetComponent<Image>(), null, 0, false, 0, 0);
 	}

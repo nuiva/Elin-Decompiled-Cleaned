@@ -64,19 +64,23 @@ public class SpatialManager : EClass
 	{
 		if (EClass.debug.returnAnywhere)
 		{
-			return (from Zone a in 
+			List<Zone> list = (from Zone a in 
 				from a in this.map.Values
 				where a is Zone
 				select a
 			where a != EClass._zone && (a.IsReturnLocation || a.IsPCFaction || (!(a is Zone_Field) && !a.IsInstance && !a.isRandomSite)) && a.parent == EClass.world.region && !a.source.tag.Contains("closed")
 			select a).ToList<Zone>();
+			list.Sort((Zone a, Zone b) => a.GetSortVal() - b.GetSortVal());
+			return list;
 		}
-		return (from Zone a in 
+		List<Zone> list2 = (from Zone a in 
 			from a in this.map.Values
 			where a is Zone
 			select a
 		where a != EClass._zone && a.IsReturnLocation && a.GetTopZone().visitCount > 0 && (a.GetTopZone().FindDeepestZone() == a || EClass.pc.homeZone == a)
 		select a).ToList<Zone>();
+		list2.Sort((Zone a, Zone b) => a.GetSortVal() - b.GetSortVal());
+		return list2;
 	}
 
 	public List<Zone> Zones

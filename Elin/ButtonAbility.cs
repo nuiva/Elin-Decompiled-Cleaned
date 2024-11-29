@@ -194,7 +194,6 @@ public class ButtonAbility : UIButton, IMouseHint
 					return;
 				}
 				EClass.pc.UseAbility(act.source.alias, t, EClass.pc.pos, false);
-				Debug.Log(t.IsIdentified.ToString() + "/" + ((t != null) ? t.ToString() : null));
 				int count = count;
 				count++;
 				first = false;

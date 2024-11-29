@@ -57,6 +57,7 @@ public class Party : EClass
 		if (c.homeBranch != null)
 		{
 			c.RefreshWorkElements(c.homeBranch.elements);
+			c.homeBranch.RefreshEfficiency();
 			c.homeBranch.policies.Validate();
 			if (c.homeBranch.owner.map != null)
 			{
@@ -76,6 +77,10 @@ public class Party : EClass
 		this.uidMembers.Remove(c.uid);
 		c.party = null;
 		c.SetDirtySpeed();
+		if (c.homeBranch != null)
+		{
+			c.homeBranch.RefreshEfficiency();
+		}
 		c.RefreshWorkElements(null);
 		WidgetRoster.SetDirty();
 	}

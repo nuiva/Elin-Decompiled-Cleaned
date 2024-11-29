@@ -616,7 +616,7 @@ public class Feat : Element
 		if (row.category == "resist")
 		{
 			int num = 0;
-			@ref = ((a > 0) ? "+" : "-").Repeat(Mathf.Clamp(a / 5 + num, 1, 5));
+			@ref = ((a > 0) ? "+" : "-").Repeat(Mathf.Clamp(Mathf.Abs(a) / 5 + num, 1, 5));
 			this.<Apply>g__Note|17_0("modValueRes".lang(row.GetName(), @ref, null, null, null), ref A_3);
 			return;
 		}

@@ -557,14 +557,14 @@ public class Thing : Card
 		}
 		if (!base.c_idRefCard.IsEmpty() && this.trait.RefCardName != RefCardName.None)
 		{
-			string text6 = base.c_altName.IsEmpty(EClass.sources.cards.map[base.c_idRefCard].GetName());
+			string text6 = base.c_altName.IsEmpty(base.refCard.GetName());
 			if (!base.c_idRefCard2.IsEmpty())
 			{
-				text6 = "_and".lang(text6, base.c_altName2.IsEmpty(EClass.sources.cards.map[base.c_idRefCard2].GetName()), null, null, null);
+				text6 = "_and".lang(text6, base.c_altName2.IsEmpty(base.refCard2.GetName()), null, null, null);
 			}
 			if (text6 == "*r")
 			{
-				string text7 = EClass.sources.cards.map[base.c_idRefCard].GetText("aka", false);
+				string text7 = base.refCard.GetText("aka", false);
 				if (!text7.IsEmpty())
 				{
 					text = "_of".lang(text7, text, null, null, null);

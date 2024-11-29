@@ -389,6 +389,7 @@ public class Core : BaseCore
 			}
 			EInput.Consume(false, 1);
 			EInput.dragHack = 0f;
+			EInput.DisableIME();
 		}
 	}
 

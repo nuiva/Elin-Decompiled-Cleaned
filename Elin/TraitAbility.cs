@@ -46,7 +46,8 @@ public class TraitAbility : TraitCatalyst
 		{
 			return;
 		}
-		s = EClass.sources.elements.alias[this.owner.c_idAbility].GetName();
+		SourceElement.Row row = EClass.sources.elements.alias.TryGetValue(this.owner.c_idAbility, null);
+		s = (((row != null) ? row.GetName() : null) ?? "???");
 	}
 
 	public override void SetMainText(UIText t, bool hotitem)

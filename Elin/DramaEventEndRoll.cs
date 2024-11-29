@@ -34,7 +34,7 @@ public class DramaEventEndRoll : DramaEvent
 			}
 			if (this.list.dsv.contentAnchoredPosition <= -this.list.dsv.contentSize + this.list.dsv.viewportSize + 1f)
 			{
-				if ((!EInput.rightMouse.pressedLong || !Application.isEditor) && EInput.IsAnyKeyDown(true))
+				if ((!EInput.rightMouse.pressedLong || !Application.isEditor) && EInput.IsAnyKeyDown(true, true))
 				{
 					return true;
 				}

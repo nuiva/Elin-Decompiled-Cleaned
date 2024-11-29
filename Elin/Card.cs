@@ -1788,11 +1788,19 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 	{
 		get
 		{
+			CardRow result;
 			if (!this.c_idRefCard.IsEmpty())
 			{
-				return EClass.sources.cards.map[this.c_idRefCard];
+				if ((result = EClass.sources.cards.map.TryGetValue(this.c_idRefCard, null)) == null)
+				{
+					return EClass.sources.cards.map["ash3"];
+				}
 			}
-			return null;
+			else
+			{
+				result = null;
+			}
+			return result;
 		}
 	}
 
@@ -1800,11 +1808,19 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 	{
 		get
 		{
+			CardRow result;
 			if (!this.c_idRefCard2.IsEmpty())
 			{
-				return EClass.sources.cards.map[this.c_idRefCard2];
+				if ((result = EClass.sources.cards.map.TryGetValue(this.c_idRefCard2, null)) == null)
+				{
+					return EClass.sources.cards.map["ash3"];
+				}
 			}
-			return null;
+			else
+			{
+				result = null;
+			}
+			return result;
 		}
 	}
 
@@ -5158,7 +5174,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 		{
 			return c.c_altName;
 		}
-		SourceChara.Row row = EClass.sources.cards.map[c.c_idRefCard] as SourceChara.Row;
+		SourceChara.Row row = c.refCard as SourceChara.Row;
 		if (row == null || !row.isChara)
 		{
 			return c.c_altName;

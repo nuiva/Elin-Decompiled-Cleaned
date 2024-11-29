@@ -31,6 +31,10 @@ public class Ability : Act
 		if (!c.IsPC)
 		{
 			num = Mathf.Max(num, c.LV * 6 + 30);
+			if (c.IsPCFactionOrMinion && !base.source.aliasParent.IsEmpty())
+			{
+				num = Mathf.Max(num, c.Evalue(base.source.aliasParent) * 4 + 30);
+			}
 		}
 		num = EClass.curve(num, 400, 100, 75);
 		if (this is Spell)

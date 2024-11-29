@@ -280,6 +280,22 @@ public class ActEffect : EClass
 								}
 							}
 							Chara chara = CC.isChara ? CC.Chara : ((actref.refThing != null) ? EClass._map.FindChara(actref.refThing.c_uidRefCard) : null);
+							if (c.IsMultisize)
+							{
+								if (id <= EffectId.Meteor)
+								{
+									if (id - EffectId.Ball > 2 && id != EffectId.Meteor)
+									{
+										goto IL_BB5;
+									}
+								}
+								else if (id != EffectId.Earthquake && id != EffectId.Suicide)
+								{
+									goto IL_BB5;
+								}
+								num4 /= 2;
+							}
+							IL_BB5:
 							c.DamageHP(num4, e.id, power * num / 100, AttackSource.None, chara ?? CC, true);
 							if (id == EffectId.Explosive && CC.trait is TraitCookerMicrowave)
 							{

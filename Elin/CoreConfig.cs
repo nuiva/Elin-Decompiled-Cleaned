@@ -41,12 +41,12 @@ public class CoreConfig : EClass
 
 	public static bool Exist()
 	{
-		return File.Exists(CoreConfig.path) && !EClass.debug.useNewConfig;
+		return File.Exists(CoreConfig.path) && (!EClass.debug.useNewConfig || !Application.isEditor);
 	}
 
 	public static CoreConfig TryLoadConfig()
 	{
-		if (!File.Exists(CoreConfig.path) || EClass.debug.useNewConfig)
+		if (!File.Exists(CoreConfig.path) || (EClass.debug.useNewConfig && Application.isEditor))
 		{
 			return null;
 		}
@@ -89,7 +89,7 @@ public class CoreConfig : EClass
 			Debug.Log("Creating new config.");
 			CoreConfig coreConfig = EClass.core.config = IO.DeepCopy<CoreConfig>(EClass.setting.config);
 			coreConfig.SetLang(EClass.core.langCode);
-			if (!EClass.debug.useNewConfig)
+			if (!Application.isEditor || !EClass.debug.useNewConfig)
 			{
 				coreConfig.Save();
 			}
