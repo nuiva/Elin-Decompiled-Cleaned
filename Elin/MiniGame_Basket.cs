@@ -42,6 +42,11 @@ public class MiniGame_Basket : ModMinigame<Shooter>
 		EClass.scene.audioListener.enabled = false;
 	}
 
+	public override void SlidePosition(float w)
+	{
+		this.game.transCanvas.Rect().anchoredPosition = new Vector2(w / 2f, 0f);
+	}
+
 	public override void OnDeactivate()
 	{
 		base.Kill();

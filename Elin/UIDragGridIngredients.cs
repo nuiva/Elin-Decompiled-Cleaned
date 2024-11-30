@@ -35,8 +35,7 @@ public class UIDragGridIngredients : EMono
 	{
 		Debug.Log("Refreshing uiDragGridIngredients");
 		List<Thing> list = new List<Thing>();
-		bool allowStockIngredients = this.layer.owner.AllowStockIngredients;
-		if ((EMono._zone.IsPCFaction || EMono._zone is Zone_Tent) && allowStockIngredients)
+		if (this.layer.owner.AllowStockIngredients && !this.layer.owner.owner.c_isDisableStockUse)
 		{
 			foreach (Thing thing in EMono._map.Stocked.Things)
 			{

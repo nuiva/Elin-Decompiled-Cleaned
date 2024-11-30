@@ -989,6 +989,18 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 		}
 	}
 
+	public bool c_isDisableStockUse
+	{
+		get
+		{
+			return base.GetInt(122, null) != 0;
+		}
+		set
+		{
+			base.SetInt(122, value ? 1 : 0);
+		}
+	}
+
 	public int c_lightColor
 	{
 		get
@@ -3243,7 +3255,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 				return thing;
 			}
 		}
-		Card.<>c__DisplayClass689_0 CS$<>8__locals1 = new Card.<>c__DisplayClass689_0();
+		Card.<>c__DisplayClass692_0 CS$<>8__locals1 = new Card.<>c__DisplayClass692_0();
 		t.isNPCProperty = false;
 		t.isGifted = false;
 		CS$<>8__locals1.count = 0;
@@ -3890,7 +3902,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 
 	public void DamageHP(int dmg, int ele, int eleP = 100, AttackSource attackSource = AttackSource.None, Card origin = null, bool showEffect = true)
 	{
-		Card.<>c__DisplayClass730_0 CS$<>8__locals1 = new Card.<>c__DisplayClass730_0();
+		Card.<>c__DisplayClass733_0 CS$<>8__locals1 = new Card.<>c__DisplayClass733_0();
 		CS$<>8__locals1.<>4__this = this;
 		CS$<>8__locals1.dmg = dmg;
 		CS$<>8__locals1.origin = origin;
@@ -4711,13 +4723,13 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 			{
 				i = 10;
 			}
-			if (this.<SpawnLoot>g__chance|735_0(i))
+			if (this.<SpawnLoot>g__chance|738_0(i))
 			{
 				Thing thing = ThingGen.Create("figure", -1, -1);
 				thing.MakeFigureFrom(this.id);
 				list.Add(thing);
 			}
-			if (this.<SpawnLoot>g__chance|735_0(i))
+			if (this.<SpawnLoot>g__chance|738_0(i))
 			{
 				Thing thing2 = ThingGen.Create("figure3", -1, -1);
 				thing2.MakeFigureFrom(this.id);
@@ -4759,7 +4771,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 			}
 			list.Add(thing3);
 		}
-		if (!this.IsPCFaction && this.<SpawnLoot>g__chance|735_0(200))
+		if (!this.IsPCFaction && this.<SpawnLoot>g__chance|738_0(200))
 		{
 			list.Add(this.Chara.MakeGene(null));
 		}
@@ -4776,11 +4788,11 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 			}
 			if (race.IsMachine)
 			{
-				if (this.<SpawnLoot>g__chance|735_0(20))
+				if (this.<SpawnLoot>g__chance|738_0(20))
 				{
 					list.Add(ThingGen.Create("microchip", -1, -1));
 				}
-				if (this.<SpawnLoot>g__chance|735_0(15))
+				if (this.<SpawnLoot>g__chance|738_0(15))
 				{
 					list.Add(ThingGen.Create("battery", -1, -1));
 				}
@@ -4789,20 +4801,20 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 			{
 				if (race.IsAnimal)
 				{
-					if (this.<SpawnLoot>g__chance|735_0(15))
+					if (this.<SpawnLoot>g__chance|738_0(15))
 					{
 						list.Add(ThingGen.Create("fang", -1, -1));
 					}
-					if (this.<SpawnLoot>g__chance|735_0(10))
+					if (this.<SpawnLoot>g__chance|738_0(10))
 					{
 						list.Add(ThingGen.Create("skin", -1, -1));
 					}
 				}
-				if (this.<SpawnLoot>g__chance|735_0(20))
+				if (this.<SpawnLoot>g__chance|738_0(20))
 				{
 					list.Add(ThingGen.Create("offal", -1, -1));
 				}
-				if (this.<SpawnLoot>g__chance|735_0(20))
+				if (this.<SpawnLoot>g__chance|738_0(20))
 				{
 					list.Add(ThingGen.Create("heart", -1, -1));
 				}
@@ -5139,11 +5151,11 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 	{
 		Card card = c1;
 		Card card2 = c2;
-		if (Card.<MakeFoodRef>g__IsIgnoreName|739_0(card))
+		if (Card.<MakeFoodRef>g__IsIgnoreName|742_0(card))
 		{
 			card = null;
 		}
-		if (Card.<MakeFoodRef>g__IsIgnoreName|739_0(card2))
+		if (Card.<MakeFoodRef>g__IsIgnoreName|742_0(card2))
 		{
 			card2 = null;
 		}
@@ -6021,7 +6033,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 				{
 					Thing thing = TraitSeed.MakeRandomSeed(true).SetNum(Mathf.Min(this.Num, 3));
 					card.AddCard(thing);
-					if (!this.<Decay>g__IsParentLocked|806_0())
+					if (!this.<Decay>g__IsParentLocked|809_0())
 					{
 						this.GetRootCard().Say("seed_rot", this.GetRootCard(), this, thing.Name, null);
 					}
@@ -6034,7 +6046,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 				}
 				else if (this.GetRootCard() == EClass.pc)
 				{
-					if (!this.<Decay>g__IsParentLocked|806_0())
+					if (!this.<Decay>g__IsParentLocked|809_0())
 					{
 						EClass.pc.Say("rotInv", this, EClass.pc, null, null);
 					}
@@ -6048,7 +6060,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 		}
 		else if (this.decay < num2 && this.decay + a >= num2 && this.GetRootCard() == EClass.pc)
 		{
-			if (!this.<Decay>g__IsParentLocked|806_0())
+			if (!this.<Decay>g__IsParentLocked|809_0())
 			{
 				EClass.pc.Say("rottingInv", this, EClass.pc, null, null);
 			}
@@ -7016,7 +7028,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 			int dist = 99;
 			this.ForeachPoint(delegate(Point p, bool main)
 			{
-				int num = Card.<Dist>g__DistMulti|843_0(p, c);
+				int num = Card.<Dist>g__DistMulti|846_0(p, c);
 				if (num < dist)
 				{
 					dist = num;
@@ -7024,7 +7036,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 			});
 			return dist;
 		}
-		return Card.<Dist>g__DistMulti|843_0(this.pos, c);
+		return Card.<Dist>g__DistMulti|846_0(this.pos, c);
 	}
 
 	public int Dist(Point p)
@@ -7227,7 +7239,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 	}
 
 	[CompilerGenerated]
-	private bool <SpawnLoot>g__chance|735_0(int i)
+	private bool <SpawnLoot>g__chance|738_0(int i)
 	{
 		i = i * 100 / (100 + EClass.player.codex.GetOrCreate(this.id).BonusDropLv * 10);
 		if (i < 1)
@@ -7238,7 +7250,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 	}
 
 	[CompilerGenerated]
-	internal static bool <MakeFoodRef>g__IsIgnoreName|739_0(Card c)
+	internal static bool <MakeFoodRef>g__IsIgnoreName|742_0(Card c)
 	{
 		if (c == null)
 		{
@@ -7249,13 +7261,13 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 	}
 
 	[CompilerGenerated]
-	private bool <Decay>g__IsParentLocked|806_0()
+	private bool <Decay>g__IsParentLocked|809_0()
 	{
 		return this.parent is Thing && (this.parent as Thing).c_lockLv > 0;
 	}
 
 	[CompilerGenerated]
-	internal static int <Dist>g__DistMulti|843_0(Point p1, Card c)
+	internal static int <Dist>g__DistMulti|846_0(Point p1, Card c)
 	{
 		if (!c.IsMultisize)
 		{

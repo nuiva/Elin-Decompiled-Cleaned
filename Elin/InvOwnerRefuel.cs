@@ -30,7 +30,7 @@ public class InvOwnerRefuel : InvOwnerDraglet
 	{
 		get
 		{
-			return true;
+			return EClass._zone.IsPCFaction || EClass._zone is Zone_Tent;
 		}
 	}
 

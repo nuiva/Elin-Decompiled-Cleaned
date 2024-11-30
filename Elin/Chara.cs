@@ -1496,7 +1496,7 @@ public class Chara : Card, IPathfindWalker
 		{
 			if (this.dirtySpeed)
 			{
-				this.RefreshSpeed();
+				this.RefreshSpeed(null);
 			}
 			return this._Speed;
 		}
@@ -1511,11 +1511,11 @@ public class Chara : Card, IPathfindWalker
 		}
 	}
 
-	public void RefreshSpeed()
+	public void RefreshSpeed(Element.BonusInfo info = null)
 	{
 		if (this.ride != null && !this.ride.IsDeadOrSleeping)
 		{
-			this.ride.RefreshSpeed();
+			this.ride.RefreshSpeed(null);
 			this._Speed = this.ride._Speed;
 		}
 		else if (this.host != null)
@@ -1550,15 +1550,31 @@ public class Chara : Card, IPathfindWalker
 			{
 			case 1:
 				num -= 10;
+				if (info != null)
+				{
+					info.AddFix(-10, this.burden.GetPhaseStr());
+				}
 				break;
 			case 2:
 				num -= 20;
+				if (info != null)
+				{
+					info.AddFix(-20, this.burden.GetPhaseStr());
+				}
 				break;
 			case 3:
 				num -= 30;
+				if (info != null)
+				{
+					info.AddFix(-30, this.burden.GetPhaseStr());
+				}
 				break;
 			case 4:
 				num -= (this.IsPC ? 50 : 100);
+				if (info != null)
+				{
+					info.AddFix(this.IsPC ? -50 : -100, this.burden.GetPhaseStr());
+				}
 				break;
 			}
 			if (this.IsPC)
@@ -1569,11 +1585,19 @@ public class Chara : Card, IPathfindWalker
 					if (phase == 1)
 					{
 						num -= 10;
+						if (info != null)
+						{
+							info.AddFix(-10, this.stamina.GetPhaseStr());
+						}
 					}
 				}
 				else
 				{
 					num -= 20;
+					if (info != null)
+					{
+						info.AddFix(-20, this.stamina.GetPhaseStr());
+					}
 				}
 				phase = this.sleepiness.GetPhase();
 				if (phase != 2)
@@ -1581,34 +1605,62 @@ public class Chara : Card, IPathfindWalker
 					if (phase == 3)
 					{
 						num -= 20;
+						if (info != null)
+						{
+							info.AddFix(-20, this.sleepiness.GetPhaseStr());
+						}
 					}
 				}
 				else
 				{
 					num -= 10;
+					if (info != null)
+					{
+						info.AddFix(-10, this.sleepiness.GetPhaseStr());
+					}
 				}
 				switch (this.hunger.GetPhase())
 				{
 				case 3:
 				case 4:
 					num -= 10;
+					if (info != null)
+					{
+						info.AddFix(-10, this.hunger.GetPhaseStr());
+					}
 					break;
 				case 5:
 					num -= 30;
+					if (info != null)
+					{
+						info.AddFix(-30, this.hunger.GetPhaseStr());
+					}
 					break;
 				}
 				num += EClass.player.lastEmptyAlly * base.Evalue(1646);
+				if (info != null)
+				{
+					info.AddFix(EClass.player.lastEmptyAlly * base.Evalue(1646), EClass.sources.elements.map[1646].GetName());
+				}
 			}
 			if (this.IsPCParty && EClass.player.lastEmptyAlly < 0)
 			{
 				num += EClass.player.lastEmptyAlly * 10 - 10;
+				if (info != null)
+				{
+					info.AddFix(EClass.player.lastEmptyAlly * 10 - 10, "exceedParty".lang());
+				}
+			}
+		}
+		if (this.HasCondition<ConGravity>())
+		{
+			num -= 30;
+			if (info != null)
+			{
+				info.AddFix(-30, this.GetCondition<ConGravity>().Name);
 			}
 		}
 		this._Speed = this._Speed * num / 100;
-		if (this.HasCondition<ConGravity>())
-		{
-			this._Speed = this._Speed * 2 / 3;
-		}
 		if (this._Speed < 10)
 		{
 			this._Speed = 10;

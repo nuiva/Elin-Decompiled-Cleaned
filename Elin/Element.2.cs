@@ -252,6 +252,14 @@ public class Element : EClass
 		}
 	}
 
+	public virtual bool ShowBonuses
+	{
+		get
+		{
+			return true;
+		}
+	}
+
 	public virtual string ShortName
 	{
 		get
@@ -467,7 +475,7 @@ public class Element : EClass
 
 	public void _WriteNote(UINote n, Chara c, Act act)
 	{
-		Element.<>c__DisplayClass101_0 CS$<>8__locals1;
+		Element.<>c__DisplayClass103_0 CS$<>8__locals1;
 		CS$<>8__locals1.c = c;
 		CS$<>8__locals1.e = CS$<>8__locals1.c.elements.GetOrCreateElement(act.source.id);
 		Act.Cost cost = CS$<>8__locals1.e.GetCost(CS$<>8__locals1.c);
@@ -503,7 +511,7 @@ public class Element : EClass
 				}
 				else
 				{
-					string text3 = text2.Replace("#calc", Element.<_WriteNote>g__Calc|101_0(ref CS$<>8__locals1));
+					string text3 = text2.Replace("#calc", Element.<_WriteNote>g__Calc|103_0(ref CS$<>8__locals1));
 					if (!this.source.aliasRef.IsEmpty())
 					{
 						text3 = text3.Replace("#ele", EClass.sources.elements.alias[this.source.aliasRef].GetName().ToLower());
@@ -560,6 +568,10 @@ public class Element : EClass
 			n.Space(6, 1);
 		}
 		int num = this.vLink;
+		if (owner.Chara != null && owner.Chara.IsPCFaction)
+		{
+			num += EClass.pc.faction.charaElements.Value(this.id);
+		}
 		bool flag = this.ShowValue;
 		bool flag2 = this.ShowRelativeAttribute;
 		if (this.source.category == "landfeat")
@@ -616,6 +628,15 @@ public class Element : EClass
 		if (onWriteNote != null)
 		{
 			onWriteNote(n);
+		}
+		if (this.ShowBonuses && owner.Chara != null)
+		{
+			new Element.BonusInfo
+			{
+				ele = this,
+				n = n,
+				c = owner.Chara
+			}.WriteNote();
 		}
 		UIText.globalSizeMod = 0;
 	}
@@ -816,7 +837,7 @@ public class Element : EClass
 	}
 
 	[CompilerGenerated]
-	internal static string <_WriteNote>g__Calc|101_0(ref Element.<>c__DisplayClass101_0 A_0)
+	internal static string <_WriteNote>g__Calc|103_0(ref Element.<>c__DisplayClass103_0 A_0)
 	{
 		Dice dice = Dice.Create(A_0.e, A_0.c);
 		if (dice == null)
@@ -894,4 +915,130 @@ public class Element : EClass
 	public static List<SourceElement.Row> ListElements = new List<SourceElement.Row>();
 
 	public static List<SourceElement.Row> ListAttackElements = new List<SourceElement.Row>();
+
+	public class BonusInfo
+	{
+		public void AddText(int v, string text, string textBad = null)
+		{
+			if (v == 0)
+			{
+				return;
+			}
+			string text2 = text;
+			if (!textBad.IsEmpty() && v < 0)
+			{
+				text2 = textBad;
+			}
+			if (this.first)
+			{
+				this.first = false;
+				this.n.Space(8, 1);
+			}
+			this.total += v;
+			this.n.AddText(string.Concat(new string[]
+			{
+				"_bullet".lang(),
+				text2,
+				" ",
+				(v > 0) ? "+" : "",
+				v.ToString()
+			}), (v > 0) ? FontColor.Good : FontColor.Bad);
+		}
+
+		public void AddFix(int v, string text)
+		{
+			if (v == 0)
+			{
+				return;
+			}
+			if (this.first)
+			{
+				this.first = false;
+				this.n.Space(8, 1);
+			}
+			this.n.AddText(string.Concat(new string[]
+			{
+				"_bullet".lang(),
+				text,
+				" ",
+				(v > 0) ? "+" : "",
+				v.ToString(),
+				"%"
+			}), (v > 0) ? FontColor.Good : FontColor.Bad);
+		}
+
+		public void WriteNote()
+		{
+			int id = this.ele.id;
+			int num = 0;
+			foreach (BodySlot bodySlot in this.c.body.slots)
+			{
+				if (bodySlot.elementId != 44 && bodySlot.thing != null && ((id != 67 && id != 66) || bodySlot.elementId != 35))
+				{
+					Element orCreateElement = bodySlot.thing.elements.GetOrCreateElement(id);
+					if (orCreateElement != null && !orCreateElement.IsGlobalElement)
+					{
+						num += orCreateElement.Value;
+					}
+				}
+			}
+			this.AddText(num, "equipment".lang(), null);
+			if (this.c.IsPCFaction)
+			{
+				Element element = EClass.pc.faction.charaElements.GetElement(id);
+				if (element != null)
+				{
+					this.AddText(element.Value, "sub_faction".lang(), null);
+				}
+			}
+			foreach (Condition condition in this.c.conditions)
+			{
+				if (condition.elements != null)
+				{
+					this.AddText(condition.elements.Value(id), condition.Name, null);
+				}
+			}
+			if (this.c.tempElements != null)
+			{
+				this.AddText(this.c.tempElements.Value(id), "tempStrengthen".lang(), "tempWeaken".lang());
+			}
+			try
+			{
+				if (this.c.faithElements != null)
+				{
+					Element element2 = this.c.elements.GetElement("featGod_" + this.c.faith.id + "1");
+					if (element2 != null)
+					{
+						this.AddText(this.c.faithElements.Value(id), element2.Name, null);
+					}
+				}
+			}
+			catch
+			{
+			}
+			int value = this.ele.Value;
+			int num2 = this.ele.ValueWithoutLink + this.total;
+			foreach (Element element3 in this.c.elements.dict.Values)
+			{
+				if (element3.HasTag("multiplier") && element3.source.aliasRef == this.ele.source.alias)
+				{
+					this.AddFix(element3.Value, element3.Name);
+				}
+			}
+			if (id == 79)
+			{
+				this.c.RefreshSpeed(this);
+			}
+		}
+
+		public Element ele;
+
+		public UINote n;
+
+		public Chara c;
+
+		public bool first = true;
+
+		public int total;
+	}
 }

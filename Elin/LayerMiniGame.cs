@@ -5,6 +5,7 @@ public class LayerMiniGame : ELayer
 {
 	public override void OnAfterInit()
 	{
+		LayerMiniGame.Instance = this;
 		ELayer.pc.SetNoGoal();
 		EInput.Consume(true, 1);
 		ELayer.ui.layerFloat.SetActive(false);
@@ -58,6 +59,10 @@ public class LayerMiniGame : ELayer
 		this.mini.balance.lastCoin = ELayer.pc.GetCurrency("casino_coin");
 		this.mini.balance.changeCoin = 0;
 		this.mini.OnActivate();
+		if (WidgetSideScreen.Instance)
+		{
+			WidgetSideScreen.Instance.OnChangeResolution();
+		}
 	}
 
 	public override void OnKill()
@@ -76,6 +81,8 @@ public class LayerMiniGame : ELayer
 			WidgetEquip.Instance.SetActive(true);
 		}
 	}
+
+	public static LayerMiniGame Instance;
 
 	public MiniGame mini;
 

@@ -1,5 +1,4 @@
 <center>
-# Elin Modding Documentation
 
 [![Elin](https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/2135150/header.jpg?t=1732238581)](https://store.steampowered.com/app/2135150/Elin/)  
 

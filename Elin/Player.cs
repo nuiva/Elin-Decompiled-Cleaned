@@ -424,7 +424,7 @@ public class Player : EClass
 			this.lastEmptyAlly = num;
 			foreach (Chara chara in EClass.pc.party.members)
 			{
-				chara.RefreshSpeed();
+				chara.RefreshSpeed(null);
 			}
 		}
 	}

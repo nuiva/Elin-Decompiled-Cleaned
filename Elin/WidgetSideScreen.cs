@@ -42,12 +42,18 @@ public class WidgetSideScreen : Widget
 		Layer.blurStopInstance = base.transform;
 		this.Refresh();
 		this.OnChangeResolution();
+		WidgetSideScreen.Instance = this;
 	}
 
 	public override void OnSetContextMenu(UIContextMenu m)
 	{
 		SkinConfig skin = base.config.skin;
 		UIContextMenu uicontextMenu = m.AddChild("setting");
+		uicontextMenu.AddToggle("alignUI", this.extra.alignUI, delegate(bool a)
+		{
+			this.extra.alignUI = !this.extra.alignUI;
+			this.OnChangeResolution();
+		});
 		uicontextMenu.AddToggle("reverse", this.extra.reverse, delegate(bool a)
 		{
 			this.extra.reverse = !this.extra.reverse;
@@ -105,6 +111,31 @@ public class WidgetSideScreen : Widget
 			this.imagePic.rectTransform.sizeDelta = new Vector2(num * (float)sprite.texture.width / (float)sprite.texture.height, num);
 			this.imagePic.color = this.bgColor;
 		}
+		if (!this.extra.alignUI)
+		{
+			EMono.ui.rectLayers.anchoredPosition = Vector2.zero;
+			EMono.ui.rectLayers.sizeDelta = Vector2.zero;
+			this.SlideMiniGame(0f);
+			return;
+		}
+		if (this.extra.reverse)
+		{
+			EMono.ui.rectLayers.anchoredPosition = new Vector2(rectTransform.sizeDelta.x / 2f, 0f);
+			EMono.ui.rectLayers.sizeDelta = new Vector2(-rectTransform.sizeDelta.x, 0f);
+			this.SlideMiniGame(rectTransform.sizeDelta.x);
+			return;
+		}
+		EMono.ui.rectLayers.anchoredPosition = new Vector2(-rectTransform.sizeDelta.x / 2f, 0f);
+		EMono.ui.rectLayers.sizeDelta = new Vector2(-rectTransform.sizeDelta.x, 0f);
+		this.SlideMiniGame(-rectTransform.sizeDelta.x);
+	}
+
+	public void SlideMiniGame(float w)
+	{
+		if (LayerMiniGame.Instance)
+		{
+			LayerMiniGame.Instance.mini.SlidePosition(w * EMono.core.uiScale);
+		}
 	}
 
 	private void OnEnable()
@@ -115,7 +146,12 @@ public class WidgetSideScreen : Widget
 	private void OnDisable()
 	{
 		EMono.scene.cam.rect = new Rect(0f, 0f, 1f, 1f);
+		EMono.ui.rectLayers.anchoredPosition = Vector2.zero;
+		EMono.ui.rectLayers.sizeDelta = Vector2.zero;
+		this.SlideMiniGame(0f);
 	}
+
+	public static WidgetSideScreen Instance;
 
 	public Sprite[] sprites;
 
@@ -132,5 +168,7 @@ public class WidgetSideScreen : Widget
 		public int bgColor;
 
 		public bool reverse;
+
+		public bool alignUI;
 	}
 }

@@ -3,6 +3,14 @@ using UnityEngine;
 
 public class Ability : Act
 {
+	public override bool ShowBonuses
+	{
+		get
+		{
+			return false;
+		}
+	}
+
 	public override bool CanLink(ElementContainer owner)
 	{
 		return owner.Card == null && !base.IsGlobalElement;

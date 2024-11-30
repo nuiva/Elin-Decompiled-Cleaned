@@ -95,11 +95,16 @@ public class AttackProcess : EClass
 		else if (this.IsMartial || this.IsMartialWeapon)
 		{
 			this.weaponSkill = this.CC.elements.GetOrCreateElement(100);
+			bool flag2 = this.weapon != null && this.weapon.Evalue(482) > 0;
+			if (flag2)
+			{
+				this.weaponSkill = this.CC.elements.GetOrCreateElement(305);
+			}
 			this.attackType = (this.CC.race.meleeStyle.IsEmpty() ? ((EClass.rnd(2) == 0) ? AttackType.Kick : AttackType.Punch) : this.CC.race.meleeStyle.ToEnum(true));
 			this.dBonus = this.CC.DMG + this.CC.encLV + (int)Mathf.Sqrt((float)Mathf.Max(0, this.CC.STR / 5 + this.weaponSkill.Value / 4));
 			this.dNum = 2 + Mathf.Min(this.weaponSkill.Value / 10, 4);
 			this.dDim = 5 + (int)Mathf.Sqrt((float)Mathf.Max(0, this.weaponSkill.Value / 3));
-			this.dMulti = 0.6f + (float)(this.CC.STR / 2 + this.weaponSkill.Value / 2 + this.CC.Evalue(132) / 2) / 50f;
+			this.dMulti = 0.6f + (float)(this.CC.STR / 2 + this.weaponSkill.Value / 2 + this.CC.Evalue(flag2 ? 304 : 132) / 2) / 50f;
 			this.dMulti += 0.05f * (float)this.CC.Evalue(1400);
 			this.toHitBase = EClass.curve(this.CC.DEX / 3 + this.CC.STR / 3 + this.weaponSkill.Value, 50, 25, 75) + 50;
 			this.toHitFix = this.CC.HIT;
@@ -135,15 +140,15 @@ public class AttackProcess : EClass
 			{
 				this.attackType = this.weapon.source.attackType.ToEnum(true);
 			}
-			bool flag2 = this.IsCane || this.weapon.Evalue(482) > 0;
-			if (flag2)
+			bool flag3 = this.IsCane || this.weapon.Evalue(482) > 0;
+			if (flag3)
 			{
 				this.weaponSkill = this.CC.elements.GetOrCreateElement(305);
 			}
 			this.dBonus = this.CC.DMG + this.CC.encLV + this.weapon.DMG;
 			this.dNum = this.weapon.source.offense[0];
 			this.dDim = this.weapon.c_diceDim;
-			this.dMulti = 0.6f + (float)(this.weaponSkill.GetParent(this.CC).Value + this.weaponSkill.Value / 2 + this.CC.Evalue(flag2 ? 304 : (this.IsRanged ? 133 : 132))) / 50f;
+			this.dMulti = 0.6f + (float)(this.weaponSkill.GetParent(this.CC).Value + this.weaponSkill.Value / 2 + this.CC.Evalue(flag3 ? 304 : (this.IsRanged ? 133 : 132))) / 50f;
 			this.dMulti += 0.05f * (float)this.CC.Evalue(this.IsRanged ? 1404 : 1400);
 			this.toHitBase = EClass.curve((this.IsCane ? this.CC.WIL : this.CC.DEX) / 4 + this.weaponSkill.GetParent(this.CC).Value / 3 + this.weaponSkill.Value, 50, 25, 75) + 50;
 			this.toHitFix = this.CC.HIT + this.weapon.HIT;

@@ -518,7 +518,8 @@ public class ElementContainer : EClass
 
 	public Element GetElement(string alias)
 	{
-		return this.GetElement(EClass.sources.elements.alias[alias].id);
+		SourceElement.Row row = EClass.sources.elements.alias.TryGetValue(alias, null);
+		return this.GetElement((row != null) ? row.id : 0);
 	}
 
 	public Element GetElement(int id)
@@ -590,16 +591,17 @@ public class ElementContainer : EClass
 
 	public List<Element> ListElements(Func<Element, bool> shoudList = null, Comparison<Element> comparison = null)
 	{
-		List<Element> list = new List<Element>();
 		ElementContainer.<>c__DisplayClass55_0 CS$<>8__locals1;
+		CS$<>8__locals1.<>4__this = this;
+		List<Element> list = new List<Element>();
 		CS$<>8__locals1.eles = this.dict.Values.ToList<Element>();
 		if (this.Card != null && this.Card.Chara != null)
 		{
 			if (this.Card.Chara.IsPCFaction)
 			{
-				ElementContainer.<ListElements>g__AddElements|55_0(EClass.pc.faction.charaElements, ref CS$<>8__locals1);
+				this.<ListElements>g__AddElements|55_0(EClass.pc.faction.charaElements, true, ref CS$<>8__locals1);
 			}
-			ElementContainer.<ListElements>g__AddElements|55_0(this.Card.Chara.faithElements, ref CS$<>8__locals1);
+			this.<ListElements>g__AddElements|55_0(this.Card.Chara.faithElements, false, ref CS$<>8__locals1);
 		}
 		foreach (Element element in CS$<>8__locals1.eles)
 		{
@@ -860,7 +862,7 @@ public class ElementContainer : EClass
 	}
 
 	[CompilerGenerated]
-	internal static void <ListElements>g__AddElements|55_0(ElementContainer container, ref ElementContainer.<>c__DisplayClass55_0 A_1)
+	private void <ListElements>g__AddElements|55_0(ElementContainer container, bool isGlobal, ref ElementContainer.<>c__DisplayClass55_0 A_3)
 	{
 		if (container == null)
 		{
@@ -869,7 +871,7 @@ public class ElementContainer : EClass
 		foreach (Element element in container.dict.Values)
 		{
 			bool flag = true;
-			foreach (Element element2 in A_1.eles)
+			foreach (Element element2 in A_3.eles)
 			{
 				if (element.id == element2.id)
 				{
@@ -879,7 +881,15 @@ public class ElementContainer : EClass
 			}
 			if (flag && element.Value != 0)
 			{
-				A_1.eles.Add(element);
+				if (isGlobal)
+				{
+					Element item = this.Card.Chara.elements.CreateElement(element.id);
+					A_3.eles.Add(item);
+				}
+				else
+				{
+					A_3.eles.Add(element);
+				}
 			}
 		}
 	}

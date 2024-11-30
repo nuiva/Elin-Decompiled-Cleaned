@@ -15,7 +15,7 @@ public class ConGravity : BaseDebuff
 		this.owner._isLevitating = false;
 		if (EClass.core.IsGameStarted)
 		{
-			this.owner.RefreshSpeed();
+			this.owner.RefreshSpeed(null);
 		}
 	}
 

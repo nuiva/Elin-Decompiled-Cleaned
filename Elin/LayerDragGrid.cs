@@ -73,6 +73,7 @@ public class LayerDragGrid : LayerBaseCraft
 		this.RebuildLayout(true);
 		this.buttonRefuel.SetActive(owner.ShowFuel);
 		this.buttonAutoRefuel.SetActive(owner.ShowFuel);
+		this.buttonStock.SetActive(owner.AllowStockIngredients);
 		if (owner.CanTargetAlly && ELayer.pc.party.members.Count > 1)
 		{
 			BaseList baseList = this.listAlly;
@@ -113,7 +114,7 @@ public class LayerDragGrid : LayerBaseCraft
 		{
 			this.listAlly.SetActive(false);
 		}
-		Action <>9__6;
+		Action <>9__7;
 		this.buttonRefuel.SetOnClick(delegate
 		{
 			if (!ELayer.pc.HasNoGoal)
@@ -125,9 +126,9 @@ public class LayerDragGrid : LayerBaseCraft
 			this.info.InitFuel(owner.owner);
 			Layer layer = LayerDragGrid.Create(new InvOwnerRefuel(owner.owner, null, CurrencyType.None), true);
 			Action onKill;
-			if ((onKill = <>9__6) == null)
+			if ((onKill = <>9__7) == null)
 			{
-				onKill = (<>9__6 = delegate()
+				onKill = (<>9__7 = delegate()
 				{
 					if (!this.isDestroyed)
 					{
@@ -151,6 +152,13 @@ public class LayerDragGrid : LayerBaseCraft
 			{
 				owner.OnAfterRefuel();
 			}
+		});
+		this.buttonStock.SetOnClick(delegate
+		{
+			SE.Click();
+			owner.owner.c_isDisableStockUse = !owner.owner.c_isDisableStockUse;
+			this.uiIngredients.Refresh();
+			this.RefreshCost();
 		});
 		try
 		{
@@ -187,6 +195,8 @@ public class LayerDragGrid : LayerBaseCraft
 	{
 		this.buttonAutoRefuel.mainText.text = (this.owner.owner.autoRefuel ? "On" : "Off");
 		this.buttonAutoRefuel.icon.SetAlpha(this.owner.owner.autoRefuel ? 1f : 0.4f);
+		this.buttonStock.mainText.text = ((!this.owner.owner.c_isDisableStockUse) ? "On" : "Off");
+		this.buttonStock.icon.SetAlpha((!this.owner.owner.c_isDisableStockUse) ? 1f : 0.4f);
 		this.textFuel.text = ((int)((float)this.owner.owner.c_charges / (float)this.owner.owner.trait.MaxFuel * 100f)).ToString() + "%";
 		int price = this.GetPrice();
 		this.itemCost.transform.parent.SetActive(price != 0);
@@ -506,6 +516,8 @@ public class LayerDragGrid : LayerBaseCraft
 	public UIButton buttonAutoRefuel;
 
 	public UIButton buttonAlly;
+
+	public UIButton buttonStock;
 
 	public InvOwnerDraglet owner;
 

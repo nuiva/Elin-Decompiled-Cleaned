@@ -56,6 +56,10 @@ public class MiniGame
 	{
 	}
 
+	public virtual void SlidePosition(float w)
+	{
+	}
+
 	public void Deactivate()
 	{
 		this.OnDeactivate();

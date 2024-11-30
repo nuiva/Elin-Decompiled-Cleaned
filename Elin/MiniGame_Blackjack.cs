@@ -49,6 +49,11 @@ public class MiniGame_Blackjack : ModMinigame<Blackjack>
 		this.game.Money = this.balance.lastCoin;
 	}
 
+	public override void SlidePosition(float w)
+	{
+		this.game.transCanvas.anchoredPosition = new Vector2(w / 2f, 75f);
+	}
+
 	public override void OnDeactivate()
 	{
 		this.balance.changeCoin = this.game.Money - this.balance.lastCoin;
