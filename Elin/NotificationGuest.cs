@@ -1,38 +1,22 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 public class NotificationGuest : NotificationGlobal
 {
-	public override int idSprite
-	{
-		get
-		{
-			return 3;
-		}
-	}
+	public int index;
 
-	public override bool Visible
-	{
-		get
-		{
-			return this.widget.guests > 0;
-		}
-	}
+	public override int idSprite => 3;
 
-	public override Action<UITooltip> onShowTooltip
+	public override bool Visible => widget.guests > 0;
+
+	public override Action<UITooltip> onShowTooltip => delegate(UITooltip a)
 	{
-		get
-		{
-			return delegate(UITooltip a)
-			{
-				a.textMain.text = "guests".lang() + ": " + this.widget.guests.ToString();
-			};
-		}
-	}
+		a.textMain.text = "guests".lang() + ": " + widget.guests;
+	};
 
 	public override void OnRefresh()
 	{
-		this.text = (this.widget.guests.ToString() ?? "");
+		text = widget.guests.ToString() ?? "";
 	}
 
 	public override void OnClick()
@@ -49,13 +33,11 @@ public class NotificationGuest : NotificationGlobal
 				list.Add(chara);
 			}
 		}
-		this.index++;
-		if (this.index >= list.Count)
+		index++;
+		if (index >= list.Count)
 		{
-			this.index = 0;
+			index = 0;
 		}
-		EClass.screen.Focus(list[this.index]);
+		EClass.screen.Focus(list[index]);
 	}
-
-	public int index;
 }

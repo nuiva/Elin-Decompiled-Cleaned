@@ -1,70 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class GameSetting : ScriptableObject
 {
-	public void ApplyConfig()
-	{
-		CoreConfig.Reset();
-		Core.Instance.OnChangeResolution();
-	}
-
-	public void CopyColors()
-	{
-		this.config.colors = Core.Instance.config.colors;
-	}
-
-	public void Init()
-	{
-		SubPassData.Default = (SubPassData.Current = this.pass.subDfault);
-	}
-
-	public GameSetting.AudioSetting audio;
-
-	public GameSetting.EffectSetting effect;
-
-	public GameSetting.RenderSetting render;
-
-	public GameSetting.PassSetting pass;
-
-	public GameSetting.StartSetting start;
-
-	public GameSetting.UISetting ui;
-
-	public GameSetting.BalanceSetting balance;
-
-	public GameSetting.GenSetting gen;
-
-	public GameSetting.WeatherSetting weather;
-
-	public UD_String_ElementRef elements;
-
-	public int minsPerRegionMove;
-
-	public float secsPerHour;
-
-	public float dayRatioMod;
-
-	public float fovPower;
-
-	public float fovPowerChara;
-
-	public float defaultActPace;
-
-	public float defaultTurbo;
-
-	public int maxGenHeight;
-
-	public bool toolConsumeHP;
-
-	public int defaultMapSize;
-
-	public CoreConfig config;
-
-	[NonSerialized]
-	public Dictionary<string, Vector3> dictEquipOffsets;
-
 	[Serializable]
 	public class TransData
 	{
@@ -92,86 +31,6 @@ public class GameSetting : ScriptableObject
 	[Serializable]
 	public class RenderSetting
 	{
-		public GameSetting.RenderSetting.ZSetting zSetting;
-
-		public GameSetting.RenderSetting.TCSetting tc;
-
-		public GameSetting.RenderSetting.AnimeSetting anime;
-
-		public GameSetting.RenderSetting.ActorSetting actor;
-
-		public Vector3[] charaPos;
-
-		public Vector3[] heldPos;
-
-		public Vector3[] heldPosChara;
-
-		public Vector3[] heldPosChara2;
-
-		public Vector3[] mainHandPos;
-
-		public Vector3[] offHandPos;
-
-		public Vector3[] hatPos;
-
-		public Vector3[] ridePos;
-
-		public Vector3 posShackle;
-
-		public Vector3 posGallows;
-
-		public GameSetting.TransData[] dead;
-
-		public Vector3[] rampFix;
-
-		public Vector3 vFix;
-
-		public Vector3 pccScale;
-
-		public Vector3 waterFix;
-
-		public float thingZ;
-
-		public float laydownZ;
-
-		public float charaZ;
-
-		public float shadowAngle;
-
-		public float tileMarkerZ;
-
-		public float tileMarkerZFloor;
-
-		public float crateHeight;
-
-		public float hangedObjFixZ;
-
-		public Vector3 shadowScale;
-
-		public Vector3 shadowOffset;
-
-		public Vector3 peakFix;
-
-		public Vector3 peakFixBlock;
-
-		public float roomHeightMod;
-
-		public float defCharaHeight;
-
-		public float alphaHair;
-
-		public float shadowStrength;
-
-		public Vector2 freePosFix;
-
-		public AnimationFrame[] animeWalk;
-
-		public UD_String_PaintPosition paintPos;
-
-		public GameSetting.RenderSetting.UD_MapBGSetting bgs;
-
-		public GameSetting.RenderSetting.UD_FogSetting fogs;
-
 		[Serializable]
 		public class ZSetting
 		{
@@ -273,7 +132,7 @@ public class GameSetting : ScriptableObject
 		}
 
 		[Serializable]
-		public class UD_MapBGSetting : UDictionary<MapBG, GameSetting.RenderSetting.MapBGSetting>
+		public class UD_MapBGSetting : UDictionary<MapBG, MapBGSetting>
 		{
 		}
 
@@ -281,6 +140,86 @@ public class GameSetting : ScriptableObject
 		public class UD_FogSetting : UDictionary<FogType, ScreenGradingProfile.Fog>
 		{
 		}
+
+		public ZSetting zSetting;
+
+		public TCSetting tc;
+
+		public AnimeSetting anime;
+
+		public ActorSetting actor;
+
+		public Vector3[] charaPos;
+
+		public Vector3[] heldPos;
+
+		public Vector3[] heldPosChara;
+
+		public Vector3[] heldPosChara2;
+
+		public Vector3[] mainHandPos;
+
+		public Vector3[] offHandPos;
+
+		public Vector3[] hatPos;
+
+		public Vector3[] ridePos;
+
+		public Vector3 posShackle;
+
+		public Vector3 posGallows;
+
+		public TransData[] dead;
+
+		public Vector3[] rampFix;
+
+		public Vector3 vFix;
+
+		public Vector3 pccScale;
+
+		public Vector3 waterFix;
+
+		public float thingZ;
+
+		public float laydownZ;
+
+		public float charaZ;
+
+		public float shadowAngle;
+
+		public float tileMarkerZ;
+
+		public float tileMarkerZFloor;
+
+		public float crateHeight;
+
+		public float hangedObjFixZ;
+
+		public Vector3 shadowScale;
+
+		public Vector3 shadowOffset;
+
+		public Vector3 peakFix;
+
+		public Vector3 peakFixBlock;
+
+		public float roomHeightMod;
+
+		public float defCharaHeight;
+
+		public float alphaHair;
+
+		public float shadowStrength;
+
+		public Vector2 freePosFix;
+
+		public AnimationFrame[] animeWalk;
+
+		public UD_String_PaintPosition paintPos;
+
+		public UD_MapBGSetting bgs;
+
+		public UD_FogSetting fogs;
 	}
 
 	[Serializable]
@@ -351,5 +290,66 @@ public class GameSetting : ScriptableObject
 		public bool eject;
 
 		public Vector2 firePos;
+	}
+
+	public AudioSetting audio;
+
+	public EffectSetting effect;
+
+	public RenderSetting render;
+
+	public PassSetting pass;
+
+	public StartSetting start;
+
+	public UISetting ui;
+
+	public BalanceSetting balance;
+
+	public GenSetting gen;
+
+	public WeatherSetting weather;
+
+	public UD_String_ElementRef elements;
+
+	public int minsPerRegionMove;
+
+	public float secsPerHour;
+
+	public float dayRatioMod;
+
+	public float fovPower;
+
+	public float fovPowerChara;
+
+	public float defaultActPace;
+
+	public float defaultTurbo;
+
+	public int maxGenHeight;
+
+	public bool toolConsumeHP;
+
+	public int defaultMapSize;
+
+	public CoreConfig config;
+
+	[NonSerialized]
+	public Dictionary<string, Vector3> dictEquipOffsets;
+
+	public void ApplyConfig()
+	{
+		CoreConfig.Reset();
+		Core.Instance.OnChangeResolution();
+	}
+
+	public void CopyColors()
+	{
+		config.colors = Core.Instance.config.colors;
+	}
+
+	public void Init()
+	{
+		SubPassData.Default = (SubPassData.Current = pass.subDfault);
 	}
 }

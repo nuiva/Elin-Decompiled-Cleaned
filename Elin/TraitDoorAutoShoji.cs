@@ -1,20 +1,12 @@
-﻿using System;
-
 public class TraitDoorAutoShoji : TraitDoorAuto
 {
-	public override string idSound
-	{
-		get
-		{
-			return "doorShoji";
-		}
-	}
+	public override string idSound => "doorShoji";
 
 	public override void ToggleDoor(bool sound = true, bool refresh = true)
 	{
 		if (sound)
 		{
-			this.owner.Say("open_shoji", null, null);
+			owner.Say("open_shoji");
 		}
 		base.ToggleDoor(sound, refresh);
 	}

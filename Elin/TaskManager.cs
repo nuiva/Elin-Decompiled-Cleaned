@@ -1,50 +1,10 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class TaskManager : EClass
 {
-	public void OnLoad()
-	{
-		this.designations.OnLoad();
-	}
-
-	[JsonProperty]
-	public TaskManager.Designations designations = new TaskManager.Designations();
-
-	public UndoManager undo = new UndoManager();
-
 	public class Designations : EClass
 	{
-		public void OnLoad()
-		{
-			this.mine.OnLoad();
-			this.dig.OnLoad();
-			this.cut.OnLoad();
-			this.harvest.OnLoad();
-			this.build.OnLoad();
-			this.moveInstalled.OnLoad();
-		}
-
-		public bool CanRemoveDesignation(Point point)
-		{
-			return this.mapAll.TryGetValue(point.index, null) != null;
-		}
-
-		public void TryRemoveDesignation(Point point)
-		{
-			if (!this.CanRemoveDesignation(point))
-			{
-				return;
-			}
-			TaskDesignation taskDesignation = this.mapAll.TryGetValue(point.index, null);
-			if (taskDesignation.owner != null)
-			{
-				taskDesignation.owner.SetAI(new NoGoal());
-			}
-			taskDesignation.Destroy();
-		}
-
 		[JsonProperty]
 		public DesignationList<TaskMine> mine = new DesignationList<TaskMine>();
 
@@ -64,5 +24,47 @@ public class TaskManager : EClass
 		public DesignationList<TaskMoveInstalled> moveInstalled = new DesignationList<TaskMoveInstalled>();
 
 		public Dictionary<int, TaskDesignation> mapAll = new Dictionary<int, TaskDesignation>();
+
+		public void OnLoad()
+		{
+			mine.OnLoad();
+			dig.OnLoad();
+			cut.OnLoad();
+			harvest.OnLoad();
+			build.OnLoad();
+			moveInstalled.OnLoad();
+		}
+
+		public bool CanRemoveDesignation(Point point)
+		{
+			if (mapAll.TryGetValue(point.index) == null)
+			{
+				return false;
+			}
+			return true;
+		}
+
+		public void TryRemoveDesignation(Point point)
+		{
+			if (CanRemoveDesignation(point))
+			{
+				TaskDesignation taskDesignation = mapAll.TryGetValue(point.index);
+				if (taskDesignation.owner != null)
+				{
+					taskDesignation.owner.SetAI(new NoGoal());
+				}
+				taskDesignation.Destroy();
+			}
+		}
+	}
+
+	[JsonProperty]
+	public Designations designations = new Designations();
+
+	public UndoManager undo = new UndoManager();
+
+	public void OnLoad()
+	{
+		designations.OnLoad();
 	}
 }

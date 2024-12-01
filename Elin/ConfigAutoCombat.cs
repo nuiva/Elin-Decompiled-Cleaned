@@ -1,16 +1,7 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class ConfigAutoCombat : EClass
 {
-	public bool enable
-	{
-		get
-		{
-			return this.idType != "_";
-		}
-	}
-
 	[JsonProperty]
 	public string idType = "archer";
 
@@ -58,4 +49,6 @@ public class ConfigAutoCombat : EClass
 
 	[JsonProperty]
 	public bool detail;
+
+	public bool enable => idType != "_";
 }

@@ -1,4 +1,3 @@
-﻿using System;
 using UnityEngine;
 
 public class TraitTicketFurniture : Trait
@@ -7,62 +6,51 @@ public class TraitTicketFurniture : Trait
 	{
 		get
 		{
-			return RefZone.Get(this.owner.refVal);
+			return RefZone.Get(owner.refVal);
 		}
 		set
 		{
-			this.owner.refVal = ((value != null) ? value.uid : 0);
+			owner.refVal = value?.uid ?? 0;
 		}
 	}
 
-	public override bool IsTool
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsTool => true;
 
 	public override void TrySetHeldAct(ActPlan p)
 	{
-		if (EClass._zone.GetTopZone() != this.zone)
+		if (EClass._zone.GetTopZone() != zone)
 		{
 			return;
 		}
 		p.pos.Things.ForEach(delegate(Thing t)
 		{
-			if (!t.IsInstalled || !t.isNPCProperty || !t.trait.CanBeHeld || t.trait.IsDoor || t.isMasked || t.source.value == 0)
+			if (t.IsInstalled && t.isNPCProperty && t.trait.CanBeHeld && !t.trait.IsDoor && !t.isMasked && t.source.value != 0 && (EClass._zone is Zone_LittleGarden || t.trait.CanBeDestroyed))
 			{
-				return;
-			}
-			if (!(EClass._zone is Zone_LittleGarden) && !t.trait.CanBeDestroyed)
-			{
-				return;
-			}
-			int price = this.GetPrice(t) * t.Num;
-			p.TrySetAct("actCollectFurniture".lang(price.ToString() ?? "", t.Name, null, null, null) + ((t.category.ticket >= 10) ? "ticketNotIntended".lang() : ""), delegate()
-			{
-				if (this.owner.Num < price)
+				int price = GetPrice(t) * t.Num;
+				p.TrySetAct("actCollectFurniture".lang(price.ToString() ?? "", t.Name) + ((t.category.ticket >= 10) ? "ticketNotIntended".lang() : ""), delegate
 				{
-					Msg.Say("notEnoughTicket");
+					if (owner.Num < price)
+					{
+						Msg.Say("notEnoughTicket");
+						return false;
+					}
+					SE.Pay();
+					owner.ModNum(-price);
+					t.isNPCProperty = false;
+					if (t.trait is TraitPillow)
+					{
+						t.noSell = true;
+					}
+					EClass.pc.Pick(t);
 					return false;
-				}
-				SE.Pay();
-				this.owner.ModNum(-price, true);
-				t.isNPCProperty = false;
-				if (t.trait is TraitPillow)
-				{
-					t.noSell = true;
-				}
-				EClass.pc.Pick(t, true, true);
-				return false;
-			}, null, 1);
+				});
+			}
 		});
 	}
 
 	public int GetPrice(Thing t)
 	{
-		int num = (t.GetPrice(CurrencyType.Money, false, PriceType.Default, null) / 500 + 1) * t.category.ticket;
+		int num = (t.GetPrice() / 500 + 1) * t.category.ticket;
 		if (EClass._zone is Zone_LittleGarden)
 		{
 			if (num >= 10)
@@ -76,9 +64,9 @@ public class TraitTicketFurniture : Trait
 
 	public override void SetName(ref string s)
 	{
-		if (this.zone != null)
+		if (zone != null)
 		{
-			s = "_of".lang(this.zone.Name, s, null, null, null);
+			s = "_of".lang(zone.Name, s);
 		}
 	}
 

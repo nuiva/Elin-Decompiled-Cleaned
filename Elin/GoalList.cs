@@ -1,12 +1,15 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class GoalList
 {
+	public int index = -2;
+
+	public List<Goal> list = new List<Goal>();
+
 	public void Refresh(Chara owner, GoalListType type)
 	{
-		this.list.Clear();
-		this.index = -1;
+		list.Clear();
+		index = -1;
 		if (type == GoalListType.None)
 		{
 			if (owner.IsHomeMember())
@@ -22,26 +25,24 @@ public class GoalList
 		{
 		case GoalListType.Home:
 		case GoalListType.Guest:
-			this.list.Add(new GoalIdle());
-			return;
+			list.Add(new GoalIdle());
+			break;
 		case GoalListType.Enemy:
-			this.list.Add(new GoalVisitorEnemy());
-			return;
+			list.Add(new GoalVisitorEnemy());
+			break;
+		default:
+			list.Add(new GoalIdle());
+			break;
 		}
-		this.list.Add(new GoalIdle());
 	}
 
 	public Goal Next()
 	{
-		this.index++;
-		if (this.index >= this.list.Count)
+		index++;
+		if (index >= list.Count)
 		{
-			this.index = 0;
+			index = 0;
 		}
-		return this.list[this.index].Duplicate();
+		return list[index].Duplicate();
 	}
-
-	public int index = -2;
-
-	public List<Goal> list = new List<Goal>();
 }

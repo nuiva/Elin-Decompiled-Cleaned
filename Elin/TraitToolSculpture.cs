@@ -1,5 +1,3 @@
-﻿using System;
-
 public class TraitToolSculpture : TraitWorkbench
 {
 	public override bool Contains(RecipeSource r)

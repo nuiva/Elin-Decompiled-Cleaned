@@ -1,13 +1,18 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class LayerRegisterHotbar : ELayer
 {
+	public Image moldCover;
+
+	private List<WidgetHotbar> hotbars = new List<WidgetHotbar>();
+
+	private List<Image> covers = new List<Image>();
+
 	public void SetItem(SourceElement.Row act)
 	{
-		this.SetItem(new HotItemAct
+		SetItem(new HotItemAct
 		{
 			id = act.id
 		});
@@ -15,12 +20,12 @@ public class LayerRegisterHotbar : ELayer
 
 	public LayerRegisterHotbar SetItem(Thing t)
 	{
-		return this.SetItem(t.trait.GetHotItem());
+		return SetItem(t.trait.GetHotItem());
 	}
 
 	public void SetItem(Chara c)
 	{
-		this.SetItem(new HotItemChara
+		SetItem(new HotItemChara
 		{
 			uid = c.uid
 		});
@@ -29,37 +34,37 @@ public class LayerRegisterHotbar : ELayer
 	public LayerRegisterHotbar SetItem(HotItem item)
 	{
 		WidgetHotbar.registeringItem = item;
-		this.Show();
+		Show();
 		return this;
 	}
 
 	public void Show()
 	{
 		WidgetHotbar.registering = true;
-		foreach (Widget widget in ELayer.ui.widgets.list)
+		foreach (Widget item in ELayer.ui.widgets.list)
 		{
-			WidgetHotbar widgetHotbar = widget as WidgetHotbar;
+			WidgetHotbar widgetHotbar = item as WidgetHotbar;
 			if (!(widgetHotbar == null) && widgetHotbar.CanRegisterItem && !widgetHotbar.hotbar.IsLocked)
 			{
 				if (!widgetHotbar.Visible)
 				{
 					widgetHotbar.ToggleVisible();
 				}
-				widgetHotbar.transform.SetParent(base.transform, false);
-				this.hotbars.Add(widgetHotbar);
+				widgetHotbar.transform.SetParent(base.transform, worldPositionStays: false);
+				hotbars.Add(widgetHotbar);
 			}
 		}
 	}
 
 	public ButtonHotItem GetButton()
 	{
-		foreach (WidgetHotbar widgetHotbar in this.hotbars)
+		foreach (WidgetHotbar hotbar in hotbars)
 		{
-			foreach (ButtonHotItem buttonHotItem in widgetHotbar.buttons)
+			foreach (ButtonHotItem button in hotbar.buttons)
 			{
-				if (InputModuleEX.IsPointerOver(buttonHotItem))
+				if (InputModuleEX.IsPointerOver(button))
 				{
-					return buttonHotItem;
+					return button;
 				}
 			}
 		}
@@ -68,8 +73,8 @@ public class LayerRegisterHotbar : ELayer
 
 	public bool OnEndDrag()
 	{
-		ButtonHotItem button = this.GetButton();
-		if (button)
+		ButtonHotItem button = GetButton();
+		if ((bool)button)
 		{
 			button.onClick.Invoke();
 			return true;
@@ -79,21 +84,15 @@ public class LayerRegisterHotbar : ELayer
 
 	public override void OnKill()
 	{
-		foreach (WidgetHotbar widgetHotbar in this.hotbars)
+		foreach (WidgetHotbar hotbar in hotbars)
 		{
-			widgetHotbar.transform.SetParent(ELayer.ui.widgets.transform, false);
+			hotbar.transform.SetParent(ELayer.ui.widgets.transform, worldPositionStays: false);
 		}
-		foreach (Image image in this.covers)
+		foreach (Image cover in covers)
 		{
-			UnityEngine.Object.DestroyImmediate(image.gameObject);
+			Object.DestroyImmediate(cover.gameObject);
 		}
 		WidgetHotbar.registering = false;
 		WidgetHotbar.registeringItem = null;
 	}
-
-	public Image moldCover;
-
-	private List<WidgetHotbar> hotbars = new List<WidgetHotbar>();
-
-	private List<Image> covers = new List<Image>();
 }

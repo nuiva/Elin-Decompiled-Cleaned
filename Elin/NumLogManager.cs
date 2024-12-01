@@ -1,9 +1,16 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class NumLogManager : EClass
 {
+	public List<NumLog> all = new List<NumLog>();
+
+	[JsonProperty]
+	public List<NumLog> listCategory = new List<NumLog>();
+
+	[JsonProperty]
+	public List<NumLog> listImportant = new List<NumLog>();
+
 	public void OnLoad()
 	{
 	}
@@ -23,12 +30,4 @@ public class NumLogManager : EClass
 	public void OnAdvanceYear()
 	{
 	}
-
-	public List<NumLog> all = new List<NumLog>();
-
-	[JsonProperty]
-	public List<NumLog> listCategory = new List<NumLog>();
-
-	[JsonProperty]
-	public List<NumLog> listImportant = new List<NumLog>();
 }

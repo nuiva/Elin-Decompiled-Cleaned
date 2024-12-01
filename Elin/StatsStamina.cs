@@ -1,30 +1,18 @@
-﻿using System;
-
 public class StatsStamina : Stats
 {
-	public override bool TrackPhaseChange
-	{
-		get
-		{
-			return BaseStats.CC.IsPC;
-		}
-	}
+	public const int Exhausted = 0;
 
-	public override int max
-	{
-		get
-		{
-			return BaseStats.CC._maxStamina * BaseStats.CC.Evalue(62) / 100;
-		}
-	}
+	public const int VeryTired = 1;
 
-	public override int min
-	{
-		get
-		{
-			return -9999;
-		}
-	}
+	public const int Tired = 2;
+
+	public const int Fine = 3;
+
+	public override bool TrackPhaseChange => BaseStats.CC.IsPC;
+
+	public override int max => BaseStats.CC._maxStamina * BaseStats.CC.Evalue(62) / 100;
+
+	public override int min => -9999;
 
 	public override void Mod(int a)
 	{
@@ -32,7 +20,7 @@ public class StatsStamina : Stats
 		{
 			return;
 		}
-		if (a < 0 && BaseStats.CC.HasElement(1330, 1))
+		if (a < 0 && BaseStats.CC.HasElement(1330))
 		{
 			a = -EClass.rnd(-a * 130 / 100 + 2);
 		}
@@ -48,28 +36,20 @@ public class StatsStamina : Stats
 		base.Mod(a);
 		if (a < 0)
 		{
-			bool shouldShowMsg = BaseStats.CC.ShouldShowMsg;
+			_ = BaseStats.CC.ShouldShowMsg;
 		}
-		if (a < 0 && this.value < 0)
+		if (a < 0 && value < 0)
 		{
-			BaseStats.CC.DamageHP(-this.value, AttackSource.Fatigue, null);
+			BaseStats.CC.DamageHP(-value, AttackSource.Fatigue);
 		}
 	}
 
 	public override int GetPhase()
 	{
-		if (this.value < 0)
+		if (value < 0)
 		{
 			return 0;
 		}
 		return base.GetPhase();
 	}
-
-	public const int Exhausted = 0;
-
-	public const int VeryTired = 1;
-
-	public const int Tired = 2;
-
-	public const int Fine = 3;
 }

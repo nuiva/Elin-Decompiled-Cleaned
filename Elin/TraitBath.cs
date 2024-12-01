@@ -1,5 +1,3 @@
-﻿using System;
-
 public class TraitBath : Trait
 {
 	public override void TrySetAct(ActPlan p)
@@ -7,6 +5,6 @@ public class TraitBath : Trait
 		p.TrySetAct(new AI_Bladder
 		{
 			toilet = this
-		}, this.owner);
+		}, owner);
 	}
 }

@@ -1,14 +1,6 @@
-﻿using System;
-
 public class TraitFood : Trait
 {
-	public override bool RequireFullStackCheck
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool RequireFullStackCheck => true;
 
 	public override bool CanEat(Chara c)
 	{
@@ -17,6 +9,14 @@ public class TraitFood : Trait
 
 	public override bool CanStackTo(Thing to)
 	{
-		return !(this.owner.c_altName != to.c_altName) && !(this.owner.c_idRefCard != to.c_idRefCard) && base.CanStackTo(to);
+		if (owner.c_altName != to.c_altName)
+		{
+			return false;
+		}
+		if (owner.c_idRefCard != to.c_idRefCard)
+		{
+			return false;
+		}
+		return base.CanStackTo(to);
 	}
 }

@@ -1,12 +1,4 @@
-﻿using System;
-
 public class TraitCasinoTable : TraitGamble
 {
-	public override string idMsg
-	{
-		get
-		{
-			return "use_card";
-		}
-	}
+	public override string idMsg => "use_card";
 }

@@ -1,30 +1,20 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 public class NotificationBattle : NotificationGlobal
 {
-	public override bool Visible
-	{
-		get
-		{
-			return this.widget.battles > 0;
-		}
-	}
+	public int index;
 
-	public override Action<UITooltip> onShowTooltip
+	public override bool Visible => widget.battles > 0;
+
+	public override Action<UITooltip> onShowTooltip => delegate(UITooltip a)
 	{
-		get
-		{
-			return delegate(UITooltip a)
-			{
-				a.textMain.text = "battles".lang() + ": " + this.widget.battles.ToString();
-			};
-		}
-	}
+		a.textMain.text = "battles".lang() + ": " + widget.battles;
+	};
 
 	public override void OnRefresh()
 	{
-		this.text = (this.widget.battles.ToString() ?? "");
+		text = widget.battles.ToString() ?? "";
 	}
 
 	public override void OnClick()
@@ -41,13 +31,11 @@ public class NotificationBattle : NotificationGlobal
 				list.Add(chara);
 			}
 		}
-		this.index++;
-		if (this.index >= list.Count)
+		index++;
+		if (index >= list.Count)
 		{
-			this.index = 0;
+			index = 0;
 		}
-		EClass.screen.Focus(list[this.index]);
+		EClass.screen.Focus(list[index]);
 	}
-
-	public int index;
 }

@@ -1,41 +1,7 @@
-﻿using System;
 using UnityEngine;
 
 public class RenderParam : MeshPassParam
 {
-	public Vector3 NewVector3
-	{
-		get
-		{
-			return new Vector3(this.x, this.y, this.z);
-		}
-	}
-
-	public RenderParam()
-	{
-	}
-
-	public RenderParam(RenderParam p)
-	{
-		this.liquid = p.liquid;
-		this.liquidLv = p.liquidLv;
-		this.tile2 = p.tile2;
-		this.halfBlockColor = p.halfBlockColor;
-		this.dir = p.dir;
-		this.mat = p.mat;
-		this.v = p.v;
-		this.shadowFix = p.shadowFix;
-		this.x = p.x;
-		this.y = p.y;
-		this.z = p.z;
-		this.color = p.color;
-		this.tile = p.tile;
-		this.matColor = p.matColor;
-		this.liquid = p.liquid;
-		this.cell = p.cell;
-		this.snow = p.snow;
-	}
-
 	public static RenderParam shared = new RenderParam();
 
 	public int liquidLv;
@@ -53,4 +19,31 @@ public class RenderParam : MeshPassParam
 	public Vector3 v;
 
 	public float shadowFix;
+
+	public Vector3 NewVector3 => new Vector3(x, y, z);
+
+	public RenderParam()
+	{
+	}
+
+	public RenderParam(RenderParam p)
+	{
+		liquid = p.liquid;
+		liquidLv = p.liquidLv;
+		tile2 = p.tile2;
+		halfBlockColor = p.halfBlockColor;
+		dir = p.dir;
+		mat = p.mat;
+		v = p.v;
+		shadowFix = p.shadowFix;
+		x = p.x;
+		y = p.y;
+		z = p.z;
+		color = p.color;
+		tile = p.tile;
+		matColor = p.matColor;
+		liquid = p.liquid;
+		cell = p.cell;
+		snow = p.snow;
+	}
 }

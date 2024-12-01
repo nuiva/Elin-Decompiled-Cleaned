@@ -1,27 +1,25 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 public class TaskDump : Task
 {
 	public static void TryPerform()
 	{
-		if (!EClass.ui.AllowInventoryInteractions)
+		if (EClass.ui.AllowInventoryInteractions)
 		{
-			return;
+			if (!EClass._zone.IsPCFaction && !(EClass._zone is Zone_Tent))
+			{
+				Msg.Say("dump_invalid");
+			}
+			else if (!EClass.pc.HasNoGoal)
+			{
+				SE.Beep();
+			}
+			else
+			{
+				EClass.pc.SetAIImmediate(new TaskDump());
+			}
 		}
-		if (!EClass._zone.IsPCFaction && !(EClass._zone is Zone_Tent))
-		{
-			Msg.Say("dump_invalid");
-			return;
-		}
-		if (!EClass.pc.HasNoGoal)
-		{
-			SE.Beep();
-			return;
-		}
-		EClass.pc.SetAIImmediate(new TaskDump());
 	}
 
 	public override bool CanManualCancel()
@@ -29,12 +27,12 @@ public class TaskDump : Task
 		return true;
 	}
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
 		List<Thing> containers = new List<Thing>();
 		EClass._map.things.ForEach(delegate(Thing t)
 		{
-			if (this.IsValidContainer(t))
+			if (IsValidContainer(t))
 			{
 				containers.Add(t);
 			}
@@ -42,16 +40,13 @@ public class TaskDump : Task
 		while (containers.Count > 0)
 		{
 			bool flag = true;
-			int num = TaskDump.<Run>g__SortVal|2_1(containers.First<Thing>());
-			using (List<Thing>.Enumerator enumerator = containers.GetEnumerator())
+			int num = SortVal(containers.First());
+			foreach (Thing item in containers)
 			{
-				while (enumerator.MoveNext())
+				if (SortVal(item) != num)
 				{
-					if (TaskDump.<Run>g__SortVal|2_1(enumerator.Current) != num)
-					{
-						flag = false;
-						break;
-					}
+					flag = false;
+					break;
 				}
 			}
 			if (flag)
@@ -60,74 +55,76 @@ public class TaskDump : Task
 			}
 			else
 			{
-				containers.Sort((Thing a, Thing b) => TaskDump.<Run>g__SortVal|2_1(a) - TaskDump.<Run>g__SortVal|2_1(b));
+				containers.Sort((Thing a, Thing b) => SortVal(a) - SortVal(b));
 			}
-			Thing c = containers.LastItem<Thing>();
+			Thing c = containers.LastItem();
 			containers.RemoveAt(containers.Count - 1);
-			if (this.IsValidContainer(c))
+			if (!IsValidContainer(c))
 			{
-				EClass.ui.CloseLayers();
-				Point pos = c.pos.Copy();
-				if (c.IsMultisize)
+				continue;
+			}
+			EClass.ui.CloseLayers();
+			Point pos = c.pos.Copy();
+			if (c.IsMultisize)
+			{
+				int minDist = 999;
+				c.ForeachPoint(delegate(Point p, bool isCenter)
 				{
-					int minDist = 999;
-					c.ForeachPoint(delegate(Point p, bool isCenter)
+					if (p.IsValid && p.IsInBounds)
 					{
-						if (!p.IsValid || !p.IsInBounds)
-						{
-							return;
-						}
 						PathProgress pathProgress = PathManager.Instance.RequestPathImmediate(EClass.pc.pos, p, EClass.pc, PathManager.MoveType.Default, -1, 1);
 						if (pathProgress.HasPath && pathProgress.nodes.Count < minDist)
 						{
 							minDist = pathProgress.nodes.Count;
 							pos = p.Copy();
 						}
-					});
-				}
-				yield return base.DoGoto(pos, 1, false, () => AIAct.Status.Running);
-				if (this.IsValidContainer(c))
+					}
+				});
+			}
+			yield return DoGoto(pos, 1, ignoreConnection: false, () => Status.Running);
+			if (!IsValidContainer(c))
+			{
+				continue;
+			}
+			if (!c.ExistsOnMap)
+			{
+				Msg.Say("dump_noExist", c);
+				continue;
+			}
+			if (EClass.pc.Dist(c) > 1)
+			{
+				Msg.Say("dump_tooFar", c);
+				continue;
+			}
+			List<Thing> list = ListThingsToPut(c);
+			int num2 = 0;
+			if (c.trait is TraitShippingChest)
+			{
+				c = EClass.game.cards.container_shipping;
+			}
+			foreach (Thing item2 in list)
+			{
+				if (!c.things.IsFull(item2) && !item2.isDestroyed)
 				{
-					if (!c.ExistsOnMap)
+					item2.PlaySoundDrop(spatial: false);
+					if (c.parent is Card)
 					{
-						Msg.Say("dump_noExist", c, null, null, null);
+						(c.parent as Card).SetDirtyWeight();
 					}
-					else if (EClass.pc.Dist(c) > 1)
-					{
-						Msg.Say("dump_tooFar", c, null, null, null);
-					}
-					else
-					{
-						List<Thing> list = this.ListThingsToPut(c);
-						int num2 = 0;
-						if (c.trait is TraitShippingChest)
-						{
-							c = EClass.game.cards.container_shipping;
-						}
-						foreach (Thing thing in list)
-						{
-							if (!c.things.IsFull(thing, true, true) && !thing.isDestroyed)
-							{
-								thing.PlaySoundDrop(false);
-								if (c.parent is Card)
-								{
-									(c.parent as Card).SetDirtyWeight();
-								}
-								Msg.Say("dump_item", thing, c, null, null);
-								c.AddCard(thing);
-								num2++;
-							}
-						}
-						if (num2 > 0)
-						{
-							Msg.Say("dump_dumped", num2.ToString() ?? "", c.Name, null, null);
-						}
-						c = null;
-					}
+					Msg.Say("dump_item", item2, c);
+					c.AddCard(item2);
+					num2++;
 				}
 			}
+			if (num2 > 0)
+			{
+				Msg.Say("dump_dumped", num2.ToString() ?? "", c.Name);
+			}
 		}
-		yield break;
+		static int SortVal(Thing t)
+		{
+			return t.GetWindowSaveData()?.priority ?? 0;
+		}
 	}
 
 	public override void OnCancelOrSuccess()
@@ -146,89 +143,78 @@ public class TaskDump : Task
 		{
 			c = EClass.game.cards.container_shipping;
 		}
-		return c.GetWindowSaveData() != null && c.GetWindowSaveData().autodump != AutodumpFlag.none && this.ListThingsToPut(c).Count != 0;
+		if (c.GetWindowSaveData() == null || c.GetWindowSaveData().autodump == AutodumpFlag.none)
+		{
+			return false;
+		}
+		if (ListThingsToPut(c).Count == 0)
+		{
+			return false;
+		}
+		return true;
 	}
 
 	public List<Thing> ListThingsToPut(Thing c)
 	{
-		TaskDump.<>c__DisplayClass5_0 CS$<>8__locals1 = new TaskDump.<>c__DisplayClass5_0();
-		CS$<>8__locals1.list = new List<Thing>();
+		List<Thing> list = new List<Thing>();
 		if (c.trait is TraitShippingChest)
 		{
 			c = EClass.game.cards.container_shipping;
 		}
-		CS$<>8__locals1.data = c.GetWindowSaveData();
-		if (CS$<>8__locals1.data == null)
+		Window.SaveData data = c.GetWindowSaveData();
+		if (data == null)
 		{
-			return CS$<>8__locals1.list;
+			return list;
 		}
-		switch (CS$<>8__locals1.data.autodump)
+		switch (data.autodump)
 		{
-		case AutodumpFlag.existing:
-			using (List<Thing>.Enumerator enumerator = c.things.GetEnumerator())
-			{
-				while (enumerator.MoveNext())
-				{
-					Thing ct = enumerator.Current;
-					EClass.pc.things.Foreach(delegate(Thing t)
-					{
-						if (CS$<>8__locals1.<ListThingsToPut>g__ExcludeDump|0(t))
-						{
-							return;
-						}
-						if (!t.CanStackTo(ct))
-						{
-							return;
-						}
-						CS$<>8__locals1.list.Add(t);
-					}, true);
-				}
-				goto IL_17B;
-			}
-			break;
-		case AutodumpFlag.sameCategory:
-			break;
-		case AutodumpFlag.none:
-			goto IL_17B;
 		case AutodumpFlag.distribution:
 			EClass.pc.things.Foreach(delegate(Thing t)
 			{
-				if (base.<ListThingsToPut>g__ExcludeDump|0(t))
+				if (!ExcludeDump(t))
 				{
-					return;
-				}
-				if (CS$<>8__locals1.data.advDistribution)
-				{
-					using (HashSet<int>.Enumerator enumerator2 = CS$<>8__locals1.data.cats.GetEnumerator())
+					if (data.advDistribution)
 					{
-						while (enumerator2.MoveNext())
+						foreach (int cat in data.cats)
 						{
-							int num = enumerator2.Current;
-							if (t.category.uid == num)
+							if (t.category.uid == cat)
 							{
-								CS$<>8__locals1.list.Add(t);
+								list.Add(t);
 								break;
 							}
 						}
 						return;
 					}
+					ContainerFlag containerFlag = t.category.GetRoot().id.ToEnum<ContainerFlag>();
+					if (containerFlag == ContainerFlag.none)
+					{
+						containerFlag = ContainerFlag.other;
+					}
+					if (!data.flag.HasFlag(containerFlag))
+					{
+						list.Add(t);
+					}
 				}
-				ContainerFlag containerFlag = t.category.GetRoot().id.ToEnum(true);
-				if (containerFlag == ContainerFlag.none)
+			});
+			break;
+		case AutodumpFlag.existing:
+			foreach (Thing ct in c.things)
+			{
+				EClass.pc.things.Foreach(delegate(Thing t)
 				{
-					containerFlag = ContainerFlag.other;
-				}
-				if (!CS$<>8__locals1.data.flag.HasFlag(containerFlag))
-				{
-					CS$<>8__locals1.list.Add(t);
-				}
-			}, true);
-			goto IL_17B;
-		default:
-			goto IL_17B;
-		}
-		if (c.things.Count != 0)
+					if (!ExcludeDump(t) && t.CanStackTo(ct))
+					{
+						list.Add(t);
+					}
+				});
+			}
+			break;
+		case AutodumpFlag.sameCategory:
 		{
+			if (c.things.Count == 0)
+			{
+				break;
+			}
 			HashSet<SourceCategory.Row> cats = new HashSet<SourceCategory.Row>();
 			foreach (Thing thing in c.things)
 			{
@@ -236,29 +222,42 @@ public class TaskDump : Task
 			}
 			EClass.pc.things.Foreach(delegate(Thing t)
 			{
-				if (CS$<>8__locals1.<ListThingsToPut>g__ExcludeDump|0(t))
+				if (!ExcludeDump(t) && cats.Contains(t.category))
 				{
-					return;
+					list.Add(t);
 				}
-				if (!cats.Contains(t.category))
-				{
-					return;
-				}
-				CS$<>8__locals1.list.Add(t);
-			}, true);
+			});
+			break;
 		}
-		IL_17B:
-		return CS$<>8__locals1.list;
-	}
-
-	[CompilerGenerated]
-	internal static int <Run>g__SortVal|2_1(Thing t)
-	{
-		Window.SaveData windowSaveData = t.GetWindowSaveData();
-		if (windowSaveData != null)
+		}
+		return list;
+		bool ExcludeDump(Thing t)
 		{
-			return windowSaveData.priority;
+			if (t.isEquipped || t.c_isImportant || !t.trait.CanBeDropped || t.IsHotItem || t.trait is TraitToolBelt || t.trait is TraitAbility)
+			{
+				return true;
+			}
+			if (t.IsContainer && t.things.Count > 0)
+			{
+				return true;
+			}
+			if (data.noRotten && t.IsDecayed)
+			{
+				return true;
+			}
+			if (data.onlyRottable && t.trait.Decay == 0)
+			{
+				return true;
+			}
+			if (data.userFilter && !data.IsFilterPass(t.GetName(NameStyle.Full, 1)))
+			{
+				return true;
+			}
+			if (!(t.parent is Card card))
+			{
+				return false;
+			}
+			return card.GetWindowSaveData()?.excludeDump ?? false;
 		}
-		return 0;
 	}
 }

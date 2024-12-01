@@ -1,52 +1,34 @@
-﻿using System;
-
 public class GrowSystemWheat : GrowSystemCrop
 {
-	protected override bool UseGenericFirstStageTile
-	{
-		get
-		{
-			return false;
-		}
-	}
+	protected override bool UseGenericFirstStageTile => false;
 
-	public override int HarvestStage
-	{
-		get
-		{
-			return 3;
-		}
-	}
+	public override int HarvestStage => 3;
 
-	public override int AutoMineStage
-	{
-		get
-		{
-			return 3;
-		}
-	}
+	public override int AutoMineStage => 3;
 
 	public override string GetSoundProgress()
 	{
-		return this.source.DefaultMaterial.GetSoundImpact(null);
+		return source.DefaultMaterial.GetSoundImpact();
 	}
 
 	public override int GetStageTile()
 	{
-		if (GrowSystem.currentStage.idx == this.StageLength - 1 && GrowSystem.cell.isHarvested)
+		if (GrowSystem.currentStage.idx == StageLength - 1 && GrowSystem.cell.isHarvested)
 		{
-			return this.harvestTile + 1;
+			return harvestTile + 1;
 		}
 		return base.GetStageTile();
 	}
 
 	public override void OnMineObj(Chara c = null)
 	{
-		if (base.IsWithered() || this.IsHarvestStage(base.stage.idx))
+		if (IsWithered() || IsHarvestStage(base.stage.idx))
 		{
-			base.TryPick(GrowSystem.cell, ThingGen.Create("grass", "straw"), c, false);
-			return;
+			TryPick(GrowSystem.cell, ThingGen.Create("grass", "straw"), c);
 		}
-		base.OnMineObj(c);
+		else
+		{
+			base.OnMineObj(c);
+		}
 	}
 }

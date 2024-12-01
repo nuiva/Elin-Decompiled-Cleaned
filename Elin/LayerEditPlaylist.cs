@@ -1,177 +1,89 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 
 public class LayerEditPlaylist : ELayer
 {
-	public Dictionary<int, BGMData> bgms
+	public enum Mode
 	{
-		get
+		Playlist,
+		LotBGM
+	}
+
+	public class ListBGM : ListOwner<BGMData, ItemGeneral>
+	{
+		public List<BGMData> items;
+
+		public string idTitle;
+
+		public bool single;
+
+		public new LayerEditPlaylist layer => base.layer as LayerEditPlaylist;
+
+		public override string IdTitle => idTitle;
+
+		public override void List()
 		{
-			return ELayer.core.refs.dictBGM;
-		}
-	}
-
-	public override void OnInit()
-	{
-	}
-
-	public void Activate(TraitJukeBox _box)
-	{
-		this.jukebox = _box;
-		this.single = true;
-		this.Activate(LayerEditPlaylist.Mode.LotBGM);
-	}
-
-	public void Activate(TraitHouseBoard _board)
-	{
-		this.board = _board;
-		this.single = true;
-		this.Activate(LayerEditPlaylist.Mode.LotBGM);
-	}
-
-	public void Activate(LayerEditPlaylist.Mode _mode = LayerEditPlaylist.Mode.Playlist)
-	{
-		this.mode = _mode;
-		Msg.Nerun("nPlaylist", "UN_nerun_smile3");
-		if (this.mode == LayerEditPlaylist.Mode.Playlist)
-		{
-			if (this.dayNight)
+			list.callbacks = new UIList.Callback<BGMData, ItemGeneral>
 			{
-				this.windows[0].AddBottomButton("togglePlaylist", new UnityAction(this.TogglePL), false);
-			}
-			foreach (int key in ELayer._map._plDay)
-			{
-				if (this.bgms.ContainsKey(key))
+				onInstantiate = delegate(BGMData a, ItemGeneral b)
 				{
-					this.itemsDay.Add(this.bgms[key]);
-				}
-			}
-			using (List<int>.Enumerator enumerator = ELayer._map._plNight.GetEnumerator())
-			{
-				while (enumerator.MoveNext())
-				{
-					int key2 = enumerator.Current;
-					if (this.bgms.ContainsKey(key2))
+					b.SetMainText(((a.id > 1) ? "♪ " : "") + a._name.IsEmpty(a.name).ToTitleCase());
+					b.button1.keyText.text = a.id.ToString() ?? "";
+					if (a.id != 0 && layer.jukebox == null)
 					{
-						this.itemsNight.Add(this.bgms[key2]);
-					}
-				}
-				goto IL_12C;
-			}
-		}
-		this.windows[1].SetActive(false);
-		this.windows[0].SetPosition();
-		this.multi.Double = false;
-		IL_12C:
-		this.Refresh();
-		foreach (ListOwner listOwner in this.multi.owners)
-		{
-			listOwner.OnSwitchContent();
-		}
-	}
-
-	public void Refresh()
-	{
-		List<BGMData> list = (this.mode == LayerEditPlaylist.Mode.LotBGM) ? new List<BGMData>() : (this.day ? this.itemsDay : this.itemsNight);
-		List<BGMData> list2 = new List<BGMData>();
-		foreach (BGMData bgmdata in this.bgms.Values)
-		{
-			if (ELayer.debug.allBGM || ELayer.player.knownBGMs.Contains(bgmdata.id))
-			{
-				if (this.mode == LayerEditPlaylist.Mode.LotBGM)
-				{
-					list.Add(bgmdata);
-				}
-				else
-				{
-					bool flag = bgmdata.id != 0;
-					using (List<BGMData>.Enumerator enumerator2 = list.GetEnumerator())
-					{
-						while (enumerator2.MoveNext())
+						b.AddSubButton(EClass.core.refs.icons.resume, delegate
 						{
-							if (enumerator2.Current.id == bgmdata.id)
-							{
-								flag = false;
-								break;
-							}
-						}
+							EClass.Sound.PlayBGM(a);
+						});
 					}
-					if (flag)
+					if (main && layer.mode == Mode.Playlist)
 					{
-						list2.Add(bgmdata);
+						b.AddSubButton(EClass.core.refs.icons.down, delegate
+						{
+							BGMData select = items.Move(a, 1);
+							list.OnMove(a, select);
+						});
+						b.AddSubButton(EClass.core.refs.icons.up, delegate
+						{
+							BGMData select2 = items.Move(a, -1);
+							list.OnMove(a, select2);
+						});
+					}
+					b.Build();
+					if (!single)
+					{
+						b.button1.soundClick = null;
+					}
+				},
+				onClick = delegate(BGMData c, ItemGeneral i)
+				{
+					if (layer.mode == Mode.Playlist)
+					{
+						items.Remove(c);
+						(other as ListBGM).items.Add(c);
+						MoveToOther(c);
+					}
+					else if (layer.board != null)
+					{
+						layer.board.data.idBGM = ((layer.board.data.idBGM != c.id) ? c.id : 0);
+						layer.board.ApplyData();
+						layer.Close();
+					}
+					else
+					{
+						layer.jukebox.OnSetBGM(c);
+						layer.Close();
+					}
+				},
+				onList = delegate
+				{
+					foreach (BGMData item in items)
+					{
+						list.Add(item);
 					}
 				}
-			}
-		}
-		this.multi.Clear();
-		if (this.mode == LayerEditPlaylist.Mode.LotBGM)
-		{
-			this.multi.AddOwner(0, new LayerEditPlaylist.ListBGM
-			{
-				items = list,
-				idTitle = "wBGMLot",
-				single = true
-			});
-		}
-		else
-		{
-			this.multi.AddOwner(0, new LayerEditPlaylist.ListBGM
-			{
-				items = list,
-				idTitle = "wPlaylist"
-			});
-			this.multi.AddOwner(1, new LayerEditPlaylist.ListBGM
-			{
-				items = list2,
-				idTitle = "wPlaylist2"
-			});
-		}
-		this.multi.Build(UIList.SortMode.ByNone);
-	}
-
-	public void TogglePL()
-	{
-		this.day = !this.day;
-		this.Refresh();
-		this.multi.Refresh();
-		SE.Click();
-	}
-
-	public override void OnKill()
-	{
-		if (this.mode == LayerEditPlaylist.Mode.LotBGM)
-		{
-			ELayer.Sound.StopBGM(0f, false);
-			ELayer._zone.RefreshBGM();
-			return;
-		}
-		ELayer._map._plDay.Clear();
-		ELayer._map._plNight.Clear();
-		foreach (BGMData bgmdata in this.itemsDay)
-		{
-			ELayer._map._plDay.Add(bgmdata.id);
-		}
-		foreach (BGMData bgmdata2 in this.itemsNight)
-		{
-			ELayer._map._plNight.Add(bgmdata2.id);
-		}
-		UnityEngine.Object.DestroyImmediate(ELayer._map.plDay);
-		ELayer._map.plDay = null;
-		ELayer._zone.RefreshPlaylist();
-		if (!this.keepPlaying)
-		{
-			ELayer.Sound.StopBGM(0f, false);
-			ELayer._zone.RefreshBGM();
-		}
-	}
-
-	public override void OnSwitchContent(Window window)
-	{
-		if (this.multi.owners.Count > 0)
-		{
-			this.multi.owners[window.windowIndex].OnSwitchContent();
+			};
+			list.List();
 		}
 	}
 
@@ -189,104 +101,166 @@ public class LayerEditPlaylist : ELayer
 
 	public bool dayNight;
 
-	public LayerEditPlaylist.Mode mode;
+	public Mode mode;
 
 	public TraitHouseBoard board;
 
 	public TraitJukeBox jukebox;
 
-	public enum Mode
+	public Dictionary<int, BGMData> bgms => ELayer.core.refs.dictBGM;
+
+	public override void OnInit()
 	{
-		Playlist,
-		LotBGM
 	}
 
-	public class ListBGM : ListOwner<BGMData, ItemGeneral>
+	public void Activate(TraitJukeBox _box)
 	{
-		public new LayerEditPlaylist layer
-		{
-			get
-			{
-				return this.layer as LayerEditPlaylist;
-			}
-		}
+		jukebox = _box;
+		single = true;
+		Activate(Mode.LotBGM);
+	}
 
-		public override string IdTitle
-		{
-			get
-			{
-				return this.idTitle;
-			}
-		}
+	public void Activate(TraitHouseBoard _board)
+	{
+		board = _board;
+		single = true;
+		Activate(Mode.LotBGM);
+	}
 
-		public override void List()
+	public void Activate(Mode _mode = Mode.Playlist)
+	{
+		mode = _mode;
+		Msg.Nerun("nPlaylist", "UN_nerun_smile3");
+		if (mode == Mode.Playlist)
 		{
-			this.list.callbacks = new UIList.Callback<BGMData, ItemGeneral>
+			if (dayNight)
 			{
-				onInstantiate = delegate(BGMData a, ItemGeneral b)
+				windows[0].AddBottomButton("togglePlaylist", TogglePL);
+			}
+			foreach (int item in ELayer._map._plDay)
+			{
+				if (bgms.ContainsKey(item))
 				{
-					b.SetMainText(((a.id > 1) ? "♪ " : "") + a._name.IsEmpty(a.name).ToTitleCase(false), null, true);
-					b.button1.keyText.text = (a.id.ToString() ?? "");
-					if (a.id != 0 && this.layer.jukebox == null)
-					{
-						b.AddSubButton(EClass.core.refs.icons.resume, delegate
-						{
-							EClass.Sound.PlayBGM(a, 0f, 0f);
-						}, null, null);
-					}
-					if (this.main && this.layer.mode == LayerEditPlaylist.Mode.Playlist)
-					{
-						b.AddSubButton(EClass.core.refs.icons.down, delegate
-						{
-							BGMData select = this.items.Move(a, 1);
-							this.list.OnMove(a, select);
-						}, null, null);
-						b.AddSubButton(EClass.core.refs.icons.up, delegate
-						{
-							BGMData select = this.items.Move(a, -1);
-							this.list.OnMove(a, select);
-						}, null, null);
-					}
-					b.Build();
-					if (!this.single)
-					{
-						b.button1.soundClick = null;
-					}
-				},
-				onClick = delegate(BGMData c, ItemGeneral i)
-				{
-					if (this.layer.mode == LayerEditPlaylist.Mode.Playlist)
-					{
-						this.items.Remove(c);
-						(this.other as LayerEditPlaylist.ListBGM).items.Add(c);
-						base.MoveToOther(c);
-						return;
-					}
-					if (this.layer.board != null)
-					{
-						this.layer.board.data.idBGM = ((this.layer.board.data.idBGM == c.id) ? 0 : c.id);
-						this.layer.board.ApplyData();
-						this.layer.Close();
-						return;
-					}
-					this.layer.jukebox.OnSetBGM(c);
-					this.layer.Close();
-				},
-				onList = delegate(UIList.SortMode m)
-				{
-					foreach (BGMData o in this.items)
-					{
-						this.list.Add(o);
-					}
+					itemsDay.Add(bgms[item]);
 				}
-			};
-			this.list.List(false);
+			}
+			foreach (int item2 in ELayer._map._plNight)
+			{
+				if (bgms.ContainsKey(item2))
+				{
+					itemsNight.Add(bgms[item2]);
+				}
+			}
 		}
+		else
+		{
+			windows[1].SetActive(enable: false);
+			windows[0].SetPosition();
+			multi.Double = false;
+		}
+		Refresh();
+		foreach (ListOwner owner in multi.owners)
+		{
+			owner.OnSwitchContent();
+		}
+	}
 
-		public List<BGMData> items;
+	public void Refresh()
+	{
+		List<BGMData> list = ((mode == Mode.LotBGM) ? new List<BGMData>() : (day ? itemsDay : itemsNight));
+		List<BGMData> list2 = new List<BGMData>();
+		foreach (BGMData value in bgms.Values)
+		{
+			if (!ELayer.debug.allBGM && !ELayer.player.knownBGMs.Contains(value.id))
+			{
+				continue;
+			}
+			if (mode == Mode.LotBGM)
+			{
+				list.Add(value);
+				continue;
+			}
+			bool flag = value.id != 0;
+			foreach (BGMData item in list)
+			{
+				if (item.id == value.id)
+				{
+					flag = false;
+					break;
+				}
+			}
+			if (flag)
+			{
+				list2.Add(value);
+			}
+		}
+		multi.Clear();
+		if (mode == Mode.LotBGM)
+		{
+			multi.AddOwner(0, new ListBGM
+			{
+				items = list,
+				idTitle = "wBGMLot",
+				single = true
+			});
+		}
+		else
+		{
+			multi.AddOwner(0, new ListBGM
+			{
+				items = list,
+				idTitle = "wPlaylist"
+			});
+			multi.AddOwner(1, new ListBGM
+			{
+				items = list2,
+				idTitle = "wPlaylist2"
+			});
+		}
+		multi.Build();
+	}
 
-		public string idTitle;
+	public void TogglePL()
+	{
+		day = !day;
+		Refresh();
+		multi.Refresh();
+		SE.Click();
+	}
 
-		public bool single;
+	public override void OnKill()
+	{
+		if (mode == Mode.LotBGM)
+		{
+			ELayer.Sound.StopBGM();
+			ELayer._zone.RefreshBGM();
+			return;
+		}
+		ELayer._map._plDay.Clear();
+		ELayer._map._plNight.Clear();
+		foreach (BGMData item in itemsDay)
+		{
+			ELayer._map._plDay.Add(item.id);
+		}
+		foreach (BGMData item2 in itemsNight)
+		{
+			ELayer._map._plNight.Add(item2.id);
+		}
+		Object.DestroyImmediate(ELayer._map.plDay);
+		ELayer._map.plDay = null;
+		ELayer._zone.RefreshPlaylist();
+		if (!keepPlaying)
+		{
+			ELayer.Sound.StopBGM();
+			ELayer._zone.RefreshBGM();
+		}
+	}
+
+	public override void OnSwitchContent(Window window)
+	{
+		if (multi.owners.Count > 0)
+		{
+			multi.owners[window.windowIndex].OnSwitchContent();
+		}
 	}
 }

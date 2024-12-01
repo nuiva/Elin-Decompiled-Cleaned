@@ -1,27 +1,25 @@
-﻿using System;
-
 public class QuestCompanion : QuestProgression
 {
 	public override bool CanUpdateOnTalk(Chara c)
 	{
-		int phase = this.phase;
-		if (phase != 0)
+		return phase switch
 		{
-			return phase == 1 && EClass.pc.homeBranch.members.Count >= 11;
-		}
-		return EClass.pc.homeBranch.members.Count >= 3;
+			0 => EClass.pc.homeBranch.members.Count >= 3, 
+			1 => EClass.pc.homeBranch.members.Count >= 11, 
+			_ => false, 
+		};
 	}
 
 	public override void OnDropReward()
 	{
-		base.DropReward(ThingGen.CreateScroll(9001, 1));
+		DropReward(ThingGen.CreateScroll(9001));
 	}
 
 	public override string GetTextProgress()
 	{
-		if (this.phase == 1)
+		if (phase == 1)
 		{
-			return "progressRecruit".lang((EClass.pc.homeBranch.members.Count - 1).ToString() ?? "", 10.ToString() ?? "", null, null, null);
+			return "progressRecruit".lang((EClass.pc.homeBranch.members.Count - 1).ToString() ?? "", 10.ToString() ?? "");
 		}
 		return "";
 	}

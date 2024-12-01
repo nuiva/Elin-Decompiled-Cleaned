@@ -1,99 +1,79 @@
-﻿using System;
-
 public class TraitGeneratorWheel : TraitGenerator
 {
-	public override bool HaveUpdate
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool HaveUpdate => true;
 
-	public override bool Waterproof
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool Waterproof => true;
 
-	public override ToggleType ToggleType
-	{
-		get
-		{
-			return ToggleType.Custom;
-		}
-	}
+	public override ToggleType ToggleType => ToggleType.Custom;
 
 	public override bool IsOn
 	{
 		get
 		{
-			return this.owner.isOn || !EClass._zone.IsPCFaction;
+			if (!owner.isOn)
+			{
+				return !EClass._zone.IsPCFaction;
+			}
+			return true;
 		}
 	}
 
 	public override bool CanUse(Chara c)
 	{
-		return this.owner.IsInstalled && EClass._zone.IsPCFaction && !this.owner.pos.HasChara;
+		if (owner.IsInstalled && EClass._zone.IsPCFaction)
+		{
+			return !owner.pos.HasChara;
+		}
+		return false;
 	}
 
 	public override bool OnUse(Chara c)
 	{
 		LayerPeople.CreateSelect("", "", delegate(UIList l)
 		{
-			foreach (Chara chara in EClass.Branch.members)
+			foreach (Chara member in EClass.Branch.members)
 			{
-				if (chara.IsAliveInCurrentZone && !chara.IsPCParty && chara.memberType == FactionMemberType.Default)
+				if (member.IsAliveInCurrentZone && !member.IsPCParty && member.memberType == FactionMemberType.Default)
 				{
-					l.Add(chara);
+					l.Add(member);
 				}
 			}
 		}, delegate(Chara c)
 		{
-			c.Teleport(this.owner.pos, false, true);
+			c.Teleport(owner.pos, silent: false, force: true);
 			c.RemoveCondition<ConSleep>();
 			c.noMove = true;
-			c.orgPos = new Point(this.owner.pos);
-			c.PlaySound("ride", 1f, true);
-		}, null);
+			c.orgPos = new Point(owner.pos);
+			c.PlaySound("ride");
+		});
 		return true;
 	}
 
 	public override void OnStepped(Chara c)
 	{
-		if (this.IsOn)
+		if (!IsOn && ShouldWork())
 		{
-			return;
-		}
-		if (this.ShouldWork())
-		{
-			this.owner.isOn = true;
+			owner.isOn = true;
 			EClass._zone.dirtyElectricity = true;
-			this.owner.Say("generator_start", this.owner, null, null);
-			this.owner.PlaySound("electricity_on", 1f, true);
-			this.Refresh(c);
+			owner.Say("generator_start", owner);
+			owner.PlaySound("electricity_on");
+			Refresh(c);
 		}
 	}
 
 	public override void OnSteppedOut(Chara c)
 	{
-		this.Refresh(c);
+		Refresh(c);
 	}
 
 	public override void Update()
 	{
-		if (!this.owner.isOn || !EClass._zone.IsPCFaction)
+		if (owner.isOn && EClass._zone.IsPCFaction && !ShouldWork())
 		{
-			return;
-		}
-		if (!this.ShouldWork())
-		{
-			this.owner.isOn = false;
+			owner.isOn = false;
 			EClass._zone.dirtyElectricity = true;
-			this.owner.Say("generator_stop", this.owner, null, null);
-			this.owner.PlaySound("electricity_off", 1f, true);
+			owner.Say("generator_stop", owner);
+			owner.PlaySound("electricity_off");
 		}
 	}
 
@@ -107,12 +87,12 @@ public class TraitGeneratorWheel : TraitGenerator
 
 	public bool ShouldWork()
 	{
-		if (!this.owner.pos.HasChara)
+		if (!owner.pos.HasChara)
 		{
 			return false;
 		}
 		int num = 0;
-		foreach (Thing thing in this.owner.pos.Things)
+		foreach (Thing thing in owner.pos.Things)
 		{
 			if (thing.IsInstalled && thing.trait is TraitGeneratorWheel)
 			{
@@ -127,7 +107,7 @@ public class TraitGeneratorWheel : TraitGenerator
 		{
 			return true;
 		}
-		foreach (Chara chara in this.owner.pos.Charas)
+		foreach (Chara chara in owner.pos.Charas)
 		{
 			if (chara.IsPCFaction && chara.memberType == FactionMemberType.Default)
 			{

@@ -1,5 +1,3 @@
-﻿using System;
-
 public class GrowSystemTreeSingle : GrowSystemTree
 {
 	public override int GetShadow(int index)
@@ -7,9 +5,9 @@ public class GrowSystemTreeSingle : GrowSystemTree
 		return 33;
 	}
 
-	public override void SetStageTile(GrowSystem.Stage s)
+	public override void SetStageTile(Stage s)
 	{
-		s.renderData = this.source.renderData;
-		s.SetTile(0, this.baseTiles);
+		s.renderData = source.renderData;
+		s.SetTile(0, baseTiles);
 	}
 }

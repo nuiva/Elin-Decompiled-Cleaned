@@ -1,71 +1,49 @@
-﻿using System;
-
 public class AI_OpenLock : AI_TargetThing
 {
-	public override CursorInfo CursorIcon
-	{
-		get
-		{
-			return CursorSystem.Container;
-		}
-	}
+	public override CursorInfo CursorIcon => CursorSystem.Container;
 
-	public override bool HasProgress
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool HasProgress => true;
 
-	public override bool CanTargetInventory
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanTargetInventory => true;
 
 	public override AIProgress CreateProgress()
 	{
 		return new Progress_Custom
 		{
-			canProgress = new Func<bool>(this.CanProgress),
-			onProgressBegin = delegate()
+			canProgress = CanProgress,
+			onProgressBegin = delegate
 			{
-				Thing thing = this.owner.things.FindBest<TraitLockpick>((Thing t) => -t.c_charges);
+				Thing thing = owner.things.FindBest<TraitLockpick>((Thing t) => -t.c_charges);
 				if (thing != null)
 				{
-					this.owner.Say("lockpick_start_pick", thing, base.target, null, null);
+					owner.Say("lockpick_start_pick", thing, base.target);
 				}
 				else
 				{
-					this.owner.Say("lockpick_start", this.owner, base.target, null, null);
+					owner.Say("lockpick_start", owner, base.target);
 				}
-				this.owner.PlaySound("lock_pick", 1f, true);
+				owner.PlaySound("lock_pick");
 			},
 			onProgress = delegate(Progress_Custom p)
 			{
-				LockOpenState lockOpenState = base.target.trait.TryOpenLock(this.owner, false);
-				if (lockOpenState == LockOpenState.Success)
+				switch (base.target.trait.TryOpenLock(owner, msgFail: false))
 				{
+				case LockOpenState.Success:
 					p.CompleteProgress();
-					EClass.Sound.Stop("lock_pick", 0f);
-					return;
+					EClass.Sound.Stop("lock_pick");
+					break;
+				case LockOpenState.NotEnoughSkill:
+					owner.Say("lockpick_end", owner, base.target);
+					p.Cancel();
+					EClass.Sound.Stop("lock_pick");
+					break;
 				}
-				if (lockOpenState != LockOpenState.NotEnoughSkill)
-				{
-					return;
-				}
-				this.owner.Say("lockpick_end", this.owner, base.target, null, null);
-				p.Cancel();
-				EClass.Sound.Stop("lock_pick", 0f);
 			},
-			onProgressComplete = delegate()
+			onProgressComplete = delegate
 			{
-				if (base.target.c_lockLv != 0 && this.owner != null)
+				if (base.target.c_lockLv != 0 && owner != null)
 				{
-					this.owner.Say("lockpick_end", this.owner, base.target, null, null);
+					owner.Say("lockpick_end", owner, base.target);
 				}
 			}
 		}.SetDuration(30, 10);

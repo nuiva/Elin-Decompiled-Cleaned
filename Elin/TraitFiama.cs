@@ -1,36 +1,10 @@
-﻿using System;
-
 public class TraitFiama : TraitUniqueMerchant
 {
-	public override bool CanInvite
-	{
-		get
-		{
-			return EClass._zone.id == "lothria";
-		}
-	}
+	public override bool CanInvite => EClass._zone.id == "lothria";
 
-	public override ShopType ShopType
-	{
-		get
-		{
-			return ShopType.Starter;
-		}
-	}
+	public override ShopType ShopType => ShopType.Starter;
 
-	public override CurrencyType CurrencyType
-	{
-		get
-		{
-			return CurrencyType.Money2;
-		}
-	}
+	public override CurrencyType CurrencyType => CurrencyType.Money2;
 
-	public override string LangBarter
-	{
-		get
-		{
-			return "daBuyStarter";
-		}
-	}
+	public override string LangBarter => "daBuyStarter";
 }

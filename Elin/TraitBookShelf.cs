@@ -1,28 +1,8 @@
-﻿using System;
-
 public class TraitBookShelf : TraitContainer
 {
-	public override string DefaultIdInvStyle
-	{
-		get
-		{
-			return "bookshelf";
-		}
-	}
+	public override string DefaultIdInvStyle => "bookshelf";
 
-	public override string DefaultIdContainer
-	{
-		get
-		{
-			return "shop_book";
-		}
-	}
+	public override string DefaultIdContainer => "shop_book";
 
-	public override int DefaultHeight
-	{
-		get
-		{
-			return 4;
-		}
-	}
+	public override int DefaultHeight => 4;
 }

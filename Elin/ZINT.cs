@@ -1,5 +1,3 @@
-﻿using System;
-
 public class ZINT
 {
 	public const int weight = 1;

@@ -1,33 +1,52 @@
-﻿using System;
 using DG.Tweening;
 using UnityEngine;
 
 public class LayerGacha : ELayer
 {
+	public static GameObject slot;
+
+	public GameObject goFree;
+
+	public Color colorC;
+
+	public Color colorR;
+
+	public Color colorSR;
+
+	public Color colorSSR;
+
+	public Color colorLE;
+
+	public DOTweenAnimation[] randomAnimes;
+
+	public bool alt;
+
+	public UIList listCoin;
+
 	public override void OnAfterInit()
 	{
 		Msg.TalkHomeMemeber("layerGacha");
-		if (this.alt)
+		if (alt)
 		{
-			ActionMode.NoMap.Activate(true, false);
+			ActionMode.NoMap.Activate();
 		}
-		this.RefreshCoin();
-		base.InvokeRepeating("RandomAnime", 2f, 2f);
+		RefreshCoin();
+		InvokeRepeating("RandomAnime", 2f, 2f);
 	}
 
 	private void RandomAnime()
 	{
-		this.randomAnimes.RandomItem<DOTweenAnimation>().DORestart();
+		randomAnimes.RandomItem().DORestart();
 	}
 
 	public void OnClickGoldGacha(int num)
 	{
-		this.PlayGacha(true, num);
+		PlayGacha(gold: true, num);
 	}
 
 	public void OnClickSilverGacha(int num)
 	{
-		this.PlayGacha(false, num);
+		PlayGacha(gold: false, num);
 	}
 
 	public void PlayGacha(bool gold, int num)
@@ -45,13 +64,13 @@ public class LayerGacha : ELayer
 				SE.Beep();
 				return;
 			}
-			thing.ModNum(-num, true);
+			thing.ModNum(-num);
 		}
-		this.RefreshCoin();
+		RefreshCoin();
 		Dialog d = Layer.Create("DialogGacha") as Dialog;
 		d.windows[0].setting.textCaption = "confirm".lang();
 		d.note.AddPrefab("Media/Graphics/Image/IllustGacha");
-		d.note.Space(0, 1);
+		d.note.Space();
 		bool lose = true;
 		for (int i = 0; i < num; i++)
 		{
@@ -94,36 +113,29 @@ public class LayerGacha : ELayer
 			{
 				num2 = 5;
 			}
-			Hoard.Item item = ELayer.player.hoard.AddRandom(num2, true);
+			Hoard.Item item = ELayer.player.hoard.AddRandom(num2);
 			int rarity = item.Source.rarity;
 			if (rarity == 4 || rarity == 5)
 			{
 				lose = false;
 			}
-			d.note.AddText(null, item.Name(1), ELayer.Colors.GetRarityColor(rarity, false));
+			d.note.AddText(null, item.Name(1), ELayer.Colors.GetRarityColor(rarity));
 		}
-		d.note.Space(0, 1);
+		d.note.Space();
 		if (thing == null)
 		{
-			d.note.AddText("dailyGacha".lang() + "  1 > 0", FontColor.DontChange);
+			d.note.AddText("dailyGacha".lang() + "  1 > 0");
 		}
 		else
 		{
-			d.note.AddText(string.Concat(new string[]
-			{
-				thing.NameSimple,
-				"  ",
-				(thing.Num + num).ToString(),
-				" > ",
-				thing.Num.ToString()
-			}), FontColor.DontChange);
+			d.note.AddText(thing.NameSimple + "  " + (thing.Num + num) + " > " + thing.Num);
 		}
 		d.note.Build();
-		d.windows[0].Find("GachaAnime", false).SetActive(true);
+		d.windows[0].Find<Transform>("GachaAnime").SetActive(enable: true);
 		d.list.AddButton(null, Lang.Get("ok"), delegate
 		{
 			d.Close();
-		}, null);
+		});
 		ELayer.ui.AddLayer(d);
 		ELayer.Sound.Play("gacha");
 		TweenUtil.Delay(0.5f, delegate
@@ -141,20 +153,20 @@ public class LayerGacha : ELayer
 
 	public void RefreshCoin()
 	{
-		this.goFree.SetActive(ELayer.player.dailyGacha);
-		this.listCoin.Clear();
-		BaseList baseList = this.listCoin;
-		UIList.Callback<Thing, ButtonGrid> callback = new UIList.Callback<Thing, ButtonGrid>();
-		callback.onInstantiate = delegate(Thing a, ButtonGrid b)
+		goFree.SetActive(ELayer.player.dailyGacha);
+		listCoin.Clear();
+		listCoin.callbacks = new UIList.Callback<Thing, ButtonGrid>
 		{
-			b.SetCard(a, ButtonGrid.Mode.Default, null);
+			onInstantiate = delegate(Thing a, ButtonGrid b)
+			{
+				b.SetCard(a);
+			},
+			onClick = delegate(Thing a, ButtonGrid b)
+			{
+				ELayer.ui.AddLayer<LayerInfo>().Set(a);
+			}
 		};
-		callback.onClick = delegate(Thing a, ButtonGrid b)
-		{
-			ELayer.ui.AddLayer<LayerInfo>().Set(a, false);
-		};
-		baseList.callbacks = callback;
-		this.listCoin.Refresh(false);
+		listCoin.Refresh();
 	}
 
 	public void OnClickBuyCoin()
@@ -164,29 +176,9 @@ public class LayerGacha : ELayer
 
 	public override void OnKill()
 	{
-		if (this.alt)
+		if (alt)
 		{
-			ActionMode.DefaultMode.Activate(true, false);
+			ActionMode.DefaultMode.Activate();
 		}
 	}
-
-	public static GameObject slot;
-
-	public GameObject goFree;
-
-	public Color colorC;
-
-	public Color colorR;
-
-	public Color colorSR;
-
-	public Color colorSSR;
-
-	public Color colorLE;
-
-	public DOTweenAnimation[] randomAnimes;
-
-	public bool alt;
-
-	public UIList listCoin;
 }

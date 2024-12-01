@@ -1,32 +1,9 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class MapConfig : EClass
 {
-	private IEnumerable<string> SceneProfileIDs()
-	{
-		SceneProfile[] array = Resources.LoadAll<SceneProfile>("Scene/Profile/");
-		List<string> list = new List<string>();
-		foreach (SceneProfile sceneProfile in array)
-		{
-			list.Add(sceneProfile.name.Replace("SceneProfile_", ""));
-		}
-		return list;
-	}
-
-	private IEnumerable<string> FowProfileIDs()
-	{
-		FowProfile[] array = Resources.LoadAll<FowProfile>("Scene/Profile/Fow/");
-		List<string> list = new List<string>();
-		foreach (FowProfile fowProfile in array)
-		{
-			list.Add(fowProfile.name.Replace("FowProfile_", ""));
-		}
-		return list;
-	}
-
 	[JsonProperty]
 	public string idSceneProfile;
 
@@ -119,4 +96,28 @@ public class MapConfig : EClass
 
 	[JsonProperty]
 	public SerializableColor colorSea = new SerializableColor(0, 0, 0, 0);
+
+	private IEnumerable<string> SceneProfileIDs()
+	{
+		SceneProfile[] array = Resources.LoadAll<SceneProfile>("Scene/Profile/");
+		List<string> list = new List<string>();
+		SceneProfile[] array2 = array;
+		foreach (SceneProfile sceneProfile in array2)
+		{
+			list.Add(sceneProfile.name.Replace("SceneProfile_", ""));
+		}
+		return list;
+	}
+
+	private IEnumerable<string> FowProfileIDs()
+	{
+		FowProfile[] array = Resources.LoadAll<FowProfile>("Scene/Profile/Fow/");
+		List<string> list = new List<string>();
+		FowProfile[] array2 = array;
+		foreach (FowProfile fowProfile in array2)
+		{
+			list.Add(fowProfile.name.Replace("FowProfile_", ""));
+		}
+		return list;
+	}
 }

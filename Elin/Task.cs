@@ -1,15 +1,17 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class Task : AIAct
 {
-	public override TargetType TargetType
-	{
-		get
-		{
-			return TargetType.Ground;
-		}
-	}
+	public TaskList taskList;
+
+	public bool isDestroyed;
+
+	public int nextTry;
+
+	[JsonProperty]
+	public bool suspended;
+
+	public override TargetType TargetType => TargetType.Ground;
 
 	public virtual HitResult GetHitResult()
 	{
@@ -18,68 +20,72 @@ public class Task : AIAct
 
 	public override void OnSuccess()
 	{
-		this.Destroy();
+		Destroy();
 	}
 
 	public void TryLayer(int min = 30)
 	{
-		this.nextTry = EClass.game.sessionMin + min;
+		nextTry = EClass.game.sessionMin + min;
 	}
 
-	public AIAct.Status Destroy()
+	public Status Destroy()
 	{
-		if (this.status == AIAct.Status.Running)
+		if (status == Status.Running)
 		{
-			this.status = AIAct.Status.Fail;
+			status = Status.Fail;
 		}
-		if (this.isDestroyed)
+		if (isDestroyed)
 		{
-			return this.status;
+			return status;
 		}
-		this.isDestroyed = true;
-		if (this.taskList != null)
+		isDestroyed = true;
+		if (taskList != null)
 		{
-			this.taskList.Remove(this);
+			taskList.Remove(this);
 		}
-		this.OnDestroy();
-		return this.status;
+		OnDestroy();
+		return status;
 	}
 
 	public virtual void OnDestroy()
 	{
 	}
 
-	public override AIAct.Status Cancel()
+	public override Status Cancel()
 	{
-		this.TryLayer(30);
+		TryLayer();
 		return base.Cancel();
 	}
 
 	public override void OnReset()
 	{
-		if (this.isDestroyed)
+		if (!isDestroyed && taskList != null)
 		{
-			return;
-		}
-		if (this.taskList != null)
-		{
-			this.taskList.SetAstLastItem(this);
+			taskList.SetAstLastItem(this);
 		}
 	}
 
 	public override bool CanProgress()
 	{
-		if (this.isDestroyed)
+		if (isDestroyed)
 		{
 			return false;
 		}
-		HitResult hitResult = this.GetHitResult();
-		return hitResult == HitResult.Valid || hitResult == HitResult.Warning;
+		HitResult hitResult = GetHitResult();
+		if (hitResult != HitResult.Valid)
+		{
+			return hitResult == HitResult.Warning;
+		}
+		return true;
 	}
 
 	public bool CanPerformTask(Chara chara, int radius)
 	{
-		return !this.suspended && this._CanPerformTask(chara, radius);
+		if (!suspended)
+		{
+			return _CanPerformTask(chara, radius);
+		}
+		return false;
 	}
 
 	public virtual bool _CanPerformTask(Chara chara, int radius)
@@ -93,19 +99,10 @@ public class Task : AIAct
 
 	public void ToggleSuspend()
 	{
-		this.suspended = !this.suspended;
-		if (this.suspended && this.IsRunning)
+		suspended = !suspended;
+		if (suspended && IsRunning)
 		{
-			this.Cancel();
+			Cancel();
 		}
 	}
-
-	public TaskList taskList;
-
-	public bool isDestroyed;
-
-	public int nextTry;
-
-	[JsonProperty]
-	public bool suspended;
 }

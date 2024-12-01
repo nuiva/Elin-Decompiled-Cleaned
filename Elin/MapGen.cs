@@ -1,338 +1,336 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class MapGen : BaseMapGen
 {
-	public static MapGen Instance
-	{
-		get
-		{
-			MapGen result;
-			if ((result = MapGen._Instance) == null)
-			{
-				result = (MapGen._Instance = new MapGen());
-			}
-			return result;
-		}
-	}
+	private static MapGen _Instance;
+
+	public static MapGen Instance => _Instance ?? (_Instance = new MapGen());
 
 	protected override void GenerateTerrain()
 	{
-		base.SetSize(this.zp.useRootSize ? this.zone.GetTopZone().bounds.Size : this.zp.size, 10);
-		if (this.biomes == null || this.Size != this.biomes.GetLength(0))
+		SetSize(zp.useRootSize ? zone.GetTopZone().bounds.Size : zp.size, 10);
+		if (biomes == null || Size != biomes.GetLength(0))
 		{
-			this.biomes = new BiomeProfile[this.Size, this.Size];
-			this.subBiomes = new bool[this.Size, this.Size];
-			this.heights1 = new float[this.Size, this.Size];
-			this.heights2 = new float[this.Size, this.Size];
-			this.heights3 = new float[this.Size, this.Size];
-			this.waters = new float[this.Size, this.Size];
-			this.heights3d = new float[this.Size, this.Size];
-			this.lastSize = this.Size;
+			biomes = new BiomeProfile[Size, Size];
+			subBiomes = new bool[Size, Size];
+			heights1 = new float[Size, Size];
+			heights2 = new float[Size, Size];
+			heights3 = new float[Size, Size];
+			waters = new float[Size, Size];
+			heights3d = new float[Size, Size];
+			lastSize = Size;
 		}
-		this.map.biomes = this.biomes;
-		this.layerHeight.SaveSettings();
-		this.layerStratum.SaveSettings();
-		this.layerBiome.SaveSettings();
-		this.layerRiver.SaveSettings();
-		this.layerBiome.SaveSettings();
-		this.skipWater = (this.zp.noWater || (this.bp.tileCenter != null && (this.bp.tileCenter.IsNeighborRoad || this.bp.tileCenter.isRoad)));
+		map.biomes = biomes;
+		layerHeight.SaveSettings();
+		layerStratum.SaveSettings();
+		layerBiome.SaveSettings();
+		layerRiver.SaveSettings();
+		layerBiome.SaveSettings();
+		skipWater = zp.noWater || (bp.tileCenter != null && (bp.tileCenter.IsNeighborRoad || bp.tileCenter.isRoad));
 		for (int i = 0; i < 100; i++)
 		{
-			this.seed = (this.map.seed = this.bp.genSetting.seed + i);
-			Rand.SetSeed(this.seed);
-			if (this.OnGenerateTerrain())
+			seed = (map.seed = bp.genSetting.seed + i);
+			Rand.SetSeed(seed);
+			if (OnGenerateTerrain())
 			{
 				break;
 			}
-			Debug.Log("Failed map generation:" + i.ToString() + " / " + BaseMapGen.err);
-			this.skipWater = true;
+			Debug.Log("Failed map generation:" + i + " / " + BaseMapGen.err);
+			skipWater = true;
 		}
-		this.map.SetZone(EClass._zone);
-		for (int j = 0; j < this.Size; j++)
+		map.SetZone(EClass._zone);
+		for (int j = 0; j < Size; j++)
 		{
-			for (int k = 0; k < this.Size; k++)
+			for (int k = 0; k < Size; k++)
 			{
-				this.map.QuickRefreshTile(j, k);
+				map.QuickRefreshTile(j, k);
 			}
 		}
-		Rand.SetSeed(-1);
+		Rand.SetSeed();
 	}
 
 	protected override bool OnGenerateTerrain()
 	{
 		int idMat = 66;
-		if (this.map.isGenerated)
+		if (map.isGenerated)
 		{
-			if (this.map.Size != this.Size)
+			if (map.Size != Size)
 			{
-				this.map.Resize(this.Size);
+				map.Resize(Size);
 			}
-			this.map.Reset();
+			map.Reset();
 		}
 		else
 		{
-			this.map.CreateNew(this.Size, true);
+			map.CreateNew(Size);
 		}
-		this.map.poiMap.Reset();
-		if (this.bp.zoneProfile.useRootSize)
+		map.poiMap.Reset();
+		if (bp.zoneProfile.useRootSize)
 		{
-			this.map.SetBounds(this.zone.GetTopZone().bounds);
+			map.SetBounds(zone.GetTopZone().bounds);
 		}
 		else
 		{
-			this.map.SetBounds((this.bp.zoneProfile.sizeBounds == 0) ? EClass.setting.defaultMapSize : this.bp.zoneProfile.sizeBounds);
+			map.SetBounds((bp.zoneProfile.sizeBounds == 0) ? EClass.setting.defaultMapSize : bp.zoneProfile.sizeBounds);
 		}
-		ZoneProfile.GenType genType = this.zp.genType;
-		if (genType != ZoneProfile.GenType.Sky)
+		switch (zp.genType)
 		{
-			if (genType == ZoneProfile.GenType.Underground)
+		case ZoneProfile.GenType.Underground:
+			map.config.idBiome = "Underground";
+			zone._biome = null;
+			break;
+		case ZoneProfile.GenType.Sky:
+		{
+			map.config.idBiome = "Sky";
+			zone._biome = null;
+			for (int i = 0; i < Size; i++)
 			{
-				this.map.config.idBiome = "Underground";
-				this.zone._biome = null;
-			}
-			this.waterCount = 0f;
-			if (!this.skipWater)
-			{
-				float num = (float)(this.Size * this.Size) * this.variation.maxWaterRatio;
-				this.layerRiver.FillHeightMap(this.waters, this.OX, 0, this.OZ, this.Size, this.Size, this.seed, 1f);
-				for (int i = 0; i < this.Size; i++)
+				for (int j = 0; j < Size; j++)
 				{
-					for (int j = 0; j < this.Size; j++)
-					{
-						this.waters[i, j] += (float)this.zp.water;
-						if (this.waters[i, j] > 0f)
-						{
-							this.waterCount += 1f;
-						}
-					}
-					if (this.waterCount > num)
-					{
-						BaseMapGen.err = "Too many water";
-						return false;
-					}
-				}
-			}
-			this.layerBiome.FillHeightMap(this.heights1, this.OX, 0, this.OZ, this.Size, this.Size, this.zp.seeds.biome, 1f);
-			this.layerBiome.FillHeightMap(this.heights2, this.OX, 0, this.OZ, this.Size, this.Size, this.zp.seeds.biome + 1, 1f);
-			if (base.extraBiome)
-			{
-				this.layerBiome.FillHeightMap(this.heights3, this.OX, 0, this.OZ, this.Size, this.Size, this.zp.seeds.biome + 2, 1f);
-			}
-			for (int k = 0; k < this.Size; k++)
-			{
-				for (int l = 0; l < this.Size; l++)
-				{
-					if (this.heights1[k, l] != 0f)
-					{
-						this.biomes[k, l] = this.biomeProfiles[1];
-					}
-					else if (this.heights2[k, l] != 0f)
-					{
-						this.biomes[k, l] = this.biomeProfiles[2];
-					}
-					else if (base.extraBiome && this.heights3[k, l] != 0f)
-					{
-						this.biomes[k, l] = this.biomeProfiles[3];
-					}
-					else
-					{
-						this.biomes[k, l] = this.biomeProfiles[0];
-					}
-				}
-			}
-			this.layerBiome.FillHeightMap(this.heights1, this.OX, 0, this.OZ, this.Size, this.Size, this.zp.seeds.biomeSub, this.zp.biomeSubScale);
-			for (int m = 0; m < this.Size; m++)
-			{
-				for (int n = 0; n < this.Size; n++)
-				{
-					this.subBiomes[m, n] = (this.heights1[m, n] != 0f);
-				}
-			}
-			this.layerBiome.FillHeightMap(this.heights1, this.OX, 0, this.OZ, this.Size, this.Size, this.zp.seeds.biome, 1f);
-			for (int num2 = 0; num2 < this.biomeProfiles.Length; num2++)
-			{
-				if (num2 == 0 || !(this.biomeProfiles[num2 - 1] == this.biomeProfiles[num2]))
-				{
-					this.biomeProfiles[num2].layerBlock.FillHeightMap(this.heights1, this.OX, 0, this.OZ, this.Size, this.Size, this.zp.seeds.biome, 1f);
-					bool flag = EClass.sources.floors.rows[this.biomeProfiles[num2].exterior.floor.id].tag.Contains("soil");
-					for (int num3 = 0; num3 < this.Size; num3++)
-					{
-						if (!this.zp.clearEdge || ((num3 <= this.map.bounds.x - 4 || num3 > this.map.bounds.x + 4) && (num3 <= this.map.bounds.maxX - 4 || num3 > this.map.bounds.maxX + 4)))
-						{
-							for (int num4 = 0; num4 < this.Size; num4++)
-							{
-								if ((!this.zp.clearEdge || ((num4 <= this.map.bounds.z - 4 || num4 > this.map.bounds.z + 4) && (num4 <= this.map.bounds.maxZ - 4 || num4 > this.map.bounds.maxZ + 4))) && !(this.biomes[num3, num4] != this.biomeProfiles[num2]) && this.heights1[num3, num4] > (float)this.blockHeight)
-								{
-									SourceBlock.Row row = EClass.sources.blocks.rows[this.biomeProfiles[num2].exterior.block.id];
-									if (!flag || row.alias == "block_ice")
-									{
-										SourceFloor.Row row2 = EClass.sources.floors.alias[row.autoFloor];
-										base.SetFloor(num3, num4, row2.DefaultMaterial.id, row2.id, 0);
-									}
-									base.SetBlock(num3, num4, this.biomeProfiles[num2].exterior.block.mat, this.biomeProfiles[num2].exterior.block.id, 0);
-								}
-							}
-						}
-					}
-				}
-			}
-			bool flag2 = false;
-			for (int num5 = this.Size / 2 - 4; num5 < this.Size / 2 + 4; num5++)
-			{
-				for (int num6 = this.Size / 2 - 4; num6 < this.Size / 2 + 4; num6++)
-				{
-					if (num5 >= 0 && num6 >= 0 && num5 < this.Size && num6 < this.Size && this.map.cells[num5, num6]._block != 0)
-					{
-						flag2 = true;
-						break;
-					}
-				}
-			}
-			if (flag2)
-			{
-				for (int num7 = 0; num7 < this.Size; num7++)
-				{
-					for (int num8 = 0; num8 < this.Size; num8++)
-					{
-						base.SetBlock(num7, num8, 0, 0, 0);
-					}
-				}
-			}
-			this.layerHeight.FillHeightMap(this.heights1, this.OX, 0, this.OZ, this.Size, this.Size, this.seed, 1f);
-			this.layerHeight.FillHeightMap(this.heights2, this.OX, 0, this.OZ, this.Size, this.Size, this.zp.seeds.bush, 1f);
-			this.layerHeight.FillHeightMap(this.heights3, this.OX, 0, this.OZ, this.Size, this.Size, this.seed + 1, 1f);
-			BiomeProfile biomeWater = this.biomeWater;
-			byte b = (byte)EClass.setting.maxGenHeight;
-			for (int num9 = 0; num9 < this.Size; num9++)
-			{
-				for (int num10 = 0; num10 < this.Size; num10++)
-				{
-					int num11 = (int)this.heights1[num9, num10];
-					Cell cell = this.map.cells[num9, num10];
-					if (cell._block == 0 || cell._floor == 0)
-					{
-						BiomeProfile biomeProfile = this.biomes[num9, num10];
-						SourceMaterial.Row row3 = this.subBiomes[num9, num10] ? biomeProfile.MatSub : biomeProfile.MatFloor;
-						int dir = biomeProfile.exterior.floor.GetDir();
-						byte b2 = (byte)(this.heights1[num9, num10] * (float)this.hSetting.heightMod + (float)this.hSetting.baseHeight);
-						if (this.hSetting.step > 0)
-						{
-							b2 = (byte)((int)b2 / this.hSetting.step * this.hSetting.step);
-						}
-						if (b2 > b)
-						{
-							b2 = b;
-						}
-						cell.height = b2;
-						if (!this.skipWater && this.waters[num9, num10] > 0f && cell._block == 0)
-						{
-							cell.height = 0;
-							if (biomeWater)
-							{
-								bool flag3 = false;
-								for (int num12 = num10 - 2; num12 < num10 + 3; num12++)
-								{
-									for (int num13 = num9 - 2; num13 < num9 + 3; num13++)
-									{
-										if (num12 >= 0 && num13 >= 0 && num13 < this.Size && num12 < this.Size && this.waters[num13, num12] <= 0f)
-										{
-											flag3 = true;
-											break;
-										}
-									}
-								}
-								base.SetFloor(num9, num10, this.biomeWater.MatFloor.id, flag3 ? 44 : 43, 0);
-							}
-							else
-							{
-								base.SetFloor(num9, num10, idMat, (this.waters[num9, num10] < 5f) ? 44 : 43, 0);
-							}
-						}
-						else if (this.zp.shoreHeight > 0f && (float)num11 < this.zp.shoreHeight)
-						{
-							base.SetFloor(num9, num10, this.biomeShore.MatFloor.id, this.biomeShore.MatFloor.defFloor, 0);
-							this.biomes[num9, num10] = this.biomeShore;
-						}
-						else if (biomeProfile.floor_height != 0 && (int)this.heights2[num9, num10] + this.zp.bushMod >= 4)
-						{
-							base.SetFloor(num9, num10, (int)((byte)row3.id), biomeProfile.floor_height, dir);
-						}
-						else
-						{
-							base.SetFloor(num9, num10, (int)((byte)row3.id), (biomeProfile.exterior.floor.id != 0) ? biomeProfile.exterior.floor.id : row3.defFloor, dir);
-						}
-					}
-				}
-			}
-			if (this.hSetting.heightMod > 0)
-			{
-				this.ModifyHeight(this.map);
-			}
-			this.MakeNeighbor();
-			for (int num14 = 0; num14 < this.Size; num14++)
-			{
-				for (int num15 = 0; num15 < this.Size; num15++)
-				{
-					Cell cell2 = this.map.cells[num14, num15];
-					if (this.zp.setShore && !cell2.HasBlock && !cell2.IsTopWater && cell2.height <= 20)
-					{
-						bool flag4 = false;
-						for (int num16 = num14 - 1; num16 < num14 + 2; num16++)
-						{
-							if (num16 >= 0 && num16 < this.Size)
-							{
-								for (int num17 = num15 - 1; num17 < num15 + 2; num17++)
-								{
-									if (num17 >= 0 && num17 < this.Size && (num16 != num14 || num17 != num15) && this.map.cells[num16, num17].IsTopWater)
-									{
-										flag4 = true;
-										break;
-									}
-								}
-								if (flag4)
-								{
-									break;
-								}
-							}
-						}
-						if (flag4)
-						{
-							base.SetFloor(num14, num15, this.biomeShore.MatFloor.id, this.biomeShore.MatFloor.defFloor, 0);
-							this.biomes[num14, num15] = this.biomeShore;
-							if (this.zp.extraShores > 0)
-							{
-								int extraShores = this.zp.extraShores;
-								for (int num18 = num14 - extraShores; num18 < num14 + extraShores + 1; num18++)
-								{
-									if (num18 >= 0 && num18 < this.Size)
-									{
-										for (int num19 = num15 - extraShores; num19 < num15 + extraShores + 1; num19++)
-										{
-											if (num19 >= 0 && num19 < this.Size && !(this.biomes[num18, num19] == this.biomeShore) && !this.map.cells[num18, num19].IsTopWater && !this.map.cells[num18, num19].HasBlock)
-											{
-												base.SetFloor(num18, num19, this.biomeShore.MatFloor.id, this.biomeShore.MatFloor.defFloor, 0);
-												this.biomes[num18, num19] = this.biomeShore;
-											}
-										}
-									}
-								}
-							}
-						}
-					}
+					SetFloor(i, j, 0, 90);
 				}
 			}
 			return true;
 		}
-		this.map.config.idBiome = "Sky";
-		this.zone._biome = null;
-		for (int num20 = 0; num20 < this.Size; num20++)
+		}
+		waterCount = 0f;
+		if (!skipWater)
 		{
-			for (int num21 = 0; num21 < this.Size; num21++)
+			float num = (float)(Size * Size) * variation.maxWaterRatio;
+			layerRiver.FillHeightMap(waters, OX, 0, OZ, Size, Size, seed);
+			for (int k = 0; k < Size; k++)
 			{
-				base.SetFloor(num20, num21, 0, 90, 0);
+				for (int l = 0; l < Size; l++)
+				{
+					waters[k, l] += zp.water;
+					if (waters[k, l] > 0f)
+					{
+						waterCount += 1f;
+					}
+				}
+				if (waterCount > num)
+				{
+					BaseMapGen.err = "Too many water";
+					return false;
+				}
+			}
+		}
+		layerBiome.FillHeightMap(heights1, OX, 0, OZ, Size, Size, zp.seeds.biome);
+		layerBiome.FillHeightMap(heights2, OX, 0, OZ, Size, Size, zp.seeds.biome + 1);
+		if (base.extraBiome)
+		{
+			layerBiome.FillHeightMap(heights3, OX, 0, OZ, Size, Size, zp.seeds.biome + 2);
+		}
+		for (int m = 0; m < Size; m++)
+		{
+			for (int n = 0; n < Size; n++)
+			{
+				if (heights1[m, n] != 0f)
+				{
+					biomes[m, n] = biomeProfiles[1];
+				}
+				else if (heights2[m, n] != 0f)
+				{
+					biomes[m, n] = biomeProfiles[2];
+				}
+				else if (base.extraBiome && heights3[m, n] != 0f)
+				{
+					biomes[m, n] = biomeProfiles[3];
+				}
+				else
+				{
+					biomes[m, n] = biomeProfiles[0];
+				}
+			}
+		}
+		layerBiome.FillHeightMap(heights1, OX, 0, OZ, Size, Size, zp.seeds.biomeSub, zp.biomeSubScale);
+		for (int num2 = 0; num2 < Size; num2++)
+		{
+			for (int num3 = 0; num3 < Size; num3++)
+			{
+				subBiomes[num2, num3] = heights1[num2, num3] != 0f;
+			}
+		}
+		layerBiome.FillHeightMap(heights1, OX, 0, OZ, Size, Size, zp.seeds.biome);
+		for (int num4 = 0; num4 < biomeProfiles.Length; num4++)
+		{
+			if (num4 != 0 && biomeProfiles[num4 - 1] == biomeProfiles[num4])
+			{
+				continue;
+			}
+			biomeProfiles[num4].layerBlock.FillHeightMap(heights1, OX, 0, OZ, Size, Size, zp.seeds.biome);
+			bool flag = EClass.sources.floors.rows[biomeProfiles[num4].exterior.floor.id].tag.Contains("soil");
+			for (int num5 = 0; num5 < Size; num5++)
+			{
+				if (zp.clearEdge && ((num5 > map.bounds.x - 4 && num5 <= map.bounds.x + 4) || (num5 > map.bounds.maxX - 4 && num5 <= map.bounds.maxX + 4)))
+				{
+					continue;
+				}
+				for (int num6 = 0; num6 < Size; num6++)
+				{
+					if ((!zp.clearEdge || ((num6 <= map.bounds.z - 4 || num6 > map.bounds.z + 4) && (num6 <= map.bounds.maxZ - 4 || num6 > map.bounds.maxZ + 4))) && !(biomes[num5, num6] != biomeProfiles[num4]) && heights1[num5, num6] > (float)blockHeight)
+					{
+						SourceBlock.Row row = EClass.sources.blocks.rows[biomeProfiles[num4].exterior.block.id];
+						if (!flag || row.alias == "block_ice")
+						{
+							SourceFloor.Row row2 = EClass.sources.floors.alias[row.autoFloor];
+							SetFloor(num5, num6, row2.DefaultMaterial.id, row2.id);
+						}
+						SetBlock(num5, num6, biomeProfiles[num4].exterior.block.mat, biomeProfiles[num4].exterior.block.id);
+					}
+				}
+			}
+		}
+		bool flag2 = false;
+		for (int num7 = Size / 2 - 4; num7 < Size / 2 + 4; num7++)
+		{
+			for (int num8 = Size / 2 - 4; num8 < Size / 2 + 4; num8++)
+			{
+				if (num7 >= 0 && num8 >= 0 && num7 < Size && num8 < Size && map.cells[num7, num8]._block != 0)
+				{
+					flag2 = true;
+					break;
+				}
+			}
+		}
+		if (flag2)
+		{
+			for (int num9 = 0; num9 < Size; num9++)
+			{
+				for (int num10 = 0; num10 < Size; num10++)
+				{
+					SetBlock(num9, num10, 0, 0);
+				}
+			}
+		}
+		layerHeight.FillHeightMap(heights1, OX, 0, OZ, Size, Size, seed);
+		layerHeight.FillHeightMap(heights2, OX, 0, OZ, Size, Size, zp.seeds.bush);
+		layerHeight.FillHeightMap(heights3, OX, 0, OZ, Size, Size, seed + 1);
+		BiomeProfile biomeProfile = biomeWater;
+		byte b = (byte)EClass.setting.maxGenHeight;
+		for (int num11 = 0; num11 < Size; num11++)
+		{
+			for (int num12 = 0; num12 < Size; num12++)
+			{
+				int num13 = (int)heights1[num11, num12];
+				Cell cell = map.cells[num11, num12];
+				if (cell._block != 0 && cell._floor != 0)
+				{
+					continue;
+				}
+				BiomeProfile biomeProfile2 = biomes[num11, num12];
+				SourceMaterial.Row row3 = (subBiomes[num11, num12] ? biomeProfile2.MatSub : biomeProfile2.MatFloor);
+				int dir = biomeProfile2.exterior.floor.GetDir();
+				byte b2 = (byte)(heights1[num11, num12] * (float)hSetting.heightMod + (float)hSetting.baseHeight);
+				if (hSetting.step > 0)
+				{
+					b2 = (byte)(b2 / hSetting.step * hSetting.step);
+				}
+				if (b2 > b)
+				{
+					b2 = b;
+				}
+				cell.height = b2;
+				if (!skipWater && waters[num11, num12] > 0f && cell._block == 0)
+				{
+					cell.height = 0;
+					if ((bool)biomeProfile)
+					{
+						bool flag3 = false;
+						for (int num14 = num12 - 2; num14 < num12 + 3; num14++)
+						{
+							for (int num15 = num11 - 2; num15 < num11 + 3; num15++)
+							{
+								if (num14 >= 0 && num15 >= 0 && num15 < Size && num14 < Size && waters[num15, num14] <= 0f)
+								{
+									flag3 = true;
+									break;
+								}
+							}
+						}
+						SetFloor(num11, num12, biomeWater.MatFloor.id, flag3 ? 44 : 43);
+					}
+					else
+					{
+						SetFloor(num11, num12, idMat, (waters[num11, num12] < 5f) ? 44 : 43);
+					}
+				}
+				else if (zp.shoreHeight > 0f && (float)num13 < zp.shoreHeight)
+				{
+					SetFloor(num11, num12, biomeShore.MatFloor.id, biomeShore.MatFloor.defFloor);
+					biomes[num11, num12] = biomeShore;
+				}
+				else if (biomeProfile2.floor_height != 0 && (int)heights2[num11, num12] + zp.bushMod >= 4)
+				{
+					SetFloor(num11, num12, (byte)row3.id, biomeProfile2.floor_height, dir);
+				}
+				else
+				{
+					SetFloor(num11, num12, (byte)row3.id, (biomeProfile2.exterior.floor.id != 0) ? biomeProfile2.exterior.floor.id : row3.defFloor, dir);
+				}
+			}
+		}
+		if (hSetting.heightMod > 0)
+		{
+			ModifyHeight(map);
+		}
+		MakeNeighbor();
+		for (int num16 = 0; num16 < Size; num16++)
+		{
+			for (int num17 = 0; num17 < Size; num17++)
+			{
+				Cell cell2 = map.cells[num16, num17];
+				if (!zp.setShore || cell2.HasBlock || cell2.IsTopWater || cell2.height > 20)
+				{
+					continue;
+				}
+				bool flag4 = false;
+				for (int num18 = num16 - 1; num18 < num16 + 2; num18++)
+				{
+					if (num18 < 0 || num18 >= Size)
+					{
+						continue;
+					}
+					for (int num19 = num17 - 1; num19 < num17 + 2; num19++)
+					{
+						if (num19 >= 0 && num19 < Size && (num18 != num16 || num19 != num17) && map.cells[num18, num19].IsTopWater)
+						{
+							flag4 = true;
+							break;
+						}
+					}
+					if (flag4)
+					{
+						break;
+					}
+				}
+				if (!flag4)
+				{
+					continue;
+				}
+				SetFloor(num16, num17, biomeShore.MatFloor.id, biomeShore.MatFloor.defFloor);
+				biomes[num16, num17] = biomeShore;
+				if (zp.extraShores <= 0)
+				{
+					continue;
+				}
+				int extraShores = zp.extraShores;
+				for (int num20 = num16 - extraShores; num20 < num16 + extraShores + 1; num20++)
+				{
+					if (num20 < 0 || num20 >= Size)
+					{
+						continue;
+					}
+					for (int num21 = num17 - extraShores; num21 < num17 + extraShores + 1; num21++)
+					{
+						if (num21 >= 0 && num21 < Size && !(biomes[num20, num21] == biomeShore) && !map.cells[num20, num21].IsTopWater && !map.cells[num20, num21].HasBlock)
+						{
+							SetFloor(num20, num21, biomeShore.MatFloor.id, biomeShore.MatFloor.defFloor);
+							biomes[num20, num21] = biomeShore;
+						}
+					}
+				}
 			}
 		}
 		return true;
@@ -340,157 +338,292 @@ public class MapGen : BaseMapGen
 
 	public void MakeNeighbor()
 	{
-		MapGen.<>c__DisplayClass5_0 CS$<>8__locals1;
-		CS$<>8__locals1.<>4__this = this;
-		if (this.bp.surrounding == null)
+		EloMap.TileInfo thisInfo;
+		int seaDir;
+		if (bp.surrounding != null)
 		{
-			return;
+			thisInfo = bp.surrounding[1, 1];
+			seaDir = (thisInfo.sea ? (1 + EClass.rnd(4)) : 0);
+			_MakeNeighbor(bp.surrounding[1, 2], Size / 3 + 7, new Point(0, Size - 1), 0, -1, 3, 1);
+			_MakeNeighbor(bp.surrounding[1, 0], Size / 3 + 7, new Point(0, 0), 0, 1, 1, 3);
+			_MakeNeighbor(bp.surrounding[2, 1], Size / 3 + 7, new Point(Size - 1, 0), -1, 0, 2, 4);
+			_MakeNeighbor(bp.surrounding[0, 1], Size / 3 + 7, new Point(0, 0), 1, 0, 4, 2);
+			EClass._map.config.seaDir = seaDir;
 		}
-		CS$<>8__locals1.thisInfo = this.bp.surrounding[1, 1];
-		CS$<>8__locals1.seaDir = (CS$<>8__locals1.thisInfo.sea ? (1 + EClass.rnd(4)) : 0);
-		this.<MakeNeighbor>g___MakeNeighbor|5_0(this.bp.surrounding[1, 2], this.Size / 3 + 7, new Point(0, this.Size - 1), 0, -1, 3, 1, ref CS$<>8__locals1);
-		this.<MakeNeighbor>g___MakeNeighbor|5_0(this.bp.surrounding[1, 0], this.Size / 3 + 7, new Point(0, 0), 0, 1, 1, 3, ref CS$<>8__locals1);
-		this.<MakeNeighbor>g___MakeNeighbor|5_0(this.bp.surrounding[2, 1], this.Size / 3 + 7, new Point(this.Size - 1, 0), -1, 0, 2, 4, ref CS$<>8__locals1);
-		this.<MakeNeighbor>g___MakeNeighbor|5_0(this.bp.surrounding[0, 1], this.Size / 3 + 7, new Point(0, 0), 1, 0, 4, 2, ref CS$<>8__locals1);
-		EClass._map.config.seaDir = CS$<>8__locals1.seaDir;
+		void _MakeNeighbor(EloMap.TileInfo info, int _s, Point p, int vx, int vz, int _seaDir1, int _seaDir2)
+		{
+			int num = _s;
+			int num2 = 4;
+			Point point = new Point();
+			while (p.IsValid)
+			{
+				point.Set(p);
+				num2--;
+				if (num2 < 0)
+				{
+					num += ((EClass.rnd(2) == 0) ? 1 : (-1));
+					num = Mathf.Clamp(num, _s - 3, _s + 3);
+					num2 = 2 + EClass.rnd(4);
+				}
+				for (int i = 0; i < num; i++)
+				{
+					if (vx != 0)
+					{
+						point.x = p.x + i * vx;
+					}
+					else
+					{
+						point.z = p.z + i * vz;
+					}
+					if (point.IsValid)
+					{
+						if (info.sea)
+						{
+							if (!thisInfo.sea)
+							{
+								seaDir = _seaDir1;
+							}
+							SetFloor(point.x, point.z, 66, (i >= num - 3) ? 44 : 43);
+						}
+						else if (info.rock)
+						{
+							SetBlock(point.x, point.z, 45, 1);
+						}
+						else if (info.shore)
+						{
+							if (!thisInfo.shore)
+							{
+								seaDir = _seaDir2;
+							}
+							SetFloor(point.x, point.z, 97, 33);
+						}
+					}
+				}
+				if (vx == 0)
+				{
+					p.x++;
+				}
+				else
+				{
+					p.z++;
+				}
+			}
+		}
 	}
 
 	public void MakeNeighbor_old()
 	{
-		if (this.bp.surrounding == null)
+		if (bp.surrounding != null)
 		{
-			return;
+			_MakeNeighbor(bp.surrounding[1, 2], new Point(Size / 2, Size / 3 * 2 - 5), 0, 1);
+			_MakeNeighbor(bp.surrounding[1, 0], new Point(Size / 2, Size / 3 + 6), 0, -1);
+			_MakeNeighbor(bp.surrounding[2, 1], new Point(Size / 3 * 2 - 5, Size / 2), 1, 0);
+			_MakeNeighbor(bp.surrounding[0, 1], new Point(Size / 3 + 6, Size / 2), -1, 0);
 		}
-		this.<MakeNeighbor_old>g___MakeNeighbor|6_0(this.bp.surrounding[1, 2], new Point(this.Size / 2, this.Size / 3 * 2 - 5), 0, 1);
-		this.<MakeNeighbor_old>g___MakeNeighbor|6_0(this.bp.surrounding[1, 0], new Point(this.Size / 2, this.Size / 3 + 6), 0, -1);
-		this.<MakeNeighbor_old>g___MakeNeighbor|6_0(this.bp.surrounding[2, 1], new Point(this.Size / 3 * 2 - 5, this.Size / 2), 1, 0);
-		this.<MakeNeighbor_old>g___MakeNeighbor|6_0(this.bp.surrounding[0, 1], new Point(this.Size / 3 + 6, this.Size / 2), -1, 0);
+		void _MakeNeighbor(EloMap.TileInfo info, Point p, int vx, int vz)
+		{
+			Point point = new Point();
+			while (p.IsValid)
+			{
+				point.Set(p);
+				int num = 0;
+				num = EClass.rnd(2) - EClass.rnd(2);
+				if (vx != 0)
+				{
+					p.x += num;
+				}
+				else
+				{
+					p.z += num;
+				}
+				for (int i = -Size / 2; i < Size / 2; i++)
+				{
+					if (vx != 0)
+					{
+						point.z = p.z + i;
+					}
+					else
+					{
+						point.x = p.x + i;
+					}
+					if (point.IsValid)
+					{
+						if (info.sea)
+						{
+							SetFloor(point.x, point.z, 66, 43);
+						}
+						else if (info.rock)
+						{
+							SetBlock(point.x, point.z, 45, 1);
+						}
+						else if (info.shore)
+						{
+							SetFloor(point.x, point.z, 97, 33);
+						}
+					}
+				}
+				p.x += vx;
+				p.z += vz;
+			}
+		}
 	}
 
 	public void MakeRoad()
 	{
-		if (this.bp.tileCenter == null || this.bp.ignoreRoad)
+		if (bp.tileCenter != null && !bp.ignoreRoad)
 		{
-			return;
+			EloMap.TileInfo tileCenter = bp.tileCenter;
+			if (tileCenter.roadLeft)
+			{
+				_MakeRoad(-1, 0);
+			}
+			if (tileCenter.roadRight)
+			{
+				_MakeRoad(1, 0);
+			}
+			if (tileCenter.roadUp)
+			{
+				_MakeRoad(0, 1);
+			}
+			if (tileCenter.roadDown)
+			{
+				_MakeRoad(0, -1);
+			}
 		}
-		EloMap.TileInfo tileCenter = this.bp.tileCenter;
-		if (tileCenter.roadLeft)
+		void _MakeRoad(int vx, int vz)
 		{
-			this.<MakeRoad>g___MakeRoad|7_0(-1, 0);
-		}
-		if (tileCenter.roadRight)
-		{
-			this.<MakeRoad>g___MakeRoad|7_0(1, 0);
-		}
-		if (tileCenter.roadUp)
-		{
-			this.<MakeRoad>g___MakeRoad|7_0(0, 1);
-		}
-		if (tileCenter.roadDown)
-		{
-			this.<MakeRoad>g___MakeRoad|7_0(0, -1);
+			Point point = new Point(Size / 2, Size / 2);
+			Point point2 = new Point();
+			while (point.IsValid)
+			{
+				point2.Set(point);
+				for (int i = -1; i < 2; i++)
+				{
+					if (vx != 0)
+					{
+						point2.z = point.z + i;
+					}
+					else
+					{
+						point2.x = point.x + i;
+					}
+					if (point2.IsValid)
+					{
+						SetFloor(point2.x, point2.z, 45, 40);
+						SetBlock(point2.x, point2.z, 0, 0);
+						point2.cell.obj = 0;
+					}
+				}
+				point.x += vx;
+				point.z += vz;
+				if (EClass.rnd(30) == 0)
+				{
+					point.x += ((vx == 0) ? (EClass.rnd(3) - 1) : 0);
+					point.z += ((vz == 0) ? (EClass.rnd(3) - 1) : 0);
+				}
+			}
 		}
 	}
 
 	public void ModifyHeight(Map _map)
 	{
-		this.map = _map;
-		Cell[,] cells = this.map.cells;
+		map = _map;
+		Cell[,] cells = map.cells;
 		bool flag = false;
-		for (int i = this.Size - 1; i > 0; i--)
+		for (int num = Size - 1; num > 0; num--)
 		{
-			for (int j = 0; j < this.Size - 1; j++)
+			for (int i = 0; i < Size - 1; i++)
 			{
-				Cell cell = cells[i, j];
-				byte height = cell.height;
-				Cell cell2 = cells[i - 1, j];
-				Cell cell3 = cells[i, j + 1];
-				if (!cell2.IsTopWater && !cell3.IsTopWater)
+				Cell cell = cells[num, i];
+				byte b = cell.height;
+				Cell cell2 = cells[num - 1, i];
+				Cell cell3 = cells[num, i + 1];
+				if (cell2.IsTopWater || cell3.IsTopWater)
 				{
-					if (EClass.rnd(500) == 0)
+					continue;
+				}
+				if (EClass.rnd(500) == 0)
+				{
+					flag = !flag;
+				}
+				if (EClass.rnd(3) == 0)
+				{
+					if (flag)
 					{
-						flag = !flag;
-					}
-					if (EClass.rnd(3) == 0)
-					{
-						if (flag)
-						{
-							cell2.height = height;
-						}
-						else
-						{
-							cell3.height = height;
-						}
-					}
-					if (this.hSetting.smoothDownhill && EClass.rnd(3) == 0)
-					{
-						if (cell2.height < height - 2)
-						{
-							cell2.height = height - 2;
-						}
-						if (cell3.height < height - 2)
-						{
-							cell3.height = height - 2;
-						}
+						cell2.height = b;
 					}
 					else
 					{
-						if (this.hSetting.mod1 && (cell2.height >= height - 1 || cell3.height >= height - 1))
-						{
-							if (EClass.rnd(4) == 0 && height != 0)
-							{
-								cell2.height = (cell3.height = height);
-							}
-							else
-							{
-								cell.height = (cell2.height = cell3.height);
-							}
-						}
-						if (this.hSetting.mod2 && (cell2.height < height - 1 || cell3.height < height - 1))
-						{
-							if (EClass.rnd(2) == 0)
-							{
-								cell2.height = (cell3.height = height);
-							}
-							else
-							{
-								cells[i, j].height = (cell2.height = cell3.height);
-							}
-						}
-						if (this.hSetting.mod3 && (cell2.height >= height - 1 || cell3.height >= height - 1))
-						{
-							if (EClass.rnd(2) == 0)
-							{
-								cell2.height = (cell3.height = height);
-							}
-							else
-							{
-								cells[i, j].height = (cell2.height = cell3.height);
-							}
-						}
+						cell3.height = b;
+					}
+				}
+				if (hSetting.smoothDownhill && EClass.rnd(3) == 0)
+				{
+					if (cell2.height < b - 2)
+					{
+						cell2.height = (byte)(b - 2);
+					}
+					if (cell3.height < b - 2)
+					{
+						cell3.height = (byte)(b - 2);
+					}
+					continue;
+				}
+				if (hSetting.mod1 && (cell2.height >= b - 1 || cell3.height >= b - 1))
+				{
+					if (EClass.rnd(4) == 0 && b != 0)
+					{
+						cell2.height = (cell3.height = b);
+					}
+					else
+					{
+						cell.height = (cell2.height = cell3.height);
+					}
+				}
+				if (hSetting.mod2 && (cell2.height < b - 1 || cell3.height < b - 1))
+				{
+					if (EClass.rnd(2) == 0)
+					{
+						cell2.height = (cell3.height = b);
+					}
+					else
+					{
+						cells[num, i].height = (cell2.height = cell3.height);
+					}
+				}
+				if (hSetting.mod3 && (cell2.height >= b - 1 || cell3.height >= b - 1))
+				{
+					if (EClass.rnd(2) == 0)
+					{
+						cell2.height = (cell3.height = b);
+					}
+					else
+					{
+						cells[num, i].height = (cell2.height = cell3.height);
 					}
 				}
 			}
 		}
-		if (this.hSetting.smoothDownhill)
+		if (!hSetting.smoothDownhill)
 		{
-			for (int k = this.Size - 1; k > 0; k--)
+			return;
+		}
+		for (int num2 = Size - 1; num2 > 0; num2--)
+		{
+			for (int j = 0; j < Size - 1; j++)
 			{
-				for (int l = 0; l < this.Size - 1; l++)
+				byte b2 = cells[num2, j].height;
+				Cell cell4 = cells[num2 - 1, j];
+				Cell cell5 = cells[num2, j + 1];
+				if (b2 != 0)
 				{
-					byte height2 = cells[k, l].height;
-					Cell cell4 = cells[k - 1, l];
-					Cell cell5 = cells[k, l + 1];
-					if (height2 != 0)
+					if (cell4.height < b2 - 2 && !cell4.IsTopWater)
 					{
-						if (cell4.height < height2 - 2 && !cell4.IsTopWater)
-						{
-							cell4.height = height2 - 2;
-						}
-						if (cell5.height < height2 - 2 && !cell5.IsTopWater)
-						{
-							cell5.height = height2 - 2;
-						}
+						cell4.height = (byte)(b2 - 2);
+					}
+					if (cell5.height < b2 - 2 && !cell5.IsTopWater)
+					{
+						cell5.height = (byte)(b2 - 2);
 					}
 				}
 			}
@@ -520,7 +653,7 @@ public class MapGen : BaseMapGen
 					break;
 				}
 			}
-			if (this.TryMakeRiver(point, point2))
+			if (TryMakeRiver(point, point2))
 			{
 				num += 1 + EClass.rnd(2);
 				if (num > 10)
@@ -537,49 +670,49 @@ public class MapGen : BaseMapGen
 		int num = 30;
 		for (int i = 0; i < num; i++)
 		{
-			list.Add(new Point
-			{
-				x = p1.x + (p2.x - p1.x) * i / num,
-				z = p1.z + (p2.z - p1.z) * i / num
-			});
+			Point point = new Point();
+			point.x = p1.x + (p2.x - p1.x) * i / num;
+			point.z = p1.z + (p2.z - p1.z) * i / num;
+			list.Add(point);
 		}
 		for (int j = 0; j < num; j++)
 		{
-			Point point = list[j];
-			if (!p1.Equals(point))
+			Point point2 = list[j];
+			if (p1.Equals(point2))
 			{
-				while (!p1.IsWater)
+				continue;
+			}
+			while (!p1.IsWater)
+			{
+				SetBlock(p1.x, p1.z, 0, 0);
+				SetFloor(p1.x, p1.z, 67, 44);
+				if (EClass.rnd(2) == 0)
 				{
-					base.SetBlock(p1.x, p1.z, 0, 0, 0);
-					base.SetFloor(p1.x, p1.z, 67, 44, 0);
-					if (EClass.rnd(2) == 0)
+					if (p1.x != point2.x)
 					{
-						if (p1.x != point.x)
-						{
-							p1.x += ((p1.x > point.x) ? -1 : 1);
-						}
-						else if (p1.z != point.z)
-						{
-							p1.z += ((p1.z > point.z) ? -1 : 1);
-						}
+						p1.x += ((p1.x <= point2.x) ? 1 : (-1));
 					}
-					else if (p1.z != point.z)
+					else if (p1.z != point2.z)
 					{
-						p1.z += ((p1.z > point.z) ? -1 : 1);
-					}
-					else if (p1.x != point.x)
-					{
-						p1.x += ((p1.x > point.x) ? -1 : 1);
-					}
-					if (p1.Equals(point))
-					{
-						break;
+						p1.z += ((p1.z <= point2.z) ? 1 : (-1));
 					}
 				}
-				if (p1.IsWater || p1.Equals(p2))
+				else if (p1.z != point2.z)
 				{
-					return true;
+					p1.z += ((p1.z <= point2.z) ? 1 : (-1));
 				}
+				else if (p1.x != point2.x)
+				{
+					p1.x += ((p1.x <= point2.x) ? 1 : (-1));
+				}
+				if (p1.Equals(point2))
+				{
+					break;
+				}
+			}
+			if (p1.IsWater || p1.Equals(p2))
+			{
+				return true;
 			}
 		}
 		return true;
@@ -587,230 +720,75 @@ public class MapGen : BaseMapGen
 
 	public void Populate(Map _map)
 	{
-		this.map = _map;
-		EClass._zone.isShore = this.bp.zoneProfile.isShore;
-		Rand.SetSeed(this.zp.seeds.poi);
-		if (this.zp.river)
+		map = _map;
+		EClass._zone.isShore = bp.zoneProfile.isShore;
+		Rand.SetSeed(zp.seeds.poi);
+		if (zp.river)
 		{
-			this.MakeRiver(_map);
+			MakeRiver(_map);
 		}
-		this.map.RefreshAllTiles();
-		this.layerStratum.FillHeightMap(this.heights1, this.OX, 0, this.OZ, this.Size, this.Size, this.seed, 1f);
-		this.layerStratum.FillHeightMap(this.heights2, this.OX, 0, this.OZ, this.Size, this.Size, this.seed + 1, 1f);
-		this.layerStratum.FillHeightMap(this.heights3, this.OX, 0, this.OZ, this.Size, this.Size, this.seed + 2, 1f);
-		this.layerStratum.FillHeightMap(this.heights3d, this.OX, 0, this.OZ, this.Size, this.Size, this.seed, 1f);
+		map.RefreshAllTiles();
+		layerStratum.FillHeightMap(heights1, OX, 0, OZ, Size, Size, seed);
+		layerStratum.FillHeightMap(heights2, OX, 0, OZ, Size, Size, seed + 1);
+		layerStratum.FillHeightMap(heights3, OX, 0, OZ, Size, Size, seed + 2);
+		layerStratum.FillHeightMap(heights3d, OX, 0, OZ, Size, Size, seed);
 		Point point = new Point();
-		for (int i = 0; i < this.Size; i++)
+		for (int i = 0; i < Size; i++)
 		{
-			for (int j = 0; j < this.Size; j++)
+			for (int j = 0; j < Size; j++)
 			{
 				point.Set(i, j);
 				Cell cell = point.cell;
-				if (cell.IsTopWater && this.biomeWater)
+				if (cell.IsTopWater && (bool)biomeWater)
 				{
 					if (cell.Left.IsTopWater && cell.Right.IsTopWater && cell.Front.IsTopWater && cell.Back.IsTopWater)
 					{
-						this.biomeWater.Populate(point, false);
+						biomeWater.Populate(point);
 					}
+					continue;
 				}
-				else
+				BiomeProfile biome = cell.biome;
+				if (!cell.HasBlock)
 				{
-					BiomeProfile biome = cell.biome;
-					if (!cell.HasBlock)
-					{
-						biome.Populate(point, false);
-					}
+					biome.Populate(point);
 				}
 			}
 		}
-		if (this.zp.name == "R_Plain")
+		if (zp.name == "R_Plain")
 		{
 			Crawler crawler = Crawler.Create("pasture");
 			int tries = 10;
 			crawler.CrawlUntil(_map, () => _map.GetRandomPoint(), tries, delegate(Crawler.Result r)
 			{
-				int id = (EClass.rnd(3) == 0) ? 108 : 105;
+				int id = ((EClass.rnd(3) == 0) ? 108 : 105);
 				foreach (Point point2 in r.points)
 				{
-					this.map.SetObj(point2.x, point2.z, id, 1, 0);
+					map.SetObj(point2.x, point2.z, id);
 					int num = 3;
 					if (EClass.rnd(6) == 0)
 					{
 						num++;
 					}
-					point2.growth.SetStage(num, false);
+					point2.growth.SetStage(num);
 				}
 				return false;
-			}, null);
+			});
 		}
-		if (this.crawlers != null)
+		if (crawlers != null)
 		{
-			Crawler[] crawlers = this.crawlers;
-			for (int k = 0; k < crawlers.Length; k++)
+			Crawler[] array = crawlers;
+			for (int k = 0; k < array.Length; k++)
 			{
-				crawlers[k].Crawl(this.map);
+				array[k].Crawl(map);
 			}
 		}
-		this.MakeRoad();
-		Rand.SetSeed(-1);
+		MakeRoad();
+		Rand.SetSeed();
 	}
 
 	public void Output()
 	{
-		Debug.Log(this.zp.name + "/" + this.variation.name);
-		Debug.Log(string.Concat(new string[]
-		{
-			"seed:",
-			EClass._map.seed.ToString(),
-			"  offset: ",
-			this.OX.ToString(),
-			"/",
-			this.OZ.ToString()
-		}));
+		Debug.Log(zp.name + "/" + variation.name);
+		Debug.Log("seed:" + EClass._map.seed + "  offset: " + OX + "/" + OZ);
 	}
-
-	[CompilerGenerated]
-	private void <MakeNeighbor>g___MakeNeighbor|5_0(EloMap.TileInfo info, int _s, Point p, int vx, int vz, int _seaDir1, int _seaDir2, ref MapGen.<>c__DisplayClass5_0 A_8)
-	{
-		int num = _s;
-		int num2 = 4;
-		Point point = new Point();
-		while (p.IsValid)
-		{
-			point.Set(p);
-			num2--;
-			if (num2 < 0)
-			{
-				num += ((EClass.rnd(2) == 0) ? 1 : -1);
-				num = Mathf.Clamp(num, _s - 3, _s + 3);
-				num2 = 2 + EClass.rnd(4);
-			}
-			for (int i = 0; i < num; i++)
-			{
-				if (vx != 0)
-				{
-					point.x = p.x + i * vx;
-				}
-				else
-				{
-					point.z = p.z + i * vz;
-				}
-				if (point.IsValid)
-				{
-					if (info.sea)
-					{
-						if (!A_8.thisInfo.sea)
-						{
-							A_8.seaDir = _seaDir1;
-						}
-						base.SetFloor(point.x, point.z, 66, (i >= num - 3) ? 44 : 43, 0);
-					}
-					else if (info.rock)
-					{
-						base.SetBlock(point.x, point.z, 45, 1, 0);
-					}
-					else if (info.shore)
-					{
-						if (!A_8.thisInfo.shore)
-						{
-							A_8.seaDir = _seaDir2;
-						}
-						base.SetFloor(point.x, point.z, 97, 33, 0);
-					}
-				}
-			}
-			if (vx == 0)
-			{
-				p.x++;
-			}
-			else
-			{
-				p.z++;
-			}
-		}
-	}
-
-	[CompilerGenerated]
-	private void <MakeNeighbor_old>g___MakeNeighbor|6_0(EloMap.TileInfo info, Point p, int vx, int vz)
-	{
-		Point point = new Point();
-		while (p.IsValid)
-		{
-			point.Set(p);
-			int num = EClass.rnd(2) - EClass.rnd(2);
-			if (vx != 0)
-			{
-				p.x += num;
-			}
-			else
-			{
-				p.z += num;
-			}
-			for (int i = -this.Size / 2; i < this.Size / 2; i++)
-			{
-				if (vx != 0)
-				{
-					point.z = p.z + i;
-				}
-				else
-				{
-					point.x = p.x + i;
-				}
-				if (point.IsValid)
-				{
-					if (info.sea)
-					{
-						base.SetFloor(point.x, point.z, 66, 43, 0);
-					}
-					else if (info.rock)
-					{
-						base.SetBlock(point.x, point.z, 45, 1, 0);
-					}
-					else if (info.shore)
-					{
-						base.SetFloor(point.x, point.z, 97, 33, 0);
-					}
-				}
-			}
-			p.x += vx;
-			p.z += vz;
-		}
-	}
-
-	[CompilerGenerated]
-	private void <MakeRoad>g___MakeRoad|7_0(int vx, int vz)
-	{
-		Point point = new Point(this.Size / 2, this.Size / 2);
-		Point point2 = new Point();
-		while (point.IsValid)
-		{
-			point2.Set(point);
-			for (int i = -1; i < 2; i++)
-			{
-				if (vx != 0)
-				{
-					point2.z = point.z + i;
-				}
-				else
-				{
-					point2.x = point.x + i;
-				}
-				if (point2.IsValid)
-				{
-					base.SetFloor(point2.x, point2.z, 45, 40, 0);
-					base.SetBlock(point2.x, point2.z, 0, 0, 0);
-					point2.cell.obj = 0;
-				}
-			}
-			point.x += vx;
-			point.z += vz;
-			if (EClass.rnd(30) == 0)
-			{
-				point.x += ((vx == 0) ? (EClass.rnd(3) - 1) : 0);
-				point.z += ((vz == 0) ? (EClass.rnd(3) - 1) : 0);
-			}
-		}
-	}
-
-	private static MapGen _Instance;
 }

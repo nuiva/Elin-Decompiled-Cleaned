@@ -1,63 +1,49 @@
-﻿using System;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class GlobalGoalVisitAndStay : GlobalGoal
 {
-	public Zone destZone
-	{
-		get
-		{
-			return RefZone.Get(this.uidZone);
-		}
-	}
+	[JsonProperty]
+	public int uidZone;
+
+	public Zone destZone => RefZone.Get(uidZone);
 
 	public override void OnAdvanceHour()
 	{
-		if (this.owner.currentZone == EClass.game.activeZone)
+		if (owner.currentZone == EClass.game.activeZone)
 		{
 			return;
 		}
-		if (this.uidZone == 0)
+		if (uidZone == 0)
 		{
-			if (this.GetDestZone() == null)
+			if (GetDestZone() == null)
 			{
-				base.Kill();
+				Kill();
 				return;
 			}
-			this.uidZone = this.GetDestZone().uid;
+			uidZone = GetDestZone().uid;
 			if (EClass.debug.logAdv)
 			{
-				Debug.Log(string.Concat(new string[]
-				{
-					this.owner.Name,
-					" -> ",
-					this.destZone.Name,
-					" / ",
-					(this != null) ? this.ToString() : null
-				}));
+				Debug.Log(owner.Name + " -> " + destZone.Name + " / " + this);
 			}
 		}
-		if (this.owner.currentZone == this.destZone)
+		if (owner.currentZone == destZone)
 		{
-			this.OnStay();
-			if (this.hours > 64 && EClass.rnd(48) == 0)
+			OnStay();
+			if (hours > 64 && EClass.rnd(48) == 0)
 			{
-				base.Complete();
-				return;
+				Complete();
 			}
+			return;
 		}
-		else
+		OnTravel();
+		if (hours > 6 && EClass.rnd(4) == 0 && destZone != EClass.game.activeZone)
 		{
-			this.OnTravel();
-			if (this.hours > 6 && EClass.rnd(4) == 0 && this.destZone != EClass.game.activeZone)
+			if (EClass.debug.logAdv)
 			{
-				if (EClass.debug.logAdv)
-				{
-					Debug.Log(this.owner.Name + " reached " + this.destZone.Name);
-				}
-				this.owner.MoveZone(this.destZone, ZoneTransition.EnterState.RandomVisit);
+				Debug.Log(owner.Name + " reached " + destZone.Name);
 			}
+			owner.MoveZone(destZone, ZoneTransition.EnterState.RandomVisit);
 		}
 	}
 
@@ -71,9 +57,6 @@ public class GlobalGoalVisitAndStay : GlobalGoal
 
 	public virtual Zone GetDestZone()
 	{
-		return this.owner.homeZone;
+		return owner.homeZone;
 	}
-
-	[JsonProperty]
-	public int uidZone;
 }

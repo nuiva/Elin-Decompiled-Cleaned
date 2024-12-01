@@ -1,28 +1,7 @@
-﻿using System;
 using UnityEngine;
 
 public class RigidMove : RigidUpdate
 {
-	public override void OnFixedUpdate()
-	{
-		if (this.rb.velocity.y > 0.3f || this.rb.velocity.y < -0.3f)
-		{
-			return;
-		}
-		this.time += RigidUpdate.delta;
-		this.dir.x = (float)(this.flip ? -1 : 1);
-		this.rb.transform.position = this.rb.transform.position + this.dir * this.force;
-		if (this.rb.transform.position.x > RigidUpdate.rightX)
-		{
-			this.flip = true;
-			return;
-		}
-		if (this.rb.transform.position.x < RigidUpdate.leftX)
-		{
-			this.flip = false;
-		}
-	}
-
 	public float force;
 
 	private bool flip;
@@ -30,4 +9,22 @@ public class RigidMove : RigidUpdate
 	private float time;
 
 	private Vector3 dir = new Vector3(1f, 0f, 0f);
+
+	public override void OnFixedUpdate()
+	{
+		if (!(rb.velocity.y > 0.3f) && !(rb.velocity.y < -0.3f))
+		{
+			time += RigidUpdate.delta;
+			dir.x = ((!flip) ? 1 : (-1));
+			rb.transform.position = rb.transform.position + dir * force;
+			if (rb.transform.position.x > RigidUpdate.rightX)
+			{
+				flip = true;
+			}
+			else if (rb.transform.position.x < RigidUpdate.leftX)
+			{
+				flip = false;
+			}
+		}
+	}
 }

@@ -1,39 +1,42 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
-using UnityEngine;
 
 public class DramaActor : EMono
 {
-	public DialogDrama dialog
-	{
-		get
-		{
-			return this.sequence.dialog;
-		}
-	}
+	public static bool useGlitch;
+
+	public string id;
+
+	public Person owner;
+
+	public DramaSequence sequence;
+
+	private int choiceIdx;
+
+	public DialogDrama dialog => sequence.dialog;
 
 	public void Init(DramaSequence _sequence, string _id, Person _owner)
 	{
-		this.sequence = _sequence;
-		this.id = _id;
-		this.owner = _owner;
-		base.gameObject.SetActive(false);
+		sequence = _sequence;
+		id = _id;
+		owner = _owner;
+		base.gameObject.SetActive(value: false);
 	}
 
 	public void Talk(string text, List<DramaChoice> choices, bool center, bool unknown)
 	{
-		Chara chara = this.owner.chara;
-		this.dialog.gameObject.SetActive(true);
-		this.dialog.textName.text = (unknown ? "???" : this.owner.GetDramaTitle());
-		if (this.dialog.portrait)
+		Chara chara = owner.chara;
+		dialog.gameObject.SetActive(value: true);
+		dialog.textName.text = (unknown ? "???" : owner.GetDramaTitle());
+		if ((bool)dialog.portrait)
 		{
-			this.dialog.portrait.enableFull = this.sequence.fullPortrait;
-			this.dialog.portrait.SetPerson(this.owner);
+			dialog.portrait.enableFull = sequence.fullPortrait;
+			dialog.portrait.SetPerson(owner);
 		}
-		text = this.ConvertAdv(text);
-		text = GameLang.ConvertDrama(text, this.owner.chara);
-		if (!this.owner.HumanSpeak)
+		text = ConvertAdv(text);
+		text = GameLang.ConvertDrama(text, owner.chara);
+		if (!owner.HumanSpeak)
 		{
 			if (!text.StartsWith("("))
 			{
@@ -43,40 +46,40 @@ public class DramaActor : EMono
 		}
 		if (chara != null)
 		{
-			string a = chara.id;
-			if (!(a == "adv_gaki"))
+			string text2 = chara.id;
+			if (!(text2 == "adv_gaki"))
 			{
-				if (a == "corgon")
+				if (text2 == "corgon")
 				{
 					BackerContent.GakiConvert(ref text, "mokyu");
 				}
 			}
 			else
 			{
-				BackerContent.GakiConvert(ref text, "zako");
+				BackerContent.GakiConvert(ref text);
 			}
 		}
-		if (this.dialog.goAffinity)
+		if ((bool)dialog.goAffinity)
 		{
-			this.dialog.layoutInterest.SetActive(chara != null);
-			this.dialog.textNoInterest.SetActive(chara == null);
-			bool flag = chara != null && chara.trait.ShowAdvRank;
-			if (this.dialog.transFav)
+			dialog.layoutInterest.SetActive(chara != null);
+			dialog.textNoInterest.SetActive(chara == null);
+			bool flag = chara?.trait.ShowAdvRank ?? false;
+			if ((bool)dialog.transFav)
 			{
-				this.dialog.transFav.SetActive(chara != null && chara.knowFav);
+				dialog.transFav.SetActive(chara?.knowFav ?? false);
 			}
-			if (this.dialog.transRank)
+			if ((bool)dialog.transRank)
 			{
-				this.dialog.transRank.SetActive(flag);
+				dialog.transRank.SetActive(flag);
 				if (flag)
 				{
-					this.dialog.textRank.text = "factionRank2".lang() + " " + chara.trait.GetAdvRankText();
+					dialog.textRank.text = "factionRank2".lang() + " " + chara.trait.GetAdvRankText();
 				}
 			}
 			if (chara != null)
 			{
-				this.dialog.textAffinity.text = ((chara.c_bossType != BossType.none) ? " - " : (chara.affinity.Name + "(" + chara._affinity.ToString() + ")"));
-				this.dialog.layoutInterest.DestroyChildren(false, true);
+				dialog.textAffinity.text = ((chara.c_bossType != 0) ? " - " : (chara.affinity.Name + "(" + chara._affinity + ")"));
+				dialog.layoutInterest.DestroyChildren();
 				int num = chara.interest / 10 + 1;
 				if (chara.interest <= 0)
 				{
@@ -88,62 +91,59 @@ public class DramaActor : EMono
 				}
 				for (int i = 0; i < num; i++)
 				{
-					Util.Instantiate<Transform>(this.dialog.moldInterest, this.dialog.layoutInterest);
+					Util.Instantiate(dialog.moldInterest, dialog.layoutInterest);
 				}
-				this.dialog.layoutInterest.RebuildLayout(false);
-				this.dialog.textNoInterest.SetActive(num <= 0);
-				if (this.dialog.textFav && chara.knowFav)
+				dialog.layoutInterest.RebuildLayout();
+				dialog.textNoInterest.SetActive(num <= 0);
+				if ((bool)dialog.textFav && chara.knowFav)
 				{
-					this.dialog.textFav.text = chara.GetFavCat().GetName().ToTitleCase(false) + Environment.NewLine + chara.GetFavFood().GetName().ToTitleCase(false);
+					dialog.textFav.text = chara.GetFavCat().GetName().ToTitleCase() + Environment.NewLine + chara.GetFavFood().GetName().ToTitleCase();
 				}
 			}
 			else
 			{
-				this.dialog.textAffinity.text = "???";
-				this.dialog.textNoInterest.text = "???";
+				dialog.textAffinity.text = "???";
+				dialog.textNoInterest.text = "???";
 			}
 		}
-		text = text.Replace("((", "(").Replace("))", ")").Replace("（（", "（").Replace("））", "）");
-		if (this.dialog.glitch)
+		text = text.Replace("((", "(").Replace("))", ")").Replace("（（", "（")
+			.Replace("））", "）");
+		if ((bool)dialog.glitch)
 		{
-			this.dialog.glitch.enabled = DramaActor.useGlitch;
-			DramaActor.useGlitch = false;
+			dialog.glitch.enabled = useGlitch;
+			useGlitch = false;
 		}
-		this.dialog.SetText(text.ToTitleCase(false), center);
-		this.dialog.ClearChoice();
-		this.choiceIdx = 1;
+		dialog.SetText(text.ToTitleCase(), center);
+		dialog.ClearChoice();
+		choiceIdx = 1;
 		for (int j = 0; j < choices.Count; j++)
 		{
-			this.SetChoice(choices[j], j);
+			SetChoice(choices[j], j);
 		}
-		this.dialog.transChoices.RebuildLayout(true);
-		this.dialog.iconNext.SetActive(this.choiceIdx == 1);
+		dialog.transChoices.RebuildLayout(recursive: true);
+		dialog.iconNext.SetActive(choiceIdx == 1);
 		UIButton.TryHihlight();
-		EMono.core.actionsNextFrame.Add(new Action(UIButton.TryHihlight));
+		EMono.core.actionsNextFrame.Add(UIButton.TryHihlight);
 		EMono.core.actionsNextFrame.Add(delegate
 		{
-			EMono.core.actionsNextFrame.Add(new Action(UIButton.TryHihlight));
+			EMono.core.actionsNextFrame.Add(UIButton.TryHihlight);
 		});
 	}
 
 	private void SetChoice(DramaChoice item, int index)
 	{
 		item.index = index;
-		if (!item.IF.IsEmpty() && !DramaOutcome.If(item, this.owner.chara))
-		{
-			return;
-		}
-		if (item.activeCondition != null && !item.activeCondition())
+		if ((!item.IF.IsEmpty() && !DramaOutcome.If(item, owner.chara)) || (item.activeCondition != null && !item.activeCondition()))
 		{
 			return;
 		}
 		DramaOutcome.idJump = null;
 		string text = item.text.TrimEnd(Environment.NewLine.ToCharArray());
-		text = this.ConvertAdv(text);
-		text = GameLang.ConvertDrama(text, this.owner.chara);
+		text = ConvertAdv(text);
+		text = GameLang.ConvertDrama(text, owner.chara);
 		if (item.check != null && EMono.debug.logDice)
 		{
-			text = text + " (" + item.check.GetText(EMono.pc, this.owner.chara, true) + ")";
+			text = text + " (" + item.check.GetText(EMono.pc, owner.chara, inDialog: true) + ")";
 		}
 		Check check = null;
 		string idJump = item.idJump;
@@ -152,46 +152,43 @@ public class DramaActor : EMono
 		int? affinity = null;
 		if (!item.CHECK.IsEmpty())
 		{
-			string[] array = item.CHECK.Split('/', StringSplitOptions.None);
-			string a = array[0];
-			if (!(a == "check"))
+			string[] array = item.CHECK.Split('/');
+			string text2 = array[0];
+			if (!(text2 == "check"))
 			{
-				if (!(a == "affinity"))
+				if (text2 == "affinity")
 				{
 				}
 			}
 			else
 			{
-				check = Check.Get(array[1], 1f);
+				check = Check.Get(array[1]);
 			}
 		}
-		UIButton uibutton = this.dialog.AddChoice(item, text, delegate
+		UIButton uIButton = dialog.AddChoice(item, text, delegate
 		{
-			this.gameObject.SetActive(false);
+			base.gameObject.SetActive(value: false);
 			DramaChoice.lastChoice = item;
-			Check check = check;
-			if (affinity != null)
+			_ = check;
+			if (affinity.HasValue)
 			{
 				bool flag = true;
 				if (flag)
 				{
-					idJump = idJump.Split('/', StringSplitOptions.None)[0];
+					idJump = idJump.Split('/')[0];
 				}
 				else
 				{
-					idJump = idJump.Split('/', StringSplitOptions.None)[1];
+					idJump = idJump.Split('/')[1];
 				}
-				PARAMS = new object[]
-				{
-					flag
-				};
+				PARAMS = new object[1] { flag };
 			}
 			if (!idAction.IsEmpty())
 			{
-				typeof(DramaOutcome).GetMethod(this.sequence.id + "_" + idAction).Invoke(this.sequence.manager.outcome, PARAMS);
+				typeof(DramaOutcome).GetMethod(sequence.id + "_" + idAction).Invoke(sequence.manager.outcome, PARAMS);
 				if (DramaOutcome.idJump != null)
 				{
-					this.sequence.Play(DramaOutcome.idJump);
+					sequence.Play(DramaOutcome.idJump);
 					return;
 				}
 			}
@@ -199,37 +196,38 @@ public class DramaActor : EMono
 			{
 				item.onClick();
 			}
-			this.sequence.tempEvents.Clear();
+			sequence.tempEvents.Clear();
 			if (item.onJump != null)
 			{
 				item.onJump();
-				return;
 			}
-			if (idJump.IsEmpty())
+			else if (idJump.IsEmpty())
 			{
-				this.sequence.PlayNext();
-				return;
+				sequence.PlayNext();
 			}
-			this.sequence.Play(idJump);
-		}, true);
-		if (uibutton.subText)
+			else
+			{
+				sequence.Play(idJump);
+			}
+		});
+		if ((bool)uIButton.subText)
 		{
-			uibutton.subText.SetText(this.choiceIdx.ToString() + ".");
+			uIButton.subText.SetText(choiceIdx + ".");
 		}
 		if (!item.sound)
 		{
-			uibutton.soundClick = null;
+			uIButton.soundClick = null;
 		}
 		if (item.onTooltip != null)
 		{
-			uibutton.SetTooltip(item.onTooltip, true);
+			uIButton.SetTooltip(item.onTooltip);
 		}
 		if (item.forceHighlight)
 		{
-			uibutton.DoHighlightTransition(false);
+			uIButton.DoHighlightTransition();
 			item.forceHighlight = false;
 		}
-		this.choiceIdx++;
+		choiceIdx++;
 	}
 
 	public string ConvertAdv(string text)
@@ -245,14 +243,4 @@ public class DramaActor : EMono
 		}
 		return stringBuilder.ToString();
 	}
-
-	public static bool useGlitch;
-
-	public string id;
-
-	public Person owner;
-
-	public DramaSequence sequence;
-
-	private int choiceIdx;
 }

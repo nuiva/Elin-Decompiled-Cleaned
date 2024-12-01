@@ -1,69 +1,41 @@
-﻿using System;
-
 public class TraitRodRandom : TraitRod
 {
-	public override SourceElement.Row source
-	{
-		get
-		{
-			return EClass.sources.elements.map[this.owner.refVal];
-		}
-	}
-
-	public override string aliasEle
-	{
-		get
-		{
-			return this.source.aliasRef;
-		}
-	}
-
-	public override int Power
-	{
-		get
-		{
-			return 100;
-		}
-	}
-
-	public override EffectId IdEffect
-	{
-		get
-		{
-			return this.source.proc[0].ToEnum(true);
-		}
-	}
-
-	public override string N1
-	{
-		get
-		{
-			return this.source.proc.TryGet(1, true);
-		}
-	}
-
-	public override bool IsNegative
-	{
-		get
-		{
-			return base.IsNegative || this.source.tag.Contains("neg");
-		}
-	}
-
-	public override void OnCreate(int lv)
-	{
-		this.owner.c_charges = EClass.rnd(this.source.charge * 150 / 100);
-		this.owner.refVal = TraitRodRandom.selecter.Select(lv);
-	}
-
-	public override string GetName()
-	{
-		return "rod_".lang(this.source.GetName().ToLower(), null, null, null, null);
-	}
-
 	public static ElementSelecter selecter = new ElementSelecter
 	{
 		type = "R",
 		lvMod = 10
 	};
+
+	public override SourceElement.Row source => EClass.sources.elements.map[owner.refVal];
+
+	public override string aliasEle => source.aliasRef;
+
+	public override int Power => 100;
+
+	public override EffectId IdEffect => source.proc[0].ToEnum<EffectId>();
+
+	public override string N1 => source.proc.TryGet(1, returnNull: true);
+
+	public override bool IsNegative
+	{
+		get
+		{
+			if (!base.IsNegative)
+			{
+				return source.tag.Contains("neg");
+			}
+			return true;
+		}
+	}
+
+	public override void OnCreate(int lv)
+	{
+		owner.c_charges = EClass.rnd(source.charge * 150 / 100);
+		owner.refVal = selecter.Select(lv);
+	}
+
+	public override string GetName()
+	{
+		return "rod_".lang(source.GetName().ToLower());
+	}
 }

@@ -1,23 +1,18 @@
-﻿using System;
 using UnityEngine;
 
 public class TraitAmmoTalisman : TraitAmmo
 {
-	public override bool ConsumeOnMiss
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool ConsumeOnMiss => false;
 
 	public override void SetName(ref string s)
 	{
-		if (EClass.sources.elements.map.TryGetValue(this.owner.refVal, null) == null)
+		if (EClass.sources.elements.map.TryGetValue(owner.refVal) == null)
 		{
-			Debug.Log(this.owner.refVal);
-			return;
+			Debug.Log(owner.refVal);
 		}
-		s = s + " (" + EClass.sources.elements.map[this.owner.refVal].GetName().ToTitleCase(false) + ")";
+		else
+		{
+			s = s + " (" + EClass.sources.elements.map[owner.refVal].GetName().ToTitleCase() + ")";
+		}
 	}
 }

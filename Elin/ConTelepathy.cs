@@ -1,17 +1,9 @@
-﻿using System;
-
 public class ConTelepathy : BaseBuff
 {
-	public override bool ShouldRefresh
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool ShouldRefresh => true;
 
 	public override void OnRefresh()
 	{
-		this.owner.hasTelepathy = true;
+		owner.hasTelepathy = true;
 	}
 }

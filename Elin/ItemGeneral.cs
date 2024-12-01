@@ -1,18 +1,29 @@
-﻿using System;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class ItemGeneral : UIItem, IPrefImage
 {
+	private const int IconSize = 40;
+
+	private const int IconPadding = 10;
+
+	private const int ButtonPaddingWhenIcon = 3;
+
+	public LayoutGroup layout;
+
+	public int paddingSubText = 50;
+
+	public Card card;
+
+	private int count;
+
 	public void SetChara(Chara c)
 	{
-		this.card = c;
-		c.SetImage(this.button1.icon);
+		card = c;
+		c.SetImage(button1.icon);
 		string text = c.Name;
-		FactionBranch branch = EClass.Branch;
-		int? num = (branch != null) ? new int?(branch.uidMaid) : null;
-		int uid = c.uid;
-		if (num.GetValueOrDefault() == uid & num != null)
+		if (EClass.Branch?.uidMaid == c.uid)
 		{
 			text += ("(" + "maid".lang() + ")").TagSize(12);
 		}
@@ -29,103 +40,98 @@ public class ItemGeneral : UIItem, IPrefImage
 		{
 			c2 = FontColor.Warning;
 		}
-		this.button1.mainText.SetText(text, c2);
-		RectTransform rectTransform = this.button1.icon.rectTransform;
+		button1.mainText.SetText(text, c2);
+		_ = button1.icon.rectTransform;
 	}
 
 	public RenderRow GetRenderRow()
 	{
-		Card card = this.card;
-		if (card == null)
-		{
-			return null;
-		}
-		return card.sourceRenderCard;
+		return card?.sourceRenderCard;
 	}
 
 	public void OnRefreshPref()
 	{
-		if (this.card != null && this.card.isChara)
+		if (card != null && card.isChara)
 		{
-			this.SetChara(this.card.Chara);
+			SetChara(card.Chara);
 		}
 	}
 
 	public void Clear()
 	{
-		if (this.count > 0)
+		if (count <= 0)
 		{
-			foreach (UIButton uibutton in base.transform.GetComponentsInDirectChildren(true))
-			{
-				if (uibutton != this.button1)
-				{
-					UnityEngine.Object.DestroyImmediate(uibutton.gameObject);
-				}
-			}
-			this.count = 0;
+			return;
 		}
+		foreach (UIButton componentsInDirectChild in base.transform.GetComponentsInDirectChildren<UIButton>())
+		{
+			if (componentsInDirectChild != button1)
+			{
+				UnityEngine.Object.DestroyImmediate(componentsInDirectChild.gameObject);
+			}
+		}
+		count = 0;
 	}
 
 	public UIButton AddSubButton(Sprite sprite, Action action, string lang = null, Action<UITooltip> onTooltip = null)
 	{
-		UIButton uibutton = Util.Instantiate<UIButton>("UI/Element/Button/SubButton", base.transform);
-		uibutton.Rect().anchoredPosition = new Vector2((float)(this.count * -40 - 20 - 10), 0f);
-		uibutton.icon.sprite = sprite;
-		uibutton.onClick.AddListener(delegate()
+		UIButton uIButton = Util.Instantiate<UIButton>("UI/Element/Button/SubButton", base.transform);
+		uIButton.Rect().anchoredPosition = new Vector2(count * -40 - 20 - 10, 0f);
+		uIButton.icon.sprite = sprite;
+		uIButton.onClick.AddListener(delegate
 		{
 			action();
 		});
 		if (!lang.IsEmpty())
 		{
-			uibutton.tooltip.enable = true;
-			uibutton.tooltip.lang = lang;
+			uIButton.tooltip.enable = true;
+			uIButton.tooltip.lang = lang;
 		}
 		if (onTooltip != null)
 		{
-			uibutton.tooltip.id = "note";
-			uibutton.tooltip.onShowTooltip = onTooltip;
-			uibutton.tooltip.enable = true;
+			uIButton.tooltip.id = "note";
+			uIButton.tooltip.onShowTooltip = onTooltip;
+			uIButton.tooltip.enable = true;
 		}
-		uibutton.highlightTarget = this.button1;
-		this.count++;
-		return uibutton;
+		uIButton.highlightTarget = button1;
+		count++;
+		return uIButton;
 	}
 
 	public void SetMainText(string lang, Sprite sprite = null, bool disableMask = true)
 	{
-		this.button1.mainText.SetText(lang.lang());
-		if (sprite)
+		button1.mainText.SetText(lang.lang());
+		if ((bool)sprite)
 		{
-			this.button1.icon.sprite = sprite;
-			this.button1.icon.SetNativeSize();
+			button1.icon.sprite = sprite;
+			button1.icon.SetNativeSize();
 			if (disableMask)
 			{
-				this.DisableMask();
-				return;
+				DisableMask();
 			}
 		}
 		else
 		{
-			this.DisableIcon();
+			DisableIcon();
 		}
 	}
 
 	public UIButton SetSubText(string lang, int x, FontColor c = FontColor.Default, TextAnchor align = TextAnchor.MiddleLeft)
 	{
-		this.button1.subText.SetActive(true);
-		this.button1.subText.SetText(lang.lang(), c);
-		this.button1.subText.alignment = align;
-		this.button1.mainText.rectTransform.sizeDelta = new Vector2((float)(x - this.paddingSubText), 20f);
-		this.button1.subText.rectTransform.anchoredPosition = new Vector2((float)x, 0f);
-		return this.button1;
+		button1.subText.SetActive(enable: true);
+		button1.subText.SetText(lang.lang(), c);
+		button1.subText.alignment = align;
+		button1.mainText.rectTransform.sizeDelta = new Vector2(x - paddingSubText, 20f);
+		button1.subText.rectTransform.anchoredPosition = new Vector2(x, 0f);
+		return button1;
 	}
 
 	public UIButton SetSubText2(string lang, FontColor c = FontColor.Default, TextAnchor align = TextAnchor.MiddleRight)
 	{
-		this.button1.subText2.SetActive(true);
-		this.button1.subText2.SetText(lang.lang(), c);
-		this.button1.subText2.alignment = align;
-		return this.button1;
+		button1.subText2.SetActive(enable: true);
+		button1.subText2.SetText(lang.lang(), c);
+		button1.subText2.alignment = align;
+		return button1;
 	}
 
 	public T AddPrefab<T>(string id) where T : Component
@@ -135,44 +141,29 @@ public class ItemGeneral : UIItem, IPrefImage
 
 	public void SetSound(SoundData data = null)
 	{
-		this.button1.soundClick = (data ?? SE.DataClick);
+		button1.soundClick = data ?? SE.DataClick;
 	}
 
 	public void DisableIcon()
 	{
-		this.button1.icon.transform.parent.SetActive(false);
-		if (this.button1.keyText)
+		button1.icon.transform.parent.SetActive(enable: false);
+		if (!button1.keyText)
 		{
-			return;
+			button1.mainText.rectTransform.anchoredPosition = new Vector2(20f, 0f);
 		}
-		this.button1.mainText.rectTransform.anchoredPosition = new Vector2(20f, 0f);
 	}
 
 	public void DisableMask()
 	{
-		this.image2.enabled = false;
+		image2.enabled = false;
 	}
 
 	public void Build()
 	{
-		RectTransform rectTransform = this.button1.Rect();
-		if (this.count > 0)
+		RectTransform rectTransform = button1.Rect();
+		if (count > 0)
 		{
-			rectTransform.sizeDelta = new Vector2((float)(this.count * -40 - 10 - 3), 0f);
+			rectTransform.sizeDelta = new Vector2(count * -40 - 10 - 3, 0f);
 		}
 	}
-
-	private const int IconSize = 40;
-
-	private const int IconPadding = 10;
-
-	private const int ButtonPaddingWhenIcon = 3;
-
-	public LayoutGroup layout;
-
-	public int paddingSubText = 50;
-
-	public Card card;
-
-	private int count;
 }

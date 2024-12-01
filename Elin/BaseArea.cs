@@ -1,43 +1,67 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class BaseArea : EClass, IInspect
 {
+	public enum AccessType
+	{
+		Public,
+		Resident,
+		Private
+	}
+
+	public class Interaction
+	{
+		public string text;
+
+		public Action action;
+	}
+
+	[JsonProperty]
+	public int uid;
+
+	[JsonProperty]
+	public PointList points = new PointList();
+
+	[JsonProperty]
+	public AreaData data = new AreaData();
+
+	[JsonProperty]
+	public AreaType type = new AreaTypeRoom();
+
+	public TraitRoomPlate plate;
+
 	public virtual string Name
 	{
 		get
 		{
-			if (!this.data.name.IsEmpty())
+			if (!data.name.IsEmpty())
 			{
-				return this.data.name;
+				return data.name;
 			}
-			return this.type.source.GetName();
+			return type.source.GetName();
 		}
 	}
 
-	public bool IsPrivate
-	{
-		get
-		{
-			return this.data.accessType == BaseArea.AccessType.Private;
-		}
-	}
+	public bool IsPrivate => data.accessType == AccessType.Private;
 
-	public SourceArea.Row source
-	{
-		get
-		{
-			return this.type.source;
-		}
-	}
+	public SourceArea.Row source => type.source;
+
+	public bool CanInspect => true;
+
+	public string InspectName => Name;
+
+	public Point InspectPoint => Point.Invalid;
+
+	public Vector3 InspectPosition => Vector3.zero;
 
 	public Point GetRandomFreePos()
 	{
 		for (int i = 0; i < 100; i++)
 		{
-			Point point = this.points.RandomItem<Point>();
+			Point point = points.RandomItem();
 			if (!point.IsBlocked)
 			{
 				return point;
@@ -48,7 +72,7 @@ public class BaseArea : EClass, IInspect
 
 	public Thing GetEmptySeat()
 	{
-		foreach (Point point in this.points)
+		foreach (Point point in points)
 		{
 			foreach (Thing thing in point.Things)
 			{
@@ -67,7 +91,7 @@ public class BaseArea : EClass, IInspect
 		{
 			for (int i = 0; i < 100; i++)
 			{
-				foreach (Point point in this.points)
+				foreach (Point point in points)
 				{
 					if (!point.IsBlocked && (allowChara || !point.HasChara))
 					{
@@ -76,23 +100,23 @@ public class BaseArea : EClass, IInspect
 				}
 			}
 		}
-		return this.points.RandomItem<Point>();
+		return points.RandomItem();
 	}
 
 	public void ChangeType(string _id)
 	{
-		this.type = ClassCache.Create<AreaType>("AreaType" + _id, "Elin");
-		this.type.id = _id;
-		this.type.owner = this;
-		if (this.plate != null)
+		type = ClassCache.Create<AreaType>("AreaType" + _id, "Elin");
+		type.id = _id;
+		type.owner = this;
+		if (plate != null)
 		{
-			this.plate.areaData.type = this.type;
+			plate.areaData.type = type;
 		}
 	}
 
 	public void SetRandomName(int seed = -1)
 	{
-		this.data.name = this.GetRandomName(seed);
+		data.name = GetRandomName(seed);
 	}
 
 	public string GetRandomName(int seed = -1)
@@ -101,11 +125,10 @@ public class BaseArea : EClass, IInspect
 		{
 			Rand.SetSeed(seed);
 		}
-		FactionBranch branch = EClass.Branch;
-		string combinedName = WordGen.GetCombinedName((branch != null) ? branch.GetRandomName() : null, this.ListRoomNames().RandomItem<string>(), true);
+		string combinedName = WordGen.GetCombinedName(EClass.Branch?.GetRandomName(), ListRoomNames().RandomItem(), room: true);
 		if (seed != -1)
 		{
-			Rand.SetSeed(-1);
+			Rand.SetSeed();
 		}
 		return combinedName;
 	}
@@ -113,17 +136,19 @@ public class BaseArea : EClass, IInspect
 	public HashSet<string> ListRoomNames()
 	{
 		HashSet<string> hashSet = new HashSet<string>();
-		foreach (string item in Lang.GetList("rooms"))
+		string[] list = Lang.GetList("rooms");
+		foreach (string item in list)
 		{
 			hashSet.Add(item);
 		}
-		foreach (Point point in this.points)
+		foreach (Point point in points)
 		{
 			foreach (Thing thing in point.Things)
 			{
 				if (thing.IsInstalled && !thing.source.roomName.IsEmpty())
 				{
-					foreach (string item2 in thing.source.GetTextArray("roomName"))
+					list = thing.source.GetTextArray("roomName");
+					foreach (string item2 in list)
 					{
 						hashSet.Add(item2);
 					}
@@ -135,83 +160,80 @@ public class BaseArea : EClass, IInspect
 
 	public int GetSortVal(UIList.SortMode m)
 	{
-		return this.source._index;
+		_ = 7;
+		return source._index;
 	}
 
-	public List<BaseArea.Interaction> ListInteractions()
+	public List<Interaction> ListInteractions()
 	{
-		return new List<BaseArea.Interaction>
+		return new List<Interaction>
 		{
-			new BaseArea.Interaction
+			new Interaction
 			{
-				text = "accessType".lang(("access_" + this.data.accessType.ToString()).lang(), null, null, null, null),
-				action = delegate()
+				text = "accessType".lang(("access_" + data.accessType).lang()),
+				action = delegate
 				{
-					UIContextMenu uicontextMenu = EClass.ui.CreateContextMenuInteraction();
-					using (List<BaseArea.AccessType>.Enumerator enumerator = Util.EnumToList<BaseArea.AccessType>().GetEnumerator())
+					UIContextMenu uIContextMenu = EClass.ui.CreateContextMenuInteraction();
+					foreach (AccessType t in Util.EnumToList<AccessType>())
 					{
-						while (enumerator.MoveNext())
+						uIContextMenu.AddButton(((data.accessType == t) ? "context_checker".lang() : "") + ("access_" + t).lang(), delegate
 						{
-							BaseArea.AccessType t = enumerator.Current;
-							uicontextMenu.AddButton(((this.data.accessType == t) ? "context_checker".lang() : "") + ("access_" + t.ToString()).lang(), delegate()
+							data.accessType = t;
+							if (plate != null)
 							{
-								this.data.accessType = t;
-								if (this.plate != null)
-								{
-									this.plate.areaData.accessType = this.data.accessType;
-								}
-								SE.ClickOk();
-							}, true);
-						}
+								plate.areaData.accessType = data.accessType;
+							}
+							SE.ClickOk();
+						});
 					}
 					CursorSystem.ignoreCount = 5;
-					uicontextMenu.Show();
+					uIContextMenu.Show();
 				}
 			},
-			new BaseArea.Interaction
+			new Interaction
 			{
 				text = "changeName",
-				action = delegate()
+				action = delegate
 				{
-					Dialog.InputName("dialogChangeName", this.data.name.IsEmpty(this.GetRandomName(-1)), delegate(bool cancel, string text)
+					Dialog.InputName("dialogChangeName", data.name.IsEmpty(GetRandomName()), delegate(bool cancel, string text)
 					{
 						if (!cancel)
 						{
-							this.data.name = text;
-							if (this.plate != null)
+							data.name = text;
+							if (plate != null)
 							{
-								this.plate.areaData.name = text;
+								plate.areaData.name = text;
 							}
 						}
-					}, Dialog.InputType.Default);
+					});
 				}
 			},
-			new BaseArea.Interaction
+			new Interaction
 			{
-				text = "toggleShowWallItem".lang() + "(" + (this.data.showWallItem ? "on" : "off").lang() + ")",
-				action = delegate()
+				text = "toggleShowWallItem".lang() + "(" + (data.showWallItem ? "on" : "off").lang() + ")",
+				action = delegate
 				{
-					this.data.showWallItem = !this.data.showWallItem;
+					data.showWallItem = !data.showWallItem;
 					SE.ClickOk();
 				}
 			},
-			new BaseArea.Interaction
+			new Interaction
 			{
-				text = "toggleAtrium".lang() + "(" + (this.data.atrium ? "on" : "off").lang() + ")",
-				action = delegate()
+				text = "toggleAtrium".lang() + "(" + (data.atrium ? "on" : "off").lang() + ")",
+				action = delegate
 				{
-					this.data.atrium = !this.data.atrium;
-					if (this.plate != null)
+					data.atrium = !data.atrium;
+					if (plate != null)
 					{
-						this.plate.areaData.atrium = this.data.atrium;
+						plate.areaData.atrium = data.atrium;
 					}
 					SE.ClickOk();
 				}
 			},
-			new BaseArea.Interaction
+			new Interaction
 			{
 				text = "limitRoomHeight",
-				action = delegate()
+				action = delegate
 				{
 					List<string> list = new List<string>();
 					EClass.ui.AddLayer<LayerList>().SetStringList(delegate
@@ -224,38 +246,38 @@ public class BaseArea : EClass, IInspect
 						return list;
 					}, delegate(int a, string b)
 					{
-						this.data.maxHeight = a + 1;
-						if (this.plate != null)
+						data.maxHeight = a + 1;
+						if (plate != null)
 						{
-							this.plate.areaData.maxHeight = a + 1;
+							plate.areaData.maxHeight = a + 1;
 						}
 						EClass._map.rooms.RefreshAll();
-					}, true);
+					});
 				}
 			},
-			new BaseArea.Interaction
+			new Interaction
 			{
 				text = "changeGroup",
-				action = delegate()
+				action = delegate
 				{
-					List<string> list = new List<string>();
+					List<string> list2 = new List<string>();
 					EClass.ui.AddLayer<LayerList>().SetStringList(delegate
 					{
-						list.Clear();
-						for (int i = 0; i < 5; i++)
+						list2.Clear();
+						for (int j = 0; j < 5; j++)
 						{
-							list.Add(i.ToString() ?? "");
+							list2.Add(j.ToString() ?? "");
 						}
-						return list;
+						return list2;
 					}, delegate(int a, string b)
 					{
-						this.data.group = a;
-						if (this.plate != null)
+						data.group = a;
+						if (plate != null)
 						{
-							this.plate.areaData.group = a;
+							plate.areaData.group = a;
 						}
 						EClass._map.rooms.RefreshAll();
-					}, true);
+					});
 				}
 			}
 		};
@@ -265,70 +287,10 @@ public class BaseArea : EClass, IInspect
 	{
 	}
 
-	public bool CanInspect
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public string InspectName
-	{
-		get
-		{
-			return this.Name;
-		}
-	}
-
-	public Point InspectPoint
-	{
-		get
-		{
-			return Point.Invalid;
-		}
-	}
-
 	public void WriteNote(UINote n, Action<UINote> onWriteNote = null, IInspect.NoteMode mode = IInspect.NoteMode.Default, Recipe recipe = null)
 	{
 		n.Clear();
-		n.AddHeaderCard(this.Name, null);
+		n.AddHeaderCard(Name);
 		n.Build();
-	}
-
-	public Vector3 InspectPosition
-	{
-		get
-		{
-			return Vector3.zero;
-		}
-	}
-
-	[JsonProperty]
-	public int uid;
-
-	[JsonProperty]
-	public PointList points = new PointList();
-
-	[JsonProperty]
-	public AreaData data = new AreaData();
-
-	[JsonProperty]
-	public AreaType type = new AreaTypeRoom();
-
-	public TraitRoomPlate plate;
-
-	public enum AccessType
-	{
-		Public,
-		Resident,
-		Private
-	}
-
-	public class Interaction
-	{
-		public string text;
-
-		public Action action;
 	}
 }

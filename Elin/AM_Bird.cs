@@ -1,13 +1,11 @@
-﻿using System;
-
 public class AM_Bird : AM_MiniGame
 {
 	public override void OnActivate()
 	{
-		EClass.scene.transFocus = EClass.scene.flock._roamers.RandomItem<FlockChild>().transform;
+		EClass.scene.transFocus = EClass.scene.flock._roamers.RandomItem().transform;
 		EClass.screen.SetTargetZoomIndex(1);
 		EClass.screen.RefreshTilt();
-		EClass.ui.layerFloat.SetActive(false);
+		EClass.ui.layerFloat.SetActive(enable: false);
 	}
 
 	public override void OnUpdateInput()
@@ -27,7 +25,7 @@ public class AM_Bird : AM_MiniGame
 		}
 		if (EInput.rightMouse.down)
 		{
-			base.Deactivate();
+			Deactivate();
 		}
 	}
 
@@ -36,6 +34,6 @@ public class AM_Bird : AM_MiniGame
 		EClass.scene.transFocus = null;
 		EClass.screen.RefreshTilt();
 		EClass.screen.SetTargetZoomIndex(1);
-		EClass.ui.layerFloat.SetActive(true);
+		EClass.ui.layerFloat.SetActive(enable: true);
 	}
 }

@@ -1,156 +1,134 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class GoalAutoCombat : GoalCombat
 {
+	public Thing renderThing;
+
+	public List<Chara> listHealthy = new List<Chara>();
+
+	public override bool UseTurbo => EClass.game.config.autoCombat.turbo;
+
+	public override Thing RenderThing => renderThing;
+
+	public ConfigAutoCombat config => EClass.game.config.autoCombat;
+
 	public override Color GetActPlanColor()
 	{
-		if (EClass.pc.IsCriticallyWounded(false))
+		if (!EClass.pc.IsCriticallyWounded())
 		{
-			return EClass.Colors.colorActCriticalWarning;
+			if (!EClass.pc.party.IsCriticallyWounded())
+			{
+				return EClass.Colors.colorAct;
+			}
+			return EClass.Colors.colorActWarnning;
 		}
-		if (!EClass.pc.party.IsCriticallyWounded(false))
-		{
-			return EClass.Colors.colorAct;
-		}
-		return EClass.Colors.colorActWarnning;
-	}
-
-	public override bool UseTurbo
-	{
-		get
-		{
-			return EClass.game.config.autoCombat.turbo;
-		}
-	}
-
-	public override Thing RenderThing
-	{
-		get
-		{
-			return this.renderThing;
-		}
-	}
-
-	public ConfigAutoCombat config
-	{
-		get
-		{
-			return EClass.game.config.autoCombat;
-		}
+		return EClass.Colors.colorActCriticalWarning;
 	}
 
 	public GoalAutoCombat(Chara e)
 	{
-		this.destEnemy = e;
+		destEnemy = e;
 		EClass.player.autoCombatStartHP = ((EClass.pc.Evalue(1421) > 0) ? (EClass.pc.hp + EClass.pc.mana.value) : EClass.pc.hp);
-		foreach (Chara chara in EClass.pc.party.members)
+		foreach (Chara member in EClass.pc.party.members)
 		{
-			if (!chara.IsCriticallyWounded(false))
+			if (!member.IsCriticallyWounded())
 			{
-				this.listHealthy.Add(chara);
+				listHealthy.Add(member);
 			}
 		}
 	}
 
 	public override bool TryUseRanged(int dist)
 	{
-		Thing ranged = this.owner.ranged;
-		this.owner.ranged = null;
-		if (this.config.bUseHotBar)
+		Thing ranged = owner.ranged;
+		owner.ranged = null;
+		if (config.bUseHotBar)
 		{
-			this.<TryUseRanged>g__FindRanged|10_0(true);
+			FindRanged(hotbar: true);
 		}
-		if (this.owner.ranged == null || !ACT.Ranged.Perform(this.owner, this.tc, null))
+		if (owner.ranged != null && ACT.Ranged.Perform(owner, tc))
 		{
-			return false;
-		}
-		if (this.owner == null)
-		{
+			if (owner == null)
+			{
+				return true;
+			}
+			renderThing = owner.ranged;
+			if (owner.ranged != ranged)
+			{
+				owner.ranged = ranged;
+			}
 			return true;
 		}
-		this.renderThing = this.owner.ranged;
-		if (this.owner.ranged != ranged)
+		return false;
+		void FindRanged(bool hotbar)
 		{
-			this.owner.ranged = ranged;
+			owner.things.Foreach(delegate(Thing t)
+			{
+				if (t.IsHotItem)
+				{
+					if (!hotbar)
+					{
+						return false;
+					}
+				}
+				else if (hotbar)
+				{
+					return false;
+				}
+				if (t.IsRangedWeapon && (t.trait is TraitToolRangeCane || t.c_ammo > 0 || EClass.pc.FindAmmo(t) != null) && owner.CanEquipRanged(t))
+				{
+					owner.ranged = t;
+					return true;
+				}
+				return false;
+			});
 		}
-		return true;
 	}
 
 	public void GetAbilities(Func<Element, bool> func)
 	{
-		if (this.config.bUseHotBar)
+		if (config.bUseHotBar)
 		{
-			foreach (Thing thing in from t in EClass.pc.things
-			where t.IsHotItem && t.trait is TraitAbility
-			select t)
+			foreach (Thing item in EClass.pc.things.Where((Thing t) => t.IsHotItem && t.trait is TraitAbility))
 			{
-				Element element = this.owner.elements.GetElement(thing.c_idAbility);
+				Element element = owner.elements.GetElement(item.c_idAbility);
 				if (element != null && func(element))
 				{
-					base.AddAbility(element.act, 15, 100, false);
+					AddAbility(element.act, 15);
 				}
 			}
 		}
-		if (this.config.bUseInventory)
+		if (!config.bUseInventory)
 		{
-			foreach (Element element2 in this.owner.elements.dict.Values)
+			return;
+		}
+		foreach (Element value in owner.elements.dict.Values)
+		{
+			if ((!config.bUseFav || EClass.player.favAbility.Contains(value.id)) && func(value))
 			{
-				if ((!this.config.bUseFav || EClass.player.favAbility.Contains(element2.id)) && func(element2))
-				{
-					base.AddAbility(element2.act, 0, 100, false);
-				}
+				AddAbility(value.act);
 			}
 		}
 	}
 
 	public override void BuildAbilityList()
 	{
-		this.GetAbilities((Element e) => e.source.abilityType.Length != 0);
-		base.AddAbility(ACT.Ranged, 0, 100, false);
-		base.AddAbility(ACT.Melee, 0, 100, false);
-		base.AddAbility(ACT.Item, 0, 100, false);
+		GetAbilities((Element e) => e.source.abilityType.Length != 0);
+		AddAbility(ACT.Ranged);
+		AddAbility(ACT.Melee);
+		AddAbility(ACT.Item);
 	}
 
 	public override bool TryAbortCombat()
 	{
-		if (this.idleCount >= 2)
+		if (idleCount >= 2)
 		{
 			Msg.Say("abort_idle");
 			return true;
 		}
 		return false;
 	}
-
-	[CompilerGenerated]
-	private void <TryUseRanged>g__FindRanged|10_0(bool hotbar)
-	{
-		this.owner.things.Foreach(delegate(Thing t)
-		{
-			if (t.IsHotItem)
-			{
-				if (!hotbar)
-				{
-					return false;
-				}
-			}
-			else if (hotbar)
-			{
-				return false;
-			}
-			if (t.IsRangedWeapon && (t.trait is TraitToolRangeCane || t.c_ammo > 0 || EClass.pc.FindAmmo(t) != null) && this.owner.CanEquipRanged(t))
-			{
-				this.owner.ranged = t;
-				return true;
-			}
-			return false;
-		}, true);
-	}
-
-	public Thing renderThing;
-
-	public List<Chara> listHealthy = new List<Chara>();
 }

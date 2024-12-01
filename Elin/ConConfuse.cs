@@ -1,14 +1,6 @@
-﻿using System;
-
 public class ConConfuse : BadCondition
 {
-	public override Emo2 EmoIcon
-	{
-		get
-		{
-			return Emo2.confused;
-		}
-	}
+	public override Emo2 EmoIcon => Emo2.confused;
 
 	public override int GetPhase()
 	{
@@ -17,12 +9,12 @@ public class ConConfuse : BadCondition
 
 	public override void SetOwner(Chara _owner, bool onDeserialize = false)
 	{
-		base.SetOwner(_owner, false);
-		this.owner.isConfused = true;
+		base.SetOwner(_owner);
+		owner.isConfused = true;
 	}
 
 	public override void OnRemoved()
 	{
-		this.owner.isConfused = false;
+		owner.isConfused = false;
 	}
 }

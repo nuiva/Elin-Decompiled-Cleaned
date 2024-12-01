@@ -1,21 +1,18 @@
-﻿using System;
 using UnityEngine;
 
 public class TraitGenerator : Trait
 {
-	public virtual bool Waterproof
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool Waterproof => false;
 
 	public override bool IsOn
 	{
 		get
 		{
-			return !this.owner.isBroken && !EClass._map.isBreakerDown;
+			if (!owner.isBroken)
+			{
+				return !EClass._map.isBreakerDown;
+			}
+			return false;
 		}
 	}
 
@@ -23,7 +20,7 @@ public class TraitGenerator : Trait
 	{
 		get
 		{
-			if (this.IsOn)
+			if (IsOn)
 			{
 				return base.Electricity;
 			}
@@ -31,71 +28,63 @@ public class TraitGenerator : Trait
 		}
 	}
 
-	public override bool UseAltTiles
-	{
-		get
-		{
-			return this.Electricity > 0;
-		}
-	}
+	public override bool UseAltTiles => Electricity > 0;
 
 	public override void OnSimulateHour(VirtualDate date)
 	{
-		if (!date.IsRealTime || !this.owner.IsInstalled)
+		if (date.IsRealTime && owner.IsInstalled)
 		{
-			return;
-		}
-		if (!this.Waterproof && (this.owner.Cell.IsTopWater || (!this.owner.Cell.HasRoof && !EClass._map.IsIndoor && EClass.world.weather.IsHazard)))
-		{
-			this.ModHP(-10);
-		}
-		else
-		{
-			this.ModHP(10);
-		}
-		if (!this.owner.isBroken && EClass._zone.electricity < 0 && 100 >= EClass.rnd(150))
-		{
-			this.ShortOut();
+			if (!Waterproof && (owner.Cell.IsTopWater || (!owner.Cell.HasRoof && !EClass._map.IsIndoor && EClass.world.weather.IsHazard)))
+			{
+				ModHP(-10);
+			}
+			else
+			{
+				ModHP(10);
+			}
+			if (!owner.isBroken && EClass._zone.electricity < 0 && 100 >= EClass.rnd(150))
+			{
+				ShortOut();
+			}
 		}
 	}
 
 	public void ModHP(int a)
 	{
-		this.owner.hp = Mathf.Clamp(this.owner.hp + a, 1, 100);
-		if (!this.owner.isBroken && this.owner.hp < 50)
+		owner.hp = Mathf.Clamp(owner.hp + a, 1, 100);
+		if (!owner.isBroken && owner.hp < 50)
 		{
-			this.ShortOut();
-			return;
+			ShortOut();
 		}
-		if (this.owner.isBroken && this.owner.hp >= 50)
+		else if (owner.isBroken && owner.hp >= 50)
 		{
-			this.Recover();
+			Recover();
 		}
 	}
 
 	public void Recover()
 	{
-		this.owner.hp = 80;
-		this.owner.isBroken = false;
-		this.owner.PlaySound("electricity_on", 1f, true);
-		this.owner.Say("electricity_recover", this.owner, null, null);
+		owner.hp = 80;
+		owner.isBroken = false;
+		owner.PlaySound("electricity_on");
+		owner.Say("electricity_recover", owner);
 		EClass._zone.RefreshElectricity();
 	}
 
 	public void ShortOut()
 	{
-		this.owner.hp -= 20 + EClass.rnd(30);
-		this.owner.isBroken = true;
-		this.owner.PlaySound("electricity_off", 1f, true);
-		this.owner.Say("electricity_short", this.owner, null, null);
+		owner.hp -= 20 + EClass.rnd(30);
+		owner.isBroken = true;
+		owner.PlaySound("electricity_off");
+		owner.Say("electricity_short", owner);
 		EClass._zone.RefreshElectricity();
 	}
 
 	public override void SetName(ref string s)
 	{
-		if (this.owner.isBroken)
+		if (owner.isBroken)
 		{
-			s = "gen_broken".lang(s, null, null, null, null);
+			s = "gen_broken".lang(s);
 		}
 	}
 }

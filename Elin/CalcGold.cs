@@ -1,5 +1,3 @@
-﻿using System;
-
 public class CalcGold : EClass
 {
 	public static int ExpandLand()

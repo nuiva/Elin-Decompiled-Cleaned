@@ -1,16 +1,17 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class DomainManager : EClass
 {
+	public Dictionary<string, Domain> dictAll = new Dictionary<string, Domain>();
+
 	public void OnCreateGame()
 	{
-		this.Build();
+		Build();
 	}
 
 	public void OnLoad()
 	{
-		this.Build();
+		Build();
 	}
 
 	public void Build()
@@ -19,13 +20,11 @@ public class DomainManager : EClass
 		{
 			if (!(row.group != "DOMAIN"))
 			{
-				this.dictAll.Add(row.alias, new Domain
+				dictAll.Add(row.alias, new Domain
 				{
 					source = row
 				});
 			}
 		}
 	}
-
-	public Dictionary<string, Domain> dictAll = new Dictionary<string, Domain>();
 }

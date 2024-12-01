@@ -1,129 +1,76 @@
-﻿using System;
-
 public class TraitDoor : Trait
 {
-	public override bool CanBeOnlyBuiltInHome
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public int count;
 
-	public override bool CanBuildInTown
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeOnlyBuiltInHome => true;
 
-	public override bool CanBeDisassembled
-	{
-		get
-		{
-			return !this.owner.IsInstalled;
-		}
-	}
+	public override bool CanBuildInTown => false;
 
-	public override Trait.TileMode tileMode
-	{
-		get
-		{
-			return Trait.TileMode.Door;
-		}
-	}
+	public override bool CanBeDisassembled => !owner.IsInstalled;
 
-	public override bool HaveUpdate
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override TileMode tileMode => TileMode.Door;
 
-	public override bool IsOpenSight
-	{
-		get
-		{
-			return this.IsOpen();
-		}
-	}
+	public override bool HaveUpdate => true;
 
-	public override bool IsDoor
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsOpenSight => IsOpen();
 
-	public override bool ShouldRefreshTile
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsDoor => true;
 
-	public virtual string idSound
-	{
-		get
-		{
-			return "door1";
-		}
-	}
+	public override bool ShouldRefreshTile => true;
+
+	public virtual string idSound => "door1";
 
 	public override void Update()
 	{
-		this.TryAutoClose();
+		TryAutoClose();
 	}
 
 	public void ForceClose()
 	{
-		if (this.IsOpen())
+		if (IsOpen())
 		{
-			this.ToggleDoor(true, true);
+			ToggleDoor();
 		}
 	}
 
 	public void TryOpen(Chara c)
 	{
-		if (this.IsOpen())
+		if (IsOpen())
 		{
 			return;
 		}
-		this.ToggleDoor(true, true);
-		c.Say("openDoor", c, this.owner, null, null);
-		if (this.owner.Cell.Front.FirstThing != null)
+		ToggleDoor();
+		c.Say("openDoor", c, owner);
+		if (owner.Cell.Front.FirstThing != null)
 		{
-			foreach (Thing thing in this.owner.Cell.Front.Things)
+			foreach (Thing thing in owner.Cell.Front.Things)
 			{
 				thing.trait.OnOpenDoor(c);
 			}
 		}
-		if (this.owner.Cell.Right.FirstThing != null)
+		if (owner.Cell.Right.FirstThing == null)
 		{
-			foreach (Thing thing2 in this.owner.Cell.Right.Things)
-			{
-				thing2.trait.OnOpenDoor(c);
-			}
+			return;
+		}
+		foreach (Thing thing2 in owner.Cell.Right.Things)
+		{
+			thing2.trait.OnOpenDoor(c);
 		}
 	}
 
 	public void TryAutoClose()
 	{
-		this.count++;
-		if (this.count > 5 && this.CanClose() && this.IsOpen())
+		count++;
+		if (count > 5 && CanClose() && IsOpen())
 		{
-			this.ToggleDoor(false, true);
+			ToggleDoor(sound: false);
 		}
 	}
 
 	public virtual bool CanClose()
 	{
 		int num = 0;
-		foreach (Thing thing in this.owner.pos.Things)
+		foreach (Thing thing in owner.pos.Things)
 		{
 			if (!thing.isRoofItem && !thing.isHidden && thing.TileType != TileType.Illumination)
 			{
@@ -134,20 +81,28 @@ public class TraitDoor : Trait
 				}
 			}
 		}
-		return !this.owner.pos.HasChara;
+		return !owner.pos.HasChara;
 	}
 
 	public virtual bool IsOpen()
 	{
-		int dir = this.owner.dir;
-		Cell cell = this.owner.pos.cell;
-		return (!cell.Right.HasFullBlockOrWallOrFence && (dir == 0 || dir == 2) && cell.Front.HasFullBlockOrWallOrFence) || (!cell.Front.HasFullBlockOrWallOrFence && (dir == 1 || dir == 3) && cell.Right.HasFullBlockOrWallOrFence);
+		int dir = owner.dir;
+		Cell cell = owner.pos.cell;
+		if (!cell.Right.HasFullBlockOrWallOrFence && (dir == 0 || dir == 2) && cell.Front.HasFullBlockOrWallOrFence)
+		{
+			return true;
+		}
+		if (!cell.Front.HasFullBlockOrWallOrFence && (dir == 1 || dir == 3) && cell.Right.HasFullBlockOrWallOrFence)
+		{
+			return true;
+		}
+		return false;
 	}
 
 	public bool IsValid()
 	{
-		int dir = this.owner.dir;
-		Cell cell = this.owner.pos.cell;
+		_ = owner.dir;
+		Cell cell = owner.pos.cell;
 		if (!cell.HasBlock)
 		{
 			return false;
@@ -156,79 +111,87 @@ public class TraitDoor : Trait
 		bool hasFullBlockOrWallOrFence2 = cell.Right.HasFullBlockOrWallOrFence;
 		bool hasFullBlockOrWallOrFence3 = cell.Front.HasFullBlockOrWallOrFence;
 		bool hasFullBlockOrWallOrFence4 = cell.Back.HasFullBlockOrWallOrFence;
-		return (hasFullBlockOrWallOrFence ? 1 : 0) + (hasFullBlockOrWallOrFence2 ? 1 : 0) + (hasFullBlockOrWallOrFence3 ? 1 : 0) + (hasFullBlockOrWallOrFence4 ? 1 : 0) < 3 && ((hasFullBlockOrWallOrFence && hasFullBlockOrWallOrFence2) || (hasFullBlockOrWallOrFence3 && hasFullBlockOrWallOrFence4));
+		if ((hasFullBlockOrWallOrFence ? 1 : 0) + (hasFullBlockOrWallOrFence2 ? 1 : 0) + (hasFullBlockOrWallOrFence3 ? 1 : 0) + (hasFullBlockOrWallOrFence4 ? 1 : 0) >= 3)
+		{
+			return false;
+		}
+		if (hasFullBlockOrWallOrFence && hasFullBlockOrWallOrFence2)
+		{
+			return true;
+		}
+		if (hasFullBlockOrWallOrFence3 && hasFullBlockOrWallOrFence4)
+		{
+			return true;
+		}
+		return false;
 	}
 
 	public virtual void ToggleDoor(bool sound = true, bool refresh = true)
 	{
 		if (sound)
 		{
-			this.owner.PlaySound(this.idSound, 1f, true);
+			owner.PlaySound(idSound);
 		}
-		this.RotateDoor();
-		this.count = 0;
+		RotateDoor();
+		count = 0;
 		if (refresh)
 		{
-			EClass._map.RefreshSingleTile(this.owner.pos.x, this.owner.pos.z);
-			EClass._map.RefreshFOV(this.owner.pos.x, this.owner.pos.z, 6, false);
+			EClass._map.RefreshSingleTile(owner.pos.x, owner.pos.z);
+			EClass._map.RefreshFOV(owner.pos.x, owner.pos.z);
 		}
 	}
 
 	public void RotateDoor()
 	{
-		if (this.owner.dir == 0)
+		if (owner.dir == 0)
 		{
-			this.owner.dir = 1;
+			owner.dir = 1;
 		}
-		else if (this.owner.dir == 1)
+		else if (owner.dir == 1)
 		{
-			this.owner.dir = 0;
+			owner.dir = 0;
 		}
-		else if (this.owner.dir == 2)
+		else if (owner.dir == 2)
 		{
-			this.owner.dir = 3;
+			owner.dir = 3;
 		}
 		else
 		{
-			this.owner.dir = 2;
+			owner.dir = 2;
 		}
-		this.owner.renderer.RefreshSprite();
+		owner.renderer.RefreshSprite();
 	}
 
 	public override void TrySetAct(ActPlan p)
 	{
-		if (!this.owner.IsInstalled)
+		if (!owner.IsInstalled)
 		{
 			return;
 		}
-		if (this.owner.c_lockLv > 0)
+		if (owner.c_lockLv > 0)
 		{
 			p.TrySetAct(new AI_OpenLock
 			{
-				target = this.owner.Thing
-			}, this.owner);
-			return;
+				target = owner.Thing
+			}, owner);
 		}
-		if (!this.IsOpen())
+		else if (!IsOpen())
 		{
-			p.TrySetAct("actOpen", delegate()
+			p.TrySetAct("actOpen", delegate
 			{
-				EClass.pc.Say("openDoor", EClass.pc, this.owner, null, null);
-				this.ToggleDoor(true, true);
+				EClass.pc.Say("openDoor", EClass.pc, owner);
+				ToggleDoor();
 				return true;
-			}, this.owner, CursorSystem.Door, 1, false, true, false);
-			return;
+			}, owner, CursorSystem.Door);
 		}
-		if (this.CanClose() && p.altAction)
+		else if (CanClose() && p.altAction)
 		{
-			p.TrySetAct("actClose", delegate()
+			p.TrySetAct("actClose", delegate
 			{
-				EClass.pc.Say("close", EClass.pc, this.owner, null, null);
-				this.ToggleDoor(true, true);
+				EClass.pc.Say("close", EClass.pc, owner);
+				ToggleDoor();
 				return true;
-			}, this.owner, CursorSystem.Door, 1, false, true, false);
+			}, owner, CursorSystem.Door);
 		}
 	}
-
-	public int count;
 }

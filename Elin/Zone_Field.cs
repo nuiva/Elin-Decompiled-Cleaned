@@ -1,36 +1,26 @@
-﻿using System;
-
 public class Zone_Field : Zone
 {
-	public override bool WillAutoSave
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool WillAutoSave => false;
 
 	public bool IsBridge
 	{
 		get
 		{
-			return base.lv == 0 && base.Tile.IsBridge;
+			if (base.lv == 0)
+			{
+				return base.Tile.IsBridge;
+			}
+			return false;
 		}
 	}
 
-	public override bool HasLaw
-	{
-		get
-		{
-			return this.IsBridge;
-		}
-	}
+	public override bool HasLaw => IsBridge;
 
 	public override float ChanceSpawnNeutral
 	{
 		get
 		{
-			if (!this.IsBridge)
+			if (!IsBridge)
 			{
 				return base.ChanceSpawnNeutral;
 			}
@@ -38,67 +28,25 @@ public class Zone_Field : Zone
 		}
 	}
 
-	public override bool UseFog
-	{
-		get
-		{
-			return base.lv <= 0;
-		}
-	}
+	public override bool UseFog => base.lv <= 0;
 
-	public override ZoneFeatureType FeatureType
-	{
-		get
-		{
-			return ZoneFeatureType.RandomField;
-		}
-	}
+	public override ZoneFeatureType FeatureType => ZoneFeatureType.RandomField;
 
-	public override int DangerLvFix
-	{
-		get
-		{
-			return base.Tile.source.dangerLv;
-		}
-	}
+	public override int DangerLvFix => base.Tile.source.dangerLv;
 
-	public override string IdBiome
-	{
-		get
-		{
-			return EClass._map.config.idBiome.IsEmpty(base.Tile.source.idBiome.IsEmpty("Plain"));
-		}
-	}
+	public override string IdBiome => EClass._map.config.idBiome.IsEmpty(base.Tile.source.idBiome.IsEmpty("Plain"));
 
-	public override float PrespawnRate
-	{
-		get
-		{
-			return 1.2f;
-		}
-	}
+	public override float PrespawnRate => 1.2f;
 
-	public override bool isClaimable
-	{
-		get
-		{
-			return EClass.pc.homeBranch != null;
-		}
-	}
+	public override bool isClaimable => EClass.pc.homeBranch != null;
 
-	public override bool CanFastTravel
-	{
-		get
-		{
-			return base.IsPCFaction;
-		}
-	}
+	public override bool CanFastTravel => base.IsPCFaction;
 
 	public override string idExport
 	{
 		get
 		{
-			if (!this.IsBridge)
+			if (!IsBridge)
 			{
 				return base.idExport;
 			}
@@ -106,29 +54,11 @@ public class Zone_Field : Zone
 		}
 	}
 
-	public override float BigDaddyChance
-	{
-		get
-		{
-			return 0.02f;
-		}
-	}
+	public override float BigDaddyChance => 0.02f;
 
-	public override float EvolvedChance
-	{
-		get
-		{
-			return 0.05f;
-		}
-	}
+	public override float EvolvedChance => 0.05f;
 
-	public override float OreChance
-	{
-		get
-		{
-			return 5f;
-		}
-	}
+	public override float OreChance => 5f;
 
 	public override float ShrineChance
 	{
@@ -159,13 +89,13 @@ public class Zone_Field : Zone
 		base.OnGenerateMap();
 		if (base.lv == 0)
 		{
-			base.idPrefix = EClass.sources.zoneAffixes.rows.RandomItem<SourceZoneAffix.Row>().id;
-			base.dateExpire = EClass.world.date.GetRaw(0) + 10080;
+			base.idPrefix = EClass.sources.zoneAffixes.rows.RandomItem().id;
+			base.dateExpire = EClass.world.date.GetRaw() + 10080;
 		}
 		bool draw = EClass.pc.HasCondition<ConDrawBacker>();
-		base.ApplyBackerPet(draw);
-		this.map.AddBackerTree(draw);
-		if (this.IsBridge)
+		ApplyBackerPet(draw);
+		map.AddBackerTree(draw);
+		if (IsBridge)
 		{
 			EClass._map.ForeachCell(delegate(Cell c)
 			{

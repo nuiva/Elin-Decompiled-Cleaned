@@ -1,51 +1,48 @@
-﻿using System;
 using DG.Tweening;
-using DG.Tweening.Core;
-using DG.Tweening.Plugins.Options;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class UIQueue : EMono
 {
-	public QueueManager queues
-	{
-		get
-		{
-			return EMono.player.queues;
-		}
-	}
+	public static UIQueue Instance;
+
+	public LayoutGroup layout;
+
+	public UIButton mold;
+
+	public QueueManager queues => EMono.player.queues;
 
 	private void OnEnable()
 	{
-		UIQueue.Instance = this;
+		Instance = this;
 	}
 
 	private void OnDisable()
 	{
-		UIQueue.Instance = null;
+		Instance = null;
 	}
 
 	public void OnAdd(Queue q, bool insert = false)
 	{
-		UIButton uibutton = q.button = Util.Instantiate<UIButton>(this.mold, this.layout);
-		uibutton.onClick.AddListener(delegate()
+		UIButton uIButton = (q.button = Util.Instantiate(mold, layout));
+		uIButton.onClick.AddListener(delegate
 		{
 			if (q.CanCancel)
 			{
-				this.queues.Cancel(q);
+				queues.Cancel(q);
 			}
 		});
 		if (insert)
 		{
-			uibutton.transform.SetAsFirstSibling();
+			uIButton.transform.SetAsFirstSibling();
 		}
-		uibutton.tooltip.onShowTooltip = delegate(UITooltip a)
+		uIButton.tooltip.onShowTooltip = delegate(UITooltip a)
 		{
 			string text = q.interaction.GetType().ToString() + "\n";
-			text += q.interaction.status.ToString();
+			text += q.interaction.status;
 			a.textMain.SetText(text);
 		};
-		uibutton.transform.DOScale(0f, 0.2f).From<TweenerCore<Vector3, Vector3, VectorOptions>>();
+		uIButton.transform.DOScale(0f, 0.2f).From();
 	}
 
 	public void OnRemove(Queue q)
@@ -57,33 +54,27 @@ public class UIQueue : EMono
 		q.button.interactable = false;
 		q.button.transform.DOScale(0f, 0.3f).OnComplete(delegate
 		{
-			if (q.button.gameObject)
+			if ((bool)q.button.gameObject)
 			{
-				UnityEngine.Object.DestroyImmediate(q.button.gameObject);
+				Object.DestroyImmediate(q.button.gameObject);
 			}
 		});
 	}
 
 	public void OnSetOwner()
 	{
-		if (!this.mold)
+		if (!mold)
 		{
-			this.mold = this.layout.CreateMold(null);
+			mold = layout.CreateMold<UIButton>();
 		}
-		this.layout.DestroyChildren(false, true);
+		layout.DestroyChildren();
 	}
 
 	private void Update()
 	{
-		if (this.queues.list.Count > 0 && !this.queues.currentQueue.interaction.IsRunning)
+		if (queues.list.Count > 0 && !queues.currentQueue.interaction.IsRunning)
 		{
-			this.OnRemove(this.queues.currentQueue);
+			OnRemove(queues.currentQueue);
 		}
 	}
-
-	public static UIQueue Instance;
-
-	public LayoutGroup layout;
-
-	public UIButton mold;
 }

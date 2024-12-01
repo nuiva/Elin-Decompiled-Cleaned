@@ -1,4 +1,3 @@
-﻿using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
@@ -6,156 +5,6 @@ using UnityEngine.UI;
 
 public class UIFactionInfo : EMono
 {
-	public EloMap elomap
-	{
-		get
-		{
-			return EMono.scene.elomapActor.elomap;
-		}
-	}
-
-	public EloMapActor actor
-	{
-		get
-		{
-			return EMono.scene.elomapActor;
-		}
-	}
-
-	private void Awake()
-	{
-		if (this.imageFull)
-		{
-			this.imageFull.SetAlpha(0f);
-		}
-	}
-
-	public void SetFaction(Faction f)
-	{
-		this.note.Clear();
-		this.note.AddHeader("HeaderNoteFaction", f.Name, null);
-		this.note.AddTopic("relation", f.relation.GetTextRelation() ?? "");
-		this.note.AddTopic("type", f.TextType ?? "");
-		this.note.Build();
-		if (!this.imageFull)
-		{
-			return;
-		}
-		this.transImage.SetPositionX(this.pivot.position.x);
-		Sprite sprite = Resources.Load<Sprite>("Media/Graphics/Image/Faction/" + f.source.id + "_avatar");
-		TweenUtil.KillTween(ref this.tween, false);
-		if (sprite)
-		{
-			if (sprite != this.imageFull.sprite)
-			{
-				this.imageFull.SetAlpha(0f);
-			}
-			this.imageFull.sprite = sprite;
-			this.imageFull.SetNativeSize();
-			this.tween = this.imageIn.Play(this.imageFull.transform, null, -1f, 0f);
-			return;
-		}
-		this.tween = this.imageOut.Play(this.imageFull.transform, null, -1f, 0f);
-	}
-
-	public void SetReligion(Religion f)
-	{
-		this.note.Clear();
-		UIItem c = this.note.AddHeader("HeaderFaction", "", f.GetSprite());
-		c.Find("Name", true).SetText(f.Name);
-		c.Find("Topic1", true).SetTopic("relationGod", f.relation.ToString() ?? "");
-		c.Find("Topic2", true).SetTopic("type", f.source.GetText("textType", false) ?? "");
-		c.Find("Topic3", true).SetTopic("avatar", f.source.textAvatar ?? "");
-		string lang = "GSSleep";
-		if (f.id == "harmony")
-		{
-			lang = "GSWithdraw";
-		}
-		if (f.id == "oblivion")
-		{
-			lang = "GSStray";
-		}
-		c.Find("Topic4", true).SetTopic("status", lang);
-		this.note.AddText(f.source.GetDetail(), FontColor.DontChange).Hyphenate();
-		this.note.Build();
-		if (!this.imageFull)
-		{
-			return;
-		}
-		this.transImage.SetPositionX(this.pivot.position.x);
-		Sprite sprite = Resources.Load<Sprite>("Media/Graphics/Image/Faction/" + f.source.id + "_avatar");
-		TweenUtil.KillTween(ref this.tween, false);
-		if (sprite)
-		{
-			if (sprite != this.imageFull.sprite)
-			{
-				this.imageFull.SetAlpha(0f);
-			}
-			this.imageFull.sprite = sprite;
-			this.imageFull.SetNativeSize();
-			this.tween = this.imageIn.Play(this.imageFull.transform, null, -1f, 0f);
-			return;
-		}
-		this.tween = this.imageOut.Play(this.imageFull.transform, null, -1f, 0f);
-	}
-
-	public void SetZone(Zone _zone)
-	{
-		this.zone = _zone;
-		FactionBranch branch = this.zone.branch;
-		this.gx = this.zone.x;
-		this.gy = this.zone.y;
-		this.note.Clear();
-		this.note.AddHeader("HeaderNoteFaction", this.zone.Name, null);
-		this.note.AddTopic("mainFaction", this.zone.mainFaction.Name ?? "");
-		this.note.AddTopic("branchLv", branch.TextLv);
-		this.note.AddTopic("wealth", branch.resources.worth.value.ToFormat() ?? "");
-		this.note.AddTopic("ranking", EMono.game.spatials.ranks.GetRankText(this.zone) ?? "");
-		this.note.AddTopic("rank_income", "rank_income2".lang(EMono.game.spatials.ranks.GetIncome(this.zone).ToFormat(), null, null, null, null));
-		this.note.Space(0, 1);
-		this.note.AddHeaderTopic("landfeat".lang(), null);
-		List<Element> list = _zone.ListLandFeats();
-		for (int i = 0; i < list.Count; i++)
-		{
-			this.note.AddText(list[i].Name + (((i == 1 && branch.lv < 4) || (i == 2 && branch.lv < 7)) ? "landfeat_locked".lang() : ""), FontColor.DontChange);
-		}
-		this.note.Space(0, 1);
-		this.note.AddHeaderTopic("listRoamers".lang(), null);
-		int num = 0;
-		foreach (Chara chara in EMono.game.cards.globalCharas.Values)
-		{
-			if (chara.homeBranch == branch)
-			{
-				this.note.AddText(chara.Name, FontColor.DontChange);
-				num++;
-				if (num > 5)
-				{
-					break;
-				}
-			}
-		}
-		if (num == 0)
-		{
-			this.note.AddText("????????", FontColor.DontChange);
-		}
-		this.note.Space(0, 1);
-		this.note.AddHeaderTopic("listPolicies".lang(), null);
-		foreach (Element element in branch.elements.dict.Values)
-		{
-			if (element.source.category == "policy")
-			{
-				this.note.AddText(element.Name, FontColor.DontChange);
-			}
-		}
-		this.note.Build();
-	}
-
-	public void Clear()
-	{
-		this.note.Clear();
-		this.note.Build();
-	}
-
 	public UINote note;
 
 	public Image imageFull;
@@ -183,4 +32,146 @@ public class UIFactionInfo : EMono
 	public Zone zone;
 
 	public LayoutGroup layoutButtons;
+
+	public EloMap elomap => EMono.scene.elomapActor.elomap;
+
+	public EloMapActor actor => EMono.scene.elomapActor;
+
+	private void Awake()
+	{
+		if ((bool)imageFull)
+		{
+			imageFull.SetAlpha(0f);
+		}
+	}
+
+	public void SetFaction(Faction f)
+	{
+		note.Clear();
+		note.AddHeader("HeaderNoteFaction", f.Name);
+		note.AddTopic("relation", f.relation.GetTextRelation() ?? "");
+		note.AddTopic("type", f.TextType ?? "");
+		note.Build();
+		if (!imageFull)
+		{
+			return;
+		}
+		transImage.SetPositionX(pivot.position.x);
+		Sprite sprite = Resources.Load<Sprite>("Media/Graphics/Image/Faction/" + f.source.id + "_avatar");
+		TweenUtil.KillTween(ref tween);
+		if ((bool)sprite)
+		{
+			if (sprite != imageFull.sprite)
+			{
+				imageFull.SetAlpha(0f);
+			}
+			imageFull.sprite = sprite;
+			imageFull.SetNativeSize();
+			tween = imageIn.Play(imageFull.transform);
+		}
+		else
+		{
+			tween = imageOut.Play(imageFull.transform);
+		}
+	}
+
+	public void SetReligion(Religion f)
+	{
+		note.Clear();
+		UIItem c = note.AddHeader("HeaderFaction", "", f.GetSprite());
+		c.Find<UIText>("Name", recursive: true).SetText(f.Name);
+		c.Find<UIItem>("Topic1", recursive: true).SetTopic("relationGod", f.relation.ToString() ?? "");
+		c.Find<UIItem>("Topic2", recursive: true).SetTopic("type", f.source.GetText("textType") ?? "");
+		c.Find<UIItem>("Topic3", recursive: true).SetTopic("avatar", f.source.textAvatar ?? "");
+		string lang = "GSSleep";
+		if (f.id == "harmony")
+		{
+			lang = "GSWithdraw";
+		}
+		if (f.id == "oblivion")
+		{
+			lang = "GSStray";
+		}
+		c.Find<UIItem>("Topic4", recursive: true).SetTopic("status", lang);
+		note.AddText(f.source.GetDetail()).Hyphenate();
+		note.Build();
+		if (!imageFull)
+		{
+			return;
+		}
+		transImage.SetPositionX(pivot.position.x);
+		Sprite sprite = Resources.Load<Sprite>("Media/Graphics/Image/Faction/" + f.source.id + "_avatar");
+		TweenUtil.KillTween(ref tween);
+		if ((bool)sprite)
+		{
+			if (sprite != imageFull.sprite)
+			{
+				imageFull.SetAlpha(0f);
+			}
+			imageFull.sprite = sprite;
+			imageFull.SetNativeSize();
+			tween = imageIn.Play(imageFull.transform);
+		}
+		else
+		{
+			tween = imageOut.Play(imageFull.transform);
+		}
+	}
+
+	public void SetZone(Zone _zone)
+	{
+		zone = _zone;
+		FactionBranch branch = zone.branch;
+		gx = zone.x;
+		gy = zone.y;
+		note.Clear();
+		note.AddHeader("HeaderNoteFaction", zone.Name);
+		note.AddTopic("mainFaction", zone.mainFaction.Name ?? "");
+		note.AddTopic("branchLv", branch.TextLv);
+		note.AddTopic("wealth", branch.resources.worth.value.ToFormat() ?? "");
+		note.AddTopic("ranking", EMono.game.spatials.ranks.GetRankText(zone) ?? "");
+		note.AddTopic("rank_income", "rank_income2".lang(EMono.game.spatials.ranks.GetIncome(zone).ToFormat()));
+		note.Space();
+		note.AddHeaderTopic("landfeat".lang());
+		List<Element> list = _zone.ListLandFeats();
+		for (int i = 0; i < list.Count; i++)
+		{
+			note.AddText(list[i].Name + (((i == 1 && branch.lv < 4) || (i == 2 && branch.lv < 7)) ? "landfeat_locked".lang() : ""));
+		}
+		note.Space();
+		note.AddHeaderTopic("listRoamers".lang());
+		int num = 0;
+		foreach (Chara value in EMono.game.cards.globalCharas.Values)
+		{
+			if (value.homeBranch == branch)
+			{
+				note.AddText(value.Name);
+				num++;
+				if (num > 5)
+				{
+					break;
+				}
+			}
+		}
+		if (num == 0)
+		{
+			note.AddText("????????");
+		}
+		note.Space();
+		note.AddHeaderTopic("listPolicies".lang());
+		foreach (Element value2 in branch.elements.dict.Values)
+		{
+			if (value2.source.category == "policy")
+			{
+				note.AddText(value2.Name);
+			}
+		}
+		note.Build();
+	}
+
+	public void Clear()
+	{
+		note.Clear();
+		note.Build();
+	}
 }

@@ -1,21 +1,8 @@
-﻿using System;
 using UnityEngine;
 
 public class TraitTortureHorse : TraitShackle
 {
-	public override Vector3 GetRestrainPos
-	{
-		get
-		{
-			return default(Vector3);
-		}
-	}
+	public override Vector3 GetRestrainPos => default(Vector3);
 
-	public override AnimeID animeId
-	{
-		get
-		{
-			return AnimeID.JumpSmall;
-		}
-	}
+	public override AnimeID animeId => AnimeID.JumpSmall;
 }

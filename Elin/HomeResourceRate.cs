@@ -1,27 +1,13 @@
-﻿using System;
-
 public class HomeResourceRate : BaseHomeResource
 {
-	public override bool IsAvailable
-	{
-		get
-		{
-			return this.value > 0;
-		}
-	}
+	public override bool IsAvailable => value > 0;
 
-	public override BaseHomeResource.ResourceGroup Group
-	{
-		get
-		{
-			return BaseHomeResource.ResourceGroup.Rate;
-		}
-	}
+	public override ResourceGroup Group => ResourceGroup.Rate;
 
 	public override void Refresh()
 	{
-		this.lastValue = this.value;
-		this.value = this.GetDestValue();
+		lastValue = value;
+		value = GetDestValue();
 	}
 
 	public override void OnAdvanceDay()

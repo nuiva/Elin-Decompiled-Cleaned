@@ -1,69 +1,8 @@
-﻿using System;
+using System;
 using NoiseSystem;
 
 public class BaseMapGen : GenBounds
 {
-	public bool extraBiome
-	{
-		get
-		{
-			return this.biomeProfiles.Length > 3;
-		}
-	}
-
-	public void SetSize(int size, int _poiSize)
-	{
-		this.Size = size;
-		if (this.map.poiMap == null || this.Size != POIMap.mapSize)
-		{
-			this.map.poiMap = new POIMap();
-			this.map.poiMap.Init(this.Size, _poiSize);
-		}
-	}
-
-	public void Generate(ZoneBlueprint _bp)
-	{
-		BiomeProfile.Init();
-		this.bp = _bp;
-		this.zone = this.bp.zone;
-		this.zp = this.bp.zoneProfile;
-		this.map = this.bp.map;
-		this.OX = this.zp.offsetX;
-		this.OZ = this.zp.offsetZ;
-		this.blockHeight = this.zp.blockHeight;
-		this.hSetting = this.zp.height;
-		MapGenVariation mapGenVariation = this.variation = this.bp.genSetting.variation;
-		this.layerHeight = mapGenVariation.layerHeight;
-		this.layerRiver = mapGenVariation.layerRiver;
-		this.layerStratum = mapGenVariation.layerStratum;
-		this.layerBiome = mapGenVariation.layerBiome;
-		this.biomeProfiles = mapGenVariation.biomeProfiles;
-		this.biomeShore = mapGenVariation.biomeShore;
-		this.biomeWater = mapGenVariation.biomeWater;
-		this.biomeSand = EClass.core.refs.biomes.Sand;
-		this.GenerateTerrain();
-		if (this.zp.indoor)
-		{
-			this.map.config.bg = MapBG.None;
-			this.map.config.indoor = true;
-		}
-		if (this.map.config.idSceneProfile.IsEmpty())
-		{
-			this.map.config.idSceneProfile = this.zp.idSceneProfile.IsEmpty(this.zp.indoor ? "indoor" : null);
-		}
-		this.map.config.bg = this.zp.mapBG;
-	}
-
-	protected virtual void GenerateTerrain()
-	{
-		this.OnGenerateTerrain();
-	}
-
-	protected virtual bool OnGenerateTerrain()
-	{
-		return false;
-	}
-
 	public static string err;
 
 	[NonSerialized]
@@ -146,4 +85,59 @@ public class BaseMapGen : GenBounds
 
 	[NonSerialized]
 	public MapHeight hSetting;
+
+	public bool extraBiome => biomeProfiles.Length > 3;
+
+	public void SetSize(int size, int _poiSize)
+	{
+		Size = size;
+		if (map.poiMap == null || Size != POIMap.mapSize)
+		{
+			map.poiMap = new POIMap();
+			map.poiMap.Init(Size, _poiSize);
+		}
+	}
+
+	public void Generate(ZoneBlueprint _bp)
+	{
+		BiomeProfile.Init();
+		bp = _bp;
+		zone = bp.zone;
+		zp = bp.zoneProfile;
+		map = bp.map;
+		OX = zp.offsetX;
+		OZ = zp.offsetZ;
+		blockHeight = zp.blockHeight;
+		hSetting = zp.height;
+		MapGenVariation mapGenVariation = (variation = bp.genSetting.variation);
+		layerHeight = mapGenVariation.layerHeight;
+		layerRiver = mapGenVariation.layerRiver;
+		layerStratum = mapGenVariation.layerStratum;
+		layerBiome = mapGenVariation.layerBiome;
+		biomeProfiles = mapGenVariation.biomeProfiles;
+		biomeShore = mapGenVariation.biomeShore;
+		biomeWater = mapGenVariation.biomeWater;
+		biomeSand = EClass.core.refs.biomes.Sand;
+		GenerateTerrain();
+		if (zp.indoor)
+		{
+			map.config.bg = MapBG.None;
+			map.config.indoor = true;
+		}
+		if (map.config.idSceneProfile.IsEmpty())
+		{
+			map.config.idSceneProfile = zp.idSceneProfile.IsEmpty(zp.indoor ? "indoor" : null);
+		}
+		map.config.bg = zp.mapBG;
+	}
+
+	protected virtual void GenerateTerrain()
+	{
+		OnGenerateTerrain();
+	}
+
+	protected virtual bool OnGenerateTerrain()
+	{
+		return false;
+	}
 }

@@ -1,78 +1,22 @@
-﻿using System;
-
 public class TraitToolTalisman : TraitCrafter
 {
-	public override string IdSource
-	{
-		get
-		{
-			return "Talisman";
-		}
-	}
+	public override string IdSource => "Talisman";
 
-	public override string CrafterTitle
-	{
-		get
-		{
-			return "actWrite";
-		}
-	}
+	public override string CrafterTitle => "actWrite";
 
-	public override string idSoundProgress
-	{
-		get
-		{
-			return "write";
-		}
-	}
+	public override string idSoundProgress => "write";
 
-	public override string idSoundComplete
-	{
-		get
-		{
-			return "intonation";
-		}
-	}
+	public override string idSoundComplete => "intonation";
 
-	public override AnimeID IdAnimeProgress
-	{
-		get
-		{
-			return AnimeID.Shiver;
-		}
-	}
+	public override AnimeID IdAnimeProgress => AnimeID.Shiver;
 
-	public override bool CanUseFromInventory
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanUseFromInventory => true;
 
-	public override bool CloseOnComplete
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CloseOnComplete => true;
 
-	public override bool IsConsumeIng
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool IsConsumeIng => false;
 
-	public override int numIng
-	{
-		get
-		{
-			return 2;
-		}
-	}
+	public override int numIng => 2;
 
 	public override bool ShouldConsumeIng(SourceRecipe.Row item, int index)
 	{
@@ -83,11 +27,10 @@ public class TraitToolTalisman : TraitCrafter
 	{
 		if (cat == "spellbook")
 		{
-			TraitSpellbook traitSpellbook = c.trait as TraitSpellbook;
-			if (traitSpellbook != null && traitSpellbook.source.abilityType.Length >= 1)
+			if (c.trait is TraitSpellbook traitSpellbook && traitSpellbook.source.abilityType.Length >= 1)
 			{
-				string a = traitSpellbook.source.abilityType[0];
-				if (a == "attack" || a == "attackArea")
+				string text = traitSpellbook.source.abilityType[0];
+				if (text == "attack" || text == "attackArea")
 				{
 					return true;
 				}

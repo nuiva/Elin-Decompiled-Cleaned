@@ -1,27 +1,13 @@
-﻿using System;
-
 public class HotItemToggleWidget : HotItemIcon
 {
-	public override int defaultIcon
-	{
-		get
-		{
-			return 11;
-		}
-	}
+	public override int defaultIcon => 11;
 
-	public override string Name
-	{
-		get
-		{
-			return "s_toggleWidgets".lang();
-		}
-	}
+	public override string Name => "s_toggleWidgets".lang();
 
 	public override void OnClick(UIButton b)
 	{
 		EClass.ui.widgets.UpdateConfigs();
-		EClass.ui.widgets.Reset(true);
+		EClass.ui.widgets.Reset(toggleTheme: true);
 		SE.Tab();
 	}
 }

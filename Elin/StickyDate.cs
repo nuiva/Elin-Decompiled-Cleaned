@@ -1,30 +1,12 @@
-﻿using System;
+using System;
 
 public class StickyDate : BaseSticky
 {
-	public override int idIcon
-	{
-		get
-		{
-			return 4;
-		}
-	}
+	public override int idIcon => 4;
 
-	public override bool ForceShowText
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool ForceShowText => true;
 
-	public override bool ShouldShow
-	{
-		get
-		{
-			return base.widget.extra.showDate;
-		}
-	}
+	public override bool ShouldShow => base.widget.extra.showDate;
 
 	public override string GetText()
 	{
@@ -33,6 +15,6 @@ public class StickyDate : BaseSticky
 
 	public override void Refresh()
 	{
-		this.SetText();
+		SetText();
 	}
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using UnityEngine;
 
 public class ABILITY
 {
@@ -224,118 +224,71 @@ public class ABILITY
 
 	public const int ActDrainBlood = 6626;
 
-	public static readonly int[] IDS = new int[]
+	public static readonly int[] IDS = new int[111]
 	{
-		5042,
-		5036,
-		5037,
-		5038,
-		5039,
-		5040,
-		5041,
-		5043,
-		5044,
-		5045,
-		5046,
-		5047,
-		5048,
-		5049,
-		5050,
-		5051,
-		5052,
-		5053,
-		5054,
-		5055,
-		6001,
-		6003,
-		6011,
-		6012,
-		6013,
-		6015,
-		6018,
-		6019,
-		6020,
-		6050,
-		5035,
-		5034,
-		5033,
-		5032,
-		5002,
-		5003,
-		5004,
-		5005,
-		5006,
-		5007,
-		5008,
-		5009,
-		5010,
-		5011,
-		5012,
-		5013,
-		5014,
-		5015,
-		6400,
-		5016,
-		5018,
-		5019,
-		5020,
-		5021,
-		5022,
-		5023,
-		5024,
-		5025,
-		5026,
-		5027,
-		5028,
-		5029,
-		5030,
-		5031,
-		5017,
-		5001,
-		6410,
-		6450,
-		6902,
-		6903,
-		6904,
-		7000,
-		50200,
-		50201,
-		50202,
-		50203,
-		6420,
-		50205,
-		50206,
-		50207,
-		50208,
-		50209,
-		50210,
-		50211,
-		50212,
-		50213,
-		50214,
-		6901,
-		6900,
-		50204,
-		6700,
-		6720,
-		6500,
-		6600,
-		6601,
-		6602,
-		6610,
-		6611,
-		6620,
-		6621,
-		6622,
-		5000,
-		6630,
-		6631,
-		6640,
-		6641,
-		6642,
-		6650,
-		6660,
-		6661,
+		5042, 5036, 5037, 5038, 5039, 5040, 5041, 5043, 5044, 5045,
+		5046, 5047, 5048, 5049, 5050, 5051, 5052, 5053, 5054, 5055,
+		6001, 6003, 6011, 6012, 6013, 6015, 6018, 6019, 6020, 6050,
+		5035, 5034, 5033, 5032, 5002, 5003, 5004, 5005, 5006, 5007,
+		5008, 5009, 5010, 5011, 5012, 5013, 5014, 5015, 6400, 5016,
+		5018, 5019, 5020, 5021, 5022, 5023, 5024, 5025, 5026, 5027,
+		5028, 5029, 5030, 5031, 5017, 5001, 6410, 6450, 6902, 6903,
+		6904, 7000, 50200, 50201, 50202, 50203, 6420, 50205, 50206, 50207,
+		50208, 50209, 50210, 50211, 50212, 50213, 50214, 6901, 6900, 50204,
+		6700, 6720, 6500, 6600, 6601, 6602, 6610, 6611, 6620, 6621,
+		6622, 5000, 6630, 6631, 6640, 6641, 6642, 6650, 6660, 6661,
 		6626
 	};
+}
+public class Ability : Act
+{
+	public override bool ShowBonuses => false;
+
+	public override bool CanPressRepeat => base.source.tag.Contains("repeat");
+
+	public override bool CanLink(ElementContainer owner)
+	{
+		if (owner.Card == null)
+		{
+			return !base.IsGlobalElement;
+		}
+		return false;
+	}
+
+	public override int GetSourceValue(int v, int lv, SourceValueType type)
+	{
+		if (type != 0)
+		{
+			return base.GetSourceValue(v, lv, type);
+		}
+		return 10 * (100 + (lv - 1) * base.source.lvFactor / 10) / 100;
+	}
+
+	public override int GetPower(Card c)
+	{
+		int a = base.Value * 8 + 50;
+		if (!c.IsPC)
+		{
+			a = Mathf.Max(a, c.LV * 6 + 30);
+			if (c.IsPCFactionOrMinion && !base.source.aliasParent.IsEmpty())
+			{
+				a = Mathf.Max(a, c.Evalue(base.source.aliasParent) * 4 + 30);
+			}
+		}
+		a = EClass.curve(a, 400, 100);
+		if (this is Spell)
+		{
+			a = a * (100 + c.Evalue(411)) / 100;
+		}
+		return a;
+	}
+
+	public override void OnChangeValue()
+	{
+		Card card = owner.Card;
+		if (card != null && card._IsPC)
+		{
+			LayerAbility.SetDirty(this);
+		}
+	}
 }

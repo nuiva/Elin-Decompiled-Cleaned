@@ -1,10 +1,26 @@
-﻿using System;
+using System;
 
 public class SourceCalc : SourceDataString<SourceCalc.Row>
 {
-	public override SourceCalc.Row CreateRow()
+	[Serializable]
+	public class Row : BaseRow
 	{
-		return new SourceCalc.Row
+		public string id;
+
+		public string num;
+
+		public string sides;
+
+		public string bonus;
+
+		public override bool UseAlias => false;
+
+		public override string GetAlias => "n";
+	}
+
+	public override Row CreateRow()
+	{
+		return new Row
 		{
 			id = SourceData.GetString(0),
 			num = SourceData.GetString(2),
@@ -13,36 +29,8 @@ public class SourceCalc : SourceDataString<SourceCalc.Row>
 		};
 	}
 
-	public override void SetRow(SourceCalc.Row r)
+	public override void SetRow(Row r)
 	{
-		this.map[r.id] = r;
-	}
-
-	[Serializable]
-	public class Row : SourceData.BaseRow
-	{
-		public override bool UseAlias
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		public override string GetAlias
-		{
-			get
-			{
-				return "n";
-			}
-		}
-
-		public string id;
-
-		public string num;
-
-		public string sides;
-
-		public string bonus;
+		map[r.id] = r;
 	}
 }

@@ -1,14 +1,6 @@
-﻿using System;
-
 public class TraitPlamoBox : TraitItem
 {
-	public override string LangUse
-	{
-		get
-		{
-			return "actOpen";
-		}
-	}
+	public override string LangUse => "actOpen";
 
 	public override bool OnUse(Chara c)
 	{
@@ -17,16 +9,16 @@ public class TraitPlamoBox : TraitItem
 			Msg.SayCannotUseHere();
 			return false;
 		}
-		if (this.owner.isNPCProperty)
+		if (owner.isNPCProperty)
 		{
 			Msg.Say("notGood");
 			return false;
 		}
-		EClass.pc.Say("openDoor", EClass.pc, this.owner, null, null);
-		Thing thing = ThingGen.Create("plamo", -1, -1);
+		EClass.pc.Say("openDoor", EClass.pc, owner);
+		Thing thing = ThingGen.Create("plamo");
 		thing.DyeRandom();
-		EClass.pc.Pick(thing, true, true);
-		this.owner.ModNum(-1, true);
+		EClass.pc.Pick(thing);
+		owner.ModNum(-1);
 		return base.OnUse(c);
 	}
 }

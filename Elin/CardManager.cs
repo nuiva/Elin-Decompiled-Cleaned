@@ -1,4 +1,3 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
@@ -6,63 +5,45 @@ using UnityEngine;
 
 public class CardManager : EClass
 {
-	[OnDeserializing]
-	private void OnDeserializing(StreamingContext context)
+	public class GlobalCharaList : Dictionary<int, Chara>
 	{
-		Debug.Log("#io CardManager OnDeserializing:");
-	}
-
-	[OnDeserialized]
-	private void OnDeserialized(StreamingContext context)
-	{
-		Debug.Log("#io CardManager OnDeserialized:" + this.globalCharas.Count.ToString());
-	}
-
-	public void AssignUID(Card c)
-	{
-		c.uid = this.uidNext;
-		this.uidNext++;
-	}
-
-	public void AssignUIDRecursive(Card c)
-	{
-		if (c.things.Count > 0)
+		public void Add(Chara c)
 		{
-			foreach (Thing c2 in c.things)
-			{
-				this.AssignUIDRecursive(c2);
-			}
+			base[c.uid] = c;
 		}
-		this.AssignUID(c);
-	}
 
-	public List<Chara> ListGlobalChara(Zone z)
-	{
-		List<Chara> list = new List<Chara>();
-		foreach (Chara chara in this.globalCharas.Values)
+		public void Remove(Chara c)
 		{
-			if (chara.currentZone == z)
-			{
-				list.Add(chara);
-			}
+			Remove(c.uid);
 		}
-		return list;
-	}
 
-	public Chara Find(int uid)
-	{
-		foreach (Chara chara in this.globalCharas.Values)
+		public Chara Find(string id)
 		{
-			if (chara.uid == uid)
+			foreach (Chara value in base.Values)
 			{
-				return chara;
+				if (value.id == id)
+				{
+					return value;
+				}
 			}
+			return null;
 		}
-		return null;
+
+		public Chara Find(int uid)
+		{
+			foreach (Chara value in base.Values)
+			{
+				if (value.uid == uid)
+				{
+					return value;
+				}
+			}
+			return null;
+		}
 	}
 
 	[JsonProperty]
-	public CardManager.GlobalCharaList globalCharas = new CardManager.GlobalCharaList();
+	public GlobalCharaList globalCharas = new GlobalCharaList();
 
 	[JsonProperty]
 	public int uidNext = 1;
@@ -82,40 +63,58 @@ public class CardManager : EClass
 	[JsonProperty]
 	public List<Chara> listAdv = new List<Chara>();
 
-	public class GlobalCharaList : Dictionary<int, Chara>
+	[OnDeserializing]
+	private void OnDeserializing(StreamingContext context)
 	{
-		public void Add(Chara c)
-		{
-			base[c.uid] = c;
-		}
+		Debug.Log("#io CardManager OnDeserializing:");
+	}
 
-		public void Remove(Chara c)
-		{
-			base.Remove(c.uid);
-		}
+	[OnDeserialized]
+	private void OnDeserialized(StreamingContext context)
+	{
+		Debug.Log("#io CardManager OnDeserialized:" + globalCharas.Count);
+	}
 
-		public Chara Find(string id)
+	public void AssignUID(Card c)
+	{
+		c.uid = uidNext;
+		uidNext++;
+	}
+
+	public void AssignUIDRecursive(Card c)
+	{
+		if (c.things.Count > 0)
 		{
-			foreach (Chara chara in base.Values)
+			foreach (Thing thing in c.things)
 			{
-				if (chara.id == id)
-				{
-					return chara;
-				}
+				AssignUIDRecursive(thing);
 			}
-			return null;
 		}
+		AssignUID(c);
+	}
 
-		public Chara Find(int uid)
+	public List<Chara> ListGlobalChara(Zone z)
+	{
+		List<Chara> list = new List<Chara>();
+		foreach (Chara value in globalCharas.Values)
 		{
-			foreach (Chara chara in base.Values)
+			if (value.currentZone == z)
 			{
-				if (chara.uid == uid)
-				{
-					return chara;
-				}
+				list.Add(value);
 			}
-			return null;
 		}
+		return list;
+	}
+
+	public Chara Find(int uid)
+	{
+		foreach (Chara value in globalCharas.Values)
+		{
+			if (value.uid == uid)
+			{
+				return value;
+			}
+		}
+		return null;
 	}
 }

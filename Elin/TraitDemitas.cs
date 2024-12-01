@@ -1,41 +1,32 @@
-﻿using System;
 using UnityEngine;
 
 public class TraitDemitas : TraitUniqueChara
 {
-	public override int CostRerollShop
-	{
-		get
-		{
-			return 0;
-		}
-	}
+	public override int CostRerollShop => 0;
 
 	public bool CanSpellwrite
 	{
 		get
 		{
-			return EClass.debug.enable || EClass.game.quests.IsCompleted("demitas_spellwriter");
-		}
-	}
-
-	public override bool CanInvest
-	{
-		get
-		{
-			return this.CanSpellwrite;
-		}
-	}
-
-	public override Trait.CopyShopType CopyShop
-	{
-		get
-		{
-			if (!this.CanSpellwrite)
+			if (!EClass.debug.enable)
 			{
-				return Trait.CopyShopType.None;
+				return EClass.game.quests.IsCompleted("demitas_spellwriter");
 			}
-			return Trait.CopyShopType.Spellbook;
+			return true;
+		}
+	}
+
+	public override bool CanInvest => CanSpellwrite;
+
+	public override CopyShopType CopyShop
+	{
+		get
+		{
+			if (!CanSpellwrite)
+			{
+				return CopyShopType.None;
+			}
+			return CopyShopType.Spellbook;
 		}
 	}
 
@@ -43,7 +34,7 @@ public class TraitDemitas : TraitUniqueChara
 	{
 		get
 		{
-			if (!this.CanSpellwrite)
+			if (!CanSpellwrite)
 			{
 				return ShopType.None;
 			}
@@ -51,37 +42,13 @@ public class TraitDemitas : TraitUniqueChara
 		}
 	}
 
-	public override int NumCopyItem
-	{
-		get
-		{
-			return 3 + Mathf.Min(base.owner.c_invest / 5, 7);
-		}
-	}
+	public override int NumCopyItem => 3 + Mathf.Min(base.owner.c_invest / 5, 7);
 
-	public override bool CanJoinParty
-	{
-		get
-		{
-			return EClass.debug.enable;
-		}
-	}
+	public override bool CanJoinParty => EClass.debug.enable;
 
-	public override bool CanBeBanished
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeBanished => false;
 
-	public override int RestockDay
-	{
-		get
-		{
-			return 30;
-		}
-	}
+	public override int RestockDay => 30;
 
 	public override bool CanCopy(Thing t)
 	{

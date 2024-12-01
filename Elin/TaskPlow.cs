@@ -1,34 +1,16 @@
-﻿using System;
 using UnityEngine;
 
 public class TaskPlow : TaskDesignation
 {
-	public override bool CanProgress()
-	{
-		return base.CanProgress() && !this.pos.IsFarmField;
-	}
+	public override CursorInfo CursorIcon => CursorSystem.Dig;
 
-	public override CursorInfo CursorIcon
-	{
-		get
-		{
-			return CursorSystem.Dig;
-		}
-	}
-
-	public override bool CanPressRepeat
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanPressRepeat => true;
 
 	public override int destDist
 	{
 		get
 		{
-			if (!this.pos.cell.blocked)
+			if (!pos.cell.blocked)
 			{
 				return 0;
 			}
@@ -36,52 +18,61 @@ public class TaskPlow : TaskDesignation
 		}
 	}
 
+	public override bool CanProgress()
+	{
+		if (base.CanProgress())
+		{
+			return !pos.IsFarmField;
+		}
+		return false;
+	}
+
 	public override void OnCreateProgress(Progress_Custom p)
 	{
-		p.textHint = this.Name;
-		p.maxProgress = Mathf.Max((15 + EClass.rnd(20)) * 100 / (100 + this.owner.Tool.material.hardness * 3), 2);
-		p.onProgressBegin = delegate()
+		p.textHint = Name;
+		p.maxProgress = Mathf.Max((15 + EClass.rnd(20)) * 100 / (100 + owner.Tool.material.hardness * 3), 2);
+		p.onProgressBegin = delegate
 		{
-			if (this.owner.Tool != null)
+			if (owner.Tool != null)
 			{
-				this.owner.Say("till_start", this.owner, this.owner.Tool, null, null);
+				owner.Say("till_start", owner, owner.Tool);
 			}
 		};
 		p.onProgress = delegate(Progress_Custom _p)
 		{
-			SourceMaterial.Row row = this.pos.cell.HasBridge ? this.pos.cell.matBridge : this.pos.cell.matFloor;
-			row.PlayHitEffect(this.pos);
-			row.AddBlood(this.pos, 1);
-			this.pos.PlaySound(row.GetSoundImpact(null), true, 1f, true);
-			this.owner.renderer.NextFrame();
-			if (!(this.pos.HasBridge ? this.pos.sourceBridge : this.pos.sourceFloor).tag.Contains("soil"))
+			SourceMaterial.Row row = (pos.cell.HasBridge ? pos.cell.matBridge : pos.cell.matFloor);
+			row.PlayHitEffect(pos);
+			row.AddBlood(pos);
+			pos.PlaySound(row.GetSoundImpact());
+			owner.renderer.NextFrame();
+			if (!(pos.HasBridge ? pos.sourceBridge : pos.sourceFloor).tag.Contains("soil"))
 			{
-				this.owner.Say("till_invalid", null, null);
+				owner.Say("till_invalid");
 				_p.Cancel();
-				return;
 			}
 		};
-		p.onProgressComplete = delegate()
+		p.onProgressComplete = delegate
 		{
-			this.owner.PlaySound(this.pos.cell.HasBridge ? this.pos.cell.matBridge.GetSoundDead(this.pos.sourceBridge) : this.pos.cell.matFloor.GetSoundDead(this.pos.sourceFloor), 1f, true);
-			Effect.Get("mine").Play(this.pos, 0f, null, null).SetParticleColor(this.pos.cell.HasBridge ? this.pos.matBridge.GetColor() : this.pos.matFloor.GetColor()).Emit(10 + EClass.rnd(10));
-			this.pos.Animate(AnimeID.Dig, true);
-			if (this.pos.HasBridge)
+			owner.PlaySound(pos.cell.HasBridge ? pos.cell.matBridge.GetSoundDead(pos.sourceBridge) : pos.cell.matFloor.GetSoundDead(pos.sourceFloor));
+			Effect.Get("mine").Play(pos).SetParticleColor(pos.cell.HasBridge ? pos.matBridge.GetColor() : pos.matFloor.GetColor())
+				.Emit(10 + EClass.rnd(10));
+			pos.Animate(AnimeID.Dig, animeBlock: true);
+			if (pos.HasBridge)
 			{
-				this.pos.cell._bridge = 4;
+				pos.cell._bridge = 4;
 			}
 			else
 			{
-				this.pos.SetFloor(this.pos.matFloor.id, 4);
+				pos.SetFloor(pos.matFloor.id, 4);
 			}
-			this.owner.elements.ModExp(286, 30, false);
-			this.owner.stamina.Mod(-1);
+			owner.elements.ModExp(286, 30);
+			owner.stamina.Mod(-1);
 		};
 	}
 
 	public override HitResult GetHitResult()
 	{
-		if (this.pos.cell.IsTopWater || this.pos.HasObj || this.pos.IsFarmField)
+		if (pos.cell.IsTopWater || pos.HasObj || pos.IsFarmField)
 		{
 			return HitResult.Invalid;
 		}

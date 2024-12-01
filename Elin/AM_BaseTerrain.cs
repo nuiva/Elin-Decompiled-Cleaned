@@ -1,63 +1,28 @@
-﻿using System;
 using UnityEngine;
 
 public class AM_BaseTerrain : AM_BaseTileSelect
 {
-	public override BaseTileSelector.SelectType selectType
-	{
-		get
-		{
-			return BaseTileSelector.SelectType.Single;
-		}
-	}
+	public int power = 1;
 
-	public override bool UseSubMenu
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public float timer;
 
-	public override bool UseSubMenuSlider
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public bool firstClick;
 
-	public override bool SubMenuAsGroup
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public Point lastPoint;
 
-	public override bool ContinuousClick
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override BaseTileSelector.SelectType selectType => BaseTileSelector.SelectType.Single;
 
-	public override bool IsBuildMode
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool UseSubMenu => true;
 
-	public virtual bool FixedPointer
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool UseSubMenuSlider => true;
+
+	public override bool SubMenuAsGroup => true;
+
+	public override bool ContinuousClick => true;
+
+	public override bool IsBuildMode => true;
+
+	public virtual bool FixedPointer => false;
 
 	public override void SEExecuteSummary()
 	{
@@ -70,9 +35,9 @@ public class AM_BaseTerrain : AM_BaseTileSelect
 
 	public override HitResult HitTest(Point point, Point start)
 	{
-		if (this.lastPoint != null)
+		if (lastPoint != null)
 		{
-			point = this.lastPoint;
+			point = lastPoint;
 		}
 		if (point.IsValid)
 		{
@@ -83,48 +48,42 @@ public class AM_BaseTerrain : AM_BaseTileSelect
 
 	public override void OnRenderTile(Point point, HitResult result, int dir)
 	{
-		if (this.lastPoint != null)
+		if (lastPoint != null)
 		{
-			point = this.lastPoint;
+			point = lastPoint;
 		}
-		this.timer += Core.delta;
+		timer += Core.delta;
 		if (!Input.GetMouseButton(0))
 		{
-			this.firstClick = true;
+			firstClick = true;
 		}
 		if (point.IsValid)
 		{
-			EClass._map.ForeachSphere(point.x, point.z, (float)this.brushRadius, delegate(Point p)
+			EClass._map.ForeachSphere(point.x, point.z, brushRadius, delegate(Point p)
 			{
 				if (p.IsValid)
 				{
-					this.<>n__0(p, result, dir);
+					base.OnRenderTile(p, result, dir);
 				}
 			});
-			return;
 		}
-		base.OnRenderTile(point, result, dir);
+		else
+		{
+			base.OnRenderTile(point, result, dir);
+		}
 	}
 
 	public override void OnUpdateInput()
 	{
 		base.OnUpdateInput();
-		if (this.FixedPointer && (!EInput.leftMouse.pressing || EInput.leftMouse.dragging))
+		if (FixedPointer && (!EInput.leftMouse.pressing || EInput.leftMouse.dragging))
 		{
-			this.lastPoint = null;
+			lastPoint = null;
 		}
 	}
 
 	public override void OnAfterProcessTiles(Point start, Point end)
 	{
-		this.firstClick = false;
+		firstClick = false;
 	}
-
-	public int power = 1;
-
-	public float timer;
-
-	public bool firstClick;
-
-	public Point lastPoint;
 }

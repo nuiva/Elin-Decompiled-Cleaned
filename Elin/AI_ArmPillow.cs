@@ -1,26 +1,23 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class AI_ArmPillow : AI_Massage
 {
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		this.target.Say("armpillow_start", this.target, this.owner, null, null);
-		this.isFail = (() => !this.target.IsAliveInCurrentZone || this.owner.Dist(this.target) > 3);
+		target.Say("armpillow_start", target, owner);
+		isFail = () => !target.IsAliveInCurrentZone || owner.Dist(target) > 3;
 		int i = 0;
-		while (this.target.HasCondition<ConSleep>())
+		while (target.HasCondition<ConSleep>())
 		{
-			yield return base.DoGoto(this.target.pos, 1, false, null);
-			this.owner.LookAt(this.target);
+			yield return DoGoto(target.pos, 1);
+			owner.LookAt(target);
 			if (i % 30 == 20)
 			{
-				this.owner.Talk("goodBoy", null, null, false);
+				owner.Talk("goodBoy");
 			}
-			int num = i;
-			i = num + 1;
+			i++;
 		}
-		this.target.Say("armpillow_end", this.target, this.owner, null, null);
-		base.Finish(this.owner, this.target, 50);
-		yield break;
+		target.Say("armpillow_end", target, owner);
+		Finish(owner, target, 50);
 	}
 }

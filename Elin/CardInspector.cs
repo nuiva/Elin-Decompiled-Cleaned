@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -6,13 +6,21 @@ using UnityEngine;
 
 public class CardInspector : EMono
 {
+	public static CardInspector Instance;
+
+	public Card card;
+
+	public List<EditorTag> tags = new List<EditorTag>();
+
+	public string traitVals;
+
 	public string Info
 	{
 		get
 		{
-			if (this.card != null)
+			if (card != null)
 			{
-				return this.card.id + "(" + this.card.NameSimple + ")";
+				return card.id + "(" + card.NameSimple + ")";
 			}
 			return "";
 		}
@@ -22,18 +30,13 @@ public class CardInspector : EMono
 	{
 		get
 		{
-			Card card = this.card;
-			if (card == null)
-			{
-				return null;
-			}
-			return card.c_idEditor;
+			return card?.c_idEditor;
 		}
 		set
 		{
-			if (this.card != null)
+			if (card != null)
 			{
-				this.card.c_idEditor = value;
+				card.c_idEditor = value;
 			}
 		}
 	}
@@ -42,18 +45,13 @@ public class CardInspector : EMono
 	{
 		get
 		{
-			Card card = this.card;
-			if (card == null)
-			{
-				return null;
-			}
-			return card.c_idTrait;
+			return card?.c_idTrait;
 		}
 		set
 		{
-			if (this.card != null)
+			if (card != null)
 			{
-				this.card.c_idTrait = value;
+				card.c_idTrait = value;
 			}
 		}
 	}
@@ -62,73 +60,37 @@ public class CardInspector : EMono
 	{
 		get
 		{
-			if (this.card == null || this.card.refVal == 0)
+			if (card == null || card.refVal == 0)
 			{
 				return "0";
 			}
-			BGMData bgmdata = EMono.core.refs.bgms.FirstOrDefault((BGMData a) => a.id == this.card.refVal);
-			if (!(bgmdata == null))
+			BGMData bGMData = EMono.core.refs.bgms.FirstOrDefault((BGMData a) => a.id == card.refVal);
+			if (!(bGMData == null))
 			{
-				return bgmdata.name;
+				return bGMData.name;
 			}
 			return "0";
 		}
 		set
 		{
-			if (this.card != null)
+			if (card != null)
 			{
-				this.card.refVal = value.Split(' ', StringSplitOptions.None)[0].ToInt();
+				card.refVal = value.Split(' ')[0].ToInt();
 			}
 		}
 	}
 
-	private IEnumerable<string> _TapeList()
-	{
-		List<string> list = new List<string>();
-		foreach (BGMData bgmdata in EMono.core.refs.bgms)
-		{
-			list.Add(bgmdata.name);
-		}
-		return list;
-	}
-
-	public bool IsTape
-	{
-		get
-		{
-			Card card = this.card;
-			return ((card != null) ? card.trait : null) is TraitTape;
-		}
-	}
-
-	private IEnumerable<string> Traits()
-	{
-		IEnumerable<Type> enumerable = (this.card == null || !this.card.isChara) ? this.GetInheritedClasses(typeof(Trait), typeof(TraitChara)) : this.GetInheritedClasses(typeof(TraitChara), null);
-		List<string> list = new List<string>();
-		list.Add("");
-		foreach (Type type in enumerable)
-		{
-			list.Add(type.Name);
-		}
-		return list;
-	}
-
-	private IEnumerable<Type> GetInheritedClasses(Type MyType, Type exclude = null)
-	{
-		return from TheType in Assembly.GetAssembly(MyType).GetTypes()
-		where TheType.IsClass && TheType.IsSubclassOf(MyType) && (exclude == null || !TheType.IsSubclassOf(exclude))
-		select TheType;
-	}
+	public bool IsTape => card?.trait is TraitTape;
 
 	public string spawnList
 	{
 		get
 		{
-			if (this.card == null || this.card.c_idRefCard.IsEmpty() || !EMono.editorSources.spawnLists.map.ContainsKey(this.card.c_idRefCard))
+			if (card == null || card.c_idRefCard.IsEmpty() || !EMono.editorSources.spawnLists.map.ContainsKey(card.c_idRefCard))
 			{
 				return "-";
 			}
-			SourceSpawnList.Row row = EMono.editorSources.spawnLists.rows.First((SourceSpawnList.Row a) => a.id == this.card.c_idRefCard);
+			SourceSpawnList.Row row = EMono.editorSources.spawnLists.rows.First((SourceSpawnList.Row a) => a.id == card.c_idRefCard);
 			if (row != null)
 			{
 				return row.id;
@@ -137,11 +99,39 @@ public class CardInspector : EMono
 		}
 		set
 		{
-			if (this.card != null)
+			if (card != null)
 			{
-				this.card.c_idRefCard = value;
+				card.c_idRefCard = value;
 			}
 		}
+	}
+
+	private IEnumerable<string> _TapeList()
+	{
+		List<string> list = new List<string>();
+		foreach (BGMData bgm in EMono.core.refs.bgms)
+		{
+			list.Add(bgm.name);
+		}
+		return list;
+	}
+
+	private IEnumerable<string> Traits()
+	{
+		IEnumerable<Type> obj = ((card == null || !card.isChara) ? GetInheritedClasses(typeof(Trait), typeof(TraitChara)) : GetInheritedClasses(typeof(TraitChara)));
+		List<string> list = new List<string> { "" };
+		foreach (Type item in obj)
+		{
+			list.Add(item.Name);
+		}
+		return list;
+	}
+
+	private IEnumerable<Type> GetInheritedClasses(Type MyType, Type exclude = null)
+	{
+		return from TheType in Assembly.GetAssembly(MyType).GetTypes()
+			where TheType.IsClass && TheType.IsSubclassOf(MyType) && (exclude == null || !TheType.IsSubclassOf(exclude))
+			select TheType;
 	}
 
 	protected IEnumerable<string> _SpawnList()
@@ -151,20 +141,21 @@ public class CardInspector : EMono
 
 	private void Awake()
 	{
-		CardInspector.Instance = this;
+		Instance = this;
 	}
 
 	public void SetCard(Card c, bool select = true)
 	{
-		this.card = c;
-		this.tags.Clear();
+		card = c;
+		tags.Clear();
 		if (c != null && !c.c_editorTags.IsEmpty())
 		{
-			foreach (string text in c.c_editorTags.Split(',', StringSplitOptions.None))
+			string[] array = c.c_editorTags.Split(',');
+			foreach (string text in array)
 			{
 				try
 				{
-					this.tags.Add(text.ToEnum(true));
+					tags.Add(text.ToEnum<EditorTag>());
 				}
 				catch
 				{
@@ -172,34 +163,26 @@ public class CardInspector : EMono
 				}
 			}
 		}
-		this.traitVals = c.c_editorTraitVal;
+		traitVals = c.c_editorTraitVal;
 	}
 
 	private void OnValidate()
 	{
-		if (!Application.isPlaying || !EMono.core.IsGameStarted || this.card == null)
+		if (!Application.isPlaying || !EMono.core.IsGameStarted || card == null)
 		{
 			return;
 		}
 		string text = null;
 		bool flag = true;
-		if (this.tags != null)
+		if (tags != null)
 		{
-			foreach (EditorTag editorTag in this.tags)
+			foreach (EditorTag tag in tags)
 			{
-				text = text + (flag ? "" : ",") + editorTag.ToString();
+				text = text + (flag ? "" : ",") + tag;
 				flag = false;
 			}
 		}
-		this.card.c_editorTags = text;
-		this.card.c_editorTraitVal = (this.traitVals.IsEmpty() ? null : this.traitVals);
+		card.c_editorTags = text;
+		card.c_editorTraitVal = (traitVals.IsEmpty() ? null : traitVals);
 	}
-
-	public static CardInspector Instance;
-
-	public Card card;
-
-	public List<EditorTag> tags = new List<EditorTag>();
-
-	public string traitVals;
 }

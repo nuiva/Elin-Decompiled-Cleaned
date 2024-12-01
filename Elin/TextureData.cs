@@ -1,205 +1,40 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
 public class TextureData : EScriptable
 {
-	public void TryRefresh()
+	[Serializable]
+	public class Date
 	{
-		DateTime lastWriteTime = File.GetLastWriteTime(this.path);
-		bool flag = this.date.DateTime.Year != 1 && this.date.DateTime.Equals(lastWriteTime);
-		if (this.dictReplace.Count > 0)
-		{
-			List<int> list = new List<int>();
-			foreach (TextureReplace textureReplace in this.dictReplace.Values)
-			{
-				if (!File.Exists(textureReplace.file.FullName))
-				{
-					this.forceRefresh = true;
-					list.Add(textureReplace.index);
-				}
-			}
-			foreach (int index in list)
-			{
-				this.RemoveDeletedReplace(index);
-			}
-		}
-		if (this.forceRefresh)
-		{
-			this.forceRefresh = false;
-			flag = false;
-		}
-		if (!flag || !this.IsValid())
-		{
-			this.Load(flag);
-		}
-		foreach (TextureReplace textureReplace2 in this.dictReplace.Values)
-		{
-			textureReplace2.TryRefresh(!flag);
-		}
-		this.date.DateTime = lastWriteTime;
-	}
+		public long ticks;
 
-	public void ForceRefresh()
-	{
-		this.forceRefresh = true;
-		this.TryRefresh();
-	}
-
-	public static void RefreshAll()
-	{
-		if (!EClass.core.IsGameStarted)
+		public DateTime DateTime
 		{
-			return;
-		}
-		foreach (TextureData textureData in EClass.core.textures.texMap.Values)
-		{
-			textureData.ForceRefresh();
+			get
+			{
+				return new DateTime(ticks);
+			}
+			set
+			{
+				ticks = value.Ticks;
+			}
 		}
 	}
 
-	public virtual bool IsValid()
+	public enum Type
 	{
-		TextureData.Type type = this.type;
-		if (type != TextureData.Type.Pass)
-		{
-			return type != TextureData.Type.World || EClass.scene.tileset.AtlasTexture;
-		}
-		using (List<MeshPass>.Enumerator enumerator = this.listPass.GetEnumerator())
-		{
-			while (enumerator.MoveNext())
-			{
-				if (!enumerator.Current.mat.GetTexture(this.texName))
-				{
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	public void Load(bool dateMatched)
-	{
-		if (!dateMatched)
-		{
-			Texture2D texture2D = IO.LoadPNG(this.path, FilterMode.Point);
-			if (!texture2D)
-			{
-				Debug.Log(this.path);
-			}
-			if (this.tex.width != texture2D.width || this.tex.height != texture2D.height)
-			{
-				Debug.Log(string.Concat(new string[]
-				{
-					this.id,
-					"/",
-					texture2D.width.ToString(),
-					"/",
-					texture2D.height.ToString(),
-					"/",
-					this.path
-				}));
-			}
-			this.tex.SetPixels32(texture2D.GetPixels32());
-			this.tex.Apply();
-			UnityEngine.Object.Destroy(texture2D);
-			Debug.Log("Reloaded Texture:" + this.path);
-		}
-		TextureData.Type type = this.type;
-		if (type != TextureData.Type.Pass)
-		{
-			if (type != TextureData.Type.World)
-			{
-				return;
-			}
-		}
-		else
-		{
-			using (List<MeshPass>.Enumerator enumerator = this.listPass.GetEnumerator())
-			{
-				while (enumerator.MoveNext())
-				{
-					MeshPass meshPass = enumerator.Current;
-					meshPass.mat.SetTexture(this.texName, this.tex);
-					if (meshPass.haveShadowPass)
-					{
-						meshPass.shadowPass.mat.SetTexture(this.texName, this.tex);
-					}
-				}
-				return;
-			}
-		}
-		EClass.scene.tileset.AtlasTexture = this.tex;
-	}
-
-	public void CreateReplace(int index, string path, TextureReplace.Source source, int sizeX, int sizeY)
-	{
-		string str = this.id + "_" + index.ToString() + ".png";
-		Texture2D texture2D = new Texture2D(this.tileW * sizeX, this.tileH * sizeY);
-		int srcX = index % 100 * this.tileW;
-		int srcY = this.tex.height - index / 100 * this.tileH - texture2D.height;
-		Graphics.CopyTexture(this.tex, 0, 0, srcX, srcY, this.tileW * sizeX, this.tileH * sizeY, texture2D, 0, 0, 0, 0);
-		byte[] bytes = texture2D.EncodeToPNG();
-		try
-		{
-			File.WriteAllBytes(path + str, bytes);
-			EClass.core.textures.TryAddReplace(new FileInfo(path + str), source, true, true);
-		}
-		catch
-		{
-		}
-		UnityEngine.Object.Destroy(texture2D);
-	}
-
-	public void AddReplace(TextureReplace r)
-	{
-		TextureReplace textureReplace = this.dictReplace.TryGetValue(r.index, null);
-		if (textureReplace != null)
-		{
-			if (r.source == TextureReplace.Source.Local && textureReplace.source != TextureReplace.Source.Local)
-			{
-				r.original = textureReplace;
-			}
-			else
-			{
-				textureReplace.DestoryTex();
-			}
-		}
-		if (r.source == TextureReplace.Source.Local)
-		{
-			this.listReplaceLocal.Add(r);
-		}
-		this.dictReplace[r.index] = r;
-	}
-
-	public void DeleteReplace(TextureReplace r)
-	{
-		r.file.Delete();
-		this.RemoveDeletedReplace(r.index);
-	}
-
-	public void RemoveDeletedReplace(int index)
-	{
-		TextureReplace textureReplace = this.dictReplace.TryGetValue(index, null);
-		if (textureReplace == null)
-		{
-			return;
-		}
-		textureReplace.DestoryTex();
-		if (textureReplace.original != null && textureReplace.original.file.Exists)
-		{
-			this.dictReplace[index] = textureReplace.original;
-			return;
-		}
-		this.dictReplace.Remove(index);
+		Pass,
+		World,
+		DestTex
 	}
 
 	public string id;
 
-	public TextureData.Type type;
+	public Type type;
 
-	public TextureData.Date date;
+	public Date date;
 
 	public Texture2D tex;
 
@@ -224,28 +59,178 @@ public class TextureData : EScriptable
 	[NonSerialized]
 	public List<TextureReplace> listReplaceLocal = new List<TextureReplace>();
 
-	[Serializable]
-	public class Date
+	public void TryRefresh()
 	{
-		public DateTime DateTime
+		DateTime lastWriteTime = File.GetLastWriteTime(path);
+		bool flag = date.DateTime.Year != 1 && date.DateTime.Equals(lastWriteTime);
+		if (dictReplace.Count > 0)
 		{
-			get
+			List<int> list = new List<int>();
+			foreach (TextureReplace value in dictReplace.Values)
 			{
-				return new DateTime(this.ticks);
+				if (!File.Exists(value.file.FullName))
+				{
+					forceRefresh = true;
+					list.Add(value.index);
+				}
 			}
-			set
+			foreach (int item in list)
 			{
-				this.ticks = value.Ticks;
+				RemoveDeletedReplace(item);
 			}
 		}
-
-		public long ticks;
+		if (forceRefresh)
+		{
+			forceRefresh = false;
+			flag = false;
+		}
+		if (!flag || !IsValid())
+		{
+			Load(flag);
+		}
+		foreach (TextureReplace value2 in dictReplace.Values)
+		{
+			value2.TryRefresh(!flag);
+		}
+		date.DateTime = lastWriteTime;
 	}
 
-	public enum Type
+	public void ForceRefresh()
 	{
-		Pass,
-		World,
-		DestTex
+		forceRefresh = true;
+		TryRefresh();
+	}
+
+	public static void RefreshAll()
+	{
+		if (!EClass.core.IsGameStarted)
+		{
+			return;
+		}
+		foreach (TextureData value in EClass.core.textures.texMap.Values)
+		{
+			value.ForceRefresh();
+		}
+	}
+
+	public virtual bool IsValid()
+	{
+		switch (type)
+		{
+		case Type.Pass:
+			foreach (MeshPass item in listPass)
+			{
+				if (!item.mat.GetTexture(texName))
+				{
+					return false;
+				}
+			}
+			return true;
+		case Type.World:
+			return EClass.scene.tileset.AtlasTexture;
+		default:
+			return true;
+		}
+	}
+
+	public void Load(bool dateMatched)
+	{
+		if (!dateMatched)
+		{
+			Texture2D texture2D = IO.LoadPNG(path);
+			if (!texture2D)
+			{
+				Debug.Log(path);
+			}
+			if (tex.width != texture2D.width || tex.height != texture2D.height)
+			{
+				Debug.Log(id + "/" + texture2D.width + "/" + texture2D.height + "/" + path);
+			}
+			tex.SetPixels32(texture2D.GetPixels32());
+			tex.Apply();
+			UnityEngine.Object.Destroy(texture2D);
+			Debug.Log("Reloaded Texture:" + path);
+		}
+		switch (type)
+		{
+		case Type.Pass:
+		{
+			foreach (MeshPass item in listPass)
+			{
+				item.mat.SetTexture(texName, tex);
+				if (item.haveShadowPass)
+				{
+					item.shadowPass.mat.SetTexture(texName, tex);
+				}
+			}
+			break;
+		}
+		case Type.World:
+			EClass.scene.tileset.AtlasTexture = tex;
+			break;
+		}
+	}
+
+	public void CreateReplace(int index, string path, TextureReplace.Source source, int sizeX, int sizeY)
+	{
+		string text = id + "_" + index + ".png";
+		Texture2D texture2D = new Texture2D(tileW * sizeX, tileH * sizeY);
+		int srcX = index % 100 * tileW;
+		int srcY = tex.height - index / 100 * tileH - texture2D.height;
+		Graphics.CopyTexture(tex, 0, 0, srcX, srcY, tileW * sizeX, tileH * sizeY, texture2D, 0, 0, 0, 0);
+		byte[] bytes = texture2D.EncodeToPNG();
+		try
+		{
+			File.WriteAllBytes(path + text, bytes);
+			EClass.core.textures.TryAddReplace(new FileInfo(path + text), source, add: true, refresh: true);
+		}
+		catch
+		{
+		}
+		UnityEngine.Object.Destroy(texture2D);
+	}
+
+	public void AddReplace(TextureReplace r)
+	{
+		TextureReplace textureReplace = dictReplace.TryGetValue(r.index);
+		if (textureReplace != null)
+		{
+			if (r.source == TextureReplace.Source.Local && textureReplace.source != TextureReplace.Source.Local)
+			{
+				r.original = textureReplace;
+			}
+			else
+			{
+				textureReplace.DestoryTex();
+			}
+		}
+		if (r.source == TextureReplace.Source.Local)
+		{
+			listReplaceLocal.Add(r);
+		}
+		dictReplace[r.index] = r;
+	}
+
+	public void DeleteReplace(TextureReplace r)
+	{
+		r.file.Delete();
+		RemoveDeletedReplace(r.index);
+	}
+
+	public void RemoveDeletedReplace(int index)
+	{
+		TextureReplace textureReplace = dictReplace.TryGetValue(index);
+		if (textureReplace != null)
+		{
+			textureReplace.DestoryTex();
+			if (textureReplace.original != null && textureReplace.original.file.Exists)
+			{
+				dictReplace[index] = textureReplace.original;
+			}
+			else
+			{
+				dictReplace.Remove(index);
+			}
+		}
 	}
 }

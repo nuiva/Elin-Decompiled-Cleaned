@@ -1,4 +1,3 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -6,119 +5,6 @@ using UnityEngine.UI;
 
 public class UIDragGridInfo : EMono
 {
-	private void Awake()
-	{
-		this.window.SetActive(false);
-		this.transMold.SetActive(false);
-	}
-
-	public void Refresh()
-	{
-		this.Init(this.owner);
-	}
-
-	public void Init(Card _owner)
-	{
-		this.owner = _owner;
-		TraitCrafter crafter = this.owner.trait as TraitCrafter;
-		if (crafter == null)
-		{
-			return;
-		}
-		this.textHeader.text = "knownRecipe".lang();
-		List<SourceRecipe.Row> recipes = (from r in EMono.sources.recipes.rows
-		where r.factory == crafter.IdSource
-		select r).ToList<SourceRecipe.Row>();
-		if (recipes.Count == 0)
-		{
-			return;
-		}
-		BaseList baseList = this.list;
-		UIList.Callback<SourceRecipe.Row, LayoutGroup> callback = new UIList.Callback<SourceRecipe.Row, LayoutGroup>();
-		callback.onClick = delegate(SourceRecipe.Row a, LayoutGroup b)
-		{
-		};
-		callback.onInstantiate = delegate(SourceRecipe.Row a, LayoutGroup b)
-		{
-			UIDragGridInfo.<>c__DisplayClass13_1 CS$<>8__locals2;
-			CS$<>8__locals2.b = b;
-			for (int i = 0; i < crafter.numIng; i++)
-			{
-				if (i != 0)
-				{
-					Util.Instantiate<Transform>(this.moldPlus, CS$<>8__locals2.b);
-				}
-				string[] array = (i == 0) ? a.ing1 : ((i == 1) ? a.ing2 : a.ing3);
-				if (array.IsEmpty())
-				{
-					break;
-				}
-				foreach (string text in array)
-				{
-					if (text != array[0])
-					{
-						Util.Instantiate<Transform>(this.moldOr, CS$<>8__locals2.b);
-					}
-					base.<Init>g__AddThing|4(text, ref CS$<>8__locals2);
-				}
-			}
-			Util.Instantiate<Transform>(this.moldEqual, CS$<>8__locals2.b);
-			base.<Init>g__AddThing|4(a.thing, ref CS$<>8__locals2);
-		};
-		callback.onList = delegate(UIList.SortMode m)
-		{
-			foreach (SourceRecipe.Row row in recipes)
-			{
-				if (row.tag.Contains("known") || EMono.player.knownCraft.Contains(row.id) || EMono.debug.godCraft)
-				{
-					this.list.Add(row);
-				}
-			}
-		};
-		baseList.callbacks = callback;
-		this.list.List(false);
-		this.window.SetActive(true);
-		this.window.RebuildLayout(true);
-	}
-
-	public void InitFuel(Card _owner)
-	{
-		this.owner = _owner;
-		this.textHeader.text = "knownFuel".lang();
-		List<SourceThing.Row> fuels = new List<SourceThing.Row>();
-		foreach (SourceThing.Row row in EMono.sources.things.rows)
-		{
-			if (this.owner.trait.IsFuel(row.id))
-			{
-				fuels.Add(row);
-			}
-		}
-		BaseList baseList = this.list;
-		UIList.Callback<SourceThing.Row, LayoutGroup> callback = new UIList.Callback<SourceThing.Row, LayoutGroup>();
-		callback.onClick = delegate(SourceThing.Row a, LayoutGroup b)
-		{
-		};
-		callback.onInstantiate = delegate(SourceThing.Row a, LayoutGroup b)
-		{
-			UIDragGridInfo.<>c__DisplayClass14_1 CS$<>8__locals2;
-			CS$<>8__locals2.b = b;
-			base.<InitFuel>g__AddThing|3(a.id, ref CS$<>8__locals2);
-			Util.Instantiate<Transform>(this.moldEqual, CS$<>8__locals2.b);
-			base.<InitFuel>g__AddThing|3(this.owner.id, ref CS$<>8__locals2);
-		};
-		callback.onList = delegate(UIList.SortMode m)
-		{
-			foreach (SourceThing.Row o in fuels)
-			{
-				this.list.Add(o);
-			}
-		};
-		baseList.callbacks = callback;
-		this.list.List(false);
-		this.window.SetActive(true);
-		this.window.RebuildLayout(true);
-	}
-
 	public Window window;
 
 	public UIText textHeader;
@@ -140,4 +26,195 @@ public class UIDragGridInfo : EMono
 	public UIList list;
 
 	public Card owner;
+
+	private void Awake()
+	{
+		window.SetActive(enable: false);
+		transMold.SetActive(enable: false);
+	}
+
+	public void Refresh()
+	{
+		Init(owner);
+	}
+
+	public void Init(Card _owner)
+	{
+		owner = _owner;
+		TraitCrafter crafter = owner.trait as TraitCrafter;
+		if (crafter == null)
+		{
+			return;
+		}
+		textHeader.text = "knownRecipe".lang();
+		List<SourceRecipe.Row> recipes = EMono.sources.recipes.rows.Where((SourceRecipe.Row r) => r.factory == crafter.IdSource).ToList();
+		if (recipes.Count == 0)
+		{
+			return;
+		}
+		list.callbacks = new UIList.Callback<SourceRecipe.Row, LayoutGroup>
+		{
+			onClick = delegate
+			{
+			},
+			onInstantiate = delegate(SourceRecipe.Row a, LayoutGroup b)
+			{
+				for (int i = 0; i < crafter.numIng; i++)
+				{
+					if (i != 0)
+					{
+						Util.Instantiate(moldPlus, b);
+					}
+					string[] array = i switch
+					{
+						1 => a.ing2, 
+						0 => a.ing1, 
+						_ => a.ing3, 
+					};
+					if (array.IsEmpty())
+					{
+						break;
+					}
+					string[] array2 = array;
+					foreach (string text in array2)
+					{
+						if (text != array[0])
+						{
+							Util.Instantiate(moldOr, b);
+						}
+						AddThing(text);
+					}
+				}
+				Util.Instantiate(moldEqual, b);
+				AddThing(a.thing);
+			},
+			onList = delegate
+			{
+				foreach (SourceRecipe.Row item in recipes)
+				{
+					if (item.tag.Contains("known") || EMono.player.knownCraft.Contains(item.id) || EMono.debug.godCraft)
+					{
+						list.Add(item);
+					}
+				}
+			}
+		};
+		list.List();
+		window.SetActive(enable: true);
+		window.RebuildLayout(recursive: true);
+		void AddThing(string id)
+		{
+			if (id.IsEmpty() || id == "notImplemented" || id == "any")
+			{
+				Util.Instantiate(moldUnknown, P_1.b).GetComponentInChildren<UIButton>().tooltip.lang = "???";
+			}
+			else
+			{
+				id = id.Replace("%", "@");
+				string[] array3 = id.Split('@');
+				string text2 = "";
+				id = array3[0];
+				if (id.StartsWith('#'))
+				{
+					text2 = id.Replace("#", "");
+					id = EMono.sources.categories.map[text2].GetIdThing();
+				}
+				CardRow cardRow = EMono.sources.cards.map[id];
+				SourceMaterial.Row mat = cardRow.DefaultMaterial;
+				if (array3.Length >= 2)
+				{
+					mat = ((!(array3[1] == "gelatin")) ? EMono.sources.materials.alias[array3[1]] : EMono.sources.materials.alias["jelly"]);
+				}
+				Transform transform = Util.Instantiate(moldThing, P_1.b);
+				Image componentInChildren = transform.GetComponentInChildren<Image>();
+				UIButton component = componentInChildren.GetComponent<UIButton>();
+				cardRow.SetImage(componentInChildren, null, cardRow.GetColorInt(mat));
+				string s = cardRow.GetName();
+				if (!text2.IsEmpty())
+				{
+					Transform obj = Util.Instantiate(moldCat, transform);
+					string @ref = EMono.sources.categories.map[text2].GetName();
+					obj.GetComponentInChildren<UIText>().SetText("category".lang());
+					s = "ingCat".lang(@ref);
+				}
+				component.tooltip.lang = s.ToTitleCase();
+			}
+		}
+	}
+
+	public void InitFuel(Card _owner)
+	{
+		owner = _owner;
+		textHeader.text = "knownFuel".lang();
+		List<SourceThing.Row> fuels = new List<SourceThing.Row>();
+		foreach (SourceThing.Row row in EMono.sources.things.rows)
+		{
+			if (owner.trait.IsFuel(row.id))
+			{
+				fuels.Add(row);
+			}
+		}
+		list.callbacks = new UIList.Callback<SourceThing.Row, LayoutGroup>
+		{
+			onClick = delegate
+			{
+			},
+			onInstantiate = delegate(SourceThing.Row a, LayoutGroup b)
+			{
+				AddThing(a.id);
+				Util.Instantiate(moldEqual, b);
+				AddThing(owner.id);
+			},
+			onList = delegate
+			{
+				foreach (SourceThing.Row item in fuels)
+				{
+					list.Add(item);
+				}
+			}
+		};
+		list.List();
+		window.SetActive(enable: true);
+		window.RebuildLayout(recursive: true);
+		void AddThing(string id)
+		{
+			if (id.IsEmpty() || id == "notImplemented" || id == "any")
+			{
+				Util.Instantiate(moldUnknown, P_1.b).GetComponentInChildren<UIButton>().tooltip.lang = "???";
+			}
+			else
+			{
+				id = id.Replace("%", "@");
+				string[] array = id.Split('@');
+				string cat = "";
+				id = array[0];
+				if (id.StartsWith('#'))
+				{
+					cat = id.Replace("#", "");
+					List<CardRow> obj = EMono.sources.cards.rows.Where((CardRow r) => r.Category.IsChildOf(cat)).ToList();
+					obj.Sort((CardRow a, CardRow b) => a.value - b.value);
+					id = obj[0].id;
+				}
+				CardRow cardRow = EMono.sources.cards.map[id];
+				SourceMaterial.Row mat = cardRow.DefaultMaterial;
+				if (array.Length >= 2)
+				{
+					mat = ((!(array[1] == "gelatin")) ? EMono.sources.materials.alias[array[1]] : EMono.sources.materials.alias["jelly"]);
+				}
+				Transform transform = Util.Instantiate(moldThing, P_1.b);
+				Image componentInChildren = transform.GetComponentInChildren<Image>();
+				UIButton component = componentInChildren.GetComponent<UIButton>();
+				cardRow.SetImage(componentInChildren, null, cardRow.GetColorInt(mat));
+				string s = cardRow.GetName();
+				if (!cat.IsEmpty())
+				{
+					Transform obj2 = Util.Instantiate(moldCat, transform);
+					string @ref = EMono.sources.categories.map[cat].GetName();
+					obj2.GetComponentInChildren<UIText>().SetText("(" + "category".lang() + ")");
+					s = "ingCat".lang(@ref);
+				}
+				component.tooltip.lang = s.ToTitleCase();
+			}
+		}
+	}
 }

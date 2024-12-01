@@ -1,48 +1,28 @@
-﻿using System;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Algorithms;
 using UnityEngine;
 
 public class Zone_Dungeon : Zone
 {
-	public override string IDGenerator
+	public enum RailType
 	{
-		get
-		{
-			return "Dungeon";
-		}
+		Mine,
+		Factoy
 	}
 
-	public override bool DisableRooms
-	{
-		get
-		{
-			return !base.IsPCFaction;
-		}
-	}
+	public override string IDGenerator => "Dungeon";
 
-	public override bool UseFog
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool DisableRooms => !base.IsPCFaction;
 
-	public override bool ShowDangerLv
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool UseFog => true;
+
+	public override bool ShowDangerLv => true;
 
 	public override float PrespawnRate
 	{
 		get
 		{
-			if (!this.idExport.IsEmpty())
+			if (!idExport.IsEmpty())
 			{
 				return 0f;
 			}
@@ -50,29 +30,11 @@ public class Zone_Dungeon : Zone
 		}
 	}
 
-	public override bool IsReturnLocation
-	{
-		get
-		{
-			return base.GetDeepestLv() == base.lv;
-		}
-	}
+	public override bool IsReturnLocation => GetDeepestLv() == base.lv;
 
-	public override int StartLV
-	{
-		get
-		{
-			return -1;
-		}
-	}
+	public override int StartLV => -1;
 
-	public override bool BlockBorderExit
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool BlockBorderExit => true;
 
 	public override float EvolvedChance
 	{
@@ -110,45 +72,15 @@ public class Zone_Dungeon : Zone
 		}
 	}
 
-	public override bool IsSnowCovered
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool IsSnowCovered => false;
 
-	public override bool GrowPlant
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool GrowPlant => true;
 
-	public override bool GrowWeed
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool GrowWeed => false;
 
-	public override bool CountDeepestLevel
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CountDeepestLevel => true;
 
-	public override ZoneTransition.EnterState RegionEnterState
-	{
-		get
-		{
-			return ZoneTransition.EnterState.Down;
-		}
-	}
+	public override ZoneTransition.EnterState RegionEnterState => ZoneTransition.EnterState.Down;
 
 	public override string GetDungenID()
 	{
@@ -169,27 +101,25 @@ public class Zone_Dungeon : Zone
 
 	public override void OnGenerateMap()
 	{
-		if (!this.idExport.IsEmpty())
+		if (idExport.IsEmpty())
 		{
-			return;
+			TryGenerateOre();
+			TryGenerateBigDaddy();
+			TryGenerateEvolved();
+			TryGenerateShrine();
 		}
-		base.TryGenerateOre();
-		base.TryGenerateBigDaddy();
-		base.TryGenerateEvolved(false, null);
-		base.TryGenerateShrine();
 	}
 
-	public void PlaceRail(Zone_Dungeon.RailType railType = Zone_Dungeon.RailType.Mine)
+	public void PlaceRail(RailType railType = RailType.Mine)
 	{
-		Zone_Dungeon.<>c__DisplayClass35_0 CS$<>8__locals1;
-		CS$<>8__locals1.idRail = 31;
-		CS$<>8__locals1.idTrolley = "390";
-		CS$<>8__locals1.placeStopper = true;
+		int idRail = 31;
+		string idTrolley = "390";
+		bool placeStopper = true;
 		int num = 8;
-		if (railType == Zone_Dungeon.RailType.Factoy)
+		if (railType == RailType.Factoy)
 		{
-			CS$<>8__locals1.idRail = 110;
-			CS$<>8__locals1.placeStopper = false;
+			idRail = 110;
+			placeStopper = false;
 			num = EClass.rnd(4) + 1;
 		}
 		PathManager.Instance._pathfinder.PunishChangeDirection = true;
@@ -198,12 +128,12 @@ public class Zone_Dungeon : Zone
 		TraitStairsUp traitStairsUp = EClass._map.FindThing<TraitStairsUp>();
 		if (traitStairsDown != null && traitStairsUp != null)
 		{
-			Zone_Dungeon.<PlaceRail>g__TryPlaceRail|35_0(traitStairsDown.owner.pos, traitStairsUp.owner.pos, ref CS$<>8__locals1);
+			TryPlaceRail(traitStairsDown.owner.pos, traitStairsUp.owner.pos);
 		}
 		int num2 = 0;
 		for (int i = 0; i < 200; i++)
 		{
-			if (Zone_Dungeon.<PlaceRail>g__TryPlaceRail|35_0(EClass._map.bounds.GetRandomSurface(false, true, false), EClass._map.bounds.GetRandomSurface(false, true, false), ref CS$<>8__locals1))
+			if (TryPlaceRail(EClass._map.bounds.GetRandomSurface(), EClass._map.bounds.GetRandomSurface()))
 			{
 				num2++;
 				if (num2 > num)
@@ -213,93 +143,79 @@ public class Zone_Dungeon : Zone
 			}
 		}
 		PathManager.Instance._pathfinder.Diagonals = true;
-	}
-
-	[CompilerGenerated]
-	internal static bool <PlaceRail>g__TryPlaceRail|35_0(Point p1, Point p2, ref Zone_Dungeon.<>c__DisplayClass35_0 A_2)
-	{
-		if (p1.Distance(p2) < 20)
+		bool TryPlaceRail(Point p1, Point p2)
 		{
-			return false;
-		}
-		PathProgress pathProgress = PathManager.Instance.RequestPathImmediate(p1, p2, EClass.pc, PathManager.MoveType.Default, -1, 0);
-		if (!pathProgress.HasPath)
-		{
-			return false;
-		}
-		Point point = new Point();
-		Point point2 = new Point();
-		bool flag = false;
-		int num = 0;
-		foreach (PathFinderNode pathFinderNode in pathProgress.nodes)
-		{
-			Point shared = Point.GetShared(pathFinderNode.X, pathFinderNode.Z);
-			for (int i = -1; i < 2; i++)
+			if (p1.Distance(p2) < 20)
 			{
-				int j = -1;
-				while (j < 2)
+				return false;
+			}
+			PathProgress pathProgress = PathManager.Instance.RequestPathImmediate(p1, p2, EClass.pc);
+			if (!pathProgress.HasPath)
+			{
+				return false;
+			}
+			Point point = new Point();
+			Point point2 = new Point();
+			bool flag = false;
+			int num3 = 0;
+			foreach (PathFinderNode node in pathProgress.nodes)
+			{
+				Point shared = Point.GetShared(node.X, node.Z);
+				for (int j = -1; j < 2; j++)
 				{
-					point2.Set(shared.x + j, shared.z + i);
-					if ((Mathf.Abs(j) != 1 || Mathf.Abs(i) != 1) && point2.IsValid && point2.sourceObj.id == 31 && !point2.Equals(point))
+					for (int k = -1; k < 2; k++)
 					{
-						flag = true;
-						if (num == 0)
+						point2.Set(shared.x + k, shared.z + j);
+						if ((Mathf.Abs(k) != 1 || Mathf.Abs(j) != 1) && point2.IsValid && point2.sourceObj.id == 31 && !point2.Equals(point))
 						{
+							flag = true;
+							if (num3 != 0)
+							{
+								break;
+							}
 							return false;
 						}
-						break;
-					}
-					else
-					{
-						j++;
 					}
 				}
-			}
-			if (shared.sourceObj.id == A_2.idRail)
-			{
-				break;
-			}
-			shared.SetBlock(0, 0);
-			shared.SetObj(A_2.idRail, 1, 0);
-			shared.Things.ForeachReverse(delegate(Thing t)
-			{
-				if (!t.trait.CanBeDestroyed)
+				if (shared.sourceObj.id == idRail)
 				{
-					return;
+					break;
 				}
-				t.Destroy();
-			});
-			if (flag)
-			{
-				break;
+				shared.SetBlock();
+				shared.SetObj(idRail);
+				shared.Things.ForeachReverse(delegate(Thing t)
+				{
+					if (t.trait.CanBeDestroyed)
+					{
+						t.Destroy();
+					}
+				});
+				if (flag)
+				{
+					break;
+				}
+				num3++;
+				point.Set(shared);
 			}
-			num++;
-			point.Set(shared);
-		}
-		if (!flag & A_2.placeStopper)
-		{
-			Point shared2 = Point.GetShared(pathProgress.nodes.LastItem<PathFinderNode>().X, pathProgress.nodes.LastItem<PathFinderNode>().Z);
-			Cell cell = shared2.cell;
-			int dir = (cell.Front.obj == 31) ? 0 : ((cell.Right.obj == 31) ? 1 : ((cell.Back.obj == 31) ? 2 : 3));
-			if (!shared2.HasThing)
+			if (!flag && placeStopper)
 			{
-				EClass._zone.AddCard(ThingGen.Create("1208", -1, -1), shared2).Install().dir = dir;
+				Point shared2 = Point.GetShared(pathProgress.nodes.LastItem().X, pathProgress.nodes.LastItem().Z);
+				Cell cell = shared2.cell;
+				int dir = ((cell.Front.obj != 31) ? ((cell.Right.obj == 31) ? 1 : ((cell.Back.obj == 31) ? 2 : 3)) : 0);
+				if (!shared2.HasThing)
+				{
+					EClass._zone.AddCard(ThingGen.Create("1208"), shared2).Install().dir = dir;
+				}
 			}
-		}
-		if (num > 2)
-		{
-			Point shared3 = Point.GetShared(pathProgress.nodes.First<PathFinderNode>().X, pathProgress.nodes.First<PathFinderNode>().Z);
-			if (!shared3.HasThing)
+			if (num3 > 2)
 			{
-				EClass._zone.AddCard(ThingGen.Create(A_2.idTrolley, -1, -1), shared3).Install();
+				Point shared3 = Point.GetShared(pathProgress.nodes.First().X, pathProgress.nodes.First().Z);
+				if (!shared3.HasThing)
+				{
+					EClass._zone.AddCard(ThingGen.Create(idTrolley), shared3).Install();
+				}
 			}
+			return true;
 		}
-		return true;
-	}
-
-	public enum RailType
-	{
-		Mine,
-		Factoy
 	}
 }

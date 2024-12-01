@@ -1,14 +1,20 @@
-﻿using System;
-
 public static class CheckExtension
 {
 	public static bool IsFail(this Check.Result r)
 	{
-		return r == Check.Result.CriticalFail || r == Check.Result.Fail;
+		if (r != Check.Result.CriticalFail)
+		{
+			return r == Check.Result.Fail;
+		}
+		return true;
 	}
 
 	public static bool IsPass(this Check.Result r)
 	{
-		return r == Check.Result.CriticalPass || r == Check.Result.Pass;
+		if (r != 0)
+		{
+			return r == Check.Result.Pass;
+		}
+		return true;
 	}
 }

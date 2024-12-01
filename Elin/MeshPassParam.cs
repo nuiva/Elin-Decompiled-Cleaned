@@ -1,5 +1,3 @@
-﻿using System;
-
 public class MeshPassParam
 {
 	public float x;

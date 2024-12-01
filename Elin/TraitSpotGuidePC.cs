@@ -1,12 +1,4 @@
-﻿using System;
-
 public class TraitSpotGuidePC : TraitSpot
 {
-	public override int radius
-	{
-		get
-		{
-			return 1;
-		}
-	}
+	public override int radius => 1;
 }

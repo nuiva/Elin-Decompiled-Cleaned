@@ -1,34 +1,12 @@
-﻿using System;
-
 public class StickyHomeReport : BaseSticky
 {
-	public override int idIcon
-	{
-		get
-		{
-			return 6;
-		}
-	}
+	public override int idIcon => 6;
+
+	public override bool RemoveOnClick => true;
 
 	public override string GetText()
 	{
-		return string.Concat(new string[]
-		{
-			"sticky_homeReport".lang(),
-			"(",
-			EClass.world.date.month.ToString(),
-			"/",
-			EClass.world.date.day.ToString(),
-			")"
-		});
-	}
-
-	public override bool RemoveOnClick
-	{
-		get
-		{
-			return true;
-		}
+		return "sticky_homeReport".lang() + "(" + EClass.world.date.month + "/" + EClass.world.date.day + ")";
 	}
 
 	public override void OnClick()

@@ -1,205 +1,21 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class ButtonElement : UIButton
 {
-	public void SetElement(Element _e, ElementContainer _owner, ButtonElement.Mode _mode = ButtonElement.Mode.Skill)
+	public enum Mode
 	{
-		this.e = _e;
-		this.owner = _owner;
-		this.mode = _mode;
-		this.Refresh();
-	}
-
-	public void Refresh()
-	{
-		string str = "";
-		if (WindowChara.Instance && WindowChara.Instance.chara == EClass.pc && EClass.player.trackedElements.Contains(this.e.id))
-		{
-			str = "*";
-		}
-		switch (this.mode)
-		{
-		case ButtonElement.Mode.Attribute:
-			this.mainText.SetText(str + this.e.Name, FontColor.Default);
-			this.e.SetTextValue(this.subText);
-			goto IL_517;
-		case ButtonElement.Mode.Tech:
-		{
-			this.mainText.SetText(str + this.e.Name + " " + this.e.DisplayValue.ToString(), FontColor.Default);
-			int techUpgradeCost = EClass.Branch.GetTechUpgradeCost(this.e);
-			int currency = EClass.pc.GetCurrency("money2");
-			if (EClass.Branch.elements.ValueWithoutLink(this.e.id) == 0 || this.e.source.cost[0] == 0 || techUpgradeCost == 0)
-			{
-				this.subText.SetText("-");
-				goto IL_517;
-			}
-			this.subText.SetText(techUpgradeCost.ToString() ?? "", (currency >= techUpgradeCost) ? FontColor.Good : FontColor.Bad);
-			goto IL_517;
-		}
-		case ButtonElement.Mode.Feat:
-		case ButtonElement.Mode.FeatPurchase:
-		case ButtonElement.Mode.FeatMini:
-			if (this.mode == ButtonElement.Mode.FeatPurchase)
-			{
-				this.mainText.SetText(this.e.FullName, FontColor.Default);
-				this.subText.text = this.e.GetDetail().SplitNewline()[0].StripLastPun();
-				this.subText2.text = "".TagColor((EClass.pc.feat >= this.e.CostLearn) ? EClass.Colors.Skin.textGood : EClass.Colors.Skin.textBad, this.e.CostLearn.ToString() ?? "");
-			}
-			else
-			{
-				string str2 = (this.mode == ButtonElement.Mode.FeatMini) ? this.e.FullName : this.e.source.GetText("textPhase", false).SplitNewline().TryGet(this.e.Value - 1, -1).StripLastPun();
-				FontColor c = this.e.HasTag("neg") ? FontColor.Bad : FontColor.ButtonSelectable;
-				if (this.e.source.category == "ether")
-				{
-					c = FontColor.Ether;
-				}
-				this.mainText.SetText(str + str2, c);
-				this.subText.text = ((this.mode == ButtonElement.Mode.FeatMini) ? "" : (this.e as Feat).GetHint(this.owner));
-			}
-			if (this.imagePotential)
-			{
-				this.imagePotential.SetActive(false);
-				goto IL_517;
-			}
-			goto IL_517;
-		case ButtonElement.Mode.Policy:
-			this.mainText.SetText(str + this.e.Name, FontColor.Default);
-			this.e.SetTextValue(this.subText);
-			Mathf.Clamp((float)this.e.Potential / 300f, 0.1f, 1f);
-			if (this.imagePotential)
-			{
-				this.imagePotential.SetActive(false);
-				goto IL_517;
-			}
-			goto IL_517;
-		case ButtonElement.Mode.OnlyValue:
-			this.e.SetTextValue(this.subText);
-			this.imagePotential.SetActive(false);
-			goto IL_517;
-		case ButtonElement.Mode.LandFeat:
-		{
-			string text = str + this.e.Name;
-			if (this.e.HasTag("network") && EClass.Branch != null && EClass.Branch.HasNetwork)
-			{
-				text = "feat_network".lang(text, null, null, null, null);
-			}
-			this.mainText.SetText(text + " " + this.e.Value.ToString(), FontColor.Default);
-			this.subText.horizontalOverflow = HorizontalWrapMode.Overflow;
-			this.subText.text = this.e.GetDetail().SplitNewline()[0].StripLastPun();
-			if (this.imagePotential)
-			{
-				this.imagePotential.SetActive(false);
-				goto IL_517;
-			}
-			goto IL_517;
-		}
-		}
-		this.mainText.SetText(str + this.e.Name, (this.e.owner != null && this.e.IsFactionElement(this.e.owner.Card as Chara)) ? FontColor.Myth : FontColor.Default);
-		this.e.SetTextValue(this.subText);
-		bool flag = this.e.source.category == "skill";
-		if (this.imagePotential)
-		{
-			this.imagePotential.SetActive(flag && this.imagePotential.enabled);
-		}
-		IL_517:
-		if (this.imagePotential)
-		{
-			int num = (this.e.Potential - 80) / 20;
-			this.imagePotential.enabled = (this.e.Potential != 80);
-			this.imagePotential.sprite = EClass.core.refs.spritesPotential[Mathf.Clamp(Mathf.Abs(num), 0, EClass.core.refs.spritesPotential.Count - 1)];
-			this.imagePotential.color = ((num >= 0) ? Color.white : new Color(1f, 0.7f, 0.7f));
-		}
-		this.e.SetImage(this.icon);
-		if (this.mode == ButtonElement.Mode.FeatPurchase && this.e.Value > 1)
-		{
-			Element refEle = Element.Create(this.e.id, this.e.Value - 1);
-			base.SetTooltip("note", delegate(UITooltip tt)
-			{
-				this.e.WriteNoteWithRef(tt.note, this.owner, null, refEle);
-			}, true);
-			return;
-		}
-		base.SetTooltip("note", delegate(UITooltip tt)
-		{
-			this.e.WriteNote(tt.note, this.owner, null);
-		}, true);
-	}
-
-	public void SetGrid(Element e, Chara c)
-	{
-		bool flag = false;
-		IList<BodySlot> list = c.body.slots.Copy<BodySlot>();
-		list.Sort((BodySlot a, BodySlot b) => c.body.GetSortVal(b) - c.body.GetSortVal(a));
-		string text;
-		foreach (BodySlot bodySlot in list)
-		{
-			if (bodySlot.elementId != 44)
-			{
-				UIItem uiitem = Util.Instantiate<UIItem>(this.moldItemResist, this.layout);
-				Thing thing = bodySlot.thing;
-				if (thing == null)
-				{
-					uiitem.text1.SetActive(false);
-					uiitem.image1.color = Color.white.SetAlpha(0.5f);
-				}
-				else if (!thing.IsIdentified)
-				{
-					flag = true;
-					uiitem.text1.SetText("?", FontColor.Passive);
-					uiitem.image1.color = Color.white.SetAlpha(0.5f);
-				}
-				else
-				{
-					Element element = bodySlot.thing.elements.GetElement(e.id);
-					int num = 0;
-					if (element != null)
-					{
-						num = element.Value;
-						if (!element.CanLink(thing.elements) || element.IsGlobalElement)
-						{
-							num = 0;
-						}
-					}
-					if (num == 0)
-					{
-						uiitem.text1.SetActive(false);
-						uiitem.image1.color = Color.white.SetAlpha(0.5f);
-					}
-					text = (e.IsFlag ? "✓" : (Mathf.Abs(num).ToString() ?? ""));
-					uiitem.text1.SetText(text, (num >= 0) ? FontColor.Good : FontColor.Bad);
-				}
-			}
-		}
-		text = "";
-		int value = e.Value;
-		int num2 = value;
-		if (e is Resistance)
-		{
-			num2 = Element.GetResistLv(value);
-			if (num2 > 0)
-			{
-				text = Lang.GetList("resist")[Mathf.Min(num2, 5)];
-			}
-			else
-			{
-				text = Lang.GetList("resistNeg")[-num2];
-			}
-		}
-		text = text + " (" + (flag ? "?" : (e.IsFlag ? "✓" : (value.ToString() ?? ""))) + ")";
-		Sprite icon = e.GetIcon("");
-		if (icon != null && this.icon)
-		{
-			this.icon.sprite = icon;
-		}
-		this.mainText.SetText(e.ShortName, e.IsFactionElement(c) ? FontColor.Myth : FontColor.Default);
-		this.subText.SetText(text, (num2 == 0) ? FontColor.Default : ((num2 > 0) ? FontColor.Good : FontColor.Bad));
-		base.SetTooltip("note", delegate(UITooltip tt)
-		{
-			e.WriteNote(tt.note, c.elements, null);
-		}, true);
+		Skill,
+		Attribute,
+		Tech,
+		Feat,
+		Enchant,
+		Policy,
+		OnlyValue,
+		FeatPurchase,
+		LandFeat,
+		FeatMini
 	}
 
 	public Image imagePotential;
@@ -216,19 +32,200 @@ public class ButtonElement : UIButton
 
 	public LayoutGroup layout;
 
-	public ButtonElement.Mode mode;
+	public Mode mode;
 
-	public enum Mode
+	public void SetElement(Element _e, ElementContainer _owner, Mode _mode = Mode.Skill)
 	{
-		Skill,
-		Attribute,
-		Tech,
-		Feat,
-		Enchant,
-		Policy,
-		OnlyValue,
-		FeatPurchase,
-		LandFeat,
-		FeatMini
+		e = _e;
+		owner = _owner;
+		mode = _mode;
+		Refresh();
+	}
+
+	public void Refresh()
+	{
+		string text = "";
+		if ((bool)WindowChara.Instance && WindowChara.Instance.chara == EClass.pc && EClass.player.trackedElements.Contains(e.id))
+		{
+			text = "*";
+		}
+		switch (mode)
+		{
+		case Mode.Tech:
+		{
+			mainText.SetText(text + e.Name + " " + e.DisplayValue, FontColor.Default);
+			int techUpgradeCost = EClass.Branch.GetTechUpgradeCost(e);
+			int currency = EClass.pc.GetCurrency("money2");
+			if (EClass.Branch.elements.ValueWithoutLink(e.id) == 0 || e.source.cost[0] == 0 || techUpgradeCost == 0)
+			{
+				subText.SetText("-");
+			}
+			else
+			{
+				subText.SetText(techUpgradeCost.ToString() ?? "", (currency >= techUpgradeCost) ? FontColor.Good : FontColor.Bad);
+			}
+			break;
+		}
+		case Mode.Policy:
+			mainText.SetText(text + e.Name, FontColor.Default);
+			e.SetTextValue(subText);
+			Mathf.Clamp((float)e.Potential / 300f, 0.1f, 1f);
+			if ((bool)imagePotential)
+			{
+				imagePotential.SetActive(enable: false);
+			}
+			break;
+		case Mode.LandFeat:
+		{
+			string text2 = text + e.Name;
+			if (e.HasTag("network") && EClass.Branch != null && EClass.Branch.HasNetwork)
+			{
+				text2 = "feat_network".lang(text2);
+			}
+			mainText.SetText(text2 + " " + e.Value, FontColor.Default);
+			subText.horizontalOverflow = HorizontalWrapMode.Overflow;
+			subText.text = e.GetDetail().SplitNewline()[0].StripLastPun();
+			if ((bool)imagePotential)
+			{
+				imagePotential.SetActive(enable: false);
+			}
+			break;
+		}
+		case Mode.Feat:
+		case Mode.FeatPurchase:
+		case Mode.FeatMini:
+			if (mode == Mode.FeatPurchase)
+			{
+				mainText.SetText(e.FullName, FontColor.Default);
+				subText.text = e.GetDetail().SplitNewline()[0].StripLastPun();
+				subText2.text = "".TagColor((EClass.pc.feat >= e.CostLearn) ? EClass.Colors.Skin.textGood : EClass.Colors.Skin.textBad, e.CostLearn.ToString() ?? "");
+			}
+			else
+			{
+				string text3 = ((mode == Mode.FeatMini) ? e.FullName : e.source.GetText("textPhase").SplitNewline().TryGet(e.Value - 1)
+					.StripLastPun());
+				FontColor c = (e.HasTag("neg") ? FontColor.Bad : FontColor.ButtonSelectable);
+				if (e.source.category == "ether")
+				{
+					c = FontColor.Ether;
+				}
+				mainText.SetText(text + text3, c);
+				subText.text = ((mode == Mode.FeatMini) ? "" : (e as Feat).GetHint(owner));
+			}
+			if ((bool)imagePotential)
+			{
+				imagePotential.SetActive(enable: false);
+			}
+			break;
+		case Mode.Attribute:
+			mainText.SetText(text + e.Name, FontColor.Default);
+			e.SetTextValue(subText);
+			break;
+		case Mode.OnlyValue:
+			e.SetTextValue(subText);
+			imagePotential.SetActive(enable: false);
+			break;
+		default:
+		{
+			mainText.SetText(text + e.Name, (e.owner == null || !e.IsFactionElement(e.owner.Card as Chara)) ? FontColor.Default : FontColor.Myth);
+			e.SetTextValue(subText);
+			bool flag = e.source.category == "skill";
+			if ((bool)imagePotential)
+			{
+				imagePotential.SetActive(flag && imagePotential.enabled);
+			}
+			break;
+		}
+		}
+		if ((bool)imagePotential)
+		{
+			int num = (e.Potential - 80) / 20;
+			imagePotential.enabled = e.Potential != 80;
+			imagePotential.sprite = EClass.core.refs.spritesPotential[Mathf.Clamp(Mathf.Abs(num), 0, EClass.core.refs.spritesPotential.Count - 1)];
+			imagePotential.color = ((num >= 0) ? Color.white : new Color(1f, 0.7f, 0.7f));
+		}
+		e.SetImage(icon);
+		if (mode == Mode.FeatPurchase && e.Value > 1)
+		{
+			Element refEle = Element.Create(e.id, e.Value - 1);
+			SetTooltip("note", delegate(UITooltip tt)
+			{
+				e.WriteNoteWithRef(tt.note, owner, null, refEle);
+			});
+		}
+		else
+		{
+			SetTooltip("note", delegate(UITooltip tt)
+			{
+				e.WriteNote(tt.note, owner);
+			});
+		}
+	}
+
+	public void SetGrid(Element e, Chara c)
+	{
+		string text = "";
+		bool flag = false;
+		IList<BodySlot> list = c.body.slots.Copy();
+		list.Sort((BodySlot a, BodySlot b) => c.body.GetSortVal(b) - c.body.GetSortVal(a));
+		foreach (BodySlot item in list)
+		{
+			if (item.elementId == 44)
+			{
+				continue;
+			}
+			UIItem uIItem = Util.Instantiate(moldItemResist, layout);
+			Thing thing = item.thing;
+			if (thing == null)
+			{
+				uIItem.text1.SetActive(enable: false);
+				uIItem.image1.color = Color.white.SetAlpha(0.5f);
+				continue;
+			}
+			if (!thing.IsIdentified)
+			{
+				flag = true;
+				uIItem.text1.SetText("?", FontColor.Passive);
+				uIItem.image1.color = Color.white.SetAlpha(0.5f);
+				continue;
+			}
+			Element element = item.thing.elements.GetElement(e.id);
+			int num = 0;
+			if (element != null)
+			{
+				num = element.Value;
+				if (!element.CanLink(thing.elements) || element.IsGlobalElement)
+				{
+					num = 0;
+				}
+			}
+			if (num == 0)
+			{
+				uIItem.text1.SetActive(enable: false);
+				uIItem.image1.color = Color.white.SetAlpha(0.5f);
+			}
+			text = (e.IsFlag ? "✓" : (Mathf.Abs(num).ToString() ?? ""));
+			uIItem.text1.SetText(text, (num >= 0) ? FontColor.Good : FontColor.Bad);
+		}
+		text = "";
+		int value = e.Value;
+		int num2 = value;
+		if (e is Resistance)
+		{
+			num2 = Element.GetResistLv(value);
+			text = ((num2 <= 0) ? Lang.GetList("resistNeg")[-num2] : Lang.GetList("resist")[Mathf.Min(num2, 5)]);
+		}
+		text = text + " (" + (flag ? "?" : (e.IsFlag ? "✓" : (value.ToString() ?? ""))) + ")";
+		Sprite sprite = e.GetIcon();
+		if (sprite != null && (bool)icon)
+		{
+			icon.sprite = sprite;
+		}
+		mainText.SetText(e.ShortName, (!e.IsFactionElement(c)) ? FontColor.Default : FontColor.Myth);
+		subText.SetText(text, (num2 == 0) ? FontColor.Default : ((num2 > 0) ? FontColor.Good : FontColor.Bad));
+		SetTooltip("note", delegate(UITooltip tt)
+		{
+			e.WriteNote(tt.note, c.elements);
+		});
 	}
 }

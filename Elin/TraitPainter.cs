@@ -1,19 +1,19 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class TraitPainter : TraitItem
 {
-	public virtual TraitPainter.Type PaintType
+	public enum Type
 	{
-		get
-		{
-			return TraitPainter.Type.Paint;
-		}
+		Paint,
+		Camera,
+		Paper
 	}
+
+	public virtual Type PaintType => Type.Paint;
 
 	public override bool CanUse(Chara c)
 	{
-		return this.GetCanvas() != null;
+		return GetCanvas() != null;
 	}
 
 	public override bool OnUse(Chara c)
@@ -24,18 +24,11 @@ public class TraitPainter : TraitItem
 
 	public TraitCanvas GetCanvas()
 	{
-		List<Thing> list = EClass.pc.things.List((Thing t) => t.trait is TraitCanvas && (t.trait as TraitCanvas).CanvasType == this.PaintType && t.c_textureData == null, false);
+		List<Thing> list = EClass.pc.things.List((Thing t) => t.trait is TraitCanvas && (t.trait as TraitCanvas).CanvasType == PaintType && t.c_textureData == null);
 		if (list.Count <= 0)
 		{
 			return null;
 		}
 		return list[0].trait as TraitCanvas;
-	}
-
-	public enum Type
-	{
-		Paint,
-		Camera,
-		Paper
 	}
 }

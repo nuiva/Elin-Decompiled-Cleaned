@@ -1,22 +1,8 @@
-﻿using System;
-
 public class TraitToolRangeGun : TraitToolRange
 {
-	public override bool NeedReload
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool NeedReload => true;
 
-	public override Element WeaponSkill
-	{
-		get
-		{
-			return this.owner.elements.GetOrCreateElement(105);
-		}
-	}
+	public override Element WeaponSkill => owner.elements.GetOrCreateElement(105);
 
 	public override bool IsAmmo(Thing t)
 	{

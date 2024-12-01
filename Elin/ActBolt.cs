@@ -1,36 +1,10 @@
-﻿using System;
-
 public class ActBolt : Spell
 {
-	public override bool CanAutofire
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanAutofire => true;
 
-	public override bool CanPressRepeat
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanPressRepeat => true;
 
-	public override bool CanRapidFire
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanRapidFire => true;
 
-	public override float RapidDelay
-	{
-		get
-		{
-			return 0.25f;
-		}
-	}
+	public override float RapidDelay => 0.25f;
 }

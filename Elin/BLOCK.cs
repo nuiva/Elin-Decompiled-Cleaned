@@ -1,5 +1,3 @@
-﻿using System;
-
 public class BLOCK
 {
 	public const int raw = 1;

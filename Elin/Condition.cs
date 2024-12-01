@@ -1,12 +1,29 @@
-﻿using System;
+using System;
 
 public class Condition : BaseCondition
 {
-	public virtual bool IsKilled
+	public static bool ignoreEffect;
+
+	public virtual bool IsKilled => base.value <= 0;
+
+	public virtual string TextDuration
 	{
 		get
 		{
-			return base.value <= 0;
+			object obj;
+			if (!base.isPerfume)
+			{
+				obj = base.value.ToString();
+				if (obj == null)
+				{
+					return "";
+				}
+			}
+			else
+			{
+				obj = "";
+			}
+			return (string)obj;
 		}
 	}
 
@@ -20,10 +37,10 @@ public class Condition : BaseCondition
 
 	public static T Create<T>(int power = 100, Action<T> onCreate = null) where T : Condition
 	{
-		return (T)((object)Condition.Create(typeof(T).Name, power, delegate(Condition c)
+		return (T)Create(typeof(T).Name, power, delegate(Condition c)
 		{
 			onCreate(c as T);
-		}));
+		});
 	}
 
 	public static Condition Create(string alias, int power = 100, Action<Condition> onCreate = null)
@@ -33,37 +50,14 @@ public class Condition : BaseCondition
 		condition.power = power;
 		condition.id = row.id;
 		condition._source = row;
-		if (onCreate != null)
-		{
-			onCreate(condition);
-		}
+		onCreate?.Invoke(condition);
 		return condition;
-	}
-
-	public virtual string TextDuration
-	{
-		get
-		{
-			string result;
-			if (!base.isPerfume)
-			{
-				if ((result = base.value.ToString()) == null)
-				{
-					return "";
-				}
-			}
-			else
-			{
-				result = "";
-			}
-			return result;
-		}
 	}
 
 	public virtual void OnStacked(int p)
 	{
-		base.value += this.EvaluateTurn(p);
-		base.SetPhase();
+		base.value += EvaluateTurn(p);
+		SetPhase();
 	}
 
 	public Condition SetPerfume(int duration = 3)
@@ -75,7 +69,7 @@ public class Condition : BaseCondition
 
 	public override void Tick()
 	{
-		base.Mod(-1, false);
+		Mod(-1);
 	}
 
 	public virtual void OnCalculateFov(Fov fov, ref int radius, ref float power)
@@ -90,30 +84,28 @@ public class Condition : BaseCondition
 	{
 		if (base.value <= 0)
 		{
-			this.Kill(false);
+			Kill();
 		}
 	}
 
 	public void Kill(bool silent = false)
 	{
 		base.value = 0;
-		this.owner.conditions.Remove(this);
-		if (!silent && !this.owner.isDead && !base.source.textEnd.IsEmpty())
+		owner.conditions.Remove(this);
+		if (!silent && !owner.isDead && !base.source.textEnd.IsEmpty())
 		{
-			this.owner.Say(base.source.GetText("textEnd", false), this.owner, this.RefString1, null);
+			owner.Say(base.source.GetText("textEnd"), owner, RefString1);
 		}
-		this.PlayEndEffect();
-		this.OnRemoved();
-		if (this.elements != null)
+		PlayEndEffect();
+		OnRemoved();
+		if (elements != null)
 		{
-			this.elements.SetParent(null);
+			elements.SetParent();
 		}
-		this.owner.SetDirtySpeed();
-		if (this.ShouldRefresh)
+		owner.SetDirtySpeed();
+		if (ShouldRefresh)
 		{
-			this.owner.Refresh(false);
+			owner.Refresh();
 		}
 	}
-
-	public static bool ignoreEffect;
 }

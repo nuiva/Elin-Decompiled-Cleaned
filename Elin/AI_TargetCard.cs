@@ -1,70 +1,58 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class AI_TargetCard : AIAct
 {
-	public virtual bool GotoTarget
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public Card target;
 
-	public override bool HasProgress
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool GotoTarget => false;
 
-	public virtual bool CanTargetInventory
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool HasProgress => false;
+
+	public virtual bool CanTargetInventory => false;
 
 	public override bool CanProgress()
 	{
-		return this.target.ExistsOnMap || (this.CanTargetInventory && this.target.GetRootCard() == this.owner);
+		if (!target.ExistsOnMap)
+		{
+			if (CanTargetInventory)
+			{
+				return target.GetRootCard() == owner;
+			}
+			return false;
+		}
+		return true;
 	}
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		this.isFail = (() => !this.CanProgress());
-		if (this.target.ExistsOnMap)
+		isFail = () => !CanProgress();
+		if (target.ExistsOnMap)
 		{
-			if (this.target.isThing && !this.GotoTarget)
+			if (target.isThing && !GotoTarget)
 			{
-				yield return base.DoGotoInteraction(this.target.pos, null);
+				yield return DoGotoInteraction(target.pos);
 			}
 			else
 			{
-				yield return base.DoGoto(this.target, null);
+				yield return DoGoto(target);
 			}
-			if (this.target.Dist(this.owner) > 1)
+			if (target.Dist(owner) > 1)
 			{
-				yield return this.Cancel();
+				yield return Cancel();
 			}
-			this.owner.LookAt(this.target);
+			owner.LookAt(target);
 		}
-		else if (!this.CanTargetInventory || this.target.GetRootCard() != this.owner)
+		else if (!CanTargetInventory || target.GetRootCard() != owner)
 		{
-			yield return this.Cancel();
+			yield return Cancel();
 		}
-		if (this.HasProgress)
+		if (HasProgress)
 		{
-			yield return base.DoProgress();
+			yield return DoProgress();
 		}
 		else
 		{
-			this.OnProgressComplete();
+			OnProgressComplete();
 		}
-		yield break;
 	}
-
-	public Card target;
 }

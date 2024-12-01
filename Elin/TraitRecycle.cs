@@ -1,5 +1,3 @@
-﻿using System;
-
 public class TraitRecycle : TraitItem
 {
 	public override bool OnUse(Chara c)

@@ -1,416 +1,146 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class HotItemActionMode : HotItem
 {
-	public override string Name
-	{
-		get
-		{
-			return this.id.lang();
-		}
-	}
+	[JsonProperty]
+	public string id;
 
-	public override string pathSprite
-	{
-		get
-		{
-			return "icon_" + this.id;
-		}
-	}
+	public override string Name => id.lang();
 
-	public override bool KeepVisibleWhenHighlighted
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override string pathSprite => "icon_" + id;
+
+	public override bool KeepVisibleWhenHighlighted => true;
 
 	public static void Execute(string id)
 	{
-		uint num = <PrivateImplementationDetails>.ComputeStringHash(id);
-		if (num <= 1491228771U)
+		switch (id)
 		{
-			if (num <= 996747083U)
+		case "Inspect":
+			if (!EClass.scene.actionMode.IsBuildMode)
 			{
-				if (num <= 547102523U)
-				{
-					if (num != 482302120U)
-					{
-						if (num != 547102523U)
-						{
-							return;
-						}
-						if (!(id == "Deconstruct"))
-						{
-							return;
-						}
-						ActionMode.Deconstruct.Activate(false, false);
-						return;
-					}
-					else
-					{
-						if (!(id == "EditArea"))
-						{
-							return;
-						}
-						ActionMode.EditArea.Activate(false, false);
-						return;
-					}
-				}
-				else if (num != 561074963U)
-				{
-					if (num != 996747083U)
-					{
-						return;
-					}
-					if (!(id == "Dig"))
-					{
-						return;
-					}
-					ActionMode.Dig.Activate(TaskDig.Mode.Default);
-					return;
-				}
-				else
-				{
-					if (!(id == "Populate"))
-					{
-						return;
-					}
-					ActionMode.Populate.Activate(false, false);
-					return;
-				}
-			}
-			else if (num <= 1143685331U)
-			{
-				if (num != 1027767735U)
-				{
-					if (num != 1143685331U)
-					{
-						return;
-					}
-					if (!(id == "EditMarker"))
-					{
-						return;
-					}
-					ActionMode.EditMarker.Activate(false, false);
-					return;
-				}
-				else
-				{
-					if (!(id == "Inspect"))
-					{
-						return;
-					}
-					if (!EClass.scene.actionMode.IsBuildMode)
-					{
-						BuildMenu.Toggle();
-						return;
-					}
-					ActionMode.Inspect.Activate(false, false);
-					return;
-				}
-			}
-			else if (num != 1198054235U)
-			{
-				if (num != 1286637829U)
-				{
-					if (num != 1491228771U)
-					{
-						return;
-					}
-					if (!(id == "Cut"))
-					{
-						return;
-					}
-					ActionMode.Cut.Activate(false, false);
-					return;
-				}
-				else
-				{
-					if (!(id == "Visibility"))
-					{
-						return;
-					}
-					ActionMode.Visibility.Activate(false, false);
-					return;
-				}
+				BuildMenu.Toggle();
 			}
 			else
 			{
-				if (!(id == "FlagCell"))
-				{
-					return;
-				}
-				ActionMode.FlagCell.Activate(false, false);
-				return;
+				ActionMode.Inspect.Activate(toggle: false);
 			}
-		}
-		else if (num <= 2316551543U)
-		{
-			if (num <= 2056661452U)
-			{
-				if (num != 1703884388U)
-				{
-					if (num != 2056661452U)
-					{
-						return;
-					}
-					if (!(id == "RemoveDesignation"))
-					{
-						return;
-					}
-					ActionMode.RemoveDesignation.Activate(false, false);
-					return;
-				}
-				else
-				{
-					if (!(id == "Copy"))
-					{
-						return;
-					}
-					ActionMode.Copy.Activate(false, false);
-					return;
-				}
-			}
-			else if (num != 2207663855U)
-			{
-				if (num != 2316551543U)
-				{
-					return;
-				}
-				if (!(id == "StateEditor"))
-				{
-					return;
-				}
-				ActionMode.StateEditor.Activate(false, false);
-				return;
-			}
-			else
-			{
-				if (!(id == "Picker"))
-				{
-					return;
-				}
-				ActionMode.Picker.Activate(false, false);
-				return;
-			}
-		}
-		else if (num <= 2818509998U)
-		{
-			if (num != 2778370147U)
-			{
-				if (num != 2818509998U)
-				{
-					return;
-				}
-				if (!(id == "Terrain"))
-				{
-					return;
-				}
-				ActionMode.Terrain.Activate(false, false);
-				return;
-			}
-			else
-			{
-				if (!(id == "ExitBuild"))
-				{
-					return;
-				}
-				ActionMode.DefaultMode.Activate(false, false);
-				return;
-			}
-		}
-		else if (num != 3137301143U)
-		{
-			if (num != 3848897750U)
-			{
-				if (num != 3870556090U)
-				{
-					return;
-				}
-				if (!(id == "Cinema"))
-				{
-					return;
-				}
-				ActionMode.Cinema.Activate(false, false);
-				return;
-			}
-			else
-			{
-				if (!(id == "Mine"))
-				{
-					return;
-				}
-				ActionMode.Mine.Activate(false, false);
-				return;
-			}
-		}
-		else
-		{
-			if (!(id == "DigFloor"))
-			{
-				return;
-			}
+			break;
+		case "Cut":
+			ActionMode.Cut.Activate(toggle: false);
+			break;
+		case "Mine":
+			ActionMode.Mine.Activate(toggle: false);
+			break;
+		case "StateEditor":
+			ActionMode.StateEditor.Activate(toggle: false);
+			break;
+		case "Dig":
+			ActionMode.Dig.Activate(TaskDig.Mode.Default);
+			break;
+		case "DigFloor":
 			ActionMode.Dig.Activate(TaskDig.Mode.RemoveFloor);
-			return;
+			break;
+		case "RemoveDesignation":
+			ActionMode.RemoveDesignation.Activate(toggle: false);
+			break;
+		case "Deconstruct":
+			ActionMode.Deconstruct.Activate(toggle: false);
+			break;
+		case "EditArea":
+			ActionMode.EditArea.Activate(toggle: false);
+			break;
+		case "Picker":
+			ActionMode.Picker.Activate(toggle: false);
+			break;
+		case "Terrain":
+			ActionMode.Terrain.Activate(toggle: false);
+			break;
+		case "Populate":
+			ActionMode.Populate.Activate(toggle: false);
+			break;
+		case "EditMarker":
+			ActionMode.EditMarker.Activate(toggle: false);
+			break;
+		case "Visibility":
+			ActionMode.Visibility.Activate(toggle: false);
+			break;
+		case "Cinema":
+			ActionMode.Cinema.Activate(toggle: false);
+			break;
+		case "FlagCell":
+			ActionMode.FlagCell.Activate(toggle: false);
+			break;
+		case "ExitBuild":
+			ActionMode.DefaultMode.Activate(toggle: false);
+			break;
+		case "Copy":
+			ActionMode.Copy.Activate(toggle: false);
+			break;
 		}
 	}
 
 	public override void OnClick(ButtonHotItem b, Hotbar h)
 	{
-		HotItemActionMode.Execute(this.id);
+		Execute(id);
 	}
 
 	public override bool ShouldHighlight()
 	{
 		ActionMode actionMode = EClass.scene.actionMode;
-		string text = this.id;
-		uint num = <PrivateImplementationDetails>.ComputeStringHash(text);
-		if (num <= 1286637829U)
+		switch (id)
 		{
-			if (num <= 996747083U)
+		case "Inspect":
+			if (actionMode != ActionMode.Inspect)
 			{
-				if (num <= 547102523U)
-				{
-					if (num != 482302120U)
-					{
-						if (num == 547102523U)
-						{
-							if (text == "Deconstruct")
-							{
-								return actionMode == ActionMode.Deconstruct;
-							}
-						}
-					}
-					else if (text == "EditArea")
-					{
-						return actionMode == ActionMode.EditArea || actionMode == ActionMode.CreateArea || actionMode == ActionMode.ExpandArea;
-					}
-				}
-				else if (num != 561074963U)
-				{
-					if (num == 996747083U)
-					{
-						if (text == "Dig")
-						{
-							return actionMode == ActionMode.Dig && ActionMode.Dig.mode == TaskDig.Mode.Default;
-						}
-					}
-				}
-				else if (text == "Populate")
-				{
-					return actionMode == ActionMode.Populate;
-				}
+				return actionMode == ActionMode.Build;
 			}
-			else if (num <= 1143685331U)
+			return true;
+		case "Cut":
+			return actionMode == ActionMode.Cut;
+		case "Mine":
+			return actionMode == ActionMode.Mine;
+		case "Dig":
+			if (actionMode == ActionMode.Dig)
 			{
-				if (num != 1027767735U)
-				{
-					if (num == 1143685331U)
-					{
-						if (text == "EditMarker")
-						{
-							return actionMode == ActionMode.EditMarker;
-						}
-					}
-				}
-				else if (text == "Inspect")
-				{
-					return actionMode == ActionMode.Inspect || actionMode == ActionMode.Build;
-				}
+				return ActionMode.Dig.mode == TaskDig.Mode.Default;
 			}
-			else if (num != 1198054235U)
+			return false;
+		case "DigFloor":
+			if (actionMode == ActionMode.Dig)
 			{
-				if (num == 1286637829U)
-				{
-					if (text == "Visibility")
-					{
-						return actionMode == ActionMode.Visibility;
-					}
-				}
+				return ActionMode.Dig.mode == TaskDig.Mode.RemoveFloor;
 			}
-			else if (text == "FlagCell")
+			return false;
+		case "RemoveDesignation":
+			return actionMode == ActionMode.RemoveDesignation;
+		case "StateEditor":
+			return actionMode == ActionMode.StateEditor;
+		case "Deconstruct":
+			return actionMode == ActionMode.Deconstruct;
+		case "Picker":
+			return actionMode == ActionMode.Picker;
+		case "EditArea":
+			if (actionMode != ActionMode.EditArea && actionMode != ActionMode.CreateArea)
 			{
-				return actionMode == ActionMode.FlagCell;
+				return actionMode == ActionMode.ExpandArea;
 			}
+			return true;
+		case "Terrain":
+			return actionMode == ActionMode.Terrain;
+		case "EditMarker":
+			return actionMode == ActionMode.EditMarker;
+		case "Populate":
+			return actionMode == ActionMode.Populate;
+		case "Visibility":
+			return actionMode == ActionMode.Visibility;
+		case "Cinema":
+			return actionMode == ActionMode.Cinema;
+		case "Copy":
+			return actionMode == ActionMode.Copy;
+		case "FlagCell":
+			return actionMode == ActionMode.FlagCell;
+		default:
+			return false;
 		}
-		else if (num <= 2207663855U)
-		{
-			if (num <= 1703884388U)
-			{
-				if (num != 1491228771U)
-				{
-					if (num == 1703884388U)
-					{
-						if (text == "Copy")
-						{
-							return actionMode == ActionMode.Copy;
-						}
-					}
-				}
-				else if (text == "Cut")
-				{
-					return actionMode == ActionMode.Cut;
-				}
-			}
-			else if (num != 2056661452U)
-			{
-				if (num == 2207663855U)
-				{
-					if (text == "Picker")
-					{
-						return actionMode == ActionMode.Picker;
-					}
-				}
-			}
-			else if (text == "RemoveDesignation")
-			{
-				return actionMode == ActionMode.RemoveDesignation;
-			}
-		}
-		else if (num <= 2818509998U)
-		{
-			if (num != 2316551543U)
-			{
-				if (num == 2818509998U)
-				{
-					if (text == "Terrain")
-					{
-						return actionMode == ActionMode.Terrain;
-					}
-				}
-			}
-			else if (text == "StateEditor")
-			{
-				return actionMode == ActionMode.StateEditor;
-			}
-		}
-		else if (num != 3137301143U)
-		{
-			if (num != 3848897750U)
-			{
-				if (num == 3870556090U)
-				{
-					if (text == "Cinema")
-					{
-						return actionMode == ActionMode.Cinema;
-					}
-				}
-			}
-			else if (text == "Mine")
-			{
-				return actionMode == ActionMode.Mine;
-			}
-		}
-		else if (text == "DigFloor")
-		{
-			return actionMode == ActionMode.Dig && ActionMode.Dig.mode == TaskDig.Mode.RemoveFloor;
-		}
-		return false;
 	}
-
-	[JsonProperty]
-	public string id;
 }

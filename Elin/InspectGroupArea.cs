@@ -1,30 +1,24 @@
-﻿using System;
+using System;
 
 public class InspectGroupArea : InspectGroup<Area>
 {
-	public override string MultiName
-	{
-		get
-		{
-			return "Area";
-		}
-	}
+	public override string MultiName => "Area";
 
 	public override void OnSetActions()
 	{
 		Area first = base.FirstTarget;
-		base.Add("expandArea", "", delegate()
+		Add("expandArea", "", (Action)delegate
 		{
-			ActionMode.ExpandArea.Activate(first, false);
-		}, false, 0, false);
-		base.Add("shrinkArea", "", delegate()
+			ActionMode.ExpandArea.Activate(first);
+		}, sound: false, 0, auto: false);
+		Add("shrinkArea", "", (Action)delegate
 		{
-			ActionMode.ExpandArea.Activate(first, true);
-		}, false, 0, false);
-		base.Add("delete", "", delegate()
+			ActionMode.ExpandArea.Activate(first, _shrink: true);
+		}, sound: false, 0, auto: false);
+		Add("delete", "", (Action)delegate
 		{
 			SE.Play("trash");
 			EClass._map.rooms.RemoveArea(first);
-		}, false, 0, false);
+		}, sound: false, 0, auto: false);
 	}
 }

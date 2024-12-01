@@ -1,19 +1,20 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 [Serializable]
 public class RoofStyle
 {
-	public string GetName(int i)
+	public enum Type
 	{
-		if (i != 0)
-		{
-			return "Roof" + i.ToString();
-		}
-		return "None";
+		None = 0,
+		Default = 5,
+		DefaultNoTop = 6,
+		Flat = 7,
+		FlatFloor = 8,
+		Triangle = 9
 	}
 
-	public RoofStyle.Type type;
+	public Type type;
 
 	public int w;
 
@@ -41,13 +42,12 @@ public class RoofStyle
 
 	public float snowZ = -0.01f;
 
-	public enum Type
+	public string GetName(int i)
 	{
-		None,
-		Default = 5,
-		DefaultNoTop,
-		Flat,
-		FlatFloor,
-		Triangle
+		if (i != 0)
+		{
+			return "Roof" + i;
+		}
+		return "None";
 	}
 }

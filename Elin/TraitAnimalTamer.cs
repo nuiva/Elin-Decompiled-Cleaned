@@ -1,20 +1,6 @@
-﻿using System;
-
 public class TraitAnimalTamer : TraitCitizen
 {
-	public override int GuidePriotiy
-	{
-		get
-		{
-			return 15;
-		}
-	}
+	public override int GuidePriotiy => 15;
 
-	public override SlaverType SlaverType
-	{
-		get
-		{
-			return SlaverType.Animal;
-		}
-	}
+	public override SlaverType SlaverType => SlaverType.Animal;
 }

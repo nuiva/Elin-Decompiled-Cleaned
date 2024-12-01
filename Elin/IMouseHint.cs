@@ -1,5 +1,3 @@
-﻿using System;
-
 public interface IMouseHint
 {
 	bool ShowMouseHintLeft();

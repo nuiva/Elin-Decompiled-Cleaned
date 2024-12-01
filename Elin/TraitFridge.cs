@@ -1,28 +1,14 @@
-﻿using System;
-
 public class TraitFridge : TraitContainer
 {
-	public override bool IsFridge
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsFridge => true;
 
-	public override bool UseAltTiles
-	{
-		get
-		{
-			return this.owner.isOn;
-		}
-	}
+	public override bool UseAltTiles => owner.isOn;
 
 	public override int DecaySpeedChild
 	{
 		get
 		{
-			if (!this.owner.isOn)
+			if (!owner.isOn)
 			{
 				return base.DecaySpeedChild;
 			}

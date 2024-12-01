@@ -1,31 +1,10 @@
-﻿using System;
-
 public class CritterRoachSmall : Critter
 {
-	public override int[] idleTiles
-	{
-		get
-		{
-			return CritterRoachSmall.I_TILE;
-		}
-	}
+	public static int[] I_TILE = new int[1] { 162 };
 
-	public override int[] animeTiles
-	{
-		get
-		{
-			return CritterRoachSmall.A_TILE;
-		}
-	}
+	public static int[] A_TILE = new int[2] { 162, 163 };
 
-	public static int[] I_TILE = new int[]
-	{
-		162
-	};
+	public override int[] idleTiles => I_TILE;
 
-	public static int[] A_TILE = new int[]
-	{
-		162,
-		163
-	};
+	public override int[] animeTiles => A_TILE;
 }

@@ -1,14 +1,8 @@
-﻿using System;
 using Assets.Resources.Scene.Profile.Global;
 using UnityEngine;
 
 public class SceneProfile : ScriptableObject
 {
-	public static SceneProfile Load(string id)
-	{
-		return ResourceCache.Load<SceneProfile>("Scene/Profile/SceneProfile_" + id);
-	}
-
 	public SceneGlobalProfile global;
 
 	public OverlayProfile overlay;
@@ -20,4 +14,9 @@ public class SceneProfile : ScriptableObject
 	public Material matOverlay;
 
 	public Material matGrading;
+
+	public static SceneProfile Load(string id)
+	{
+		return ResourceCache.Load<SceneProfile>("Scene/Profile/SceneProfile_" + id);
+	}
 }

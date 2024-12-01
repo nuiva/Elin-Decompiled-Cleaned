@@ -1,54 +1,30 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public class NotificationStats : BaseNotification
 {
-	public override bool Visible
-	{
-		get
-		{
-			return !this.text.IsEmpty();
-		}
-	}
+	public Func<BaseStats> stats;
 
-	public override bool Interactable
-	{
-		get
-		{
-			return !this.stats().source.GetDetail().IsEmpty();
-		}
-	}
+	public override bool Visible => !text.IsEmpty();
 
-	public override Action<UITooltip> onShowTooltip
+	public override bool Interactable => !stats().source.GetDetail().IsEmpty();
+
+	public override Action<UITooltip> onShowTooltip => delegate(UITooltip t)
 	{
-		get
-		{
-			return delegate(UITooltip t)
-			{
-				this.stats().WriteNote(t.note, null);
-			};
-		}
-	}
+		stats().WriteNote(t.note);
+	};
+
+	public override Sprite Sprite => stats().GetSprite();
 
 	public override void OnClick()
 	{
 		EClass.ui.AddLayer<LayerChara>().SetChara(EClass.pc);
 	}
 
-	public override Sprite Sprite
-	{
-		get
-		{
-			return this.stats().GetSprite();
-		}
-	}
-
 	public override void OnRefresh()
 	{
-		BaseStats baseStats = this.stats();
-		this.text = baseStats.GetText();
-		this.item.button.mainText.color = baseStats.GetColor(this.item.button.skinRoot.GetButton().colorProf);
+		BaseStats baseStats = stats();
+		text = baseStats.GetText();
+		item.button.mainText.color = baseStats.GetColor(item.button.skinRoot.GetButton().colorProf);
 	}
-
-	public Func<BaseStats> stats;
 }

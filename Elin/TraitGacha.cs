@@ -1,73 +1,49 @@
-﻿using System;
-
 public class TraitGacha : Trait
 {
-	public TraitGacha.GachaType type
-	{
-		get
-		{
-			return base.GetParam(1, null).ToEnum(true);
-		}
-	}
-
-	public string GetIdCoin()
-	{
-		string text = "gacha_coin";
-		TraitGacha.GachaType type = this.type;
-		if (type != TraitGacha.GachaType.Plant)
-		{
-			if (type == TraitGacha.GachaType.Furniture)
-			{
-				text += "_gold";
-			}
-		}
-		else
-		{
-			text += "_silver";
-		}
-		return text;
-	}
-
-	public virtual string suffixCoin
-	{
-		get
-		{
-			return "";
-		}
-	}
-
-	public virtual int refVal
-	{
-		get
-		{
-			return 0;
-		}
-	}
-
-	public override void TrySetAct(ActPlan p)
-	{
-		if (!this.owner.isOn)
-		{
-			return;
-		}
-		p.TrySetAct("gacha", delegate()
-		{
-			LayerDragGrid.CreateGacha(this);
-			return false;
-		}, this.owner, null, 1, false, true, false);
-	}
-
-	public void PlayGacha(int num)
-	{
-		Thing thing = ThingGen.Create("gachaBall", -1, -1).SetNum(num);
-		thing.refVal = (int)this.type;
-		EClass.player.DropReward(thing, true);
-	}
-
 	public enum GachaType
 	{
 		Junk,
 		Plant,
 		Furniture
+	}
+
+	public GachaType type => GetParam(1).ToEnum<GachaType>();
+
+	public virtual string suffixCoin => "";
+
+	public virtual int refVal => 0;
+
+	public string GetIdCoin()
+	{
+		string text = "gacha_coin";
+		switch (type)
+		{
+		case GachaType.Furniture:
+			text += "_gold";
+			break;
+		case GachaType.Plant:
+			text += "_silver";
+			break;
+		}
+		return text;
+	}
+
+	public override void TrySetAct(ActPlan p)
+	{
+		if (owner.isOn)
+		{
+			p.TrySetAct("gacha", delegate
+			{
+				LayerDragGrid.CreateGacha(this);
+				return false;
+			}, owner);
+		}
+	}
+
+	public void PlayGacha(int num)
+	{
+		Thing thing = ThingGen.Create("gachaBall").SetNum(num);
+		thing.refVal = (int)type;
+		EClass.player.DropReward(thing, silent: true);
 	}
 }

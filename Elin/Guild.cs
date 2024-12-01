@@ -1,127 +1,66 @@
-﻿using System;
-
 public class Guild : Faction
 {
 	public static Guild Current
 	{
 		get
 		{
-			if (EClass._zone.id == "guild_merchant")
+			if (!(EClass._zone.id == "guild_merchant"))
 			{
-				return EClass.game.factions.Merchant;
-			}
-			if (EClass._zone.id == "lumiest")
-			{
+				if (!(EClass._zone.id == "lumiest"))
+				{
+					if (!(EClass._zone.id == "derphy"))
+					{
+						return EClass.game.factions.Fighter;
+					}
+					return EClass.game.factions.Thief;
+				}
 				return EClass.game.factions.Mage;
 			}
-			if (!(EClass._zone.id == "derphy"))
-			{
-				return EClass.game.factions.Fighter;
-			}
-			return EClass.game.factions.Thief;
-		}
-	}
-
-	public static GuildFighter Fighter
-	{
-		get
-		{
-			return EClass.game.factions.Fighter;
-		}
-	}
-
-	public static GuildMage Mage
-	{
-		get
-		{
-			return EClass.game.factions.Mage;
-		}
-	}
-
-	public static GuildThief Thief
-	{
-		get
-		{
-			return EClass.game.factions.Thief;
-		}
-	}
-
-	public static GuildMerchant Merchant
-	{
-		get
-		{
 			return EClass.game.factions.Merchant;
 		}
 	}
 
-	public static QuestGuild CurrentQuest
-	{
-		get
-		{
-			Guild guild = Guild.Current;
-			if (guild == null)
-			{
-				return null;
-			}
-			return guild.Quest;
-		}
-	}
+	public static GuildFighter Fighter => EClass.game.factions.Fighter;
+
+	public static GuildMage Mage => EClass.game.factions.Mage;
+
+	public static GuildThief Thief => EClass.game.factions.Thief;
+
+	public static GuildMerchant Merchant => EClass.game.factions.Merchant;
+
+	public static QuestGuild CurrentQuest => Current?.Quest;
+
+	public override string TextType => "sub_guild".lang();
+
+	public virtual QuestGuild Quest => null;
+
+	public virtual bool IsCurrentZone => false;
+
+	public bool IsMember => relation.type == FactionRelation.RelationType.Member;
 
 	public static Guild GetCurrentGuild()
 	{
-		if (Guild.Fighter.IsCurrentZone)
+		if (Fighter.IsCurrentZone)
 		{
-			return Guild.Fighter;
+			return Fighter;
 		}
-		if (Guild.Mage.IsCurrentZone)
+		if (Mage.IsCurrentZone)
 		{
-			return Guild.Mage;
+			return Mage;
 		}
-		if (Guild.Thief.IsCurrentZone)
+		if (Thief.IsCurrentZone)
 		{
-			return Guild.Thief;
+			return Thief;
 		}
-		if (Guild.Merchant.IsCurrentZone)
+		if (Merchant.IsCurrentZone)
 		{
-			return Guild.Merchant;
+			return Merchant;
 		}
 		return null;
 	}
 
 	public void RefreshDevelopment()
 	{
-		EClass._zone.development = (10 + this.relation.rank * 5) * 10;
-	}
-
-	public override string TextType
-	{
-		get
-		{
-			return "sub_guild".lang();
-		}
-	}
-
-	public virtual QuestGuild Quest
-	{
-		get
-		{
-			return null;
-		}
-	}
-
-	public virtual bool IsCurrentZone
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public bool IsMember
-	{
-		get
-		{
-			return this.relation.type == FactionRelation.RelationType.Member;
-		}
+		EClass._zone.development = (10 + relation.rank * 5) * 10;
 	}
 }

@@ -1,35 +1,33 @@
-﻿using System;
-
 public class RenderDataLiquid : RenderDataTile
 {
+	public enum EffectType
+	{
+		Liquid,
+		Bubble
+	}
+
+	public EffectType effectType;
+
+	public float puddleZ;
+
 	public override void Draw(RenderParam p)
 	{
-		MeshBatch meshBatch = this.pass.batches[this.pass.batchIdx];
-		meshBatch.matrices[this.pass.idx].m03 = p.x + this.offset.x;
-		meshBatch.matrices[this.pass.idx].m13 = p.y + this.offset.y;
-		meshBatch.matrices[this.pass.idx].m23 = p.z + ((this.effectType == RenderDataLiquid.EffectType.Liquid && p.liquidLv <= 10) ? this.puddleZ : this.offset.z);
-		meshBatch.tiles[this.pass.idx] = p.tile;
-		meshBatch.colors[this.pass.idx] = p.color;
-		meshBatch.matColors[this.pass.idx] = p.matColor;
-		this.pass.idx++;
-		if (this.pass.idx == this.pass.batchSize)
+		MeshBatch meshBatch = pass.batches[pass.batchIdx];
+		meshBatch.matrices[pass.idx].m03 = p.x + offset.x;
+		meshBatch.matrices[pass.idx].m13 = p.y + offset.y;
+		meshBatch.matrices[pass.idx].m23 = p.z + ((effectType == EffectType.Liquid && p.liquidLv <= 10) ? puddleZ : offset.z);
+		meshBatch.tiles[pass.idx] = p.tile;
+		meshBatch.colors[pass.idx] = p.color;
+		meshBatch.matColors[pass.idx] = p.matColor;
+		pass.idx++;
+		if (pass.idx == pass.batchSize)
 		{
-			this.pass.NextBatch();
+			pass.NextBatch();
 		}
 	}
 
 	private void OnValidate()
 	{
-		this._offset = this.offset;
-	}
-
-	public RenderDataLiquid.EffectType effectType;
-
-	public float puddleZ;
-
-	public enum EffectType
-	{
-		Liquid,
-		Bubble
+		_offset = offset;
 	}
 }

@@ -1,22 +1,30 @@
-﻿using System;
+using System;
 
 public class CharaFilter : CardFilter
 {
+	public Func<SourceChara.Row, bool> ShouldPass;
+
 	public CharaFilter()
 	{
-		this.isChara = true;
+		isChara = true;
 	}
 
 	protected override bool _ShouldPass(CardRow source)
 	{
-		return this.ShouldPass == null || this.ShouldPass(source as SourceChara.Row);
+		if (ShouldPass != null)
+		{
+			return ShouldPass(source as SourceChara.Row);
+		}
+		return true;
 	}
 
 	public override bool ContainsTag(CardRow source, string str)
 	{
 		SourceChara.Row row = source as SourceChara.Row;
-		return source.tag.Contains(str) || row.race_row.tag.Contains(str);
+		if (!source.tag.Contains(str))
+		{
+			return row.race_row.tag.Contains(str);
+		}
+		return true;
 	}
-
-	public Func<SourceChara.Row, bool> ShouldPass;
 }

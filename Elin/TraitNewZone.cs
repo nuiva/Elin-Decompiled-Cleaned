@@ -1,4 +1,3 @@
-﻿using System;
 using UnityEngine;
 
 public class TraitNewZone : Trait
@@ -7,159 +6,87 @@ public class TraitNewZone : Trait
 	{
 		get
 		{
-			return RefZone.Get(this.owner.c_uidZone);
+			return RefZone.Get(owner.c_uidZone);
 		}
 		set
 		{
-			this.owner.c_uidZone = ((value != null) ? value.uid : 0);
+			owner.c_uidZone = value?.uid ?? 0;
 		}
 	}
 
-	public virtual bool CanUseInTempDungeon
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool CanUseInTempDungeon => false;
 
-	public virtual string langOnUse
-	{
-		get
-		{
-			return "";
-		}
-	}
+	public virtual string langOnUse => "";
 
-	public virtual bool IsUpstairs
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool IsUpstairs => false;
 
-	public virtual bool IsDownstairs
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool IsDownstairs => false;
 
-	public virtual bool IsTeleport
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool IsTeleport => false;
 
-	public virtual bool OnlyInTheSameTopZone
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool OnlyInTheSameTopZone => false;
 
-	public virtual bool AutoEnter
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public virtual bool AutoEnter => true;
 
-	public virtual bool ForceEnter
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool ForceEnter => false;
 
-	public virtual bool CanToggleAutoEnter
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool CanToggleAutoEnter => false;
 
 	public virtual bool CreateExternalZone
 	{
 		get
 		{
-			return !this.IsTeleport && (this.owner.GetStr(30, null) != null || base.GetParam(1, null) != null);
+			if (!IsTeleport)
+			{
+				if (owner.GetStr(30) == null)
+				{
+					return GetParam(1) != null;
+				}
+				return true;
+			}
+			return false;
 		}
 	}
 
-	public virtual ZoneTransition.EnterState enterState
-	{
-		get
-		{
-			return ZoneTransition.EnterState.Region;
-		}
-	}
+	public virtual ZoneTransition.EnterState enterState => ZoneTransition.EnterState.Region;
 
 	public virtual bool IsEntrace
 	{
 		get
 		{
-			return !this.IsUpstairs && !this.IsDownstairs;
-		}
-	}
-
-	public override bool CanBeHeld
-	{
-		get
-		{
+			if (!IsUpstairs)
+			{
+				return !IsDownstairs;
+			}
 			return false;
 		}
 	}
 
-	public override bool CanBeDestroyed
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeHeld => false;
 
-	public override bool CanBeStolen
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeDestroyed => false;
 
-	public virtual int UseDist
-	{
-		get
-		{
-			return 0;
-		}
-	}
+	public override bool CanBeStolen => false;
+
+	public virtual int UseDist => 0;
 
 	public override void OnImportMap()
 	{
-		this.owner.c_uidZone = 0;
+		owner.c_uidZone = 0;
 	}
 
 	public virtual Point GetExitPos()
 	{
-		Point point = new Point(this.owner.pos);
-		if (this.owner.dir % 2 == 0)
+		Point point = new Point(owner.pos);
+		if (owner.dir % 2 == 0)
 		{
-			point.x -= this.owner.sourceCard.W / 2;
+			point.x -= owner.sourceCard.W / 2;
 			point.z--;
 		}
 		else
 		{
 			point.x++;
-			point.z += this.owner.sourceCard.H / 2;
+			point.z += owner.sourceCard.H / 2;
 		}
 		return point;
 	}
@@ -170,108 +97,112 @@ public class TraitNewZone : Trait
 		{
 			return;
 		}
-		bool flag = this.IsEntrace || p.IsSelf;
-		if (this.owner.sourceRenderCard.multisize)
+		bool flag = IsEntrace || p.IsSelf;
+		if (owner.sourceRenderCard.multisize)
 		{
 			int x = p.pos.x;
 			int z = p.pos.z;
-			int w = this.owner.W;
-			int h = this.owner.H;
-			flag = ((this.owner.dir % 2 == 0) ? (z == this.owner.pos.z && x > this.owner.pos.x - w + 1 && x <= this.owner.pos.x - 1) : (p.pos.x == this.owner.pos.x && p.pos.z >= this.owner.pos.z + 1 && p.pos.z < this.owner.pos.z + h - 1));
+			int w = owner.W;
+			int h = owner.H;
+			flag = ((owner.dir % 2 != 0) ? (p.pos.x == owner.pos.x && p.pos.z >= owner.pos.z + 1 && p.pos.z < owner.pos.z + h - 1) : (z == owner.pos.z && x > owner.pos.x - w + 1 && x <= owner.pos.x - 1));
 		}
-		if (!flag)
+		if (!flag || (EClass.pc.held != null && EClass.pc.held.trait.CanOnlyCarry) || p.dist > UseDist)
 		{
 			return;
 		}
-		if (EClass.pc.held != null && EClass.pc.held.trait.CanOnlyCarry)
+		p.TrySetAct("actNewZone", delegate
 		{
-			return;
-		}
-		if (p.dist <= this.UseDist)
-		{
-			p.TrySetAct("actNewZone", delegate()
+			if ((EClass._zone.RegenerateOnEnter || EClass._zone.IsInstance) && !CanUseInTempDungeon)
 			{
-				if ((EClass._zone.RegenerateOnEnter || EClass._zone.IsInstance) && !this.CanUseInTempDungeon)
-				{
-					Msg.Say("badidea");
-					return false;
-				}
-				return this.MoveZone(false);
-			}, this.owner, CursorSystem.MoveZone, 1, false, true, false);
-		}
+				Msg.Say("badidea");
+				return false;
+			}
+			return MoveZone();
+		}, owner, CursorSystem.MoveZone);
 	}
 
 	public bool CanAutoEnter()
 	{
-		return EClass._zone.AllowNewZone && !this.owner.sourceRenderCard.multisize && (EClass.pc.held == null || !EClass.pc.held.trait.CanOnlyCarry);
+		if (!EClass._zone.AllowNewZone)
+		{
+			return false;
+		}
+		if (owner.sourceRenderCard.multisize)
+		{
+			return false;
+		}
+		if (EClass.pc.held != null && EClass.pc.held.trait.CanOnlyCarry)
+		{
+			return false;
+		}
+		return true;
 	}
 
 	public bool MoveZone(bool confirmed = false)
 	{
-		if (this.Electricity != 0 && !this.owner.isOn)
+		if (Electricity != 0 && !owner.isOn)
 		{
-			this.owner.PlaySound("electricity_insufficient", 1f, true);
+			owner.PlaySound("electricity_insufficient");
 			return false;
 		}
-		if (this.TryTeleport())
+		if (TryTeleport())
 		{
 			return true;
 		}
 		if (!confirmed && EClass._zone.IsNefia && EClass._zone.Boss != null)
 		{
 			EClass.pc.ai.Cancel();
-			EInput.Consume(true, 1);
-			Dialog.YesNo("ExitZoneBoss".lang(EClass._zone.Name, null, null, null, null), delegate
+			EInput.Consume(consumeAxis: true);
+			Dialog.YesNo("ExitZoneBoss".lang(EClass._zone.Name), delegate
 			{
-				this.MoveZone(true);
-			}, null, "yes", "no");
+				MoveZone(confirmed: true);
+			});
 			return false;
 		}
 		ZoneTransition transition = new ZoneTransition
 		{
-			state = this.enterState,
-			idTele = base.GetParam(3, null)
+			state = enterState,
+			idTele = GetParam(3)
 		};
 		Zone zone = null;
-		string param = base.GetParam(2, null);
-		int num = (param != null) ? param.ToInt() : 0;
-		if (this.OnlyInTheSameTopZone && this.zone != null && this.zone.GetTopZone() != EClass._zone.GetTopZone())
+		int num = GetParam(2)?.ToInt() ?? 0;
+		if (OnlyInTheSameTopZone && this.zone != null && this.zone.GetTopZone() != EClass._zone.GetTopZone())
 		{
 			this.zone = null;
 		}
 		if (this.zone == null)
 		{
-			if (this.CreateExternalZone)
+			if (CreateExternalZone)
 			{
 				zone = EClass._zone;
 			}
-			else if (this.IsTeleport)
+			else if (IsTeleport)
 			{
-				zone = EClass.world.region.FindZone(base.GetParam(1, null));
+				zone = EClass.world.region.FindZone(GetParam(1));
 				if (zone != null)
 				{
 					zone = zone.GetTopZone();
 					this.zone = zone.FindZone(num);
 				}
 			}
-			else if (this.IsDownstairs || this.IsUpstairs)
+			else if (IsDownstairs || IsUpstairs)
 			{
 				zone = EClass._zone.GetTopZone();
-				num = EClass._zone.lv + (this.IsUpstairs ? 1 : (this.IsDownstairs ? -1 : 0));
+				num = EClass._zone.lv + (IsUpstairs ? 1 : (IsDownstairs ? (-1) : 0));
 				this.zone = EClass._zone.GetTopZone().FindZone(num);
-				if (this.zone == null && EClass._zone.parent.IsRegion && ((this.IsUpstairs && EClass._zone.lv == -1) || (this.IsDownstairs && EClass._zone.lv == 1)))
+				if (this.zone == null && EClass._zone.parent.IsRegion && ((IsUpstairs && EClass._zone.lv == -1) || (IsDownstairs && EClass._zone.lv == 1)))
 				{
-					EClass.pc.MoveZone(EClass._zone.parent as Zone, ZoneTransition.EnterState.Auto);
+					EClass.pc.MoveZone(EClass._zone.parent as Zone);
 					return false;
 				}
 			}
-			if (this.OnlyInTheSameTopZone && this.zone != null && this.zone.GetTopZone() != EClass._zone.GetTopZone())
+			if (OnlyInTheSameTopZone && this.zone != null && this.zone.GetTopZone() != EClass._zone.GetTopZone())
 			{
 				this.zone = null;
 			}
 			if (this.zone == null)
 			{
-				if (this.OnlyInTheSameTopZone && zone != null && zone.GetTopZone() != EClass._zone.GetTopZone())
+				if (OnlyInTheSameTopZone && zone != null && zone.GetTopZone() != EClass._zone.GetTopZone())
 				{
 					zone = null;
 				}
@@ -280,22 +211,22 @@ public class TraitNewZone : Trait
 					Msg.SayNothingHappen();
 					return false;
 				}
-				this.CreateZone(zone, num);
+				CreateZone(zone, num);
 			}
 		}
-		if ((this.IsDownstairs || this.IsUpstairs) && this.zone.IDGenerator == null && EClass._zone.IDGenerator == null)
+		if ((IsDownstairs || IsUpstairs) && this.zone.IDGenerator == null && EClass._zone.IDGenerator == null)
 		{
 			this.zone.events.AddPreEnter(new ZonePreEnterDigStairs
 			{
-				pos = this.owner.pos.Copy(),
-				fromAbove = this.IsDownstairs,
+				pos = owner.pos.Copy(),
+				fromAbove = IsDownstairs,
 				uidZone = EClass._zone.uid
-			}, true);
+			});
 			transition = new ZoneTransition
 			{
 				state = ZoneTransition.EnterState.UndergroundOrSky,
-				x = this.owner.pos.x,
-				z = this.owner.pos.z
+				x = owner.pos.x,
+				z = owner.pos.z
 			};
 		}
 		Debug.Log(this.zone);
@@ -306,27 +237,17 @@ public class TraitNewZone : Trait
 	public Zone CreateZone(Zone dest, int destLv)
 	{
 		string text = dest.GetNewZoneID(destLv);
-		if (this.CreateExternalZone)
+		if (CreateExternalZone)
 		{
-			text = (this.owner.GetStr(30, null) ?? base.GetParam(1, null));
+			text = owner.GetStr(30) ?? GetParam(1);
 		}
-		Debug.Log(string.Concat(new string[]
-		{
-			"Creating:",
-			text,
-			"/",
-			destLv.ToString(),
-			"/",
-			EClass.sources.zones.map.ContainsKey(text).ToString(),
-			"/",
-			(dest != null) ? dest.ToString() : null
-		}));
-		Zone zone = SpatialGen.Create(text, dest, true, this.owner.pos.x, this.owner.pos.z, 0) as Zone;
+		Debug.Log("Creating:" + text + "/" + destLv + "/" + EClass.sources.zones.map.ContainsKey(text) + "/" + dest);
+		Zone zone = SpatialGen.Create(text, dest, register: true, owner.pos.x, owner.pos.z) as Zone;
 		zone.lv = destLv;
 		zone.x = dest.x;
 		zone.y = dest.y;
-		this.owner.c_uidZone = zone.uid;
-		if (this.CreateExternalZone)
+		owner.c_uidZone = zone.uid;
+		if (CreateExternalZone)
 		{
 			zone.isExternalZone = true;
 		}
@@ -336,21 +257,14 @@ public class TraitNewZone : Trait
 
 	public override void OnStepped(Chara c)
 	{
-		if (this.AutoEnter && c.IsPC && this.owner.IsInstalled && c.IsAliveInCurrentZone && (this.ForceEnter || !EClass.core.config.game.disableAutoStairs))
+		if (AutoEnter && c.IsPC && owner.IsInstalled && c.IsAliveInCurrentZone && (ForceEnter || !EClass.core.config.game.disableAutoStairs))
 		{
-			string str = "OnStepped:";
-			AIAct ai = EClass.pc.ai;
-			Debug.Log(str + ((ai != null) ? ai.ToString() : null));
-			AI_Goto ai_Goto = EClass.pc.ai.Current as AI_Goto;
-			if (ai_Goto == null && !(EClass.pc.ai is GoalManualMove))
+			Debug.Log("OnStepped:" + EClass.pc.ai);
+			AI_Goto aI_Goto = EClass.pc.ai.Current as AI_Goto;
+			if ((aI_Goto != null || EClass.pc.ai is GoalManualMove) && (aI_Goto == null || aI_Goto.dest.Equals(owner.pos)))
 			{
-				return;
+				MoveZone();
 			}
-			if (ai_Goto != null && !ai_Goto.dest.Equals(this.owner.pos))
-			{
-				return;
-			}
-			this.MoveZone(false);
 		}
 	}
 
@@ -361,14 +275,14 @@ public class TraitNewZone : Trait
 
 	public virtual bool IsFor(Zone z)
 	{
-		if (z == this.zone)
+		if (z == zone)
 		{
 			return true;
 		}
-		string param = base.GetParam(1, null);
+		string param = GetParam(1);
 		if (!param.IsEmpty())
 		{
-			int num = (base.GetParam(2, null) != null) ? base.GetParam(2, null).ToInt() : 0;
+			int num = ((GetParam(2) != null) ? GetParam(2).ToInt() : 0);
 			if (z.id == param && z.lv == num)
 			{
 				return true;

@@ -1,76 +1,98 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using DG.Tweening;
-using DG.Tweening.Core;
-using DG.Tweening.Plugins.Options;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class WidgetHotbar : Widget, IDragParent
 {
-	public override object CreateExtra()
+	public class Extra
 	{
-		return new WidgetHotbar.Extra();
+		public int iconSize = 2;
+
+		public int width = 1;
+
+		public int rows;
+
+		public bool showShortcut;
+
+		public bool vertical;
+
+		public bool visible;
+
+		public bool alwaysShow;
+
+		public bool reverse;
+
+		public bool autoSize;
 	}
 
-	public WidgetHotbar.Extra extra
-	{
-		get
-		{
-			return base.config.extra as WidgetHotbar.Extra;
-		}
-	}
+	public static bool registering;
 
-	public Hotbar hotbar
-	{
-		get
-		{
-			return EMono.player.hotbars.bars[this.idHotbar];
-		}
-	}
+	public static bool dirtyCurrentItem;
+
+	public static HotItem registeringItem;
+
+	public static WidgetHotbar HotbarBuild;
+
+	public static WidgetHotbar HotBarMainMenu;
+
+	public static WidgetHotbar HotbarExtra;
+
+	public int idHotbar;
+
+	public GridLayoutGroup layout;
+
+	public ButtonHotItem mold;
+
+	public RawImage imageGrid;
+
+	public Image imageSelect;
+
+	public Hotbar.Type type;
+
+	public bool useMask;
+
+	[NonSerialized]
+	public List<ButtonHotItem> buttons = new List<ButtonHotItem>();
+
+	private bool showThisWidget;
+
+	private float timeSinceBecomeVisible;
+
+	public Extra extra => base.config.extra as Extra;
+
+	public Hotbar hotbar => EMono.player.hotbars.bars[idHotbar];
 
 	public bool Visible
 	{
 		get
 		{
-			return this.extra.visible;
+			return extra.visible;
 		}
 		set
 		{
-			this.extra.visible = value;
+			extra.visible = value;
 		}
 	}
 
-	public override bool ShowInBuildMode
-	{
-		get
-		{
-			return this.extra.alwaysShow;
-		}
-	}
+	public override bool ShowInBuildMode => extra.alwaysShow;
 
-	public bool IsHotbarSpeed
-	{
-		get
-		{
-			return this.idHotbar == 7;
-		}
-	}
+	public bool IsHotbarSpeed => idHotbar == 7;
 
-	public bool CanRegisterItem
+	public bool CanRegisterItem => hotbar.IsUserHotbar;
+
+	public override object CreateExtra()
 	{
-		get
-		{
-			return this.hotbar.IsUserHotbar;
-		}
+		return new Extra();
 	}
 
 	public override bool CanShowContextMenu()
 	{
-		if (this.hotbar.IsUserHotbar)
+		if (hotbar.IsUserHotbar)
 		{
 			ButtonHotItem componentOf = InputModuleEX.GetComponentOf<ButtonHotItem>();
-			if (componentOf && componentOf.item != null)
+			if ((bool)componentOf && componentOf.item != null)
 			{
 				return true;
 			}
@@ -80,98 +102,96 @@ public class WidgetHotbar : Widget, IDragParent
 
 	public override void OnActivate()
 	{
-		this.mold = this.layout.CreateMold(null);
-		if (this.idHotbar == 2)
+		mold = layout.CreateMold<ButtonHotItem>();
+		if (idHotbar == 2)
 		{
-			WidgetHotbar.HotBarMainMenu = this;
+			HotBarMainMenu = this;
 		}
-		if (this.idHotbar == 3)
+		if (idHotbar == 3)
 		{
-			WidgetHotbar.HotbarBuild = this;
+			HotbarBuild = this;
 		}
-		if (this.idHotbar == 5)
+		if (idHotbar == 5)
 		{
-			WidgetHotbar.HotbarExtra = this;
+			HotbarExtra = this;
 		}
-		if (this.extra.rows == 0)
+		if (extra.rows == 0)
 		{
-			this.extra.rows = this.hotbar.itemsPerPage;
+			extra.rows = hotbar.itemsPerPage;
 		}
-		this.hotbar.actor = this;
-		this.Rebuild();
+		hotbar.actor = this;
+		Rebuild();
 	}
 
 	public override void OnChangeActionMode()
 	{
 		base.OnChangeActionMode();
-		if (this.hotbar.dirty)
+		if (hotbar.dirty)
 		{
-			this.hotbar.dirty = false;
-			this.Rebuild();
+			hotbar.dirty = false;
+			Rebuild();
 		}
-		this.RefreshHighlight();
+		RefreshHighlight();
 	}
 
 	public void Rebuild()
 	{
-		this.buttons.Clear();
-		this.layout.cellSize = EMono.setting.ui.iconSizes[this.extra.iconSize];
-		this.layout.constraintCount = this.extra.width;
-		this.layout.constraint = (this.extra.vertical ? GridLayoutGroup.Constraint.FixedColumnCount : GridLayoutGroup.Constraint.FixedRowCount);
-		this.layout.startCorner = (this.extra.reverse ? GridLayoutGroup.Corner.LowerRight : GridLayoutGroup.Corner.UpperLeft);
-		int num = this.extra.rows;
-		if (this.extra.autoSize)
+		buttons.Clear();
+		layout.cellSize = EMono.setting.ui.iconSizes[extra.iconSize];
+		layout.constraintCount = extra.width;
+		layout.constraint = (extra.vertical ? GridLayoutGroup.Constraint.FixedColumnCount : GridLayoutGroup.Constraint.FixedRowCount);
+		layout.startCorner = (extra.reverse ? GridLayoutGroup.Corner.LowerRight : GridLayoutGroup.Corner.UpperLeft);
+		int num = extra.rows;
+		if (extra.autoSize)
 		{
 			num = 0;
-			int num2 = 0;
-			while (num2 < this.hotbar.CurrentPage.items.Count && this.hotbar.CurrentPage.items[num2] != null)
+			for (int i = 0; i < hotbar.CurrentPage.items.Count && hotbar.CurrentPage.items[i] != null; i++)
 			{
 				num++;
-				num2++;
 			}
 		}
-		int num3 = (num - 1) / this.extra.width + 1;
-		int num4 = this.extra.vertical ? this.extra.width : num3;
-		int num5 = this.extra.vertical ? num3 : this.extra.width;
-		this.imageGrid.uvRect = new Rect(1f, 1f, (float)num4, (float)num5);
-		this.layout.DestroyChildren(false, true);
-		for (int i = 0; i < num; i++)
+		int num2 = (num - 1) / extra.width + 1;
+		int num3 = (extra.vertical ? extra.width : num2);
+		int num4 = (extra.vertical ? num2 : extra.width);
+		imageGrid.uvRect = new Rect(1f, 1f, num3, num4);
+		layout.DestroyChildren();
+		for (int j = 0; j < num; j++)
 		{
-			ButtonHotItem buttonHotItem = Util.Instantiate<ButtonHotItem>(this.mold, this.layout);
-			buttonHotItem.index = i;
-			buttonHotItem.mainText.text = ((i > 10) ? "" : ((i + 1).ToString() ?? ""));
+			ButtonHotItem buttonHotItem = Util.Instantiate(mold, layout);
+			buttonHotItem.index = j;
+			buttonHotItem.mainText.text = ((j > 10) ? "" : ((j + 1).ToString() ?? ""));
 			buttonHotItem.widget = this;
-			this.buttons.Add(buttonHotItem);
-			if (this.useMask)
+			buttons.Add(buttonHotItem);
+			if (useMask)
 			{
 				buttonHotItem.gameObject.AddComponent<RectMask2D>();
 			}
 		}
-		this.layout.RebuildLayout(false);
-		this.RebuildLayout(false);
-		this.RebuildPage(-1);
+		layout.RebuildLayout();
+		this.RebuildLayout();
+		RebuildPage();
 	}
 
 	public void RebuildPage(int page = -1)
 	{
-		this.hotbar.SetPage((page == -1) ? this.hotbar.currentPage : page);
-		foreach (ButtonHotItem buttonHotItem in this.buttons)
+		hotbar.SetPage((page == -1) ? hotbar.currentPage : page);
+		foreach (ButtonHotItem button in buttons)
 		{
-			HotItem item = this.hotbar.GetItem(buttonHotItem.index, -1);
-			buttonHotItem.SetItem(item);
+			HotItem item = hotbar.GetItem(button.index);
+			button.SetItem(item);
 		}
-		this.SetVisible();
-		this.RefreshHighlight();
+		SetVisible();
+		RefreshHighlight();
 	}
 
 	public static void RebuildPages()
 	{
-		foreach (Widget widget in EMono.ui.widgets.list)
+		foreach (Widget item in EMono.ui.widgets.list)
 		{
-			WidgetHotbar widgetHotbar = widget as WidgetHotbar;
-			if (widgetHotbar)
+			WidgetHotbar widgetHotbar = item as WidgetHotbar;
+			if ((bool)widgetHotbar)
 			{
-				widgetHotbar.RebuildPage(-1);
+				widgetHotbar.RebuildPage();
 			}
 		}
 	}
@@ -179,142 +199,128 @@ public class WidgetHotbar : Widget, IDragParent
 	public void SwitchPage()
 	{
 		SE.ClickGeneral();
-		this.RebuildPage((this.hotbar.currentPage == 0) ? 1 : 0);
+		RebuildPage((hotbar.currentPage == 0) ? 1 : 0);
 	}
 
 	public HotItem GetItem(int index)
 	{
-		return this.hotbar.CurrentPage.items.TryGet(index, true);
+		return hotbar.CurrentPage.items.TryGet(index, returnNull: true);
 	}
 
 	public void TryUse(int index)
 	{
-		HotItem item = this.GetItem(index);
+		HotItem item = GetItem(index);
 		if (item == null)
 		{
 			SE.BeepSmall();
-			return;
 		}
-		item.OnClick(item.button, this.hotbar);
+		else
+		{
+			item.OnClick(item.button, hotbar);
+		}
 	}
 
 	public void OnClickEmptyItem(ButtonHotItem b)
 	{
-		UIContextMenu uicontextMenu = EMono.ui.CreateContextMenu("ContextMenu");
-		this.SetShortcutMenu(b, uicontextMenu);
-		uicontextMenu.Show();
+		UIContextMenu uIContextMenu = EMono.ui.CreateContextMenu();
+		SetShortcutMenu(b, uIContextMenu);
+		uIContextMenu.Show();
 	}
 
 	public override void OnSetContextMenu(UIContextMenu m)
 	{
 		ButtonHotItem b = InputModuleEX.GetComponentOf<ButtonHotItem>();
-		if (this.showThisWidget || !b || b.item == null || base.IsSealed || b.widget.hotbar.IsLocked)
+		if (showThisWidget || !b || b.item == null || base.IsSealed || b.widget.hotbar.IsLocked)
 		{
-			this.showThisWidget = false;
-			SkinSet skin = base.config.skin.Skin;
-			UIContextMenu uicontextMenu = m.AddChild("setting");
-			UIContextMenu uicontextMenu2 = m.AddChild("style");
+			showThisWidget = false;
+			_ = base.config.skin.Skin;
+			UIContextMenu uIContextMenu = m.AddChild("setting");
+			UIContextMenu uIContextMenu2 = m.AddChild("style");
 			if (!base.IsSealed)
 			{
-				uicontextMenu.AddSlider("numSlot", (float n) => n.ToString() ?? "", (float)this.extra.rows, delegate(float a)
+				uIContextMenu.AddSlider("numSlot", (float n) => n.ToString() ?? "", extra.rows, delegate(float a)
 				{
-					this.extra.rows = (int)a;
-					this.hotbar.SetSlotNum((int)a);
-					this.Rebuild();
-					this.ClampToScreen();
-				}, 1f, 20f, true, false, false);
+					extra.rows = (int)a;
+					hotbar.SetSlotNum((int)a);
+					Rebuild();
+					ClampToScreen();
+				}, 1f, 20f, isInt: true, hideOther: false);
 			}
-			uicontextMenu2.AddSlider("iconSize", (float n) => n.ToString() ?? "", (float)this.extra.iconSize, delegate(float a)
+			uIContextMenu2.AddSlider("iconSize", (float n) => n.ToString() ?? "", extra.iconSize, delegate(float a)
 			{
-				this.extra.iconSize = (int)a;
-				this.Rebuild();
-				this.ClampToScreen();
-			}, 0f, (float)(EMono.setting.ui.iconSizes.Count - 1), true, true, false);
-			base.SetGridContextMenu(uicontextMenu2);
-			uicontextMenu.AddToggle("vertical", this.extra.vertical, delegate(bool a)
+				extra.iconSize = (int)a;
+				Rebuild();
+				ClampToScreen();
+			}, 0f, EMono.setting.ui.iconSizes.Count - 1, isInt: true);
+			SetGridContextMenu(uIContextMenu2);
+			uIContextMenu.AddToggle("vertical", extra.vertical, delegate(bool a)
 			{
-				this.extra.vertical = a;
-				this.Rebuild();
-				this.ClampToScreen();
+				extra.vertical = a;
+				Rebuild();
+				ClampToScreen();
 			});
-			uicontextMenu.AddToggle("doubleBar", this.extra.width == 2, delegate(bool a)
+			uIContextMenu.AddToggle("doubleBar", extra.width == 2, delegate(bool a)
 			{
-				this.extra.width = (a ? 2 : 1);
-				this.Rebuild();
-				this.ClampToScreen();
+				extra.width = ((!a) ? 1 : 2);
+				Rebuild();
+				ClampToScreen();
 			});
-			uicontextMenu.AddToggle("reverseOrder", this.extra.reverse, delegate(bool a)
+			uIContextMenu.AddToggle("reverseOrder", extra.reverse, delegate(bool a)
 			{
-				this.extra.reverse = a;
-				this.Rebuild();
-				this.ClampToScreen();
+				extra.reverse = a;
+				Rebuild();
+				ClampToScreen();
 			});
 			if (!base.IsSealed)
 			{
-				uicontextMenu.AddToggle("alwaysShow2", this.extra.alwaysShow, delegate(bool a)
+				uIContextMenu.AddToggle("alwaysShow2", extra.alwaysShow, delegate(bool a)
 				{
-					this.extra.alwaysShow = a;
+					extra.alwaysShow = a;
 				});
 			}
-			base.SetBaseContextMenu(m);
-			if (!base.IsSealed)
+			SetBaseContextMenu(m);
+			if (base.IsSealed)
 			{
-				Action <>9__12;
-				m.AddButton("resetHotbar", delegate()
-				{
-					string langDetail = "dialogResetHotbar";
-					Action actionYes;
-					if ((actionYes = <>9__12) == null)
-					{
-						actionYes = (<>9__12 = delegate()
-						{
-							EMono.player.hotbars.ResetHotbar(this.hotbar.id);
-							SE.Trash();
-						});
-					}
-					Dialog.YesNo(langDetail, actionYes, null, "yes", "no");
-				}, true);
 				return;
 			}
-		}
-		else
-		{
-			m.AddButton("removeHotItem", delegate()
+			m.AddButton("resetHotbar", delegate
 			{
-				this.hotbar.SetItem(null, b.index, -1, false);
-				this.RebuildPage(-1);
-			}, true);
-			b.item.OnShowContextMenu(m);
-			m.AddToggle("alwaysShow", b.item.always, delegate(bool on)
-			{
-				b.item.always = on;
-			});
-			Action <>9__13;
-			m.AddButton("thisWidget", delegate()
-			{
-				this.showThisWidget = true;
-				List<Action> actionsNextFrame = EMono.core.actionsNextFrame;
-				Action item;
-				if ((item = <>9__13) == null)
+				Dialog.YesNo("dialogResetHotbar", delegate
 				{
-					item = (<>9__13 = delegate()
-					{
-						this.ShowContextMenu();
-					});
-				}
-				actionsNextFrame.Add(item);
-			}, true);
+					EMono.player.hotbars.ResetHotbar(hotbar.id);
+					SE.Trash();
+				});
+			});
+			return;
 		}
+		m.AddButton("removeHotItem", delegate
+		{
+			hotbar.SetItem(null, b.index);
+			RebuildPage();
+		});
+		b.item.OnShowContextMenu(m);
+		m.AddToggle("alwaysShow", b.item.always, delegate(bool on)
+		{
+			b.item.always = on;
+		});
+		m.AddButton("thisWidget", delegate
+		{
+			showThisWidget = true;
+			EMono.core.actionsNextFrame.Add(delegate
+			{
+				ShowContextMenu();
+			});
+		});
 	}
 
 	public void SetShortcutMenu(ButtonHotItem b, UIContextMenu m)
 	{
 		Action<UIContextMenu, HotItem> action = delegate(UIContextMenu _m, HotItem i)
 		{
-			_m.AddButton(i.Name, delegate()
+			_m.AddButton(i.Name, delegate
 			{
-				this.SetItem(b, i);
-			}, true);
+				SetItem(b, i);
+			});
 		};
 		UIContextMenu arg = m.AddChild("layerShortcuts");
 		action(arg, new HotItemLayer
@@ -382,7 +388,7 @@ public class WidgetHotbar : Widget, IDragParent
 			{
 				id = "system"
 			});
-			if (this == this.IsHotbarSpeed)
+			if ((bool)this == IsHotbarSpeed)
 			{
 				arg = m.AddChild("uniqueShortcuts");
 				action(arg, new HotItemSpeed
@@ -406,39 +412,39 @@ public class WidgetHotbar : Widget, IDragParent
 		arg = m.AddChild("specialShortcuts");
 		action(arg, new HotItemTogglePage());
 		action(arg, new HotItemToggleVisible());
-		m.AddButton("registerPos".lang(), delegate()
+		m.AddButton("registerPos".lang(), delegate
 		{
-			this.SetItem(b, new HotItemFocusPos
+			SetItem(b, new HotItemFocusPos
 			{
 				zone = EMono.game.activeZone,
 				x = EMono.pc.pos.x,
 				y = EMono.pc.pos.z
 			});
-		}, true);
-		m.AddButton("hotActionEQSet".lang(), delegate()
+		});
+		m.AddButton("hotActionEQSet".lang(), delegate
 		{
-			this.SetItem(b, new HotItemEQSet().Register());
-		}, true);
-		m.AddButton("hotActionSleep".lang(), delegate()
+			SetItem(b, new HotItemEQSet().Register());
+		});
+		m.AddButton("hotActionSleep".lang(), delegate
 		{
-			this.SetItem(b, new HotItemActionSleep());
-		}, true);
+			SetItem(b, new HotItemActionSleep());
+		});
 	}
 
 	public void SetItem(ButtonHotItem b, HotItem item)
 	{
-		item = this.hotbar.SetItem(item, b.index, -1, false);
+		item = hotbar.SetItem(item, b.index);
 		b.SetItem(item);
-		this.RefreshHighlight();
-		this.SetVisible();
+		RefreshHighlight();
+		SetVisible();
 	}
 
 	public static void RefreshHighlights()
 	{
-		foreach (Widget widget in EMono.ui.widgets.list)
+		foreach (Widget item in EMono.ui.widgets.list)
 		{
-			WidgetHotbar widgetHotbar = widget as WidgetHotbar;
-			if (widgetHotbar)
+			WidgetHotbar widgetHotbar = item as WidgetHotbar;
+			if ((bool)widgetHotbar)
 			{
 				widgetHotbar.RefreshHighlight();
 			}
@@ -447,15 +453,16 @@ public class WidgetHotbar : Widget, IDragParent
 
 	public static void RefreshButtons()
 	{
-		foreach (Widget widget in EMono.ui.widgets.list)
+		foreach (Widget item in EMono.ui.widgets.list)
 		{
-			WidgetHotbar widgetHotbar = widget as WidgetHotbar;
-			if (widgetHotbar)
+			WidgetHotbar widgetHotbar = item as WidgetHotbar;
+			if (!widgetHotbar)
 			{
-				foreach (ButtonHotItem buttonHotItem in widgetHotbar.buttons)
-				{
-					buttonHotItem.RefreshItem();
-				}
+				continue;
+			}
+			foreach (ButtonHotItem button in widgetHotbar.buttons)
+			{
+				button.RefreshItem();
 			}
 		}
 	}
@@ -463,35 +470,36 @@ public class WidgetHotbar : Widget, IDragParent
 	public bool RefreshHighlight()
 	{
 		bool result = false;
-		foreach (ButtonHotItem buttonHotItem in this.buttons)
+		foreach (ButtonHotItem button in buttons)
 		{
-			if (buttonHotItem.item != null)
+			if (button.item == null)
 			{
-				if (buttonHotItem.item.UseIconForHighlight)
-				{
-					if (buttonHotItem.item.ShouldHighlight())
-					{
-						result = true;
-						buttonHotItem.icon.sprite = buttonHotItem.item.GetSprite(true);
-					}
-					else
-					{
-						buttonHotItem.icon.sprite = buttonHotItem.item.GetSprite();
-					}
-				}
-				else if (buttonHotItem.item.ShouldHighlight())
+				continue;
+			}
+			if (button.item.UseIconForHighlight)
+			{
+				if (button.item.ShouldHighlight())
 				{
 					result = true;
-					buttonHotItem.image.sprite = buttonHotItem.item.SpriteHighlight;
-					if (!this.Visible && buttonHotItem.item.KeepVisibleWhenHighlighted)
-					{
-						this.ToggleVisible();
-					}
+					button.icon.sprite = button.item.GetSprite(highlight: true);
 				}
 				else
 				{
-					buttonHotItem.image.sprite = EMono.core.refs.spritesHighlight[0];
+					button.icon.sprite = button.item.GetSprite();
 				}
+			}
+			else if (button.item.ShouldHighlight())
+			{
+				result = true;
+				button.image.sprite = button.item.SpriteHighlight;
+				if (!Visible && button.item.KeepVisibleWhenHighlighted)
+				{
+					ToggleVisible();
+				}
+			}
+			else
+			{
+				button.image.sprite = EMono.core.refs.spritesHighlight[0];
 			}
 		}
 		return result;
@@ -499,11 +507,11 @@ public class WidgetHotbar : Widget, IDragParent
 
 	public void _OnDirtyInventory()
 	{
-		foreach (ButtonHotItem buttonHotItem in this.buttons)
+		foreach (ButtonHotItem button in buttons)
 		{
-			if (buttonHotItem.item != null)
+			if (button.item != null)
 			{
-				buttonHotItem.Refresh();
+				button.Refresh();
 			}
 		}
 	}
@@ -513,16 +521,16 @@ public class WidgetHotbar : Widget, IDragParent
 		UIButton componentOf = InputModuleEX.GetComponentOf<UIButton>();
 		int num = 0;
 		bool flag = false;
-		foreach (ButtonHotItem buttonHotItem in this.buttons)
+		foreach (ButtonHotItem button in buttons)
 		{
-			bool flag2 = buttonHotItem.item is HotItemToggleVisible;
-			bool flag3 = this.Visible || flag2 || (buttonHotItem.item != null && buttonHotItem.item.always);
-			buttonHotItem.image.enabled = flag3;
-			buttonHotItem.mainText.enabled = flag3;
-			buttonHotItem.icon.SetActive(flag3);
-			if (!flag2 && buttonHotItem != componentOf)
+			bool flag2 = button.item is HotItemToggleVisible;
+			bool flag3 = Visible || flag2 || (button.item != null && button.item.always);
+			button.image.enabled = flag3;
+			button.mainText.enabled = flag3;
+			button.icon.SetActive(flag3);
+			if (!flag2 && button != componentOf)
 			{
-				buttonHotItem.DoNormalTransition(true);
+				button.DoNormalTransition();
 			}
 			if (flag3)
 			{
@@ -533,87 +541,90 @@ public class WidgetHotbar : Widget, IDragParent
 				flag = true;
 			}
 		}
-		if (num == 0 && !this.Visible)
+		if (num == 0 && !Visible)
 		{
-			this.Visible = true;
-			this.SetVisible();
+			Visible = true;
+			SetVisible();
 		}
-		base.CancelInvoke("CheckAutoHide");
+		CancelInvoke("CheckAutoHide");
 		if (flag)
 		{
-			this.timeSinceBecomeVisible = 0f;
-			base.InvokeRepeating("CheckAutoHide", 0.1f, 0.2f);
+			timeSinceBecomeVisible = 0f;
+			InvokeRepeating("CheckAutoHide", 0.1f, 0.2f);
 		}
-		this.imageBG.enabled = (this.imageGrid.enabled = this.extra.visible);
-		this.dragPanel.SetActive(this.extra.visible);
+		Image image = imageBG;
+		bool flag4 = (imageGrid.enabled = extra.visible);
+		image.enabled = flag4;
+		dragPanel.SetActive(extra.visible);
 	}
 
 	public void ToggleVisible()
 	{
-		this.extra.visible = !this.extra.visible;
-		this.SetVisible();
-		if (this.Visible)
+		extra.visible = !extra.visible;
+		SetVisible();
+		if (!Visible)
 		{
-			this.imageBG.transform.localScale = new Vector3(0.6f, 0.6f, 1f);
-			this.imageBG.transform.DOScale(1f, 0.12f).SetEase(Ease.Linear);
-			this.imageGrid.transform.localScale = new Vector3(0.6f, 0.6f, 1f);
-			this.imageGrid.transform.DOScale(1f, 0.12f).SetEase(Ease.Linear);
-			foreach (ButtonHotItem buttonHotItem in this.buttons)
-			{
-				if (!(buttonHotItem.item is HotItemToggleVisible) && (buttonHotItem.item == null || !buttonHotItem.item.always))
-				{
-					buttonHotItem.transform.localScale = new Vector3(0.6f, 0.6f, 1f);
-					buttonHotItem.transform.DOScale(1f, 0.12f).SetEase(Ease.Linear);
-				}
-			}
-			this.imageBG.SetAlpha(0f);
-			this.imageGrid.SetAlpha(0f);
-			SkinConfig skin = base.config.skin;
-			this.imageBG.DOFade(skin.bgColor.a, 0.4f).SetEase(Ease.OutQuint);
-			this.imageGrid.DOFade(skin.gridColor.a, 0.4f).SetEase(Ease.OutQuint);
+			return;
 		}
+		imageBG.transform.localScale = new Vector3(0.6f, 0.6f, 1f);
+		imageBG.transform.DOScale(1f, 0.12f).SetEase(Ease.Linear);
+		imageGrid.transform.localScale = new Vector3(0.6f, 0.6f, 1f);
+		imageGrid.transform.DOScale(1f, 0.12f).SetEase(Ease.Linear);
+		foreach (ButtonHotItem button in buttons)
+		{
+			if (!(button.item is HotItemToggleVisible) && (button.item == null || !button.item.always))
+			{
+				button.transform.localScale = new Vector3(0.6f, 0.6f, 1f);
+				button.transform.DOScale(1f, 0.12f).SetEase(Ease.Linear);
+			}
+		}
+		imageBG.SetAlpha(0f);
+		imageGrid.SetAlpha(0f);
+		SkinConfig skin = base.config.skin;
+		imageBG.DOFade(skin.bgColor.a, 0.4f).SetEase(Ease.OutQuint);
+		imageGrid.DOFade(skin.gridColor.a, 0.4f).SetEase(Ease.OutQuint);
 	}
 
 	public void CheckAutoHide()
 	{
-		if (!this.Visible)
+		if (!Visible)
 		{
 			return;
 		}
-		this.timeSinceBecomeVisible += 0.2f;
-		if (this.timeSinceBecomeVisible < 1f)
+		timeSinceBecomeVisible += 0.2f;
+		if (timeSinceBecomeVisible < 1f)
 		{
 			return;
 		}
-		if (Input.GetMouseButton(0) || EMono.ui.contextMenu.currentMenu != null || WidgetHotbar.registering)
+		if (Input.GetMouseButton(0) || EMono.ui.contextMenu.currentMenu != null || registering)
 		{
-			this.timeSinceBecomeVisible = 0f;
+			timeSinceBecomeVisible = 0f;
 			return;
 		}
 		if (InputModuleEX.IsPointerOver(base.transform))
 		{
-			this.timeSinceBecomeVisible = 0f;
+			timeSinceBecomeVisible = 0f;
 			return;
 		}
-		foreach (ButtonHotItem buttonHotItem in this.buttons)
+		foreach (ButtonHotItem button in buttons)
 		{
-			if (buttonHotItem.item != null && buttonHotItem.item.KeepVisibleWhenHighlighted && buttonHotItem.item.ShouldHighlight())
+			if (button.item != null && button.item.KeepVisibleWhenHighlighted && button.item.ShouldHighlight())
 			{
 				return;
 			}
 		}
-		this.ToggleVisible();
+		ToggleVisible();
 	}
 
 	public void OnStartDrag(UIButton b)
 	{
-		EMono.ui.hud.SetDragImage(b.icon, null, null);
+		EMono.ui.hud.SetDragImage(b.icon);
 	}
 
 	public void OnDrag(UIButton b)
 	{
 		string text = "";
-		if (this.GetSwapButton(b))
+		if ((bool)GetSwapButton(b))
 		{
 			text = "hotitemSwap";
 		}
@@ -621,22 +632,23 @@ public class WidgetHotbar : Widget, IDragParent
 		{
 			text = "hotitemTrash";
 		}
-		EMono.ui.hud.SetDragText(text, null);
+		EMono.ui.hud.SetDragText(text);
 	}
 
 	public ButtonHotItem GetSwapButton(UIButton b)
 	{
-		foreach (Widget widget in EMono.ui.widgets.list)
+		foreach (Widget item in EMono.ui.widgets.list)
 		{
-			WidgetHotbar widgetHotbar = widget as WidgetHotbar;
-			if (!(widgetHotbar == null))
+			WidgetHotbar widgetHotbar = item as WidgetHotbar;
+			if (widgetHotbar == null)
 			{
-				foreach (ButtonHotItem buttonHotItem in widgetHotbar.buttons)
+				continue;
+			}
+			foreach (ButtonHotItem button in widgetHotbar.buttons)
+			{
+				if (InputModuleEX.IsPointerOver(button) && b != button)
 				{
-					if (InputModuleEX.IsPointerOver(buttonHotItem) && b != buttonHotItem)
-					{
-						return buttonHotItem;
-					}
+					return button;
 				}
 			}
 		}
@@ -645,9 +657,9 @@ public class WidgetHotbar : Widget, IDragParent
 
 	public void OnEndDrag(UIButton b, bool cancel = false)
 	{
-		EMono.ui.hud.imageDrag.SetActive(false);
-		ButtonHotItem swapButton = this.GetSwapButton(b);
-		if (swapButton)
+		EMono.ui.hud.imageDrag.SetActive(enable: false);
+		ButtonHotItem swapButton = GetSwapButton(b);
+		if ((bool)swapButton)
 		{
 			SE.SelectHotitem();
 			ButtonHotItem buttonHotItem = b as ButtonHotItem;
@@ -668,69 +680,16 @@ public class WidgetHotbar : Widget, IDragParent
 				hotItem2.hotbar = hotbar;
 			}
 			UIInventory.RefreshAllList();
-			return;
 		}
-		if (EMono.ui.isPointerOverUI)
+		else if (EMono.ui.isPointerOverUI)
 		{
 			SE.Beep();
-			return;
 		}
-		SE.Trash();
-		this.SetItem(b as ButtonHotItem, null);
-		UIInventory.RefreshAllList();
-	}
-
-	public static bool registering;
-
-	public static bool dirtyCurrentItem;
-
-	public static HotItem registeringItem;
-
-	public static WidgetHotbar HotbarBuild;
-
-	public static WidgetHotbar HotBarMainMenu;
-
-	public static WidgetHotbar HotbarExtra;
-
-	public int idHotbar;
-
-	public GridLayoutGroup layout;
-
-	public ButtonHotItem mold;
-
-	public RawImage imageGrid;
-
-	public Image imageSelect;
-
-	public Hotbar.Type type;
-
-	public bool useMask;
-
-	[NonSerialized]
-	public List<ButtonHotItem> buttons = new List<ButtonHotItem>();
-
-	private bool showThisWidget;
-
-	private float timeSinceBecomeVisible;
-
-	public class Extra
-	{
-		public int iconSize = 2;
-
-		public int width = 1;
-
-		public int rows;
-
-		public bool showShortcut;
-
-		public bool vertical;
-
-		public bool visible;
-
-		public bool alwaysShow;
-
-		public bool reverse;
-
-		public bool autoSize;
+		else
+		{
+			SE.Trash();
+			SetItem(b as ButtonHotItem, null);
+			UIInventory.RefreshAllList();
+		}
 	}
 }

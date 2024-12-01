@@ -1,60 +1,56 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class HomeResourceWorth : HomeResourceRate
 {
-	public override bool IsAvailable
-	{
-		get
-		{
-			return false;
-		}
-	}
+	[JsonProperty]
+	public int bestRank;
+
+	public override bool IsAvailable => false;
 
 	public void UpdateRank()
 	{
-		int rank = EClass.game.spatials.ranks.GetRank(this.branch.owner);
-		if (this.bestRank == 0)
+		int rank = EClass.game.spatials.ranks.GetRank(branch.owner);
+		if (bestRank == 0)
 		{
-			this.bestRank = rank;
+			bestRank = rank;
 		}
-		if (rank < this.bestRank)
+		if (rank < bestRank)
 		{
-			this.bestRank = rank;
+			bestRank = rank;
 			EClass.Sound.Play((rank <= 50) ? "clap3" : ((rank <= 100) ? "clap2" : "clap1"));
-			Msg.Say("homerank_up", EClass.game.spatials.ranks.GetRankText(this.branch.owner), null, null, null);
+			Msg.Say("homerank_up", EClass.game.spatials.ranks.GetRankText(branch.owner));
 		}
 	}
 
 	public override void Refresh()
 	{
 		base.Refresh();
-		this.UpdateRank();
+		UpdateRank();
 	}
 
 	public int GetPrice(Thing t, bool top = false)
 	{
-		int num = t.GetPrice(CurrencyType.Money, false, PriceType.Tourism, null);
+		int num = t.GetPrice(CurrencyType.Money, sell: false, PriceType.Tourism);
 		if (t.noSell)
 		{
 			num /= 50;
 		}
-		if (top && this.branch.policies.IsActive(2821, -1))
+		if (top && branch.policies.IsActive(2821))
 		{
-			num = num * (150 + (int)Mathf.Sqrt((float)this.branch.Evalue(2821)) * 5) / 100;
+			num = num * (150 + (int)Mathf.Sqrt(branch.Evalue(2821)) * 5) / 100;
 		}
 		return num;
 	}
 
 	public override int GetDestValue()
 	{
-		List<Thing> list = this.ListHeirloom();
+		List<Thing> list = ListHeirloom();
 		int num = 0;
-		foreach (Thing thing in list)
+		foreach (Thing item in list)
 		{
-			num += this.GetPrice(thing, list[0] == thing);
+			num += GetPrice(item, list[0] == item);
 		}
 		return num;
 	}
@@ -66,67 +62,66 @@ public class HomeResourceWorth : HomeResourceRate
 		HashSet<string> hashSet = new HashSet<string>();
 		int[] array = new int[EClass._map.SizeXZ];
 		int num = 0;
-		int num2 = this.branch.Evalue(2814);
-		int num3 = this.branch.Evalue(2823);
+		int num2 = branch.Evalue(2814);
+		int num3 = branch.Evalue(2823);
 		foreach (Thing thing in EClass._map.things)
 		{
-			if (thing.IsInstalled)
+			if (!thing.IsInstalled)
 			{
-				if (thing.HasTag(CTAG.tourism))
+				continue;
+			}
+			if (thing.HasTag(CTAG.tourism))
+			{
+				bool flag = thing.trait is TraitFigure;
+				if (flag)
 				{
-					bool flag = thing.trait is TraitFigure;
-					if (flag)
+					if (array[thing.pos.index] != 0)
 					{
-						if (array[thing.pos.index] != 0)
-						{
-							continue;
-						}
-						array[thing.pos.index]++;
+						continue;
 					}
-					int num4 = 1;
-					string item;
-					if (flag)
-					{
-						item = "figure_" + thing.c_idRefCard;
-						num4 = 2;
-					}
-					else
-					{
-						item = thing.id + "_" + thing.idSkin.ToString();
-					}
-					if (!hashSet.Contains(item))
-					{
-						int num5 = this.GetPrice(thing, false) * num4;
-						if (num3 > 0)
-						{
-							num5 = num5 * (110 + (int)Mathf.Sqrt((float)num3) * 4) / 100;
-						}
-						num += num5;
-						hashSet.Add(item);
-					}
-					else if (num2 > 0)
-					{
-						int num6 = this.GetPrice(thing, false) * num4 / Mathf.Max(20, 30 - (int)Mathf.Sqrt((float)num2));
-						if (num6 > 0)
-						{
-							num += num6;
-						}
-					}
+					array[thing.pos.index]++;
 				}
-				if (thing.IsFurniture || thing.trait is TraitToolMusic)
+				string text = "";
+				int num4 = 1;
+				if (flag)
 				{
-					list2.Add(thing);
+					text = "figure_" + thing.c_idRefCard;
+					num4 = 2;
+				}
+				else
+				{
+					text = thing.id + "_" + thing.idSkin;
+				}
+				if (!hashSet.Contains(text))
+				{
+					int num5 = GetPrice(thing) * num4;
+					if (num3 > 0)
+					{
+						num5 = num5 * (110 + (int)Mathf.Sqrt(num3) * 4) / 100;
+					}
+					num += num5;
+					hashSet.Add(text);
+				}
+				else if (num2 > 0)
+				{
+					int num6 = GetPrice(thing) * num4 / Mathf.Max(20, 30 - (int)Mathf.Sqrt(num2));
+					if (num6 > 0)
+					{
+						num += num6;
+					}
 				}
 			}
+			if (thing.IsFurniture || thing.trait is TraitToolMusic)
+			{
+				list2.Add(thing);
+			}
 		}
-		int num7 = this.branch.Evalue(3780) + this.branch.Evalue(3781) + this.branch.Evalue(3782) + this.branch.Evalue(3783) + this.branch.Evalue(3784);
-		this.branch.tourism = (100 + num) * (100 + num7 * 15) / 100;
-		list2.Sort((Thing a, Thing b) => this.GetPrice(b, false) - this.GetPrice(a, false));
-		int num8 = 0;
-		while (num8 < this.branch.NumHeirloom && num8 < list2.Count)
+		int num7 = branch.Evalue(3780) + branch.Evalue(3781) + branch.Evalue(3782) + branch.Evalue(3783) + branch.Evalue(3784);
+		branch.tourism = (100 + num) * (100 + num7 * 15) / 100;
+		list2.Sort((Thing a, Thing b) => GetPrice(b) - GetPrice(a));
+		for (int i = 0; i < branch.NumHeirloom && i < list2.Count; i++)
 		{
-			list.Add(list2[num8]);
-			num8++;
+			list.Add(list2[i]);
 		}
 		return list;
 	}
@@ -134,25 +129,18 @@ public class HomeResourceWorth : HomeResourceRate
 	public override void WriteNote(UINote n)
 	{
 		n.Clear();
-		n.AddHeader(base.Name, null);
-		n.AddTopic("TopicLeft", "vCurrent".lang(), this.value.ToFormat() ?? "");
-		n.AddTopic("TopicLeft", "tourism_value".lang(), this.branch.tourism.ToFormat() ?? "");
-		n.Space(0, 1);
-		n.AddHeader("HeaderTopic", "heirloom_list".lang(this.branch.NumHeirloom.ToString() ?? "", null, null, null, null), null);
-		n.Space(1, 1);
-		List<Thing> list = this.ListHeirloom();
+		n.AddHeader(base.Name);
+		n.AddTopic("TopicLeft", "vCurrent".lang(), value.ToFormat() ?? "");
+		n.AddTopic("TopicLeft", "tourism_value".lang(), branch.tourism.ToFormat() ?? "");
+		n.Space();
+		n.AddHeader("HeaderTopic", "heirloom_list".lang(branch.NumHeirloom.ToString() ?? ""));
+		n.Space(1);
+		List<Thing> list = ListHeirloom();
 		for (int i = 0; i < list.Count; i++)
 		{
 			Thing thing = list[i];
-			string str = (i + 1).ToString();
-			string str2 = ": ";
-			string name = thing.Name;
-			object obj = EClass.debug.showExtra ? this.GetPrice(thing, i == 0) : "";
-			n.AddText(str + str2 + name + ((obj != null) ? obj.ToString() : null), FontColor.DontChange);
+			n.AddText(i + 1 + ": " + thing.Name + (EClass.debug.showExtra ? ((object)GetPrice(thing, i == 0)) : ""));
 		}
 		n.Build();
 	}
-
-	[JsonProperty]
-	public int bestRank;
 }

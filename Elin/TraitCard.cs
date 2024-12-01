@@ -1,14 +1,6 @@
-﻿using System;
-
 public class TraitCard : TraitFigure
 {
-	public override bool ShowShadow
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool ShowShadow => false;
 
 	public override int GetMatColor()
 	{

@@ -1,59 +1,35 @@
-﻿using System;
-
 public class AM_CreateArea : AM_BaseTileSelect
 {
-	public override bool IsBuildMode
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public Area area;
 
-	public override string textHintTitle
-	{
-		get
-		{
-			return this.area.Name;
-		}
-	}
+	public override bool IsBuildMode => true;
+
+	public override string textHintTitle => area.Name;
+
+	public override string idSound => null;
+
+	public override AreaHighlightMode AreaHihlight => AreaHighlightMode.Edit;
 
 	public override void OnUpdateCursor()
 	{
-		base.SetCursorOnMap(CursorSystem.Build);
-	}
-
-	public override string idSound
-	{
-		get
-		{
-			return null;
-		}
-	}
-
-	public override AreaHighlightMode AreaHihlight
-	{
-		get
-		{
-			return AreaHighlightMode.Edit;
-		}
+		SetCursorOnMap(CursorSystem.Build);
 	}
 
 	public void CreateNew(Area a)
 	{
-		this.area = Area.Create(a.type.id);
-		this.area.data.name = null;
+		area = Area.Create(a.type.id);
+		area.data.name = null;
 	}
 
 	public void SetArea(Area a)
 	{
-		this.CreateNew(a);
+		CreateNew(a);
 	}
 
 	public override HitResult HitTest(Point point, Point start)
 	{
 		HitResult hitResult = EClass._map.rooms.GetHitResult(point, start);
-		if (hitResult != HitResult.Default)
+		if (hitResult != 0)
 		{
 			return hitResult;
 		}
@@ -66,20 +42,20 @@ public class AM_CreateArea : AM_BaseTileSelect
 
 	public override void OnProcessTiles(Point point, int dir)
 	{
-		this.area.SetRandomName(-1);
-		EClass._map.rooms.AddArea(this.area, point);
+		area.SetRandomName();
+		EClass._map.rooms.AddArea(area, point);
 		EClass.Sound.Play("build_area");
 	}
 
 	public override void OnAfterProcessTiles(Point start, Point end)
 	{
-		this.CreateNew(this.area);
+		CreateNew(area);
 	}
 
 	public override void OnDeactivate()
 	{
-		this.area = null;
-		if (BuildMenu.Instance)
+		area = null;
+		if ((bool)BuildMenu.Instance)
 		{
 			BuildMenu.Instance.Unselect();
 		}
@@ -87,8 +63,6 @@ public class AM_CreateArea : AM_BaseTileSelect
 
 	public override void OnCancel()
 	{
-		ActionMode.EditArea.Activate(true, false);
+		ActionMode.EditArea.Activate();
 	}
-
-	public Area area;
 }

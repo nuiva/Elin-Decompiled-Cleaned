@@ -1,11 +1,10 @@
-﻿using System;
+using System;
 
-namespace Algorithms
+namespace Algorithms;
+
+internal class AuthorAttribute : Attribute
 {
-	internal class AuthorAttribute : Attribute
+	public AuthorAttribute(string authorName)
 	{
-		public AuthorAttribute(string authorName)
-		{
-		}
 	}
 }

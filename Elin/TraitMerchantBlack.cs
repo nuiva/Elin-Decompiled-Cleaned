@@ -1,22 +1,8 @@
-﻿using System;
-
 public class TraitMerchantBlack : TraitMerchant
 {
-	public override bool AllowCriminal
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool AllowCriminal => true;
 
-	public override int CostRerollShop
-	{
-		get
-		{
-			return 2;
-		}
-	}
+	public override int CostRerollShop => 2;
 
 	public override ShopType ShopType
 	{
@@ -30,11 +16,5 @@ public class TraitMerchantBlack : TraitMerchant
 		}
 	}
 
-	public override bool CanSellStolenGoods
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanSellStolenGoods => true;
 }

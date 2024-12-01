@@ -1,82 +1,41 @@
-﻿using System;
-using System.Collections.Generic;
-
 public class TraitRoomPlate : TraitBoard
 {
-	public override bool IsHomeItem
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsHomeItem => true;
 
-	public override bool CanBeMasked
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanBeMasked => true;
 
-	public override bool ShouldTryRefreshRoom
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool ShouldTryRefreshRoom => true;
 
-	public override bool MaskOnBuild
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool MaskOnBuild => true;
 
-	public override bool ShowContextOnPick
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool ShowContextOnPick => true;
 
 	public AreaData areaData
 	{
 		get
 		{
-			return this.owner.GetObj<AreaData>(3) ?? this.owner.SetObj<AreaData>(3, new AreaData());
+			return owner.GetObj<AreaData>(3) ?? owner.SetObj<AreaData>(3, new AreaData());
 		}
 		set
 		{
-			this.owner.SetObj(3, value);
+			owner.SetObj(3, value);
 		}
 	}
 
 	public override void TrySetAct(ActPlan p)
 	{
-		if (!EClass.debug.enable && !EClass._zone.IsPCFaction)
+		if ((!EClass.debug.enable && !EClass._zone.IsPCFaction) || !owner.IsInstalled || owner.pos.cell.room == null)
 		{
 			return;
 		}
-		if (!this.owner.IsInstalled || this.owner.pos.cell.room == null)
+		foreach (BaseArea.Interaction a in owner.pos.cell.room.ListInteractions())
 		{
-			return;
-		}
-		using (List<BaseArea.Interaction>.Enumerator enumerator = this.owner.pos.cell.room.ListInteractions().GetEnumerator())
-		{
-			while (enumerator.MoveNext())
+			p.TrySetAct(a.text, delegate
 			{
-				BaseArea.Interaction a = enumerator.Current;
-				p.TrySetAct(a.text, delegate()
-				{
-					a.action();
-					EClass._map.rooms.RefreshAll();
-					return false;
-				}, this.owner, null, 1, false, true, false);
-			}
+				a.action();
+				EClass._map.rooms.RefreshAll();
+				return false;
+			}, owner);
 		}
 	}
 }

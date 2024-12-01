@@ -1,22 +1,8 @@
-﻿using System;
-
 public class TraitDeed : TraitScroll
 {
-	public override bool CanStack
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanStack => false;
 
-	public override bool CanBeDestroyed
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeDestroyed => false;
 
 	public override void OnRead(Chara c)
 	{
@@ -27,8 +13,8 @@ public class TraitDeed : TraitScroll
 		}
 		Dialog.YesNo("dialog_claimLand", delegate
 		{
-			EClass._zone.ClaimZone(false);
-			this.owner.ModNum(-1, true);
+			EClass._zone.ClaimZone();
+			owner.ModNum(-1);
 			WidgetMenuPanel.OnChangeMode();
 			if (EClass._zone == EClass.game.StartZone)
 			{
@@ -41,7 +27,7 @@ public class TraitDeed : TraitScroll
 					EClass.game.quests.Main.ChangePhase(200);
 				}
 			}
-			EClass.player.EndTurn(true);
-		}, null, "yes", "no");
+			EClass.player.EndTurn();
+		});
 	}
 }

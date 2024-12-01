@@ -1,12 +1,4 @@
-﻿using System;
-
 public class TraitUniqueChara : TraitChara
 {
-	public override bool IsUnique
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsUnique => true;
 }

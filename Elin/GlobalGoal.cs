@@ -1,17 +1,21 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class GlobalGoal : EClass
 {
+	[JsonProperty]
+	public int hours;
+
+	public Chara owner;
+
 	public void SetOwner(Chara c)
 	{
-		this.owner = c;
+		owner = c;
 		c.global.goal = this;
 	}
 
 	public void Start()
 	{
-		this.OnStart();
+		OnStart();
 	}
 
 	public virtual void OnStart()
@@ -20,8 +24,8 @@ public class GlobalGoal : EClass
 
 	public void AdvanceHour()
 	{
-		this.hours++;
-		this.OnAdvanceHour();
+		hours++;
+		OnAdvanceHour();
 	}
 
 	public virtual void OnAdvanceHour()
@@ -30,21 +34,16 @@ public class GlobalGoal : EClass
 
 	public void Kill()
 	{
-		this.owner.global.goal = null;
+		owner.global.goal = null;
 	}
 
 	public void Complete()
 	{
-		this.OnComplete();
-		this.Kill();
+		OnComplete();
+		Kill();
 	}
 
 	public virtual void OnComplete()
 	{
 	}
-
-	[JsonProperty]
-	public int hours;
-
-	public Chara owner;
 }

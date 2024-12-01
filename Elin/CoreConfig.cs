@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -6,470 +6,10 @@ using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.UI;
 
-[JsonObject(MemberSerialization.OptOut)]
 [Serializable]
+[JsonObject(MemberSerialization.OptOut)]
 public class CoreConfig : EClass
 {
-	public static string path
-	{
-		get
-		{
-			return CorePath.ConfigFile;
-		}
-	}
-
-	public static int ZoomStep
-	{
-		get
-		{
-			if (!EClass.debug.enable)
-			{
-				return 5;
-			}
-			return 5;
-		}
-	}
-
-	[JsonIgnore]
-	public CameraSupport camSupport
-	{
-		get
-		{
-			return EClass.scene.camSupport;
-		}
-	}
-
-	public static bool Exist()
-	{
-		return File.Exists(CoreConfig.path) && (!EClass.debug.useNewConfig || !Application.isEditor);
-	}
-
-	public static CoreConfig TryLoadConfig()
-	{
-		if (!File.Exists(CoreConfig.path) || (EClass.debug.useNewConfig && Application.isEditor))
-		{
-			return null;
-		}
-		if (!File.Exists(CorePath.VersionFile))
-		{
-			return null;
-		}
-		CoreConfig coreConfig = IO.LoadFile<CoreConfig>(CoreConfig.path, false, null);
-		if (!CoreConfig.IsCompatible(coreConfig.version))
-		{
-			Debug.Log("Config version is different. deleting:" + coreConfig.version.ToString() + "/" + EClass.core.version.GetText());
-			return null;
-		}
-		if (coreConfig.game.backupInterval == 0)
-		{
-			coreConfig.game.numBackup = 5;
-			coreConfig.game.backupInterval = 8;
-			coreConfig.game.autoBackup = true;
-		}
-		if (coreConfig.version.IsBelow(0, 22, 17))
-		{
-			coreConfig.game.tutorial = true;
-		}
-		if (coreConfig.version.IsBelow(0, 22, 24))
-		{
-			coreConfig.ui.balloonBG = true;
-		}
-		return coreConfig;
-	}
-
-	public static bool IsCompatible(global::Version v)
-	{
-		return v.minor >= 22;
-	}
-
-	public static void Init()
-	{
-		if (EClass.core.config == null)
-		{
-			Debug.Log("Creating new config.");
-			CoreConfig coreConfig = EClass.core.config = IO.DeepCopy<CoreConfig>(EClass.setting.config);
-			coreConfig.SetLang(EClass.core.langCode);
-			if (!Application.isEditor || !EClass.debug.useNewConfig)
-			{
-				coreConfig.Save();
-			}
-			coreConfig.GetPostEffectProfile(false).OnChangeProfile();
-			if (EClass.debug.enable)
-			{
-				coreConfig.other.showTestOptions = true;
-				coreConfig.test.showNumbers = true;
-				coreConfig.game.waiter = 0;
-				coreConfig.game.advancedMenu = true;
-			}
-		}
-		EClass.core.config.OnInit();
-	}
-
-	public void OnInit()
-	{
-		EClass.core.ui.skins.SetMainSkin(this.test.idSkin);
-		this.Apply();
-		if (EClass.debug.enable)
-		{
-			this.net.enable = false;
-		}
-	}
-
-	public bool HasBackerRewardCode()
-	{
-		return ElinEncoder.IsValid(this.rewardCode);
-	}
-
-	public static void Reset()
-	{
-		string text = EClass.core.config.lang;
-		string text2 = EClass.core.config.rewardCode;
-		EClass.core.config = IO.DeepCopy<CoreConfig>(EClass.setting.config);
-		EClass.core.config.SetLang(text);
-		EClass.core.config.OnReset();
-		EClass.core.config.rewardCode = text2;
-	}
-
-	public static void ResetGeneral()
-	{
-		CoreConfig coreConfig = IO.DeepCopy<CoreConfig>(EClass.setting.config);
-		EClass.core.config.ui = coreConfig.ui;
-		EClass.core.config.font = coreConfig.font;
-		EClass.core.config.sound = coreConfig.sound;
-		EClass.core.config.Apply();
-		EClass.core.config.ApplyFont();
-	}
-
-	public static void ResetGraphics()
-	{
-		CoreConfig coreConfig = IO.DeepCopy<CoreConfig>(EClass.setting.config);
-		EClass.core.config.graphic = coreConfig.graphic;
-		EClass.core.config.GetPostEffectProfile(false).OnChangeProfile();
-		EClass.core.config.Apply();
-	}
-
-	public static void ResetGame()
-	{
-		CoreConfig coreConfig = IO.DeepCopy<CoreConfig>(EClass.setting.config);
-		EClass.core.config.game = coreConfig.game;
-		EClass.core.config.net = coreConfig.net;
-		EClass.core.config.backer = coreConfig.backer;
-		EClass.core.config.Apply();
-	}
-
-	public static void ResetInput()
-	{
-		CoreConfig coreConfig = IO.DeepCopy<CoreConfig>(EClass.setting.config);
-		EClass.core.config.input = coreConfig.input;
-		EClass.core.config.camera = coreConfig.camera;
-		EClass.core.config.Apply();
-	}
-
-	public static void ResetOther()
-	{
-		CoreConfig coreConfig = IO.DeepCopy<CoreConfig>(EClass.setting.config);
-		EClass.core.config.fix = coreConfig.fix;
-		EClass.core.config.other = coreConfig.other;
-		EClass.core.config.Apply();
-	}
-
-	public static void ResetTest()
-	{
-		CoreConfig coreConfig = IO.DeepCopy<CoreConfig>(EClass.setting.config);
-		EClass.core.config.test = coreConfig.test;
-		EClass.core.config.Apply();
-	}
-
-	public void OnReset()
-	{
-		EClass.core.config.GetPostEffectProfile(false).OnChangeProfile();
-		this.Apply();
-		this.ApplyFont();
-		this.ApplySkin();
-	}
-
-	public void SetLang(string id)
-	{
-		this.lang = id;
-	}
-
-	public void TryUpdatePlayedHour()
-	{
-		if (EClass.core.IsGameStarted)
-		{
-			int num = (int)(EClass.player.stats.timeElapsed / 3600.0);
-			if (num > this.maxPlayedHours)
-			{
-				this.maxPlayedHours = num;
-				this.Save();
-			}
-		}
-	}
-
-	public void Save()
-	{
-		this.version = EClass.core.version;
-		IO.SaveFile(CoreConfig.path, this, false, IO.jsWriteConfig);
-		IO.SaveFile(CorePath.VersionFile, this.version, false, null);
-		Debug.Log("Config saved to " + CoreConfig.path);
-	}
-
-	public void OnChangeResolution()
-	{
-		this.ApplyScale();
-	}
-
-	public void ApplyFPS(bool force = false)
-	{
-		if (!EClass.core.IsGameStarted && !force)
-		{
-			QualitySettings.vSyncCount = 0;
-			Application.targetFrameRate = 60;
-			return;
-		}
-		if (this.graphic.vsync)
-		{
-			QualitySettings.vSyncCount = 1;
-			Application.targetFrameRate = 60;
-			return;
-		}
-		QualitySettings.vSyncCount = 0;
-		Application.targetFrameRate = this._framerates[this.graphic.fps];
-	}
-
-	public void Apply()
-	{
-		if (this.ignoreApply)
-		{
-			return;
-		}
-		EInput.SetKeyMap(this.input.keys);
-		this.ApplyFPS(false);
-		Application.runInBackground = (Application.isEditor || this.other.runBackground);
-		this.ApplyVolume();
-		this.ApplyGrading();
-		this.ApplyHUD();
-		this.ApplyResolution(false);
-		Window.openLastTab = this.ui.openLastTab;
-		Layer.closeOnRightClick = this.ui.rightClickClose;
-		RenderObject.animeSetting = EClass.core.gameSetting.render.anime;
-		RenderObject.renderSetting = (RenderData.renderSetting = EClass.core.gameSetting.render);
-		TC._setting = EClass.core.gameSetting.render.tc;
-		UIScrollView.sensitivity = this.ui.ScrollSensitivity;
-		UIContextMenu.closeOnMouseLeave = this.ui.closePopupOnMouseLeave;
-		EClass.core.canvas.pixelPerfect = this.graphic.pixelperfectUI;
-		EClass.screen.RefreshScreenSize();
-		CharaRenderer._animeFrame = EClass.setting.render.anime.animeStep[this.test.animeFrame];
-		CharaRenderer._animeFramePCC = EClass.setting.render.anime.animeStep[this.test.animeFramePCC];
-		CharaRenderer.smoothmove = this.camera.smoothMove;
-		CharaRenderer._animeFramePC = (this.camera.smoothMove ? 6000 : this.camera.moveframe);
-		Scene.skipAnime = true;
-		QualitySettings.maxQueuedFrames = 0;
-		PopManager.outlineAlpha = this.ui.outlineAlpha;
-		Window.animateWindow = this.ui.animeWindow;
-		EInput.rightScroll = this.game.rightScroll;
-		EInput.buttonScroll = (this.game.rightScroll ? EInput.rightMouse : EInput.middleMouse);
-		EInput.antiMissClick = 0.1f * (float)this.other.antiMissClick;
-		this.camSupport.bloom.enabled = this.graphic.bloom;
-		this.camSupport.beautify.bloom = this.test.bloom2;
-		this.camSupport.cam.allowHDR = this.graphic.hdr;
-		this.ApplyScale();
-	}
-
-	public void ApplyResolution(bool force = false)
-	{
-		if (this.graphic.fixedResolution)
-		{
-			force = true;
-		}
-		if (force)
-		{
-			Screen.SetResolution(this.graphic.w, this.graphic.h, this.graphic.fullScreen);
-		}
-		Screen.fullScreen = this.graphic.fullScreen;
-	}
-
-	public void ApplyScale()
-	{
-		float num = (float)this.ui.scale * 0.05f;
-		if (this.ui.autoscale)
-		{
-			float a = 0.55f;
-			float b = num + 0.05f;
-			num = 0.01f * (float)Mathf.RoundToInt(Mathf.Lerp(a, b, (float)Screen.height / 1080f) * 100f);
-		}
-		if (this.ui.secureMinWidth && Screen.width < EClass.core.ui.minWidth)
-		{
-			float num2 = (float)Screen.width / (float)EClass.core.ui.minWidth;
-			if (num2 < num)
-			{
-				num = num2;
-			}
-		}
-		Debug.Log("#UI ApplyScale:" + num.ToString());
-		EClass.core.canvas.GetComponent<CanvasScaler>().scaleFactor = num;
-	}
-
-	public void ApplyHUD()
-	{
-	}
-
-	public void ApplyZoom(float a)
-	{
-		this.camSupport.Zoom = a;
-		EClass.screen.RefreshScreenSize();
-		this.camSupport.OnChangeResolution();
-	}
-
-	public PostEffectProfile GetPostEffectProfile(bool replaceWorld = false)
-	{
-		string text = this.graphic.idPostProfile.IsEmpty("None");
-		if (replaceWorld && EClass.core.IsGameStarted && EClass.core.game.activeZone.IsRegion && text != "None")
-		{
-			text = "NFAA";
-		}
-		return ResourceCache.Load<PostEffectProfile>("Scene/Profile/PostEffect/" + text);
-	}
-
-	public void ApplyGrading()
-	{
-		PostEffectProfile postEffectProfile = this.GetPostEffectProfile(false);
-		ScreenGrading grading = this.camSupport.grading;
-		grading.userSaturation = this.graphic.saturation + postEffectProfile.Saturation;
-		grading.userBrightness = this.graphic.brightness + postEffectProfile.Brightness;
-		grading.userContrast = this.graphic.contrast + postEffectProfile.Contrast;
-		this.camSupport.beautify.saturate = this.graphic.vibrance + grading.profile.Vibrance;
-		this.camSupport.kuwahara.enabled = this.graphic.kuwahara;
-		this.camSupport.blur.enabled = (this.graphic.blur > 0);
-		this.camSupport.blur.Amount = 0.01f * (float)this.graphic.blur;
-		if (EClass.core.IsGameStarted)
-		{
-			EClass.screen.RefreshGrading();
-		}
-		this.camSupport.OnChangeResolution();
-		this.RefreshUIBrightness();
-		postEffectProfile.Apply(EClass.scene.cam);
-	}
-
-	public void RefreshUIBrightness()
-	{
-		ScreenGrading grading = this.camSupport.grading;
-		float num = 0f;
-		float num2 = 0f;
-		if (EClass.core.IsGameStarted)
-		{
-			if (this.ui.dynamicBrightness && (EClass.world.date.IsNight || EClass._map.config.indoor))
-			{
-				num -= 0.05f * this.ui.dynamicBrightnessMod;
-			}
-		}
-		else
-		{
-			num = -0.05f;
-		}
-		Shader.SetGlobalFloat("_UIBrightness", 0.01f * (float)this.ui.brightness + grading.profile.uiBrightness + num);
-		Shader.SetGlobalFloat("_UIContrast", 0.01f * (float)this.ui.contrast + grading.profile.uiContrast + EClass.core.ui.lightContrast + num2);
-	}
-
-	public void ApplyVolume()
-	{
-		this.SetVolume("VolumeMaster", this.sound.volumeMaster);
-		this.SetVolume("VolumeBGM", EClass.Sound.muteBGM ? 0f : this.sound.volumeBGM);
-		this.SetVolume("VolumeSpatialBGM", this.sound.volumeBGM);
-		this.SetVolume("VolumeSFX", this.sound.volumeSFX);
-		this.SetVolume("VolumeAmbience", this.sound.volumeAMB);
-		this.SetBGMInterval();
-	}
-
-	public void SetBGMInterval()
-	{
-		if (EClass.core.IsGameStarted)
-		{
-			EClass._map.plDay.interval = this.other.bgmInterval * 5f;
-		}
-	}
-
-	public void SetVolume(string id, float v)
-	{
-		SoundManager.current.mixer.SetFloat(id, Mathf.Log((v < 0.01f) ? 0.01f : v) * 20f);
-	}
-
-	public void OnSetLang()
-	{
-		SkinManager.Instance.InitFont();
-		this.ApplyFont();
-	}
-
-	public void ApplyFont()
-	{
-		EClass.core.ui.skins.SetFonts(this.font.fontUI, this.font.fontChatbox, this.font.fontBalloon, this.font.fontDialog, this.font.fontWidget, this.font.fontNews);
-	}
-
-	public void ApplySkin()
-	{
-		Core.Instance.ui.skins.SetMainSkin(this.test.idSkin);
-		EClass.core.ApplySkins();
-	}
-
-	public global::Version version;
-
-	public string lang = "JP";
-
-	public string nameReport;
-
-	public string emailReport;
-
-	public string rewardCode;
-
-	public int maxPlayedHours;
-
-	public bool compressSave;
-
-	public bool ignoreParallelsWarning;
-
-	public bool ignoreLinuxModWarning;
-
-	public new CoreConfig.UISetting ui;
-
-	public CoreConfig.SoundSetting sound;
-
-	public CoreConfig.FontSetting font;
-
-	public CoreConfig.GraphicSetting graphic;
-
-	public new CoreConfig.GameConfig game;
-
-	public CoreConfig.NetSetting net;
-
-	public CoreConfig.BackerContentConfig backer;
-
-	public CoreConfig.InputSetting input;
-
-	public CoreConfig.CameraConfig camera;
-
-	public CoreConfig.OtherSetting other;
-
-	public CoreConfig.Fix fix;
-
-	public CoreConfig.Test test;
-
-	public List<FontSource> customFonts;
-
-	public HashSet<string> helpFlags = new HashSet<string>();
-
-	public int[] colors = new int[10];
-
-	[NonSerialized]
-	public bool ignoreApply;
-
-	private int[] _framerates = new int[]
-	{
-		120,
-		60,
-		30,
-		15
-	};
-
 	public enum GameFunc
 	{
 		None,
@@ -652,16 +192,16 @@ public class CoreConfig : EClass
 
 		public bool haltOnSpotTrap;
 
-		[JsonIgnore]
 		[NonSerialized]
+		[JsonIgnore]
 		public bool ignoreWarnCrime;
 
-		[JsonIgnore]
 		[NonSerialized]
+		[JsonIgnore]
 		public bool ignoreWarnMana;
 
-		[JsonIgnore]
 		[NonSerialized]
+		[JsonIgnore]
 		public bool ignoreWarnDisassemble;
 	}
 
@@ -684,29 +224,29 @@ public class CoreConfig : EClass
 
 		public bool altChangeHeight;
 
-		public CoreConfig.GameFunc middleClick;
+		public GameFunc middleClick;
 
-		public CoreConfig.GameFunc middlePressLong;
+		public GameFunc middlePressLong;
 
-		public CoreConfig.GameFunc mouse3Click;
+		public GameFunc mouse3Click;
 
-		public CoreConfig.GameFunc mouse3PressLong;
+		public GameFunc mouse3PressLong;
 
-		public CoreConfig.GameFunc mouse4Click;
+		public GameFunc mouse4Click;
 
-		public CoreConfig.GameFunc mouse4PressLong;
+		public GameFunc mouse4PressLong;
 
-		public CoreConfig.GameFuncBuild b_middleClick;
+		public GameFuncBuild b_middleClick;
 
-		public CoreConfig.GameFuncBuild b_middlePressLong;
+		public GameFuncBuild b_middlePressLong;
 
-		public CoreConfig.GameFuncBuild b_mouse3Click;
+		public GameFuncBuild b_mouse3Click;
 
-		public CoreConfig.GameFuncBuild b_mouse3PressLong;
+		public GameFuncBuild b_mouse3PressLong;
 
-		public CoreConfig.GameFuncBuild b_mouse4Click;
+		public GameFuncBuild b_mouse4Click;
 
-		public CoreConfig.GameFuncBuild b_mouse4PressLong;
+		public GameFuncBuild b_mouse4PressLong;
 
 		public EInput.KeyMapManager keys;
 	}
@@ -792,14 +332,6 @@ public class CoreConfig : EClass
 	[Serializable]
 	public class UISetting
 	{
-		public float ScrollSensitivity
-		{
-			get
-			{
-				return this.baseScrollSens * this.scrollSens * this.scrollSens;
-			}
-		}
-
 		public string defaultTheme;
 
 		public bool openLastTab;
@@ -843,6 +375,8 @@ public class CoreConfig : EClass
 		public int contrast;
 
 		public int outlineAlpha;
+
+		public float ScrollSensitivity => baseScrollSens * scrollSens * scrollSens;
 	}
 
 	[Serializable]
@@ -884,33 +418,17 @@ public class CoreConfig : EClass
 	[Serializable]
 	public class BackerContentConfig
 	{
-		public bool FilterAll
-		{
-			get
-			{
-				return this.filter == 2;
-			}
-		}
+		public int filter;
 
-		public bool FilterLang
-		{
-			get
-			{
-				return this.filter == 1;
-			}
-		}
+		public bool FilterAll => filter == 2;
 
-		public bool FilterNone
-		{
-			get
-			{
-				return this.filter == 0;
-			}
-		}
+		public bool FilterLang => filter == 1;
+
+		public bool FilterNone => filter == 0;
 
 		public bool Show(int id)
 		{
-			return this.Show(EClass.sources.backers.map.TryGetValue(id, null));
+			return Show(EClass.sources.backers.map.TryGetValue(id));
 		}
 
 		public bool Show(SourceBacker.Row row)
@@ -919,11 +437,11 @@ public class CoreConfig : EClass
 			{
 				return false;
 			}
-			if (this.FilterNone)
+			if (FilterNone)
 			{
 				return true;
 			}
-			if (this.FilterAll)
+			if (FilterAll)
 			{
 				return false;
 			}
@@ -938,15 +456,15 @@ public class CoreConfig : EClass
 
 		public bool Show(string s)
 		{
-			if (this.FilterNone)
+			if (FilterNone)
 			{
 				return true;
 			}
-			if (this.FilterAll)
+			if (FilterAll)
 			{
 				return false;
 			}
-			bool flag = this.IsJapanese(s);
+			bool flag = IsJapanese(s);
 			string langCode = Lang.langCode;
 			if (langCode == "JP" || langCode == "CN")
 			{
@@ -959,8 +477,6 @@ public class CoreConfig : EClass
 		{
 			return Regex.IsMatch(text, "[\\p{IsHiragana}\\p{IsKatakana}\\p{IsCJKUnifiedIdeographs}]+");
 		}
-
-		public int filter;
 	}
 
 	[Serializable]
@@ -1034,6 +550,455 @@ public class CoreConfig : EClass
 	{
 		public CameraSupport.Divider divider;
 
-		public CoreConfig.ScreenSnapType snapType;
+		public ScreenSnapType snapType;
+	}
+
+	public Version version;
+
+	public string lang = "JP";
+
+	public string nameReport;
+
+	public string emailReport;
+
+	public string rewardCode;
+
+	public int maxPlayedHours;
+
+	public bool compressSave;
+
+	public bool ignoreParallelsWarning;
+
+	public bool ignoreLinuxModWarning;
+
+	public new UISetting ui;
+
+	public SoundSetting sound;
+
+	public FontSetting font;
+
+	public GraphicSetting graphic;
+
+	public new GameConfig game;
+
+	public NetSetting net;
+
+	public BackerContentConfig backer;
+
+	public InputSetting input;
+
+	public CameraConfig camera;
+
+	public OtherSetting other;
+
+	public Fix fix;
+
+	public Test test;
+
+	public List<FontSource> customFonts;
+
+	public HashSet<string> helpFlags = new HashSet<string>();
+
+	public int[] colors = new int[10];
+
+	[NonSerialized]
+	public bool ignoreApply;
+
+	private int[] _framerates = new int[4] { 120, 60, 30, 15 };
+
+	public static string path => CorePath.ConfigFile;
+
+	public static int ZoomStep
+	{
+		get
+		{
+			if (!EClass.debug.enable)
+			{
+				return 5;
+			}
+			return 5;
+		}
+	}
+
+	[JsonIgnore]
+	public CameraSupport camSupport => EClass.scene.camSupport;
+
+	public static bool Exist()
+	{
+		if (!File.Exists(path) || (EClass.debug.useNewConfig && Application.isEditor))
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public static CoreConfig TryLoadConfig()
+	{
+		if (!File.Exists(path) || (EClass.debug.useNewConfig && Application.isEditor))
+		{
+			return null;
+		}
+		if (!File.Exists(CorePath.VersionFile))
+		{
+			return null;
+		}
+		CoreConfig coreConfig = IO.LoadFile<CoreConfig>(path);
+		if (!IsCompatible(coreConfig.version))
+		{
+			Debug.Log("Config version is different. deleting:" + coreConfig.version.ToString() + "/" + EClass.core.version.GetText());
+			return null;
+		}
+		if (coreConfig.game.backupInterval == 0)
+		{
+			coreConfig.game.numBackup = 5;
+			coreConfig.game.backupInterval = 8;
+			coreConfig.game.autoBackup = true;
+		}
+		if (coreConfig.version.IsBelow(0, 22, 17))
+		{
+			coreConfig.game.tutorial = true;
+		}
+		if (coreConfig.version.IsBelow(0, 22, 24))
+		{
+			coreConfig.ui.balloonBG = true;
+		}
+		return coreConfig;
+	}
+
+	public static bool IsCompatible(Version v)
+	{
+		return v.minor >= 22;
+	}
+
+	public static void Init()
+	{
+		if (EClass.core.config == null)
+		{
+			Debug.Log("Creating new config.");
+			CoreConfig coreConfig = (EClass.core.config = IO.DeepCopy(EClass.setting.config));
+			coreConfig.SetLang(EClass.core.langCode);
+			if (!Application.isEditor || !EClass.debug.useNewConfig)
+			{
+				coreConfig.Save();
+			}
+			coreConfig.GetPostEffectProfile().OnChangeProfile();
+			if (EClass.debug.enable)
+			{
+				coreConfig.other.showTestOptions = true;
+				coreConfig.test.showNumbers = true;
+				coreConfig.game.waiter = 0;
+				coreConfig.game.advancedMenu = true;
+			}
+		}
+		EClass.core.config.OnInit();
+	}
+
+	public void OnInit()
+	{
+		EClass.core.ui.skins.SetMainSkin(test.idSkin);
+		Apply();
+		if (EClass.debug.enable)
+		{
+			net.enable = false;
+		}
+	}
+
+	public bool HasBackerRewardCode()
+	{
+		return ElinEncoder.IsValid(rewardCode);
+	}
+
+	public static void Reset()
+	{
+		string text = EClass.core.config.lang;
+		string text2 = EClass.core.config.rewardCode;
+		EClass.core.config = IO.DeepCopy(EClass.setting.config);
+		EClass.core.config.SetLang(text);
+		EClass.core.config.OnReset();
+		EClass.core.config.rewardCode = text2;
+	}
+
+	public static void ResetGeneral()
+	{
+		CoreConfig coreConfig = IO.DeepCopy(EClass.setting.config);
+		EClass.core.config.ui = coreConfig.ui;
+		EClass.core.config.font = coreConfig.font;
+		EClass.core.config.sound = coreConfig.sound;
+		EClass.core.config.Apply();
+		EClass.core.config.ApplyFont();
+	}
+
+	public static void ResetGraphics()
+	{
+		CoreConfig coreConfig = IO.DeepCopy(EClass.setting.config);
+		EClass.core.config.graphic = coreConfig.graphic;
+		EClass.core.config.GetPostEffectProfile().OnChangeProfile();
+		EClass.core.config.Apply();
+	}
+
+	public static void ResetGame()
+	{
+		CoreConfig coreConfig = IO.DeepCopy(EClass.setting.config);
+		EClass.core.config.game = coreConfig.game;
+		EClass.core.config.net = coreConfig.net;
+		EClass.core.config.backer = coreConfig.backer;
+		EClass.core.config.Apply();
+	}
+
+	public static void ResetInput()
+	{
+		CoreConfig coreConfig = IO.DeepCopy(EClass.setting.config);
+		EClass.core.config.input = coreConfig.input;
+		EClass.core.config.camera = coreConfig.camera;
+		EClass.core.config.Apply();
+	}
+
+	public static void ResetOther()
+	{
+		CoreConfig coreConfig = IO.DeepCopy(EClass.setting.config);
+		EClass.core.config.fix = coreConfig.fix;
+		EClass.core.config.other = coreConfig.other;
+		EClass.core.config.Apply();
+	}
+
+	public static void ResetTest()
+	{
+		CoreConfig coreConfig = IO.DeepCopy(EClass.setting.config);
+		EClass.core.config.test = coreConfig.test;
+		EClass.core.config.Apply();
+	}
+
+	public void OnReset()
+	{
+		EClass.core.config.GetPostEffectProfile().OnChangeProfile();
+		Apply();
+		ApplyFont();
+		ApplySkin();
+	}
+
+	public void SetLang(string id)
+	{
+		lang = id;
+	}
+
+	public void TryUpdatePlayedHour()
+	{
+		if (EClass.core.IsGameStarted)
+		{
+			int num = (int)(EClass.player.stats.timeElapsed / 3600.0);
+			if (num > maxPlayedHours)
+			{
+				maxPlayedHours = num;
+				Save();
+			}
+		}
+	}
+
+	public void Save()
+	{
+		version = EClass.core.version;
+		IO.SaveFile(path, this, compress: false, IO.jsWriteConfig);
+		IO.SaveFile(CorePath.VersionFile, version);
+		Debug.Log("Config saved to " + path);
+	}
+
+	public void OnChangeResolution()
+	{
+		ApplyScale();
+	}
+
+	public void ApplyFPS(bool force = false)
+	{
+		if (EClass.core.IsGameStarted || force)
+		{
+			if (graphic.vsync)
+			{
+				QualitySettings.vSyncCount = 1;
+				Application.targetFrameRate = 60;
+			}
+			else
+			{
+				QualitySettings.vSyncCount = 0;
+				Application.targetFrameRate = _framerates[graphic.fps];
+			}
+		}
+		else
+		{
+			QualitySettings.vSyncCount = 0;
+			Application.targetFrameRate = 60;
+		}
+	}
+
+	public void Apply()
+	{
+		if (!ignoreApply)
+		{
+			EInput.SetKeyMap(input.keys);
+			ApplyFPS();
+			Application.runInBackground = Application.isEditor || other.runBackground;
+			ApplyVolume();
+			ApplyGrading();
+			ApplyHUD();
+			ApplyResolution();
+			Window.openLastTab = ui.openLastTab;
+			Layer.closeOnRightClick = ui.rightClickClose;
+			RenderObject.animeSetting = EClass.core.gameSetting.render.anime;
+			RenderObject.renderSetting = (RenderData.renderSetting = EClass.core.gameSetting.render);
+			TC._setting = EClass.core.gameSetting.render.tc;
+			UIScrollView.sensitivity = ui.ScrollSensitivity;
+			UIContextMenu.closeOnMouseLeave = ui.closePopupOnMouseLeave;
+			EClass.core.canvas.pixelPerfect = graphic.pixelperfectUI;
+			EClass.screen.RefreshScreenSize();
+			CharaRenderer._animeFrame = EClass.setting.render.anime.animeStep[test.animeFrame];
+			CharaRenderer._animeFramePCC = EClass.setting.render.anime.animeStep[test.animeFramePCC];
+			CharaRenderer.smoothmove = camera.smoothMove;
+			CharaRenderer._animeFramePC = (camera.smoothMove ? 6000 : camera.moveframe);
+			Scene.skipAnime = true;
+			QualitySettings.maxQueuedFrames = 0;
+			PopManager.outlineAlpha = ui.outlineAlpha;
+			Window.animateWindow = ui.animeWindow;
+			EInput.rightScroll = game.rightScroll;
+			EInput.buttonScroll = (game.rightScroll ? EInput.rightMouse : EInput.middleMouse);
+			EInput.antiMissClick = 0.1f * (float)other.antiMissClick;
+			camSupport.bloom.enabled = graphic.bloom;
+			camSupport.beautify.bloom = test.bloom2;
+			camSupport.cam.allowHDR = graphic.hdr;
+			ApplyScale();
+		}
+	}
+
+	public void ApplyResolution(bool force = false)
+	{
+		if (graphic.fixedResolution)
+		{
+			force = true;
+		}
+		if (force)
+		{
+			Screen.SetResolution(graphic.w, graphic.h, graphic.fullScreen);
+		}
+		Screen.fullScreen = graphic.fullScreen;
+	}
+
+	public void ApplyScale()
+	{
+		float num = (float)ui.scale * 0.05f;
+		if (ui.autoscale)
+		{
+			float a = 0.55f;
+			float b = num + 0.05f;
+			num = 0.01f * (float)Mathf.RoundToInt(Mathf.Lerp(a, b, (float)Screen.height / 1080f) * 100f);
+		}
+		if (ui.secureMinWidth && Screen.width < EClass.core.ui.minWidth)
+		{
+			float num2 = (float)Screen.width / (float)EClass.core.ui.minWidth;
+			if (num2 < num)
+			{
+				num = num2;
+			}
+		}
+		Debug.Log("#UI ApplyScale:" + num);
+		EClass.core.canvas.GetComponent<CanvasScaler>().scaleFactor = num;
+	}
+
+	public void ApplyHUD()
+	{
+	}
+
+	public void ApplyZoom(float a)
+	{
+		camSupport.Zoom = a;
+		EClass.screen.RefreshScreenSize();
+		camSupport.OnChangeResolution();
+	}
+
+	public PostEffectProfile GetPostEffectProfile(bool replaceWorld = false)
+	{
+		string text = graphic.idPostProfile.IsEmpty("None");
+		if (replaceWorld && EClass.core.IsGameStarted && EClass.core.game.activeZone.IsRegion && text != "None")
+		{
+			text = "NFAA";
+		}
+		return ResourceCache.Load<PostEffectProfile>("Scene/Profile/PostEffect/" + text);
+	}
+
+	public void ApplyGrading()
+	{
+		PostEffectProfile postEffectProfile = GetPostEffectProfile();
+		ScreenGrading grading = camSupport.grading;
+		grading.userSaturation = graphic.saturation + postEffectProfile.Saturation;
+		grading.userBrightness = graphic.brightness + postEffectProfile.Brightness;
+		grading.userContrast = graphic.contrast + postEffectProfile.Contrast;
+		camSupport.beautify.saturate = graphic.vibrance + grading.profile.Vibrance;
+		camSupport.kuwahara.enabled = graphic.kuwahara;
+		camSupport.blur.enabled = graphic.blur > 0;
+		camSupport.blur.Amount = 0.01f * (float)graphic.blur;
+		if (EClass.core.IsGameStarted)
+		{
+			EClass.screen.RefreshGrading();
+		}
+		camSupport.OnChangeResolution();
+		RefreshUIBrightness();
+		postEffectProfile.Apply(EClass.scene.cam);
+	}
+
+	public void RefreshUIBrightness()
+	{
+		ScreenGrading grading = camSupport.grading;
+		float num = 0f;
+		float num2 = 0f;
+		if (EClass.core.IsGameStarted)
+		{
+			if (ui.dynamicBrightness && (EClass.world.date.IsNight || EClass._map.config.indoor))
+			{
+				num -= 0.05f * ui.dynamicBrightnessMod;
+			}
+		}
+		else
+		{
+			num = -0.05f;
+		}
+		Shader.SetGlobalFloat("_UIBrightness", 0.01f * (float)ui.brightness + grading.profile.uiBrightness + num);
+		Shader.SetGlobalFloat("_UIContrast", 0.01f * (float)ui.contrast + grading.profile.uiContrast + EClass.core.ui.lightContrast + num2);
+	}
+
+	public void ApplyVolume()
+	{
+		SetVolume("VolumeMaster", sound.volumeMaster);
+		SetVolume("VolumeBGM", EClass.Sound.muteBGM ? 0f : sound.volumeBGM);
+		SetVolume("VolumeSpatialBGM", sound.volumeBGM);
+		SetVolume("VolumeSFX", sound.volumeSFX);
+		SetVolume("VolumeAmbience", sound.volumeAMB);
+		SetBGMInterval();
+	}
+
+	public void SetBGMInterval()
+	{
+		if (EClass.core.IsGameStarted)
+		{
+			EClass._map.plDay.interval = other.bgmInterval * 5f;
+		}
+	}
+
+	public void SetVolume(string id, float v)
+	{
+		SoundManager.current.mixer.SetFloat(id, Mathf.Log((v < 0.01f) ? 0.01f : v) * 20f);
+	}
+
+	public void OnSetLang()
+	{
+		SkinManager.Instance.InitFont();
+		ApplyFont();
+	}
+
+	public void ApplyFont()
+	{
+		EClass.core.ui.skins.SetFonts(font.fontUI, font.fontChatbox, font.fontBalloon, font.fontDialog, font.fontWidget, font.fontNews);
+	}
+
+	public void ApplySkin()
+	{
+		Core.Instance.ui.skins.SetMainSkin(test.idSkin);
+		EClass.core.ApplySkins();
 	}
 }

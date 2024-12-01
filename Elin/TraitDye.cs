@@ -1,23 +1,19 @@
-﻿using System;
-
 public class TraitDye : Trait
 {
-	public override bool IsBlendBase
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsBlendBase => true;
 
 	public override bool CanUse(Chara c, Card tg)
 	{
-		return tg.isThing && c.Dist(tg) <= 1 && this.CanBlend(tg.Thing);
+		if (tg.isThing && c.Dist(tg) <= 1)
+		{
+			return CanBlend(tg.Thing);
+		}
+		return false;
 	}
 
 	public override bool OnUse(Chara c, Card tg)
 	{
-		this.Dye(tg);
+		Dye(tg);
 		return true;
 	}
 
@@ -25,9 +21,9 @@ public class TraitDye : Trait
 	{
 		if (p.HasObj)
 		{
-			p.cell.objMat = (byte)this.owner.material.id;
+			p.cell.objMat = (byte)owner.material.id;
 			p.cell.isObjDyed = true;
-			this.owner.Die(null, null, AttackSource.None);
+			owner.Die();
 		}
 	}
 
@@ -38,14 +34,14 @@ public class TraitDye : Trait
 
 	public override void OnBlend(Thing t, Chara c)
 	{
-		this.Dye(t);
+		Dye(t);
 	}
 
 	public void Dye(Card tg)
 	{
-		tg.Dye(this.owner.material);
-		Msg.Say("dye", tg, null, null, null);
-		EClass.pc.PlaySound("water_farm", 1f, true);
-		this.owner.ModNum(-1, true);
+		tg.Dye(owner.material);
+		Msg.Say("dye", tg);
+		EClass.pc.PlaySound("water_farm");
+		owner.ModNum(-1);
 	}
 }

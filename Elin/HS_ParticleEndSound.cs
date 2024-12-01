@@ -1,87 +1,18 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class HS_ParticleEndSound : MonoBehaviour
 {
-	private void Awake()
+	[Serializable]
+	public class Pool
 	{
-		HS_ParticleEndSound.SharedInstance = this;
-	}
+		public string tag;
 
-	private void Start()
-	{
-		this.poolDictionary = new Dictionary<string, Queue<GameObject>>();
-		foreach (HS_ParticleEndSound.Pool pool in this.pools)
-		{
-			Queue<GameObject> queue = new Queue<GameObject>();
-			GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(pool.prefab);
-			AudioSource component = gameObject.GetComponent<AudioSource>();
-			if (pool.tag == "AudioExplosion")
-			{
-				component.clip = this.audioExplosion[UnityEngine.Random.Range(0, this.audioExplosion.Length)];
-				component.volume = UnityEngine.Random.Range(this.explosionMinVolume, this.explosionMaxVolume);
-				component.pitch = UnityEngine.Random.Range(this.explosionPitchMin, this.explosionPitchMax);
-			}
-			else if (pool.tag == "AudioShot")
-			{
-				component.clip = this.audioShot[UnityEngine.Random.Range(0, this.audioExplosion.Length)];
-				component.volume = UnityEngine.Random.Range(this.shootMinVolume, this.shootMaxVolume);
-				component.pitch = UnityEngine.Random.Range(this.shootPitchMin, this.shootPitchMax);
-			}
-			gameObject.transform.parent = base.gameObject.transform;
-			gameObject.SetActive(false);
-			queue.Enqueue(gameObject);
-			this.poolDictionary.Add(pool.tag, queue);
-		}
-	}
+		public GameObject prefab;
 
-	public GameObject SpawnFromPool(string tag, Vector3 position)
-	{
-		if (!this.poolDictionary.ContainsKey(tag))
-		{
-			Debug.LogWarning("Pool with tag" + tag + " does not excist.");
-			return null;
-		}
-		GameObject gameObject = this.poolDictionary[tag].Dequeue();
-		gameObject.SetActive(true);
-		position.z = 0f;
-		gameObject.transform.position = position;
-		this.poolDictionary[tag].Enqueue(gameObject);
-		return gameObject;
-	}
-
-	public void LateUpdate()
-	{
-		ParticleSystem.Particle[] array = new ParticleSystem.Particle[base.GetComponent<ParticleSystem>().particleCount];
-		int particles = base.GetComponent<ParticleSystem>().GetParticles(array);
-		for (int i = 0; i < particles; i++)
-		{
-			if (this.audioExplosion.Length != 0 && array[i].remainingLifetime < Time.deltaTime)
-			{
-				GameObject gameObject = HS_ParticleEndSound.SharedInstance.SpawnFromPool("AudioExplosion", array[i].position);
-				if (gameObject != null)
-				{
-					base.StartCoroutine(this.LateCall(gameObject));
-				}
-			}
-			if (this.audioShot.Length != 0 && array[i].remainingLifetime >= array[i].startLifetime - Time.deltaTime)
-			{
-				GameObject gameObject2 = HS_ParticleEndSound.SharedInstance.SpawnFromPool("AudioShot", array[i].position);
-				if (gameObject2 != null)
-				{
-					base.StartCoroutine(this.LateCall(gameObject2));
-				}
-			}
-		}
-	}
-
-	private IEnumerator LateCall(GameObject soundInstance)
-	{
-		yield return new WaitForSeconds(this.poolReturnTimer);
-		soundInstance.SetActive(false);
-		yield break;
+		public int size;
 	}
 
 	public float poolReturnTimer = 1.5f;
@@ -108,17 +39,85 @@ public class HS_ParticleEndSound : MonoBehaviour
 
 	public static HS_ParticleEndSound SharedInstance;
 
-	public List<HS_ParticleEndSound.Pool> pools;
+	public List<Pool> pools;
 
 	public Dictionary<string, Queue<GameObject>> poolDictionary;
 
-	[Serializable]
-	public class Pool
+	private void Awake()
 	{
-		public string tag;
+		SharedInstance = this;
+	}
 
-		public GameObject prefab;
+	private void Start()
+	{
+		poolDictionary = new Dictionary<string, Queue<GameObject>>();
+		foreach (Pool pool in pools)
+		{
+			Queue<GameObject> queue = new Queue<GameObject>();
+			GameObject gameObject = UnityEngine.Object.Instantiate(pool.prefab);
+			AudioSource component = gameObject.GetComponent<AudioSource>();
+			if (pool.tag == "AudioExplosion")
+			{
+				component.clip = audioExplosion[UnityEngine.Random.Range(0, audioExplosion.Length)];
+				component.volume = UnityEngine.Random.Range(explosionMinVolume, explosionMaxVolume);
+				component.pitch = UnityEngine.Random.Range(explosionPitchMin, explosionPitchMax);
+			}
+			else if (pool.tag == "AudioShot")
+			{
+				component.clip = audioShot[UnityEngine.Random.Range(0, audioExplosion.Length)];
+				component.volume = UnityEngine.Random.Range(shootMinVolume, shootMaxVolume);
+				component.pitch = UnityEngine.Random.Range(shootPitchMin, shootPitchMax);
+			}
+			gameObject.transform.parent = base.gameObject.transform;
+			gameObject.SetActive(value: false);
+			queue.Enqueue(gameObject);
+			poolDictionary.Add(pool.tag, queue);
+		}
+	}
 
-		public int size;
+	public GameObject SpawnFromPool(string tag, Vector3 position)
+	{
+		if (!poolDictionary.ContainsKey(tag))
+		{
+			Debug.LogWarning("Pool with tag" + tag + " does not excist.");
+			return null;
+		}
+		GameObject gameObject = poolDictionary[tag].Dequeue();
+		gameObject.SetActive(value: true);
+		position.z = 0f;
+		gameObject.transform.position = position;
+		poolDictionary[tag].Enqueue(gameObject);
+		return gameObject;
+	}
+
+	public void LateUpdate()
+	{
+		ParticleSystem.Particle[] array = new ParticleSystem.Particle[GetComponent<ParticleSystem>().particleCount];
+		int particles = GetComponent<ParticleSystem>().GetParticles(array);
+		for (int i = 0; i < particles; i++)
+		{
+			if (audioExplosion.Length != 0 && array[i].remainingLifetime < Time.deltaTime)
+			{
+				GameObject gameObject = SharedInstance.SpawnFromPool("AudioExplosion", array[i].position);
+				if (gameObject != null)
+				{
+					StartCoroutine(LateCall(gameObject));
+				}
+			}
+			if (audioShot.Length != 0 && array[i].remainingLifetime >= array[i].startLifetime - Time.deltaTime)
+			{
+				GameObject gameObject2 = SharedInstance.SpawnFromPool("AudioShot", array[i].position);
+				if (gameObject2 != null)
+				{
+					StartCoroutine(LateCall(gameObject2));
+				}
+			}
+		}
+	}
+
+	private IEnumerator LateCall(GameObject soundInstance)
+	{
+		yield return new WaitForSeconds(poolReturnTimer);
+		soundInstance.SetActive(value: false);
 	}
 }

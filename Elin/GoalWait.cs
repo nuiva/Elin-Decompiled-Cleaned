@@ -1,28 +1,14 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class GoalWait : Goal
 {
-	public override bool UseTurbo
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool UseTurbo => false;
 
-	public override bool InformCancel
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool InformCancel => false;
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		this.owner.renderer.NextFrame();
-		yield return base.Success(null);
-		yield break;
+		owner.renderer.NextFrame();
+		yield return Success();
 	}
 }

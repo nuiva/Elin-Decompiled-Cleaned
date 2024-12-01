@@ -1,20 +1,13 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class RefFaction : EClass
 {
-	public Faction Instance
-	{
-		get
-		{
-			Faction result;
-			if ((result = this._faction) == null)
-			{
-				result = (this._faction = EClass.game.factions.dictAll[this.uid]);
-			}
-			return result;
-		}
-	}
+	[JsonProperty]
+	public string uid;
+
+	private Faction _faction;
+
+	public Faction Instance => _faction ?? (_faction = EClass.game.factions.dictAll[uid]);
 
 	public RefFaction()
 	{
@@ -22,12 +15,7 @@ public class RefFaction : EClass
 
 	public RefFaction(Faction faction)
 	{
-		this._faction = faction;
-		this.uid = faction.uid;
+		_faction = faction;
+		uid = faction.uid;
 	}
-
-	[JsonProperty]
-	public string uid;
-
-	private Faction _faction;
 }

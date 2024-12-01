@@ -1,13 +1,11 @@
-﻿using System;
-
 public class AIWork_Farm : AIWork
 {
 	public override void OnPerformWork(bool realtime)
 	{
 		if (!realtime)
 		{
-			base.SetDestination();
-			this.SetDestPos();
+			SetDestination();
+			SetDestPos();
 		}
 	}
 

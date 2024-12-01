@@ -1,22 +1,8 @@
-﻿using System;
-
 public class GuildMerchant : Guild
 {
-	public override QuestGuild Quest
-	{
-		get
-		{
-			return EClass.game.quests.Get<QuestGuildMerchant>();
-		}
-	}
+	public override QuestGuild Quest => EClass.game.quests.Get<QuestGuildMerchant>();
 
-	public override bool IsCurrentZone
-	{
-		get
-		{
-			return EClass._zone.id == "guild_merchant";
-		}
-	}
+	public override bool IsCurrentZone => EClass._zone.id == "guild_merchant";
 
 	public int InvestPrice(int a)
 	{
@@ -24,6 +10,6 @@ public class GuildMerchant : Guild
 		{
 			return a;
 		}
-		return (int)((long)a * 100L / (long)(110 + this.relation.rank / 2));
+		return (int)((long)a * 100L / (110 + relation.rank / 2));
 	}
 }

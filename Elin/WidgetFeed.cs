@@ -1,106 +1,14 @@
-﻿using System;
 using UnityEngine;
 
 public class WidgetFeed : Widget
 {
-	public static bool Intercept
+	public class Extra
 	{
-		get
-		{
-			return WidgetFeed.Instance && WidgetFeed.Instance.extra.intercept;
-		}
-	}
+		public bool showChat;
 
-	public override object CreateExtra()
-	{
-		return new WidgetFeed.Extra();
-	}
+		public bool intercept;
 
-	public WidgetFeed.Extra extra
-	{
-		get
-		{
-			return base.config.extra as WidgetFeed.Extra;
-		}
-	}
-
-	public override bool AlwaysTop
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public override bool ShowStyleMenu
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public bool IgnoreFeed
-	{
-		get
-		{
-			return WidgetMainText.Instance && WidgetMainText.Instance.box.isShowingLog;
-		}
-	}
-
-	public override void OnActivate()
-	{
-		WidgetFeed.Instance = this;
-		this.System("Elin's Inn version " + EMono.core.version.GetText());
-		this.System("Welcome, wanderer! Press '?' for help.");
-		WidgetMainText.Refresh();
-	}
-
-	public override void OnDeactivate()
-	{
-		WidgetFeed.Instance = null;
-		WidgetMainText.Refresh();
-	}
-
-	public void Talk(Card c, string id)
-	{
-		string text = GameLang.Convert(c.GetTalkText(id, true, true));
-		this.SayRaw(c, text);
-	}
-
-	public PopItem SayRaw(Card c, string text)
-	{
-		PopItemText popItemText = this.pop.PopText(text, null, this.idPop[this.extra.style], default(Color), default(Vector3), 0f);
-		popItemText.GetComponentInChildren<Portrait>().SetChara(c as Chara, null);
-		return popItemText;
-	}
-
-	public void SayRaw(string idPortrait, string text, string _idPop)
-	{
-		this.pop.PopText(text, null, _idPop.IsEmpty(this.idPop[this.extra.style]), default(Color), default(Vector3), 0f).GetComponentInChildren<Portrait>().SetPortrait(idPortrait, default(Color));
-	}
-
-	public void Nerun(string text, string idPortrait = "UN_nerun")
-	{
-		this.SayRaw(idPortrait, text, null);
-	}
-
-	public void System(string text)
-	{
-		if (this.extra.intercept)
-		{
-			this.pop.PopText(text, null, this.idPopSystem, Msg.currentColor, default(Vector3), 0f);
-		}
-	}
-
-	public override void OnSetContextMenu(UIContextMenu m)
-	{
-		m.AddChild("setting").AddSlider("style", (float a) => this.idPop[(int)a], (float)this.extra.style, delegate(float a)
-		{
-			this.extra.style = (int)a;
-			Msg.Nerun("this", "UN_nerun");
-		}, 0f, (float)(this.idPop.Length - 1), true, true, false);
-		base.SetBaseContextMenu(m);
+		public int style;
 	}
 
 	public static WidgetFeed Instance;
@@ -115,12 +23,93 @@ public class WidgetFeed : Widget
 
 	public string idPopSystem;
 
-	public class Extra
+	public static bool Intercept
 	{
-		public bool showChat;
+		get
+		{
+			if ((bool)Instance)
+			{
+				return Instance.extra.intercept;
+			}
+			return false;
+		}
+	}
 
-		public bool intercept;
+	public Extra extra => base.config.extra as Extra;
 
-		public int style;
+	public override bool AlwaysTop => true;
+
+	public override bool ShowStyleMenu => false;
+
+	public bool IgnoreFeed
+	{
+		get
+		{
+			if ((bool)WidgetMainText.Instance)
+			{
+				return WidgetMainText.Instance.box.isShowingLog;
+			}
+			return false;
+		}
+	}
+
+	public override object CreateExtra()
+	{
+		return new Extra();
+	}
+
+	public override void OnActivate()
+	{
+		Instance = this;
+		System("Elin's Inn version " + EMono.core.version.GetText());
+		System("Welcome, wanderer! Press '?' for help.");
+		WidgetMainText.Refresh();
+	}
+
+	public override void OnDeactivate()
+	{
+		Instance = null;
+		WidgetMainText.Refresh();
+	}
+
+	public void Talk(Card c, string id)
+	{
+		string text = GameLang.Convert(c.GetTalkText(id, stripPun: true));
+		SayRaw(c, text);
+	}
+
+	public PopItem SayRaw(Card c, string text)
+	{
+		PopItemText popItemText = pop.PopText(text, null, idPop[extra.style]);
+		popItemText.GetComponentInChildren<Portrait>().SetChara(c as Chara);
+		return popItemText;
+	}
+
+	public void SayRaw(string idPortrait, string text, string _idPop)
+	{
+		pop.PopText(text, null, _idPop.IsEmpty(idPop[extra.style])).GetComponentInChildren<Portrait>().SetPortrait(idPortrait);
+	}
+
+	public void Nerun(string text, string idPortrait = "UN_nerun")
+	{
+		SayRaw(idPortrait, text, null);
+	}
+
+	public void System(string text)
+	{
+		if (extra.intercept)
+		{
+			pop.PopText(text, null, idPopSystem, Msg.currentColor);
+		}
+	}
+
+	public override void OnSetContextMenu(UIContextMenu m)
+	{
+		m.AddChild("setting").AddSlider("style", (float a) => idPop[(int)a], extra.style, delegate(float a)
+		{
+			extra.style = (int)a;
+			Msg.Nerun("this");
+		}, 0f, idPop.Length - 1, isInt: true);
+		SetBaseContextMenu(m);
 	}
 }

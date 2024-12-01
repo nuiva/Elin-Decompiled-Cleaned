@@ -1,5 +1,3 @@
-﻿using System;
-
 public class COBJ
 {
 	public const int houseBoardData = 1;

@@ -1,70 +1,39 @@
-﻿using System;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class HotItemFocusChara : HotItem
 {
-	public Chara chara
-	{
-		get
-		{
-			return RefChara.Get(this.uid) ?? EClass.pc;
-		}
-	}
+	[JsonProperty]
+	public int uid;
 
-	public override Color SpriteColor
-	{
-		get
-		{
-			return new Color(1f, 1f, 1f, 0.9f);
-		}
-	}
+	public Chara chara => RefChara.Get(uid) ?? EClass.pc;
 
-	public override Vector3 SpriteScale
-	{
-		get
-		{
-			return new Vector3(0.8f, 0.8f, 1f);
-		}
-	}
+	public override Color SpriteColor => new Color(1f, 1f, 1f, 0.9f);
 
-	public override string Name
-	{
-		get
-		{
-			string s = "focusTo";
-			Chara chara = this.chara;
-			return s.lang(((chara != null) ? chara.NameSimple : null) ?? "???", null, null, null, null);
-		}
-	}
+	public override Vector3 SpriteScale => new Vector3(0.8f, 0.8f, 1f);
 
-	public override string pathSprite
-	{
-		get
-		{
-			return "icon_focus";
-		}
-	}
+	public override string Name => "focusTo".lang(chara?.NameSimple ?? "???");
+
+	public override string pathSprite => "icon_focus";
 
 	public override Sprite GetSprite()
 	{
-		if (this.chara != null)
+		if (chara != null)
 		{
-			return this.chara.GetSprite(0);
+			return chara.GetSprite();
 		}
 		return base.GetSprite();
 	}
 
 	public override void OnClick(ButtonHotItem b, Hotbar h)
 	{
-		if (this.chara == null || EClass.AdvMode)
+		if (chara == null || EClass.AdvMode)
 		{
 			SE.Beep();
-			return;
 		}
-		EClass.screen.Focus(this.chara);
+		else
+		{
+			EClass.screen.Focus(chara);
+		}
 	}
-
-	[JsonProperty]
-	public int uid;
 }

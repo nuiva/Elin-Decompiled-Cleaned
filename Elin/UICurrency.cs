@@ -1,149 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class UICurrency : EMono
 {
-	private void Awake()
-	{
-		if (this.autoBuild)
-		{
-			this.Build();
-		}
-		base.InvokeRepeating("Refresh", 0.1f, 0.1f);
-	}
-
-	private void OnEnable()
-	{
-		this.Refresh();
-	}
-
-	public void Build(UICurrency.Options _options)
-	{
-		this.options = _options;
-		this.Build();
-	}
-
-	public void Build()
-	{
-		this.items.Clear();
-		this.mold = this.layout.CreateMold(null);
-		if (this.options.plat)
-		{
-			this.Add(this.icons[1], "plat", () => EMono.pc.GetCurrency("plat").ToString("#,0") ?? "");
-		}
-		if (this.options.money)
-		{
-			this.Add(this.icons[0], "money", () => EMono.pc.GetCurrency("money").ToString("#,0") ?? "");
-		}
-		if (this.options.money2)
-		{
-			this.Add(this.icons[5], "money2", () => EMono.pc.GetCurrency("money2").ToString("#,0") ?? "");
-		}
-		if (this.options.medal)
-		{
-			this.Add(this.icons[4], "medal", () => EMono.pc.GetCurrency("medal").ToString("#,0") ?? "");
-		}
-		if (this.options.ecopo)
-		{
-			this.Add(EMono.sources.cards.map["ecopo"].GetSprite(0, 0, false), "ecopo", () => EMono.pc.GetCurrency("ecopo").ToString("#,0") ?? "");
-		}
-		if (this.options.influence)
-		{
-			this.Add(this.icons[3], "influence", () => EMono._zone.influence.ToString() ?? "");
-		}
-		if (this.options.casino)
-		{
-			this.Add(this.icons[10], "casino_coin", () => EMono.pc.GetCurrency("casino_coin").ToString("#,0") ?? "");
-		}
-		if (this.options.weight)
-		{
-			this.Add(this.icons[11], "weightInv", () => Lang._weight(this.target.ChildrenWeight, false, 0) + " / " + Lang._weight(this.target.WeightLimit, true, 0));
-		}
-		if (EMono.BranchOrHomeBranch != null)
-		{
-			HomeResourceManager resources = EMono.BranchOrHomeBranch.resources;
-			if (this.options.branchMoney)
-			{
-				this.Add(this.icons[5], resources.money.Name, () => resources.money.value.ToString("#,0") ?? "");
-			}
-			if (this.options.branchFood)
-			{
-				this.Add(this.icons[6], resources.food.Name, () => resources.food.value.ToString("#,0") ?? "");
-			}
-			if (this.options.branchKnowledge)
-			{
-				this.Add(this.icons[7], resources.knowledge.Name, () => resources.knowledge.value.ToString("#,0") ?? "");
-			}
-			if (this.options.admin)
-			{
-				this.Add(this.icons[9], "ap", () => EMono.Branch.policies.CurrentAP().ToString() + "/" + EMono.Branch.MaxAP.ToString());
-			}
-			if (this.options.resources)
-			{
-				using (List<BaseHomeResource>.Enumerator enumerator = EMono.BranchOrHomeBranch.resources.list.GetEnumerator())
-				{
-					while (enumerator.MoveNext())
-					{
-						BaseHomeResource r = enumerator.Current;
-						if (r.IsAvailable)
-						{
-							this.Add(r.Sprite, r.Name, () => r.value.ToString("#,0") ?? "");
-						}
-					}
-				}
-			}
-		}
-		this.layout.RebuildLayout(false);
-	}
-
-	public void Add(Sprite icon, string lang, Func<string> func)
-	{
-		UIButton uibutton = Util.Instantiate<UIButton>(this.mold, this.layout);
-		uibutton.icon.sprite = icon;
-		uibutton.icon.SetNativeSize();
-		uibutton.tooltip.lang = lang.lang().ToTitleCase(true);
-		this.items.Add(new UICurrency.Item
-		{
-			func = func,
-			text = uibutton.mainText
-		});
-		uibutton.mainText.SetText(func());
-		uibutton.mainText.RebuildLayout(false);
-		uibutton.RebuildLayout(false);
-	}
-
-	public void Refresh()
-	{
-		foreach (UICurrency.Item item in this.items)
-		{
-			string text = item.func();
-			if (item.text.text != (text ?? ""))
-			{
-				item.text.SetText(text);
-				item.text.RebuildLayout(false);
-				item.text.transform.parent.RebuildLayout(false);
-			}
-		}
-	}
-
-	public List<UICurrency.Item> items = new List<UICurrency.Item>();
-
-	public bool autoBuild;
-
-	public bool disable;
-
-	public UICurrency.Options options;
-
-	public Sprite[] icons;
-
-	public LayoutGroup layout;
-
-	public Card target;
-
-	private UIButton mold;
-
 	[Serializable]
 	public class Options
 	{
@@ -183,5 +44,140 @@ public class UICurrency : EMono
 		public Func<string> func;
 
 		public UIText text;
+	}
+
+	public List<Item> items = new List<Item>();
+
+	public bool autoBuild;
+
+	public bool disable;
+
+	public Options options;
+
+	public Sprite[] icons;
+
+	public LayoutGroup layout;
+
+	public Card target;
+
+	private UIButton mold;
+
+	private void Awake()
+	{
+		if (autoBuild)
+		{
+			Build();
+		}
+		InvokeRepeating("Refresh", 0.1f, 0.1f);
+	}
+
+	private void OnEnable()
+	{
+		Refresh();
+	}
+
+	public void Build(Options _options)
+	{
+		options = _options;
+		Build();
+	}
+
+	public void Build()
+	{
+		items.Clear();
+		mold = layout.CreateMold<UIButton>();
+		if (options.plat)
+		{
+			Add(icons[1], "plat", () => EMono.pc.GetCurrency("plat").ToString("#,0") ?? "");
+		}
+		if (options.money)
+		{
+			Add(icons[0], "money", () => EMono.pc.GetCurrency().ToString("#,0") ?? "");
+		}
+		if (options.money2)
+		{
+			Add(icons[5], "money2", () => EMono.pc.GetCurrency("money2").ToString("#,0") ?? "");
+		}
+		if (options.medal)
+		{
+			Add(icons[4], "medal", () => EMono.pc.GetCurrency("medal").ToString("#,0") ?? "");
+		}
+		if (options.ecopo)
+		{
+			Add(EMono.sources.cards.map["ecopo"].GetSprite(), "ecopo", () => EMono.pc.GetCurrency("ecopo").ToString("#,0") ?? "");
+		}
+		if (options.influence)
+		{
+			Add(icons[3], "influence", () => EMono._zone.influence.ToString() ?? "");
+		}
+		if (options.casino)
+		{
+			Add(icons[10], "casino_coin", () => EMono.pc.GetCurrency("casino_coin").ToString("#,0") ?? "");
+		}
+		if (options.weight)
+		{
+			Add(icons[11], "weightInv", () => Lang._weight(target.ChildrenWeight, showUnit: false) + " / " + Lang._weight(target.WeightLimit));
+		}
+		if (EMono.BranchOrHomeBranch != null)
+		{
+			HomeResourceManager resources = EMono.BranchOrHomeBranch.resources;
+			if (options.branchMoney)
+			{
+				Add(icons[5], resources.money.Name, () => resources.money.value.ToString("#,0") ?? "");
+			}
+			if (options.branchFood)
+			{
+				Add(icons[6], resources.food.Name, () => resources.food.value.ToString("#,0") ?? "");
+			}
+			if (options.branchKnowledge)
+			{
+				Add(icons[7], resources.knowledge.Name, () => resources.knowledge.value.ToString("#,0") ?? "");
+			}
+			if (options.admin)
+			{
+				Add(icons[9], "ap", () => EMono.Branch.policies.CurrentAP() + "/" + EMono.Branch.MaxAP);
+			}
+			if (options.resources)
+			{
+				foreach (BaseHomeResource r in EMono.BranchOrHomeBranch.resources.list)
+				{
+					if (r.IsAvailable)
+					{
+						Add(r.Sprite, r.Name, () => r.value.ToString("#,0") ?? "");
+					}
+				}
+			}
+		}
+		layout.RebuildLayout();
+	}
+
+	public void Add(Sprite icon, string lang, Func<string> func)
+	{
+		UIButton uIButton = Util.Instantiate(mold, layout);
+		uIButton.icon.sprite = icon;
+		uIButton.icon.SetNativeSize();
+		uIButton.tooltip.lang = lang.lang().ToTitleCase(wholeText: true);
+		items.Add(new Item
+		{
+			func = func,
+			text = uIButton.mainText
+		});
+		uIButton.mainText.SetText(func());
+		uIButton.mainText.RebuildLayout();
+		uIButton.RebuildLayout();
+	}
+
+	public void Refresh()
+	{
+		foreach (Item item in items)
+		{
+			string text = item.func();
+			if (item.text.text != (text ?? ""))
+			{
+				item.text.SetText(text);
+				item.text.RebuildLayout();
+				item.text.transform.parent.RebuildLayout();
+			}
+		}
 	}
 }

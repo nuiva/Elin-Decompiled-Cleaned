@@ -1,14 +1,6 @@
-﻿using System;
-
 public class TraitMerchantExotic : TraitMerchant
 {
-	public override int CostRerollShop
-	{
-		get
-		{
-			return 2;
-		}
-	}
+	public override int CostRerollShop => 2;
 
 	public override ShopType ShopType
 	{

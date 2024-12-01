@@ -1,126 +1,9 @@
-﻿using System;
 using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class WidgetMascot : Widget
 {
-	public override bool ShowStyleMenu
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public override void OnActivate()
-	{
-		string path = CorePath.coreWidget + base.config.id + "/" + "default.png";
-		string str = Lang.setting.dir + "Widget/" + base.config.id + "/";
-		string path2 = str + "default.txt";
-		string path3 = str + "siege.txt";
-		string path4 = str + "shutup.txt";
-		if (File.Exists(path2))
-		{
-			this.linesDefault = IO.LoadTextArray(path2);
-		}
-		if (File.Exists(path3))
-		{
-			this.linesSiege = IO.LoadTextArray(path3);
-		}
-		if (File.Exists(path4))
-		{
-			this.linesShutup = IO.LoadTextArray(path4);
-		}
-		if (File.Exists(path))
-		{
-			this.image.texture = IO.LoadPNG(path, FilterMode.Point);
-		}
-		this.Say("");
-		base.InvokeRepeating("_Update", 1f, 1f);
-	}
-
-	private void Update()
-	{
-		if (this.isShut && InputModuleEX.IsPointerOver(base.transform))
-		{
-			SE.Play("teleport");
-			base.transform.position = new Vector3((float)EMono.rnd(Screen.width), (float)EMono.rnd(Screen.height), 0f);
-			base.OnChangePosition();
-			base.ClampToScreen();
-		}
-	}
-
-	public void _Update()
-	{
-		if (this.nextSay > 0)
-		{
-			this.nextSay--;
-			return;
-		}
-		if (this.isShut)
-		{
-			return;
-		}
-		this.isSiege = (EMono._zone.events.GetEvent<ZoneEventSiege>() != null);
-		string[] array = this.isSiege ? this.linesSiege : this.linesDefault;
-		if (array == null)
-		{
-			return;
-		}
-		string str = (EMono.rnd(2) == 0) ? "" : array.RandomItem<string>();
-		if (this.first)
-		{
-			str = array[0];
-			this.first = false;
-		}
-		this.Say(str);
-	}
-
-	public override void OnFlip()
-	{
-		this.image.transform.localScale = new Vector3((float)(this.flip ? 1 : -1), 1f, 1f);
-	}
-
-	public void Say(string[] lines)
-	{
-		this.Say(lines.RandomItem<string>());
-	}
-
-	public void Say(string str)
-	{
-		Transform parent = this.text.transform.parent;
-		if (str.IsEmpty())
-		{
-			parent.SetActive(false);
-		}
-		else
-		{
-			parent.SetActive(true);
-			this.text.text = str;
-			base.ClampToScreenEnsured(parent, this.textPos);
-		}
-		this.nextSay = this.intervalSay + EMono.rnd(this.intervalSay);
-		if (this.isSiege)
-		{
-			this.nextSay /= 2;
-		}
-	}
-
-	public override void OnSetContextMenu(UIContextMenu m)
-	{
-		m.AddToggle("shutup", this.isShut, delegate(bool a)
-		{
-			this.isShut = a;
-			base.config.annoyPlayer = this.isShut;
-			if (this.isShut)
-			{
-				this.Say(this.linesShutup);
-			}
-		});
-		base.SetBaseContextMenu(m);
-	}
-
 	public RawImage image;
 
 	public UIText text;
@@ -142,4 +25,115 @@ public class WidgetMascot : Widget
 	private bool isSiege;
 
 	private bool isShut;
+
+	public override bool ShowStyleMenu => false;
+
+	public override void OnActivate()
+	{
+		string path = string.Concat(CorePath.coreWidget + base.config.id + "/", "default.png");
+		string obj = Lang.setting.dir + "Widget/" + base.config.id + "/";
+		string path2 = obj + "default.txt";
+		string path3 = obj + "siege.txt";
+		string path4 = obj + "shutup.txt";
+		if (File.Exists(path2))
+		{
+			linesDefault = IO.LoadTextArray(path2);
+		}
+		if (File.Exists(path3))
+		{
+			linesSiege = IO.LoadTextArray(path3);
+		}
+		if (File.Exists(path4))
+		{
+			linesShutup = IO.LoadTextArray(path4);
+		}
+		if (File.Exists(path))
+		{
+			image.texture = IO.LoadPNG(path);
+		}
+		Say("");
+		InvokeRepeating("_Update", 1f, 1f);
+	}
+
+	private void Update()
+	{
+		if (isShut && InputModuleEX.IsPointerOver(base.transform))
+		{
+			SE.Play("teleport");
+			base.transform.position = new Vector3(EMono.rnd(Screen.width), EMono.rnd(Screen.height), 0f);
+			OnChangePosition();
+			ClampToScreen();
+		}
+	}
+
+	public void _Update()
+	{
+		if (nextSay > 0)
+		{
+			nextSay--;
+		}
+		else
+		{
+			if (isShut)
+			{
+				return;
+			}
+			isSiege = EMono._zone.events.GetEvent<ZoneEventSiege>() != null;
+			string[] array = (isSiege ? linesSiege : linesDefault);
+			if (array != null)
+			{
+				string str = ((EMono.rnd(2) == 0) ? "" : array.RandomItem());
+				if (first)
+				{
+					str = array[0];
+					first = false;
+				}
+				Say(str);
+			}
+		}
+	}
+
+	public override void OnFlip()
+	{
+		image.transform.localScale = new Vector3(flip ? 1 : (-1), 1f, 1f);
+	}
+
+	public void Say(string[] lines)
+	{
+		Say(lines.RandomItem());
+	}
+
+	public void Say(string str)
+	{
+		Transform parent = text.transform.parent;
+		if (str.IsEmpty())
+		{
+			parent.SetActive(enable: false);
+		}
+		else
+		{
+			parent.SetActive(enable: true);
+			text.text = str;
+			ClampToScreenEnsured(parent, textPos);
+		}
+		nextSay = intervalSay + EMono.rnd(intervalSay);
+		if (isSiege)
+		{
+			nextSay /= 2;
+		}
+	}
+
+	public override void OnSetContextMenu(UIContextMenu m)
+	{
+		m.AddToggle("shutup", isShut, delegate(bool a)
+		{
+			isShut = a;
+			base.config.annoyPlayer = isShut;
+			if (isShut)
+			{
+				Say(linesShutup);
+			}
+		});
+		SetBaseContextMenu(m);
+	}
 }

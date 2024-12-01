@@ -1,4 +1,3 @@
-﻿using System;
 using UnityEngine;
 
 public class HotItemNoItem : HotItemGameAction
@@ -26,58 +25,54 @@ public class HotItemNoItem : HotItemGameAction
 		});
 		if (tg != null)
 		{
-			return p.TrySetAct("actHold", delegate()
+			return p.TrySetAct("actHold", delegate
 			{
 				if (tg.ExistsOnMap)
 				{
 					if (!EClass.pc.CanLift(tg))
 					{
-						EClass.pc.Say("tooHeavy", tg, null, null);
+						EClass.pc.Say("tooHeavy", tg);
 						return false;
 					}
 					if (tg.HasEditorTag(EditorTag.TreasureMelilith))
 					{
 						if (EClass.player.flags.pickedMelilithTreasure)
 						{
-							EClass.pc.PlaySound("curse3", 1f, true);
-							EClass.pc.PlayEffect("curse", true, 0f, default(Vector3));
-							EClass.pc.SetFeat(1206, 1, true);
+							EClass.pc.PlaySound("curse3");
+							EClass.pc.PlayEffect("curse");
+							EClass.pc.SetFeat(1206, 1, msg: true);
 							EClass.player.flags.gotMelilithCurse = true;
 						}
 						else
 						{
 							Msg.Say("pickedMelilithTreasure");
 							EClass.player.flags.pickedMelilithTreasure = true;
-							QuestCursedManor questCursedManor = EClass.game.quests.Get<QuestCursedManor>();
-							if (questCursedManor != null)
-							{
-								questCursedManor.NextPhase();
-							}
+							EClass.game.quests.Get<QuestCursedManor>()?.NextPhase();
 						}
 						tg.c_editorTags = null;
 					}
-					EClass.pc.HoldCard(tg, -1);
+					EClass.pc.HoldCard(tg);
 					if (EClass.pc.held != null)
 					{
-						tg.PlaySoundHold(false);
+						tg.PlaySoundHold(spatial: false);
 						EClass.player.RefreshCurrentHotItem();
 						ActionMode.Adv.planRight.Update(ActionMode.Adv.mouseTarget);
 						EClass.pc.renderer.Refresh();
 					}
 				}
 				return true;
-			}, tg, null, 1, false, false, false);
+			}, tg, null, 1, isHostileAct: false, localAct: false);
 		}
 		TaskHarvest taskHarvest = TaskHarvest.TryGetAct(EClass.pc, p.pos);
 		if (taskHarvest != null)
 		{
-			p.TrySetAct(taskHarvest, null);
+			p.TrySetAct(taskHarvest);
 		}
 		return false;
 	}
 
 	public override bool TrySetAct(ActPlan p)
 	{
-		return HotItemNoItem._TrySetAct(p);
+		return _TrySetAct(p);
 	}
 }

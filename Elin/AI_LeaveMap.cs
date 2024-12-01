@@ -1,17 +1,14 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class AI_LeaveMap : AIAct
 {
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		Trait random = EClass._map.Installed.traits.GetTraitSet<TraitSpotExit>().GetRandom();
-		Card card = (random != null) ? random.owner : null;
+		Card card = EClass._map.Installed.traits.GetTraitSet<TraitSpotExit>().GetRandom()?.owner;
 		if (card != null)
 		{
-			yield return base.DoGoto(card, null);
+			yield return DoGoto(card);
 		}
-		this.owner.visitorState = VisitorState.AboutToLeave;
-		yield break;
+		owner.visitorState = VisitorState.AboutToLeave;
 	}
 }

@@ -1,47 +1,30 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class QuestDeliver : QuestDestZone
 {
-	public virtual bool ConsumeGoods
-	{
-		get
-		{
-			return true;
-		}
-	}
+	[JsonProperty]
+	public string idThing;
 
-	public SourceThing.Row sourceThing
-	{
-		get
-		{
-			return EClass.sources.things.map[this.idThing.IsEmpty("generator_snowman")];
-		}
-	}
+	[JsonProperty]
+	public int num;
 
-	public override string NameDeliver
-	{
-		get
-		{
-			return this.sourceThing.GetName();
-		}
-	}
+	private static List<SourceCategory.Row> _listDeliver = new List<SourceCategory.Row>();
 
-	public override string RefDrama2
-	{
-		get
-		{
-			return this.NameDeliver;
-		}
-	}
+	public virtual bool ConsumeGoods => true;
+
+	public SourceThing.Row sourceThing => EClass.sources.things.map[idThing.IsEmpty("generator_snowman")];
+
+	public override string NameDeliver => sourceThing.GetName();
+
+	public override string RefDrama2 => NameDeliver;
 
 	public override int KarmaOnFail
 	{
 		get
 		{
-			if (!this.IsDeliver)
+			if (!IsDeliver)
 			{
 				return base.KarmaOnFail;
 			}
@@ -49,21 +32,9 @@ public class QuestDeliver : QuestDestZone
 		}
 	}
 
-	public override Quest.DifficultyType difficultyType
-	{
-		get
-		{
-			return Quest.DifficultyType.Deliver;
-		}
-	}
+	public override DifficultyType difficultyType => DifficultyType.Deliver;
 
-	public override bool ForbidTeleport
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool ForbidTeleport => true;
 
 	public override int GetExtraMoney()
 	{
@@ -76,8 +47,8 @@ public class QuestDeliver : QuestDestZone
 
 	public override void OnInit()
 	{
-		this.num = this.GetDestNum();
-		this.SetIdThing();
+		num = GetDestNum();
+		SetIdThing();
 	}
 
 	public virtual int GetDestNum()
@@ -90,36 +61,36 @@ public class QuestDeliver : QuestDestZone
 		CardRow cardRow;
 		do
 		{
-			SourceCategory.Row r = this.GetDeliverCat();
-			cardRow = SpawnListThing.Get("cat_" + r.id, (SourceThing.Row s) => EClass.sources.categories.map[s.category].IsChildOf(r.id)).Select(-1, -1);
+			SourceCategory.Row r = GetDeliverCat();
+			cardRow = SpawnListThing.Get("cat_" + r.id, (SourceThing.Row s) => EClass.sources.categories.map[s.category].IsChildOf(r.id)).Select();
 		}
 		while (cardRow == null);
-		this.idThing = cardRow.id;
+		idThing = cardRow.id;
 	}
 
 	private SourceCategory.Row GetDeliverCat()
 	{
-		if (QuestDeliver._listDeliver.Count == 0)
+		if (_listDeliver.Count == 0)
 		{
 			foreach (SourceCategory.Row row in EClass.sources.categories.rows)
 			{
 				if (row.deliver > 0)
 				{
-					QuestDeliver._listDeliver.Add(row);
+					_listDeliver.Add(row);
 				}
 			}
 		}
-		return QuestDeliver._listDeliver.RandomItem<SourceCategory.Row>();
+		return _listDeliver.RandomItem();
 	}
 
 	public override void OnStart()
 	{
-		if (this.IsDeliver)
+		if (IsDeliver)
 		{
-			Thing thing = ThingGen.Create(this.idThing, -1, -1);
-			thing.Identify(false, IDTSource.SuperiorIdentify);
+			Thing thing = ThingGen.Create(idThing);
+			thing.Identify(show: false, IDTSource.SuperiorIdentify);
 			Msg.Say("get_quest_item");
-			EClass.pc.Pick(thing, true, true);
+			EClass.pc.Pick(thing);
 		}
 	}
 
@@ -129,15 +100,15 @@ public class QuestDeliver : QuestDestZone
 		{
 			return false;
 		}
-		if (!t.c_isImportant && t.Num >= this.num && t.IsIdentified && t.things.Count == 0 && !t.isEquipped)
+		if (!t.c_isImportant && t.Num >= num && t.IsIdentified && t.things.Count == 0 && !t.isEquipped)
 		{
-			if (t.id == this.idThing)
+			if (t.id == idThing)
 			{
 				return true;
 			}
 			if (t.c_altName.IsEmpty())
 			{
-				string name = this.sourceThing.GetName();
+				string name = sourceThing.GetName();
 				if (t.source.GetName() == name || t.GetName(NameStyle.Simple, 1) == name)
 				{
 					return true;
@@ -149,16 +120,16 @@ public class QuestDeliver : QuestDestZone
 
 	public List<Thing> ListDestThing(bool onlyFirst = false)
 	{
-		List<Thing> list = EClass.pc.things.List((Thing t) => this.IsDestThing(t), false);
+		List<Thing> list = EClass.pc.things.List((Thing t) => IsDestThing(t));
 		if (onlyFirst && list.Count > 0)
 		{
 			return list;
 		}
-		if (!this.IsDeliver && EClass._zone.IsPCFaction)
+		if (!IsDeliver && EClass._zone.IsPCFaction)
 		{
 			foreach (Thing thing in EClass._map.props.stocked.things)
 			{
-				if (this.IsDestThing(thing))
+				if (IsDestThing(thing))
 				{
 					list.Add(thing);
 					if (onlyFirst)
@@ -167,14 +138,13 @@ public class QuestDeliver : QuestDestZone
 					}
 				}
 			}
-			return list;
 		}
 		return list;
 	}
 
 	public override Thing GetDestThing()
 	{
-		List<Thing> list = this.ListDestThing(true);
+		List<Thing> list = ListDestThing(onlyFirst: true);
 		if (list.Count <= 0)
 		{
 			return null;
@@ -184,27 +154,44 @@ public class QuestDeliver : QuestDestZone
 
 	public override bool IsDeliverTarget(Chara c)
 	{
-		if (this.IsDeliver)
+		if (IsDeliver)
 		{
-			return EClass._zone == base.DestZone && c.uid == this.uidTarget;
+			if (EClass._zone == base.DestZone)
+			{
+				return c.uid == uidTarget;
+			}
+			return false;
 		}
-		return c.quest != null && c.quest.uid == this.uid;
+		if (c.quest != null)
+		{
+			return c.quest.uid == uid;
+		}
+		return false;
 	}
 
 	public override bool CanDeliverToClient(Chara c)
 	{
-		if (this.GetDestThing() == null && !EClass.debug.autoAdvanceQuest)
+		if (GetDestThing() == null && !EClass.debug.autoAdvanceQuest)
 		{
 			return false;
 		}
-		if (this.IsDeliver)
+		if (IsDeliver)
 		{
-			return EClass._zone == base.DestZone && c.uid == this.uidTarget;
+			if (EClass._zone == base.DestZone)
+			{
+				return c.uid == uidTarget;
+			}
+			return false;
 		}
-		Chara chara = this.person.chara;
-		int? num = (chara != null) ? new int?(chara.uid) : null;
-		int uid = c.uid;
-		return (num.GetValueOrDefault() == uid & num != null) || (c.quest != null && c.quest.uid == this.uid);
+		if (person.chara?.uid == c.uid)
+		{
+			return true;
+		}
+		if (c.quest != null)
+		{
+			return c.quest.uid == uid;
+		}
+		return false;
 	}
 
 	public override bool CanDeliverToBox(Thing t)
@@ -216,25 +203,25 @@ public class QuestDeliver : QuestDestZone
 	{
 		if (t == null)
 		{
-			t = this.GetDestThing();
+			t = GetDestThing();
 			if (t == null && EClass.debug.autoAdvanceQuest)
 			{
-				Debug.Log("[error] creating " + this.idThing);
-				t = ThingGen.Create(this.idThing, -1, -1);
+				Debug.Log("[error] creating " + idThing);
+				t = ThingGen.Create(idThing);
 			}
 		}
 		if (t != null)
 		{
-			Thing thing = t.Split(this.num);
-			this.bonusMoney += this.GetBonus(thing);
-			Msg.Say("deliverItem", thing, null, null, null);
-			if (this.ConsumeGoods)
+			Thing thing = t.Split(num);
+			bonusMoney += GetBonus(thing);
+			Msg.Say("deliverItem", thing);
+			if (ConsumeGoods)
 			{
 				thing.Destroy();
 			}
 			else
 			{
-				c.Pick(thing, true, true);
+				c.Pick(thing);
 			}
 			EClass.game.quests.Complete(this);
 			c.quest = null;
@@ -250,41 +237,30 @@ public class QuestDeliver : QuestDestZone
 
 	public override string GetTextProgress()
 	{
-		string text = (this.GetDestThing() != null) ? "supplyInInv".lang().TagColor(FontColor.Good, null) : "supplyNotInInv".lang();
-		if (this.IsDeliver)
+		string text = ((GetDestThing() != null) ? "supplyInInv".lang().TagColor(FontColor.Good) : "supplyNotInInv".lang());
+		if (IsDeliver)
 		{
-			string @ref = (base.DestZone.dictCitizen.TryGetValue(this.uidTarget, null) ?? "???") + " (" + base.DestZone.Name + ")";
-			return "progressDeliver".lang(this.sourceThing.GetName(this.num), @ref, text, null, null);
+			string @ref = (base.DestZone.dictCitizen.TryGetValue(uidTarget) ?? "???") + " (" + base.DestZone.Name + ")";
+			return "progressDeliver".lang(sourceThing.GetName(num), @ref, text);
 		}
-		return "progressSupply".lang(this.sourceThing.GetName(this.num) + Lang.space + this.TextExtra2.IsEmpty(""), text, null, null, null);
+		return "progressSupply".lang(sourceThing.GetName(num) + Lang.space + TextExtra2.IsEmpty(""), text);
 	}
 
 	public override void OnEnterZone()
 	{
-		if (!this.IsDeliver)
+		if (!IsDeliver || EClass._zone != base.DestZone)
 		{
 			return;
 		}
-		if (EClass._zone == base.DestZone)
+		Chara chara = EClass._map.charas.Find((Chara c) => c.uid == uidTarget);
+		if (chara == null)
 		{
-			Chara chara = EClass._map.charas.Find((Chara c) => c.uid == this.uidTarget);
-			if (chara == null)
-			{
-				chara = EClass._map.deadCharas.Find((Chara c) => c.uid == this.uidTarget);
-			}
-			if (chara == null)
-			{
-				Msg.Say("deliver_funny");
-				base.Complete();
-			}
+			chara = EClass._map.deadCharas.Find((Chara c) => c.uid == uidTarget);
+		}
+		if (chara == null)
+		{
+			Msg.Say("deliver_funny");
+			Complete();
 		}
 	}
-
-	[JsonProperty]
-	public string idThing;
-
-	[JsonProperty]
-	public int num;
-
-	private static List<SourceCategory.Row> _listDeliver = new List<SourceCategory.Row>();
 }

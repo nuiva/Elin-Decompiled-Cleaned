@@ -1,5 +1,3 @@
-﻿using System;
-
 public class TraitChestMerchant : TraitContainer
 {
 	public override string IDInvStyle
@@ -14,9 +12,9 @@ public class TraitChestMerchant : TraitContainer
 			{
 				return "modern";
 			}
-			if (this.owner.GetRootCard().trait is TraitVendingMachine)
+			if (owner.GetRootCard().trait is TraitVendingMachine)
 			{
-				return this.owner.GetRootCard().trait.IDInvStyle;
+				return owner.GetRootCard().trait.IDInvStyle;
 			}
 			return base.idContainer;
 		}

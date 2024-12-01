@@ -1,36 +1,10 @@
-﻿using System;
-
 public class TileTypeBridge : TileTypeFloor
 {
-	public override bool IsFloor
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool IsFloor => false;
 
-	public override bool IsBridge
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsBridge => true;
 
-	public override bool CanBuiltOnWater
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanBuiltOnWater => true;
 
-	public override int MaxAltitude
-	{
-		get
-		{
-			return 15;
-		}
-	}
+	public override int MaxAltitude => 15;
 }

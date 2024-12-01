@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -6,175 +6,10 @@ using UnityEngine.UI;
 
 public class WidgetInspector : Widget
 {
-	private static PointTarget mouseTarget
+	public class Extra
 	{
-		get
-		{
-			return EMono.scene.mouseTarget;
-		}
-	}
-
-	public override object CreateExtra()
-	{
-		return new WidgetInspector.Extra();
-	}
-
-	public WidgetInspector.Extra extra
-	{
-		get
-		{
-			return base.config.extra as WidgetInspector.Extra;
-		}
-	}
-
-	public static void OnClickPoint()
-	{
-	}
-
-	public static void Show()
-	{
-	}
-
-	public static void Hide()
-	{
-		if (WidgetInspector.Instance)
-		{
-			WidgetInspector.Instance.Close();
-		}
-	}
-
-	public override void OnActivate()
-	{
-		WidgetInspector.Instance = this;
-		this.moldButton = this.layoutButton.CreateMold(null);
-		this.moldText = this.layoutLog.CreateMold(null);
-	}
-
-	public override void OnDeactivate()
-	{
-		WidgetInspector.target = null;
-	}
-
-	public void OnUpdateInput()
-	{
-		if (this.selected)
-		{
-			return;
-		}
-		if (WidgetInspector.mouseTarget.hasValidTarget)
-		{
-			this._Show();
-			return;
-		}
-		if (WidgetInspector.target != null)
-		{
-			WidgetInspector.target = null;
-			base.gameObject.SetActive(false);
-		}
-	}
-
-	public void _Show()
-	{
-		base.gameObject.SetActive(true);
-		if (this.extra.moveToMouse)
-		{
-			base.transform.position = Input.mousePosition + this.posFix;
-			base.ClampToScreen();
-		}
-		EMono.Sound.Play("pop_inspector");
-		this.SwitchPage(0);
-	}
-
-	public void SwitchPage(int _index)
-	{
-		this.index = _index;
-		WidgetInspector.target = this.list[this.index];
-		this.layoutButton.DestroyChildren(false, true);
-		this.layoutLog.DestroyChildren(false, true);
-		this.texts.Clear();
-		string name;
-		if (WidgetInspector.target is Chara)
-		{
-			Chara c = WidgetInspector.target as Chara;
-			name = c.Name;
-			c.SetImage(this.iconCard);
-			if (c.IsHomeMember())
-			{
-				this.AddButton("detail", delegate
-				{
-					EMono.ui.AddLayer<LayerChara>().SetChara(c);
-				});
-			}
-		}
-		else if (WidgetInspector.target is Thing)
-		{
-			Thing t = WidgetInspector.target as Thing;
-			name = t.Name;
-			t.SetImage(this.iconCard);
-			this.AddButton("detail", delegate
-			{
-				EMono.ui.AddLayer<LayerInfo>().Set(t, false);
-			});
-		}
-		else
-		{
-			name = (WidgetInspector.target as Area).Name;
-		}
-		this.iconCard.rectTransform.pivot = new Vector2(1f, 0f);
-		this.iconCard.SetActive(WidgetInspector.target is Card);
-		this.iconArea.SetActive(WidgetInspector.target is Area);
-		this.AddLog(WidgetInspector.target.ToString(), default(Color));
-		this.textTitle.SetText(name);
-		this.Refresh();
-		this.RebuildLayout(true);
-	}
-
-	public void Refresh()
-	{
-		if (WidgetInspector.target is Chara)
-		{
-			object obj = WidgetInspector.target;
-		}
-	}
-
-	public void AddLog(string text, Color c = default(Color))
-	{
-		UIText uitext = Util.Instantiate<UIText>(this.moldText, this.layoutLog);
-		this.texts.Add(uitext);
-		uitext.SetText(text);
-		if (this.texts.Count > this.maxLog)
-		{
-			UnityEngine.Object.DestroyImmediate(this.texts[0].gameObject);
-			this.texts.Remove(this.texts[0]);
-		}
-	}
-
-	public void AddButton(string id = "test", Action action = null)
-	{
-		UIButton uibutton = Util.Instantiate<UIButton>(this.moldButton, this.layoutButton);
-		uibutton.icon.sprite = (SpriteSheet.Get("icon_" + id) ?? uibutton.icon.sprite);
-		uibutton.mainText.SetText(id.lang());
-		if (action != null)
-		{
-			uibutton.onClick.AddListener(delegate()
-			{
-				action();
-			});
-		}
-	}
-
-	public override void OnSetContextMenu(UIContextMenu m)
-	{
-		m.AddChild("setting").AddToggle("moveToMouse", this.extra.moveToMouse, delegate(bool a)
-		{
-			this.extra.moveToMouse = a;
-		});
-		m.AddChild("style").AddSlider("toggleButtonBG", (float a) => a.ToString() ?? "", (float)base.config.skin.button, delegate(float a)
-		{
-			base.config.skin.button = (int)a;
-			this.ApplySkin();
-		}, 0f, (float)(base.config.skin.Skin.buttons.Count - 1), true, true, false);
-		base.SetBaseContextMenu(m);
+		[JsonProperty]
+		public bool moveToMouse;
 	}
 
 	public static WidgetInspector Instance;
@@ -209,9 +44,160 @@ public class WidgetInspector : Widget
 
 	private UIText moldText;
 
-	public class Extra
+	private static PointTarget mouseTarget => EMono.scene.mouseTarget;
+
+	public Extra extra => base.config.extra as Extra;
+
+	public override object CreateExtra()
 	{
-		[JsonProperty]
-		public bool moveToMouse;
+		return new Extra();
+	}
+
+	public static void OnClickPoint()
+	{
+	}
+
+	public static void Show()
+	{
+	}
+
+	public static void Hide()
+	{
+		if ((bool)Instance)
+		{
+			Instance.Close();
+		}
+	}
+
+	public override void OnActivate()
+	{
+		Instance = this;
+		moldButton = layoutButton.CreateMold<UIButton>();
+		moldText = layoutLog.CreateMold<UIText>();
+	}
+
+	public override void OnDeactivate()
+	{
+		target = null;
+	}
+
+	public void OnUpdateInput()
+	{
+		if (!selected)
+		{
+			if (mouseTarget.hasValidTarget)
+			{
+				_Show();
+			}
+			else if (target != null)
+			{
+				target = null;
+				base.gameObject.SetActive(value: false);
+			}
+		}
+	}
+
+	public void _Show()
+	{
+		base.gameObject.SetActive(value: true);
+		if (extra.moveToMouse)
+		{
+			base.transform.position = Input.mousePosition + posFix;
+			ClampToScreen();
+		}
+		EMono.Sound.Play("pop_inspector");
+		SwitchPage(0);
+	}
+
+	public void SwitchPage(int _index)
+	{
+		index = _index;
+		target = list[index];
+		string text = "";
+		layoutButton.DestroyChildren();
+		layoutLog.DestroyChildren();
+		texts.Clear();
+		if (target is Chara)
+		{
+			Chara c = target as Chara;
+			text = c.Name;
+			c.SetImage(iconCard);
+			if (c.IsHomeMember())
+			{
+				AddButton("detail", delegate
+				{
+					EMono.ui.AddLayer<LayerChara>().SetChara(c);
+				});
+			}
+		}
+		else if (target is Thing)
+		{
+			Thing t = target as Thing;
+			text = t.Name;
+			t.SetImage(iconCard);
+			AddButton("detail", delegate
+			{
+				EMono.ui.AddLayer<LayerInfo>().Set(t);
+			});
+		}
+		else
+		{
+			text = (target as Area).Name;
+		}
+		iconCard.rectTransform.pivot = new Vector2(1f, 0f);
+		iconCard.SetActive(target is Card);
+		iconArea.SetActive(target is Area);
+		AddLog(target.ToString());
+		textTitle.SetText(text);
+		Refresh();
+		this.RebuildLayout(recursive: true);
+	}
+
+	public void Refresh()
+	{
+		if (target is Chara)
+		{
+			_ = target;
+		}
+	}
+
+	public void AddLog(string text, Color c = default(Color))
+	{
+		UIText uIText = Util.Instantiate(moldText, layoutLog);
+		texts.Add(uIText);
+		uIText.SetText(text);
+		if (texts.Count > maxLog)
+		{
+			UnityEngine.Object.DestroyImmediate(texts[0].gameObject);
+			texts.Remove(texts[0]);
+		}
+	}
+
+	public void AddButton(string id = "test", Action action = null)
+	{
+		UIButton uIButton = Util.Instantiate(moldButton, layoutButton);
+		uIButton.icon.sprite = SpriteSheet.Get("icon_" + id) ?? uIButton.icon.sprite;
+		uIButton.mainText.SetText(id.lang());
+		if (action != null)
+		{
+			uIButton.onClick.AddListener(delegate
+			{
+				action();
+			});
+		}
+	}
+
+	public override void OnSetContextMenu(UIContextMenu m)
+	{
+		m.AddChild("setting").AddToggle("moveToMouse", extra.moveToMouse, delegate(bool a)
+		{
+			extra.moveToMouse = a;
+		});
+		m.AddChild("style").AddSlider("toggleButtonBG", (float a) => a.ToString() ?? "", base.config.skin.button, delegate(float a)
+		{
+			base.config.skin.button = (int)a;
+			ApplySkin();
+		}, 0f, base.config.skin.Skin.buttons.Count - 1, isInt: true);
+		SetBaseContextMenu(m);
 	}
 }

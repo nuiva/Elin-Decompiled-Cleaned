@@ -1,22 +1,8 @@
-﻿using System;
-
 public class ActWait : Act
 {
-	public override bool CanPressRepeat
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanPressRepeat => true;
 
-	public override CursorInfo CursorIcon
-	{
-		get
-		{
-			return CursorSystem.Wait;
-		}
-	}
+	public override CursorInfo CursorIcon => CursorSystem.Wait;
 
 	public override bool Perform()
 	{
@@ -26,7 +12,7 @@ public class ActWait : Act
 		}
 		if (Act.CC.IsPC)
 		{
-			ActWait.Search(Act.CC, true);
+			Search(Act.CC, manual: true);
 		}
 		return true;
 	}
@@ -45,9 +31,9 @@ public class ActWait : Act
 		{
 			if (thing.isHidden && thing.id == "medal" && !EClass._zone.IsUserZone)
 			{
-				thing.SetHidden(false);
-				c.PlaySound("medal", 1f, true);
-				Msg.Say("spotMedal", c, thing, null, null);
+				thing.SetHidden(hide: false);
+				c.PlaySound("medal");
+				Msg.Say("spotMedal", c, thing);
 				return true;
 			}
 		}
@@ -61,7 +47,7 @@ public class ActWait : Act
 			return;
 		}
 		int num = 2 + c.Evalue(402);
-		EClass._map.ForeachSphere(c.pos.x, c.pos.z, (float)num, delegate(Point p)
+		EClass._map.ForeachSphere(c.pos.x, c.pos.z, num, delegate(Point p)
 		{
 			if (p.detail == null || !c.CanSeeSimple(p))
 			{
@@ -86,24 +72,24 @@ public class ActWait : Act
 					}
 					else
 					{
-						if (EClass.rnd(c.Evalue(210) * 15 + 20 + c.PER) * (manual ? 2 : 1) <= EClass.rnd(EClass._zone.DangerLv * 8 + 60))
+						if (EClass.rnd(c.Evalue(210) * 15 + 20 + c.PER) * ((!manual) ? 1 : 2) <= EClass.rnd(EClass._zone.DangerLv * 8 + 60))
 						{
 							continue;
 						}
 						c.ModExp(210, EClass._zone.DangerLv * 3 / 2 + 100);
 					}
 					bool flag = thing.trait is TraitTrap;
-					thing.SetHidden(false);
+					thing.SetHidden(hide: false);
 					if (thing.id == "medal")
 					{
-						c.PlaySound("medal", 1f, true);
-						Msg.Say("spotMedal", c, thing, null, null);
+						c.PlaySound("medal");
+						Msg.Say("spotMedal", c, thing);
 					}
 					else
 					{
 						if (flag)
 						{
-							c.PlaySound("spot_trap", 1f, true);
+							c.PlaySound("spot_trap");
 							if (EClass.core.config.game.haltOnSpotTrap)
 							{
 								EClass.player.haltMove = true;
@@ -111,9 +97,9 @@ public class ActWait : Act
 						}
 						else
 						{
-							c.PlaySound("spot", 1f, true);
+							c.PlaySound("spot");
 						}
-						Msg.Say("spotHidden", c, thing, null, null);
+						Msg.Say("spotHidden", c, thing);
 					}
 				}
 			}

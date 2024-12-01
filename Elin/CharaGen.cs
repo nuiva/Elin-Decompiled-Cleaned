@@ -1,7 +1,7 @@
-﻿using System;
-
 public class CharaGen : CardGen
 {
+	public static int objLv;
+
 	public static Chara _Create(string id, int idMat = -1, int lv = -1)
 	{
 		Chara chara = new Chara();
@@ -9,7 +9,7 @@ public class CharaGen : CardGen
 		{
 			lv = 1;
 		}
-		CharaGen.objLv = lv;
+		objLv = lv;
 		chara.Create(id, idMat, lv);
 		if (EClass.player != null)
 		{
@@ -20,17 +20,17 @@ public class CharaGen : CardGen
 
 	public static Chara Create(string id, int lv = -1)
 	{
-		return CharaGen._Create(id, -1, lv);
+		return _Create(id, -1, lv);
 	}
 
 	public static Chara CreateFromFilter(string id, int lv = -1, int levelRange = -1)
 	{
-		return CharaGen.CreateFromFilter(SpawnList.Get(id, null, null), lv, levelRange);
+		return CreateFromFilter(SpawnList.Get(id), lv, levelRange);
 	}
 
 	public static Chara CreateFromFilter(SpawnList list, int lv = -1, int levelRange = -1)
 	{
-		return CharaGen.Create(list.Select(lv, levelRange).id, lv);
+		return Create(list.Select(lv, levelRange).id, lv);
 	}
 
 	public static Chara CreateFromElement(string idEle, int lv = -1, string idFilter = "chara")
@@ -40,7 +40,7 @@ public class CharaGen : CardGen
 			string[] mainElement = c.mainElement;
 			for (int i = 0; i < mainElement.Length; i++)
 			{
-				if (mainElement[i].Split(',', StringSplitOptions.None)[0] == idEle)
+				if (mainElement[i].Split(',')[0] == idEle)
 				{
 					return true;
 				}
@@ -51,13 +51,11 @@ public class CharaGen : CardGen
 		{
 			idEle = idEle
 		});
-		return CharaGen.Create(spawnList.Select(lv, -1).id, lv);
+		return Create(spawnList.Select(lv).id, lv);
 	}
 
 	public static Chara CreateWealthy(int lv = -1)
 	{
-		return CharaGen.CreateFromFilter(SpawnListChara.Get("c_wealthy", (SourceChara.Row r) => r.works.Contains("Rich") || r.hobbies.Contains("Rich")), lv, -1);
+		return CreateFromFilter(SpawnListChara.Get("c_wealthy", (SourceChara.Row r) => r.works.Contains("Rich") || r.hobbies.Contains("Rich")), lv);
 	}
-
-	public static int objLv;
 }

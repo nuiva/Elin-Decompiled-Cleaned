@@ -1,21 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class AM_MoveInstalled : AM_Designation<TaskMoveInstalled>
 {
-	public override bool IsRoofEditMode(Card c = null)
-	{
-		return ActionMode.Build._IsRoofEditMode(this.target);
-	}
+	public Card target;
+
+	public Card moldCard;
+
+	public bool onetime;
 
 	public override int hitW
 	{
 		get
 		{
-			if (this.target != null)
+			if (target != null)
 			{
-				return this.moldCard.W;
+				return moldCard.W;
 			}
 			return 1;
 		}
@@ -25,9 +24,9 @@ public class AM_MoveInstalled : AM_Designation<TaskMoveInstalled>
 	{
 		get
 		{
-			if (this.target != null)
+			if (target != null)
 			{
-				return this.moldCard.H;
+				return moldCard.H;
 			}
 			return 1;
 		}
@@ -37,7 +36,7 @@ public class AM_MoveInstalled : AM_Designation<TaskMoveInstalled>
 	{
 		get
 		{
-			if (this.target != null)
+			if (target != null)
 			{
 				return 0;
 			}
@@ -45,49 +44,24 @@ public class AM_MoveInstalled : AM_Designation<TaskMoveInstalled>
 		}
 	}
 
-	public override BaseTileMap.CardIconMode cardIconMode
+	public override BaseTileMap.CardIconMode cardIconMode => BaseTileMap.CardIconMode.Inspect;
+
+	public override bool AllowMiddleClickFunc => target == null;
+
+	public bool FreePos => EClass.game.config.FreePos;
+
+	public override BaseTileSelector.SelectType selectType => BaseTileSelector.SelectType.Single;
+
+	public override bool ShouldHideBuildMenu => target != null;
+
+	public override bool IsRoofEditMode(Card c = null)
 	{
-		get
-		{
-			return BaseTileMap.CardIconMode.Inspect;
-		}
+		return ActionMode.Build._IsRoofEditMode(target);
 	}
 
 	public override HitResult HitResultOnDesignation(Point p)
 	{
 		return HitResult.Invalid;
-	}
-
-	public override bool AllowMiddleClickFunc
-	{
-		get
-		{
-			return this.target == null;
-		}
-	}
-
-	public bool FreePos
-	{
-		get
-		{
-			return EClass.game.config.FreePos;
-		}
-	}
-
-	public override BaseTileSelector.SelectType selectType
-	{
-		get
-		{
-			return BaseTileSelector.SelectType.Single;
-		}
-	}
-
-	public override bool ShouldHideBuildMenu
-	{
-		get
-		{
-			return this.target != null;
-		}
 	}
 
 	public override bool CanInstaComplete(TaskMoveInstalled t)
@@ -102,102 +76,96 @@ public class AM_MoveInstalled : AM_Designation<TaskMoveInstalled>
 
 	public void Activate(Thing t)
 	{
-		base.Activate(true, false);
-		this.SetTarget(t);
-		this.onetime = true;
+		Activate();
+		SetTarget(t);
+		onetime = true;
 		EClass.ui.hud.hint.UpdateText();
 	}
 
 	public override void OnActivate()
 	{
-		this.onetime = false;
-		this.list = base.Designations.moveInstalled;
-		this.target = (this.moldCard = null);
+		onetime = false;
+		list = base.Designations.moveInstalled;
+		target = (moldCard = null);
 		base.OnActivate();
 	}
 
 	public override void OnDeactivate()
 	{
-		this.target = (this.moldCard = (this.mold.target = null));
+		target = (moldCard = (mold.target = null));
 	}
 
 	public override void OnCreateMold(bool processing)
 	{
-		this.mold.target = this.target;
+		mold.target = target;
 	}
 
 	public override HitResult HitTest(Point point, Point start)
 	{
 		if (EClass.debug.enable)
 		{
-			int hotkey = EInput.hotkey;
-			if (hotkey != 0)
+			switch (EInput.hotkey)
 			{
-				if (hotkey == 1)
-				{
-					EClass._map.AddDecal(point.x, point.z, 2, 1, true);
-				}
-			}
-			else
-			{
-				EClass._map.SetDecal(point.x, point.z, 0, 1, true);
+			case 0:
+				EClass._map.SetDecal(point.x, point.z);
+				break;
+			case 1:
+				EClass._map.AddDecal(point.x, point.z, 2);
+				break;
 			}
 		}
-		if (this.target == null)
+		if (target == null)
 		{
 			if (EClass.scene.mouseTarget.CanCycle())
 			{
 				return HitResult.Warning;
 			}
-			if (this.GetTarget(point) != null)
+			if (GetTarget(point) != null)
 			{
 				return HitResult.Valid;
 			}
 			return HitResult.Default;
 		}
-		else
+		if (target.isChara && CheckEnemyNearBy(target, point, msg: false))
 		{
-			if (this.target.isChara && this.CheckEnemyNearBy(this.target, point, false))
+			return HitResult.Invalid;
+		}
+		moldCard.ignoreStackHeight = Input.GetKey(KeyCode.LeftControl);
+		if (!EClass.debug.ignoreBuildRule)
+		{
+			if (target.isChara && (point.IsBlocked || point.HasChara))
 			{
 				return HitResult.Invalid;
 			}
-			this.moldCard.ignoreStackHeight = Input.GetKey(KeyCode.LeftControl);
-			if (!EClass.debug.ignoreBuildRule)
+			if (!EClass._map.bounds.Contains(point))
 			{
-				if (this.target.isChara && (point.IsBlocked || point.HasChara))
-				{
-					return HitResult.Invalid;
-				}
-				if (!EClass._map.bounds.Contains(point))
-				{
-					return HitResult.Invalid;
-				}
+				return HitResult.Invalid;
 			}
-			return base.HitTest(point, start);
 		}
+		return base.HitTest(point, start);
 	}
 
 	public void SetTarget(Card _target)
 	{
-		foreach (TaskMoveInstalled taskMoveInstalled in EClass._map.tasks.designations.moveInstalled.items.ToArray())
+		TaskMoveInstalled[] array = EClass._map.tasks.designations.moveInstalled.items.ToArray();
+		foreach (TaskMoveInstalled taskMoveInstalled in array)
 		{
 			if (taskMoveInstalled.target == _target)
 			{
 				taskMoveInstalled.Destroy();
 			}
 		}
-		this.mold.target = _target;
-		this.target = _target;
-		if (this.target.isThing)
+		target = (mold.target = _target);
+		if (target.isThing)
 		{
-			this.moldCard = this.target.Duplicate(1);
-			this.moldCard.placeState = PlaceState.installed;
+			moldCard = target.Duplicate(1);
+			moldCard.placeState = PlaceState.installed;
 		}
 		else
 		{
-			this.moldCard = CharaGen.Create(_target.id, -1);
-			this.moldCard.bio.SetGender(_target.bio.gender);
-			this.moldCard.idSkin = this.target.idSkin;
+			moldCard = CharaGen.Create(_target.id);
+			moldCard.bio.SetGender(_target.bio.gender);
+			moldCard.idSkin = target.idSkin;
 		}
 		EClass.ui.hud.hint.UpdateText();
 	}
@@ -209,22 +177,30 @@ public class AM_MoveInstalled : AM_Designation<TaskMoveInstalled>
 
 	public bool CanPutAway()
 	{
-		return EClass.debug.ignoreBuildRule || (this.target != null && !this.target.isChara && !this.target.trait.CanOnlyCarry);
+		if (EClass.debug.ignoreBuildRule)
+		{
+			return true;
+		}
+		if (target == null || target.isChara || target.trait.CanOnlyCarry)
+		{
+			return false;
+		}
+		return true;
 	}
 
 	public bool TryPutAway()
 	{
-		if (!this.CanPutAway())
+		if (!CanPutAway())
 		{
 			return false;
 		}
-		if (!EClass._map.PutAway(this.target))
+		if (!EClass._map.PutAway(target))
 		{
 			SE.Beep();
 			return false;
 		}
 		SE.Click();
-		this.target = null;
+		target = null;
 		EClass.ui.hud.hint.UpdateText();
 		return true;
 	}
@@ -246,7 +222,7 @@ public class AM_MoveInstalled : AM_Designation<TaskMoveInstalled>
 				if (msg)
 				{
 					SE.BeepSmall();
-					EClass.ui.Say("enemyInMap".langGame(), null);
+					EClass.ui.Say("enemyInMap".langGame());
 				}
 				return true;
 			}
@@ -256,10 +232,10 @@ public class AM_MoveInstalled : AM_Designation<TaskMoveInstalled>
 
 	public override void OnProcessTiles(Point point, int dir)
 	{
-		if (this.target == null)
+		if (target == null)
 		{
-			Card t = this.GetTarget(point);
-			if (this.CheckEnemyNearBy(t, t.pos, true))
+			Card t = GetTarget(point);
+			if (CheckEnemyNearBy(t, t.pos))
 			{
 				return;
 			}
@@ -275,175 +251,163 @@ public class AM_MoveInstalled : AM_Designation<TaskMoveInstalled>
 				t.trait.TrySetAct(actPlan);
 				if (actPlan.list.Count > 0)
 				{
-					UIContextMenu uicontextMenu = EClass.ui.CreateContextMenuInteraction();
-					uicontextMenu.AddButton("move", delegate()
+					UIContextMenu uIContextMenu = EClass.ui.CreateContextMenuInteraction();
+					uIContextMenu.AddButton("move", delegate
 					{
-						this.SetTarget(t);
+						SetTarget(t);
 						SE.Click();
-					}, true);
-					using (List<ActPlan.Item>.Enumerator enumerator = actPlan.list.GetEnumerator())
+					});
+					foreach (ActPlan.Item i in actPlan.list)
 					{
-						while (enumerator.MoveNext())
+						uIContextMenu.AddButton(i.GetTextContext(showName: false), delegate
 						{
-							ActPlan.Item i = enumerator.Current;
-							uicontextMenu.AddButton(i.GetTextContext(false), delegate()
-							{
-								i.act.Perform();
-							}, true);
-						}
+							i.act.Perform();
+						});
 					}
-					uicontextMenu.Show();
+					uIContextMenu.Show();
 					return;
 				}
 			}
-			this.SetTarget(t);
+			SetTarget(t);
 			SE.Click();
-			return;
 		}
 		else
 		{
-			if (this.CheckEnemyNearBy(this.target, point, true))
+			if (CheckEnemyNearBy(target, point))
 			{
 				return;
 			}
-			this.mold.dir = this.moldCard.dir;
-			this.mold.altitude = this.moldCard.altitude;
-			if (this.target.isChara)
+			mold.dir = moldCard.dir;
+			mold.altitude = moldCard.altitude;
+			if (target.isChara)
 			{
-				Point orgPos = this.target.Chara.orgPos;
-				if (orgPos != null)
-				{
-					orgPos.Set(point);
-				}
+				target.Chara.orgPos?.Set(point);
 			}
 			base.OnProcessTiles(point, dir);
-			this.target.ignoreStackHeight = this.moldCard.ignoreStackHeight;
-			this.target.freePos = this.moldCard.freePos;
-			this.target.fx = (this.FreePos ? this.moldCard.fx : 0f);
-			this.target.fy = (this.FreePos ? this.moldCard.fy : 0f);
-			if (this.target.isChara && EClass.debug)
+			target.ignoreStackHeight = moldCard.ignoreStackHeight;
+			target.freePos = moldCard.freePos;
+			target.fx = (FreePos ? moldCard.fx : 0f);
+			target.fy = (FreePos ? moldCard.fy : 0f);
+			if (target.isChara && (bool)EClass.debug)
 			{
 				foreach (Thing thing in point.Things)
 				{
-					TraitShackle traitShackle = thing.trait as TraitShackle;
-					if (traitShackle != null)
+					if (thing.trait is TraitShackle traitShackle)
 					{
-						traitShackle.Restrain(this.target.Chara, false);
+						traitShackle.Restrain(target.Chara);
 					}
 				}
 			}
-			if (this.target.isThing)
+			if (target.isThing)
 			{
-				this.target.isRoofItem = this.IsRoofEditMode(null);
-				if (this.target.isRoofItem)
+				target.isRoofItem = IsRoofEditMode();
+				if (target.isRoofItem)
 				{
-					this.target.SetPlaceState(PlaceState.roaming, false);
+					target.SetPlaceState(PlaceState.roaming);
 				}
 			}
 			SE.Click();
-			if (this.target.renderer.hasActor)
+			if (target.renderer.hasActor)
 			{
-				this.target.renderer.RefreshSprite();
+				target.renderer.RefreshSprite();
 			}
-			this.target = null;
-			return;
+			target = null;
 		}
 	}
 
-	public unsafe override void OnRenderTile(Point point, HitResult result, int dir)
+	public override void OnRenderTile(Point point, HitResult result, int dir)
 	{
-		if (this.target == null)
+		if (target == null)
 		{
-			Card card = this.GetTarget(point);
+			Card card = GetTarget(point);
 			if (card != null && card.isThing)
 			{
-				card.Thing.RenderMarker(point, true, result, true, -1, true);
+				card.Thing.RenderMarker(point, active: true, result, main: true, -1, useCurrentPosition: true);
 			}
-			base.OnRenderTile(point, (result == HitResult.Valid) ? (EClass.scene.mouseTarget.CanCycle() ? HitResult.Warning : HitResult.Default) : result, dir);
+			base.OnRenderTile(point, (result != HitResult.Valid) ? result : (EClass.scene.mouseTarget.CanCycle() ? HitResult.Warning : HitResult.Default), dir);
 			return;
 		}
-		if (this.moldCard == null)
+		if (moldCard == null)
 		{
 			base.OnRenderTile(point, result, dir);
 			return;
 		}
-		this.moldCard.SetFreePos(point);
+		moldCard.SetFreePos(point);
 		if (result != HitResult.Valid && result != HitResult.Warning)
 		{
 			base.OnRenderTile(point, result, dir);
 		}
 		else
 		{
-			int desiredDir = this.target.TileType.GetDesiredDir(point, this.moldCard.dir);
+			int desiredDir = target.TileType.GetDesiredDir(point, moldCard.dir);
 			if (desiredDir != -1)
 			{
-				dir = (this.moldCard.dir = desiredDir);
+				int num2 = (moldCard.dir = desiredDir);
+				dir = num2;
 			}
 			bool flag = !base.tileSelector.multisize || (base.tileSelector.firstInMulti && base.Summary.count == base.Summary.countValid);
-			this.moldCard.RenderMarker(point, false, result, flag, -1, false);
+			moldCard.RenderMarker(point, active: false, result, flag, -1);
 			if (flag)
 			{
-				this.target.trait.OnRenderTile(point, result, dir);
+				target.trait.OnRenderTile(point, result, dir);
 			}
 		}
-		EClass.screen.guide.DrawLine(*this.target.pos.PositionCenter(), *point.PositionCenter());
+		EClass.screen.guide.DrawLine(target.pos.PositionCenter(), point.PositionCenter());
 	}
 
 	public override void RotateUnderMouse()
 	{
-		if (this.target != null)
+		if (target != null)
 		{
 			SE.Rotate();
-			this.moldCard.Rotate(false);
-			return;
+			moldCard.Rotate();
 		}
-		base.RotateUnderMouse();
+		else
+		{
+			base.RotateUnderMouse();
+		}
 	}
 
 	public override void InputWheel(int wheel)
 	{
-		if (EInput.isAltDown || EInput.isCtrlDown)
+		if (!EInput.isAltDown && !EInput.isCtrlDown)
 		{
-			return;
+			if (target != null && target.TileType.MaxAltitude > 0)
+			{
+				moldCard.ChangeAltitude(wheel);
+			}
+			else if (EClass.scene.mouseTarget.CanCycle())
+			{
+				EClass.scene.mouseTarget.CycleTarget(wheel);
+			}
+			else
+			{
+				base.InputWheel(wheel);
+			}
 		}
-		if (this.target != null && this.target.TileType.MaxAltitude > 0)
-		{
-			this.moldCard.ChangeAltitude(wheel);
-			return;
-		}
-		if (EClass.scene.mouseTarget.CanCycle())
-		{
-			EClass.scene.mouseTarget.CycleTarget(wheel);
-			return;
-		}
-		base.InputWheel(wheel);
 	}
 
 	public override void OnCancel()
 	{
-		if (this.target != null)
+		if (target != null)
 		{
-			this.target = null;
-			if (this.onetime)
+			target = null;
+			if (onetime)
 			{
 				base.OnCancel();
 			}
-			return;
 		}
-		base.OnCancel();
+		else
+		{
+			base.OnCancel();
+		}
 	}
 
 	public override void OnFinishProcessTiles()
 	{
-		if (this.onetime)
+		if (onetime)
 		{
-			base.Deactivate();
+			Deactivate();
 		}
 	}
-
-	public Card target;
-
-	public Card moldCard;
-
-	public bool onetime;
 }

@@ -1,30 +1,18 @@
-﻿using System;
-
 public class TraitFloorSwitch : TraitSwitch
 {
 	public override void OnStepped(Chara c)
 	{
-		if (this.IsNegativeEffect && EClass._zone.IsPCFaction && !c.IsHostile())
+		if (!IsNegativeEffect || !EClass._zone.IsPCFaction || c.IsHostile())
 		{
-			return;
-		}
-		this.owner.SetHidden(false);
-		if (this.IgnoreWhenLevitating() && c.IsLevitating)
-		{
-			this.owner.Say("levitating", null, null);
-			return;
-		}
-		if (this.CanDisarmTrap)
-		{
-			if (base.TryDisarmTrap(c))
+			owner.SetHidden(hide: false);
+			if (IgnoreWhenLevitating() && c.IsLevitating)
 			{
-				return;
+				owner.Say("levitating");
 			}
-			if (EClass.pc.Evalue(1656) >= 3)
+			else if (!CanDisarmTrap || (!TryDisarmTrap(c) && EClass.pc.Evalue(1656) < 3))
 			{
-				return;
+				ActivateTrap(c);
 			}
 		}
-		base.ActivateTrap(c);
 	}
 }

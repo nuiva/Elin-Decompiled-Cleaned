@@ -1,4 +1,3 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
@@ -6,57 +5,26 @@ using UnityEngine;
 
 public class Region : Zone
 {
-	public override bool WillAutoSave
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public EloMap elomap = new EloMap();
 
-	public override ActionMode DefaultActionMode
-	{
-		get
-		{
-			return ActionMode.Region;
-		}
-	}
+	[JsonProperty]
+	public int dateCheckSites;
 
-	public override bool IsRegion
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool WillAutoSave => false;
 
-	public override int DangerLv
-	{
-		get
-		{
-			return 1;
-		}
-	}
+	public override ActionMode DefaultActionMode => ActionMode.Region;
 
-	public override bool BlockBorderExit
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsRegion => true;
 
-	public override Point RegionPos
-	{
-		get
-		{
-			return this._regionPos.Set(EClass.pc.pos);
-		}
-	}
+	public override int DangerLv => 1;
+
+	public override bool BlockBorderExit => true;
+
+	public override Point RegionPos => _regionPos.Set(EClass.pc.pos);
 
 	public override void OnActivate()
 	{
-		this.children.ForeachReverse(delegate(Spatial _z)
+		children.ForeachReverse(delegate(Spatial _z)
 		{
 			Zone zone = _z as Zone;
 			if (zone.CanDestroy())
@@ -64,77 +32,75 @@ public class Region : Zone
 				zone.Destroy();
 			}
 		});
-		this.children.ForeachReverse(delegate(Spatial _z)
+		children.ForeachReverse(delegate(Spatial _z)
 		{
 			if (_z.destryoed)
 			{
-				this.children.Remove(_z);
+				children.Remove(_z);
 			}
 		});
-		this.children.ForEach(delegate(Spatial a)
+		children.ForEach(delegate(Spatial a)
 		{
-			Zone zone = a as Zone;
-			if (zone.IsInstance || (!zone.IsPCFaction && zone is Zone_Field) || zone is Zone_SisterHouse)
+			Zone zone2 = a as Zone;
+			if (!zone2.IsInstance && (zone2.IsPCFaction || !(zone2 is Zone_Field)) && !(zone2 is Zone_SisterHouse))
 			{
-				return;
+				elomap.SetZone(zone2.x, zone2.y, zone2);
 			}
-			this.elomap.SetZone(zone.x, zone.y, zone, false);
 		});
-		this.CheckRandomSites();
+		CheckRandomSites();
 	}
 
 	public void CheckRandomSites()
 	{
-		if (EClass.world.date.IsExpired(this.dateCheckSites))
+		if (EClass.world.date.IsExpired(dateCheckSites))
 		{
-			this.dateCheckSites = EClass.world.date.GetRaw(0) + 1440;
-			this.UpdateRandomSites();
+			dateCheckSites = EClass.world.date.GetRaw() + 1440;
+			UpdateRandomSites();
 		}
-		if (base.FindZone("foxtown_nefu") == null)
+		if (FindZone("foxtown_nefu") == null)
 		{
-			SpatialGen.Create("foxtown_nefu", this, true, -99999, -99999, 0);
+			SpatialGen.Create("foxtown_nefu", this, register: true);
 		}
-		if (base.FindZone("little_garden") == null)
+		if (FindZone("little_garden") == null)
 		{
-			SpatialGen.Create("little_garden", this, true, -99999, -99999, 0);
+			SpatialGen.Create("little_garden", this, register: true);
 		}
-		this.elomap.objmap.UpdateMeshImmediate();
+		elomap.objmap.UpdateMeshImmediate();
 	}
 
 	public void RenewRandomSites()
 	{
-		this.dateCheckSites = 0;
+		dateCheckSites = 0;
 		Msg.Say("renewNefia");
-		Debug.Log(this.ListRandomSites().Count);
-		foreach (Zone zone in this.ListRandomSites())
+		Debug.Log(ListRandomSites().Count);
+		foreach (Zone item in ListRandomSites())
 		{
-			zone.dateExpire = 1;
+			item.dateExpire = 1;
 		}
 	}
 
 	public void UpdateRandomSites()
 	{
-		List<Zone> list = this.ListRandomSites();
+		List<Zone> list = ListRandomSites();
 		int num = 50 - list.Count;
-		if (num <= 0)
+		if (num > 0)
 		{
-			return;
-		}
-		for (int i = 0; i < num; i++)
-		{
-			this.CreateRandomSite(this.GetRandomPoint(), null, false, 0);
+			for (int i = 0; i < num; i++)
+			{
+				CreateRandomSite(GetRandomPoint(), null, updateMesh: false);
+			}
 		}
 	}
 
 	public void InitElomap()
 	{
-		EClass.scene.elomapActor.Initialize(this.elomap);
+		EClass.scene.elomapActor.Initialize(elomap);
 	}
 
 	public Zone CreateRandomSite(Zone center, int radius = 8, string idSource = null, bool updateMesh = true, int lv = 0)
 	{
-		this.InitElomap();
-		return this.CreateRandomSite(this.GetRandomPoint(center.IsRegion ? (EClass.pc.pos.x + EClass.scene.elomap.minX) : center.x, center.IsRegion ? (EClass.pc.pos.z + EClass.scene.elomap.minY) : center.y, radius, false), idSource, updateMesh, lv);
+		InitElomap();
+		return CreateRandomSite(GetRandomPoint(center.IsRegion ? (EClass.pc.pos.x + EClass.scene.elomap.minX) : center.x, center.IsRegion ? (EClass.pc.pos.z + EClass.scene.elomap.minY) : center.y, radius), idSource, updateMesh, lv);
 	}
 
 	private Zone CreateRandomSite(Point pos, string idSource, bool updateMesh, int lv = 0)
@@ -145,9 +111,9 @@ public class Region : Zone
 		}
 		if (idSource.IsEmpty())
 		{
-			idSource = this.GetRandomSiteSource().id;
+			idSource = GetRandomSiteSource().id;
 		}
-		Zone zone = SpatialGen.Create(idSource, this, true, pos.x, pos.z, 0) as Zone;
+		Zone zone = SpatialGen.Create(idSource, this, register: true, pos.x, pos.z) as Zone;
 		if (lv <= 0)
 		{
 			if (EClass.player.CountKeyItem("license_adv") == 0 && !EClass.debug.enable)
@@ -173,26 +139,22 @@ public class Region : Zone
 		}
 		zone._dangerLv = Mathf.Max(1, lv);
 		zone.isRandomSite = true;
-		zone.dateExpire = EClass.world.date.GetRaw(0) + 10080;
-		if (this.elomap.IsSnow(zone.x, zone.y))
+		zone.dateExpire = EClass.world.date.GetRaw() + 10080;
+		if (elomap.IsSnow(zone.x, zone.y))
 		{
-			Zone zone2 = zone;
-			int icon = zone2.icon;
-			zone2.icon = icon + 1;
+			zone.icon++;
 		}
-		this.elomap.SetZone(zone.x, zone.y, zone, false);
+		elomap.SetZone(zone.x, zone.y, zone);
 		if (updateMesh)
 		{
-			this.elomap.objmap.UpdateMeshImmediate();
+			elomap.objmap.UpdateMeshImmediate();
 		}
 		return zone;
 	}
 
 	public SourceZone.Row GetRandomSiteSource()
 	{
-		return (from a in EClass.sources.zones.rows
-		where a.tag.Contains("random") && (EClass.debug.enable || !a.tag.Contains("debug"))
-		select a).ToList<SourceZone.Row>().RandomItemWeighted((SourceZone.Row a) => (float)a.chance);
+		return EClass.sources.zones.rows.Where((SourceZone.Row a) => a.tag.Contains("random") && (EClass.debug.enable || !a.tag.Contains("debug"))).ToList().RandomItemWeighted((SourceZone.Row a) => a.chance);
 	}
 
 	public Point GetRandomPoint()
@@ -200,10 +162,10 @@ public class Region : Zone
 		Point point = new Point();
 		for (int i = 0; i < 1000; i++)
 		{
-			point = this.map.bounds.GetRandomPoint();
-			point.x += this.elomap.minX;
-			point.z += this.elomap.minY;
-			if (this.elomap.CanBuildSite(point.x, point.z, 1, ElomapSiteType.Nefia))
+			point = map.bounds.GetRandomPoint();
+			point.x += elomap.minX;
+			point.z += elomap.minY;
+			if (elomap.CanBuildSite(point.x, point.z, 1))
 			{
 				return point;
 			}
@@ -222,7 +184,7 @@ public class Region : Zone
 			{
 				radius++;
 			}
-			if (this.elomap.CanBuildSite(point.x, point.z, 0, ElomapSiteType.Nefia))
+			if (elomap.CanBuildSite(point.x, point.z))
 			{
 				return point;
 			}
@@ -238,7 +200,7 @@ public class Region : Zone
 		{
 			point.x = orgX + Rand.Range(-maxRadius, maxRadius);
 			point.z = orgY + Rand.Range(-maxRadius, maxRadius);
-			if (point.Distance(p) >= minRadius && !point.IsBlocked && this.elomap.CanBuildSite(point.x + this.elomap.minX, point.z + this.elomap.minY, 0, ElomapSiteType.Mob))
+			if (point.Distance(p) >= minRadius && !point.IsBlocked && elomap.CanBuildSite(point.x + elomap.minX, point.z + elomap.minY, 0, ElomapSiteType.Mob))
 			{
 				return point;
 			}
@@ -250,22 +212,26 @@ public class Region : Zone
 	{
 		EClass.scene.elomapActor.Initialize(EClass.world.region.elomap);
 		EloMap.TileInfo tileInfo = EClass.scene.elomapActor.elomap.GetTileInfo(pos.x, pos.z);
-		return !tileInfo.idZoneProfile.IsEmpty() && !tileInfo.blocked;
+		if (!tileInfo.idZoneProfile.IsEmpty())
+		{
+			return !tileInfo.blocked;
+		}
+		return false;
 	}
 
 	public Zone CreateZone(Point pos)
 	{
-		return SpatialGen.Create("field", this, true, pos.x, pos.z, 0) as Zone;
+		return SpatialGen.Create("field", this, register: true, pos.x, pos.z) as Zone;
 	}
 
 	public List<Zone> ListTowns()
 	{
 		List<Zone> list = new List<Zone>();
-		foreach (Spatial spatial in EClass.game.spatials.map.Values)
+		foreach (Spatial value in EClass.game.spatials.map.Values)
 		{
-			if (spatial.CanSpawnAdv)
+			if (value.CanSpawnAdv)
 			{
-				list.Add(spatial as Zone);
+				list.Add(value as Zone);
 			}
 		}
 		return list;
@@ -273,21 +239,21 @@ public class Region : Zone
 
 	public Zone GetRandomTown()
 	{
-		List<Zone> source = this.ListTowns();
+		List<Zone> list = ListTowns();
 		Zone zone = null;
 		for (int i = 0; i < 5; i++)
 		{
-			zone = source.RandomItem<Zone>();
-			Zone_SubTown zone_SubTown = zone as Zone_SubTown;
+			zone = list.RandomItem();
+			_ = zone is Zone_SubTown;
 		}
 		return zone;
 	}
 
 	public List<Zone> ListRandomSites()
 	{
-		return (from Zone a in this.children
-		where a.isRandomSite
-		select a).ToList<Zone>();
+		return (from Zone a in children
+			where a.isRandomSite
+			select a).ToList();
 	}
 
 	public List<Zone> ListZonesInRadius(Zone center, int radius = 10)
@@ -313,7 +279,7 @@ public class Region : Zone
 		}
 		else
 		{
-			Point pos = EClass.pc.pos;
+			_ = EClass.pc.pos;
 		}
 		foreach (Zone zone in EClass.game.spatials.Zones)
 		{
@@ -330,38 +296,31 @@ public class Region : Zone
 	{
 		if (EClass.world.date.hour == 0)
 		{
-			foreach (Chara chara in this.ListMobs())
+			foreach (Chara item in ListMobs())
 			{
-				if (chara.Dist(EClass.pc) > 20 && EClass.rnd(2) == 0)
+				if (item.Dist(EClass.pc) > 20 && EClass.rnd(2) == 0)
 				{
-					chara.Destroy();
+					item.Destroy();
 				}
 			}
 		}
-		if (this.ListMobs().Count < 6 && EClass.rnd(3) == 0)
+		if (ListMobs().Count >= 6 || EClass.rnd(3) != 0)
 		{
-			Point randomPoint = this.GetRandomPoint(EClass.pc.pos.x, EClass.pc.pos.z, 8, 14);
-			if (randomPoint != null)
+			return;
+		}
+		Point randomPoint = GetRandomPoint(EClass.pc.pos.x, EClass.pc.pos.z, 8, 14);
+		if (randomPoint != null)
+		{
+			RegionPoint regionPoint = new RegionPoint(EClass.pc.pos);
+			BiomeProfile biome = regionPoint.biome;
+			SpawnList list = ((biome.spawn.chara.Count <= 0) ? SpawnList.Get(biome.name, "chara", new CharaFilter
 			{
-				RegionPoint regionPoint = new RegionPoint(EClass.pc.pos);
-				BiomeProfile biome = regionPoint.biome;
-				SpawnList list;
-				if (biome.spawn.chara.Count > 0)
-				{
-					list = SpawnList.Get(biome.spawn.GetRandomCharaId(), null, null);
-				}
-				else
-				{
-					list = SpawnList.Get(biome.name, "chara", new CharaFilter
-					{
-						ShouldPass = ((SourceChara.Row s) => s.biome == biome.name || s.biome.IsEmpty())
-					});
-				}
-				Chara chara2 = CharaGen.CreateFromFilter(list, regionPoint.dangerLv, -1);
-				if (chara2 != null)
-				{
-					base.AddCard(chara2, randomPoint);
-				}
+				ShouldPass = (SourceChara.Row s) => s.biome == biome.name || s.biome.IsEmpty()
+			}) : SpawnList.Get(biome.spawn.GetRandomCharaId()));
+			Chara chara = CharaGen.CreateFromFilter(list, regionPoint.dangerLv);
+			if (chara != null)
+			{
+				AddCard(chara, randomPoint);
 			}
 		}
 	}
@@ -378,9 +337,4 @@ public class Region : Zone
 		}
 		return list;
 	}
-
-	public EloMap elomap = new EloMap();
-
-	[JsonProperty]
-	public int dateCheckSites;
 }

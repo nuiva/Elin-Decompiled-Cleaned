@@ -1,180 +1,11 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class DramaSequence : EClass
 {
-	public DialogDrama dialog
+	public enum Template
 	{
-		get
-		{
-			return this.manager.dialog;
-		}
-	}
-
-	public void Clear()
-	{
-		this.steps.Clear();
-		this.actors.Clear();
-		this.events.Clear();
-		this.tempEvents.Clear();
-	}
-
-	public DramaActor GetActor(string id)
-	{
-		if (this.actors.ContainsKey(id))
-		{
-			return this.actors[id];
-		}
-		if (EClass.sources.persons.map.ContainsKey(id))
-		{
-			return this.AddActor(id, new Person(id, null));
-		}
-		if (this.actors.Count <= 0)
-		{
-			return this.GetActor("narrator");
-		}
-		return this.actors.FirstItem<string, DramaActor>();
-	}
-
-	public T GetEvent<T>(string idStep) where T : DramaEvent
-	{
-		foreach (DramaEvent dramaEvent in this.events)
-		{
-			if (dramaEvent.step == idStep)
-			{
-				return dramaEvent as T;
-			}
-		}
-		return default(T);
-	}
-
-	public DramaActor AddActor(string id, Person person)
-	{
-		if (this.actors.ContainsKey(id))
-		{
-			return this.actors[id];
-		}
-		DramaActor dramaActor = Util.Instantiate<DramaActor>(this.manager.moldActor, this.manager.actorPos);
-		dramaActor.Init(this, id, person);
-		this.actors.Add(id, dramaActor);
-		return dramaActor;
-	}
-
-	public void AddStep(string id)
-	{
-		this.steps.Add(id, this.events.Count);
-		this.events.Add(new DramaEvent
-		{
-			sequence = this,
-			step = id
-		});
-	}
-
-	public DramaEvent AddEvent(DramaEvent e)
-	{
-		if (!e.step.IsEmpty())
-		{
-			this.steps.Add(e.step, this.events.Count);
-		}
-		e.sequence = this;
-		this.events.Add(e);
-		return e;
-	}
-
-	public void PlayNext()
-	{
-		this.Play(this.currentEventID + 1);
-	}
-
-	public void Play(string id)
-	{
-		if (id == "last")
-		{
-			id = this.lastlastStep;
-		}
-		if (!id.IsEmpty() && !this.steps.ContainsKey(id))
-		{
-			Debug.Log(id);
-		}
-		this.Play(string.IsNullOrEmpty(id) ? 0 : this.steps[id]);
-	}
-
-	public void Play(int eventID = 0)
-	{
-		if (this.isExited)
-		{
-			return;
-		}
-		if (eventID >= this.events.Count)
-		{
-			if (!this.isLoop)
-			{
-				this.Exit();
-				return;
-			}
-			eventID = 0;
-		}
-		this.currentEventID = eventID;
-		this.currentEvent = this.events[eventID];
-		this.currentEvent.Reset();
-		string str = eventID.ToString() + "/";
-		foreach (KeyValuePair<string, int> keyValuePair in this.steps)
-		{
-			if (keyValuePair.Value == eventID)
-			{
-				str += keyValuePair.Key;
-			}
-			if (keyValuePair.Value == eventID && !keyValuePair.Key.StartsWith("flag"))
-			{
-				this.lastlastStep = this.lastStep;
-				this.lastStep = keyValuePair.Key;
-				break;
-			}
-		}
-		this.OnUpdate();
-	}
-
-	public void Exit()
-	{
-		this.isExited = true;
-		this.currentEvent = null;
-		this.manager.SetActive(false);
-	}
-
-	public void OnUpdate()
-	{
-		if (this.tempEvents.Count > 0)
-		{
-			if (this.tempEvents[0].Play() && this.tempEvents.Count > 0)
-			{
-				this.tempEvents.RemoveAt(0);
-			}
-			return;
-		}
-		if (this.currentEvent == null)
-		{
-			return;
-		}
-		if (this.currentEvent is DramaEventGoto)
-		{
-			string a = this.currentEvent.idJump;
-			if (a == "*")
-			{
-				if (this.setup.step.IsEmpty())
-				{
-					this.PlayNext();
-					return;
-				}
-				a = this.setup.step;
-			}
-			this.Play(a);
-			return;
-		}
-		if (this.currentEvent.Play())
-		{
-			this.PlayNext();
-		}
+		Default
 	}
 
 	public string id;
@@ -213,8 +44,171 @@ public class DramaSequence : EClass
 
 	private int currentEventID;
 
-	public enum Template
+	public DialogDrama dialog => manager.dialog;
+
+	public void Clear()
 	{
-		Default
+		steps.Clear();
+		actors.Clear();
+		events.Clear();
+		tempEvents.Clear();
+	}
+
+	public DramaActor GetActor(string id)
+	{
+		if (actors.ContainsKey(id))
+		{
+			return actors[id];
+		}
+		if (EClass.sources.persons.map.ContainsKey(id))
+		{
+			return AddActor(id, new Person(id));
+		}
+		if (actors.Count <= 0)
+		{
+			return GetActor("narrator");
+		}
+		return actors.FirstItem();
+	}
+
+	public T GetEvent<T>(string idStep) where T : DramaEvent
+	{
+		foreach (DramaEvent @event in events)
+		{
+			if (@event.step == idStep)
+			{
+				return @event as T;
+			}
+		}
+		return null;
+	}
+
+	public DramaActor AddActor(string id, Person person)
+	{
+		if (actors.ContainsKey(id))
+		{
+			return actors[id];
+		}
+		DramaActor dramaActor = Util.Instantiate(manager.moldActor, manager.actorPos);
+		dramaActor.Init(this, id, person);
+		actors.Add(id, dramaActor);
+		return dramaActor;
+	}
+
+	public void AddStep(string id)
+	{
+		steps.Add(id, events.Count);
+		events.Add(new DramaEvent
+		{
+			sequence = this,
+			step = id
+		});
+	}
+
+	public DramaEvent AddEvent(DramaEvent e)
+	{
+		if (!e.step.IsEmpty())
+		{
+			steps.Add(e.step, events.Count);
+		}
+		e.sequence = this;
+		events.Add(e);
+		return e;
+	}
+
+	public void PlayNext()
+	{
+		Play(currentEventID + 1);
+	}
+
+	public void Play(string id)
+	{
+		if (id == "last")
+		{
+			id = lastlastStep;
+		}
+		if (!id.IsEmpty() && !steps.ContainsKey(id))
+		{
+			Debug.Log(id);
+		}
+		Play((!string.IsNullOrEmpty(id)) ? steps[id] : 0);
+	}
+
+	public void Play(int eventID = 0)
+	{
+		if (isExited)
+		{
+			return;
+		}
+		if (eventID >= events.Count)
+		{
+			if (!isLoop)
+			{
+				Exit();
+				return;
+			}
+			eventID = 0;
+		}
+		currentEventID = eventID;
+		currentEvent = events[eventID];
+		currentEvent.Reset();
+		string text = eventID + "/";
+		foreach (KeyValuePair<string, int> step in steps)
+		{
+			if (step.Value == eventID)
+			{
+				text += step.Key;
+			}
+			if (step.Value == eventID && !step.Key.StartsWith("flag"))
+			{
+				lastlastStep = lastStep;
+				lastStep = step.Key;
+				break;
+			}
+		}
+		OnUpdate();
+	}
+
+	public void Exit()
+	{
+		isExited = true;
+		currentEvent = null;
+		manager.SetActive(enable: false);
+	}
+
+	public void OnUpdate()
+	{
+		if (tempEvents.Count > 0)
+		{
+			if (tempEvents[0].Play() && tempEvents.Count > 0)
+			{
+				tempEvents.RemoveAt(0);
+			}
+		}
+		else
+		{
+			if (currentEvent == null)
+			{
+				return;
+			}
+			if (currentEvent is DramaEventGoto)
+			{
+				string text = currentEvent.idJump;
+				if (text == "*")
+				{
+					if (setup.step.IsEmpty())
+					{
+						PlayNext();
+						return;
+					}
+					text = setup.step;
+				}
+				Play(text);
+			}
+			else if (currentEvent.Play())
+			{
+				PlayNext();
+			}
+		}
 	}
 }

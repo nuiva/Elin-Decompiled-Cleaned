@@ -1,5 +1,3 @@
-﻿using System;
-
 public class Footmark
 {
 	public Point pos = new Point();

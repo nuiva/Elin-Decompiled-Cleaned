@@ -1,16 +1,9 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class TraitDrinkMilkMother : TraitDrinkMilk
 {
-	public override bool HoldAsDefaultInteraction
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool HoldAsDefaultInteraction => true;
 
 	public override Emo2 GetHeldEmo(Chara c)
 	{
@@ -25,76 +18,64 @@ public class TraitDrinkMilkMother : TraitDrinkMilk
 	{
 		if (c.Evalue(1232) > 0)
 		{
-			c.SetFeat(1232, c.Evalue(1232) - 1, false);
+			c.SetFeat(1232, c.Evalue(1232) - 1);
 			int uidNext = EClass.game.cards.uidNext;
 			EClass.game.cards.uidNext = 1;
 			Rand.SetSeed(1);
-			Chara chara = CharaGen.Create(this.owner.c_idRefCard, -1);
-			chara.SetLv(Mathf.Clamp(5 + this.owner.encLV * 5, 1, 20 + EClass.pc.Evalue(237)));
-			Rand.SetSeed(-1);
+			Chara chara = CharaGen.Create(owner.c_idRefCard);
+			chara.SetLv(Mathf.Clamp(5 + owner.encLV * 5, 1, 20 + EClass.pc.Evalue(237)));
+			Rand.SetSeed();
 			EClass.game.cards.uidNext = uidNext;
-			Debug.Log(chara.id + "/" + chara.LV.ToString());
+			Debug.Log(chara.id + "/" + chara.LV);
 			List<Element> list = chara.elements.ListBestAttributes();
 			List<Element> list2 = chara.elements.ListBestSkills();
 			int num = 100;
 			int num2 = 0;
-			foreach (Element element in list)
+			foreach (Element item in list)
 			{
-				Element element2 = c.elements.GetElement(element.id);
-				int num3 = element.ValueWithoutLink * (element2.Potential - element2.vTempPotential) / num / 2;
+				Element element = c.elements.GetElement(item.id);
+				int num3 = item.ValueWithoutLink * (element.Potential - element.vTempPotential) / num / 2;
 				if (num3 > 0)
 				{
 					num2 += num3;
-					Debug.Log(string.Concat(new string[]
-					{
-						element.source.alias,
-						"/",
-						num3.ToString(),
-						" org:",
-						element.ValueWithoutLink.ToString()
-					}));
-					c.elements.ModBase(element.id, num3);
+					Debug.Log(item.source.alias + "/" + num3 + " org:" + item.ValueWithoutLink);
+					c.elements.ModBase(item.id, num3);
 				}
 				num += 50;
 			}
 			num = 100;
-			foreach (Element element3 in list2)
+			foreach (Element item2 in list2)
 			{
-				Element element4 = c.elements.GetElement(element3.id);
-				if (element4 != null && element4.ValueWithoutLink != 0)
+				Element element2 = c.elements.GetElement(item2.id);
+				if (element2 != null && element2.ValueWithoutLink != 0)
 				{
-					int num4 = element3.ValueWithoutLink * (element4.Potential - element4.vTempPotential) / num / 2;
+					int num4 = item2.ValueWithoutLink * (element2.Potential - element2.vTempPotential) / num / 2;
 					if (num4 > 0)
 					{
-						Debug.Log(string.Concat(new string[]
-						{
-							element3.source.alias,
-							"/",
-							num4.ToString(),
-							" org:",
-							element3.ValueWithoutLink.ToString()
-						}));
-						c.elements.ModBase(element3.id, num4);
+						Debug.Log(item2.source.alias + "/" + num4 + " org:" + item2.ValueWithoutLink);
+						c.elements.ModBase(item2.id, num4);
 					}
 					num += 50;
 				}
 			}
-			c.feat += this.owner.encLV;
+			c.feat += owner.encLV;
 			if (c.Evalue(1232) == 0)
 			{
-				c.Say("grow_adult", c, null, null);
-				c.PlaySound("mutation", 1f, true);
-				c.PlayEffect("mutation", true, 0f, default(Vector3));
+				c.Say("grow_adult", c);
+				c.PlaySound("mutation");
+				c.PlayEffect("mutation");
 			}
 			else
 			{
-				c.Say("grow_baby", c, null, null);
-				c.PlaySound("ding_potential", 1f, true);
+				c.Say("grow_baby", c);
+				c.PlaySound("ding_potential");
 			}
-			c.PlayEffect("buff", true, 0f, default(Vector3));
+			c.PlayEffect("buff");
 			EClass.pc.ModExp(237, 100);
-			return;
 		}
-		base.OnDrink(c);
+		else
+		{
+			base.OnDrink(c);
+		}
 	}
 }

@@ -1,108 +1,7 @@
-﻿using System;
+using System;
 
 public class Progress_Custom : AIProgress
 {
-	public override bool CancelWhenMoved
-	{
-		get
-		{
-			return this.cancelWhenMoved;
-		}
-	}
-
-	public override bool CancelWhenDamaged
-	{
-		get
-		{
-			return this.cancelWhenDamaged;
-		}
-	}
-
-	public override int MaxProgress
-	{
-		get
-		{
-			return this.maxProgress;
-		}
-	}
-
-	public override bool ShowProgress
-	{
-		get
-		{
-			return this.showProgress;
-		}
-	}
-
-	public override int Interval
-	{
-		get
-		{
-			return this.interval;
-		}
-	}
-
-	public override string TextHint
-	{
-		get
-		{
-			return this.textHint;
-		}
-	}
-
-	public override bool CanProgress()
-	{
-		Func<bool> func = this.canProgress;
-		return func == null || func();
-	}
-
-	public override void OnProgress()
-	{
-		Action<Progress_Custom> action = this.onProgress;
-		if (action == null)
-		{
-			return;
-		}
-		action(this);
-	}
-
-	public override void OnProgressComplete()
-	{
-		Action action = this.onProgressComplete;
-		if (action == null)
-		{
-			return;
-		}
-		action();
-	}
-
-	public override void OnBeforeProgress()
-	{
-		Action action = this.onBeforeProgress;
-		if (action == null)
-		{
-			return;
-		}
-		action();
-	}
-
-	public override void OnProgressBegin()
-	{
-		Action action = this.onProgressBegin;
-		if (action == null)
-		{
-			return;
-		}
-		action();
-	}
-
-	public Progress_Custom SetDuration(int max, int _interval = 2)
-	{
-		this.maxProgress = max;
-		this.interval = _interval;
-		return this;
-	}
-
 	public string textHint;
 
 	public int maxProgress = 20;
@@ -124,4 +23,48 @@ public class Progress_Custom : AIProgress
 	public Action onProgressBegin;
 
 	public Action<Progress_Custom> onProgress;
+
+	public override bool CancelWhenMoved => cancelWhenMoved;
+
+	public override bool CancelWhenDamaged => cancelWhenDamaged;
+
+	public override int MaxProgress => maxProgress;
+
+	public override bool ShowProgress => showProgress;
+
+	public override int Interval => interval;
+
+	public override string TextHint => textHint;
+
+	public override bool CanProgress()
+	{
+		return canProgress?.Invoke() ?? true;
+	}
+
+	public override void OnProgress()
+	{
+		onProgress?.Invoke(this);
+	}
+
+	public override void OnProgressComplete()
+	{
+		onProgressComplete?.Invoke();
+	}
+
+	public override void OnBeforeProgress()
+	{
+		onBeforeProgress?.Invoke();
+	}
+
+	public override void OnProgressBegin()
+	{
+		onProgressBegin?.Invoke();
+	}
+
+	public Progress_Custom SetDuration(int max, int _interval = 2)
+	{
+		maxProgress = max;
+		interval = _interval;
+		return this;
+	}
 }

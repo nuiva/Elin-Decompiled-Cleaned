@@ -1,25 +1,18 @@
-﻿using System;
 using UnityEngine;
 
 public class TraitLight : TraitTorch
 {
-	public override ToggleType ToggleType
-	{
-		get
-		{
-			return ToggleType.Light;
-		}
-	}
+	public override ToggleType ToggleType => ToggleType.Light;
 
 	public override Color? ColorExtra
 	{
 		get
 		{
-			if (this.owner.c_lightColor == 0)
+			if (owner.c_lightColor == 0)
 			{
 				return base.ColorExtra;
 			}
-			return new Color?(this.owner.LightColor);
+			return owner.LightColor;
 		}
 	}
 }

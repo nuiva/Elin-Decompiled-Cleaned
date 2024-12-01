@@ -1,118 +1,16 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class WidgetSticky : Widget
 {
-	public override object CreateExtra()
+	public class Extra
 	{
-		return new WidgetSticky.Extra();
-	}
+		public bool showDate;
 
-	public WidgetSticky.Extra extra
-	{
-		get
-		{
-			return base.config.extra as WidgetSticky.Extra;
-		}
-	}
+		public bool showText;
 
-	public override void OnActivate()
-	{
-		WidgetSticky.Instance = this;
-		this.Init();
-	}
-
-	public void Init()
-	{
-		WidgetSticky.Instance = this;
-		this.mold = this.layout.CreateMold(null);
-		this._Add(new StickyMenu(), false);
-		this._Add(new StickyDate(), false);
-		this._Add(new StickyWelcome(), false);
-		this._Add(new StickyGacha(), false);
-		base.InvokeRepeating("Refresh", 0f, 1f);
-	}
-
-	public static void Add(BaseSticky sticky, bool animate = true)
-	{
-		if (!WidgetSticky.Instance)
-		{
-			return;
-		}
-		WidgetSticky.Instance._Add(sticky, true);
-	}
-
-	public void _Add(BaseSticky sticky, bool animate = true)
-	{
-		if (!sticky.AllowMultiple)
-		{
-			this.list.ForeachReverse(delegate(BaseSticky i)
-			{
-				if (i.GetType().Equals(sticky.GetType()))
-				{
-					this._Remove(i);
-				}
-			});
-		}
-		this.list.Add(sticky);
-		UIItem uiitem = sticky.item = Util.Instantiate<UIItem>(this.mold, this.layout);
-		uiitem.image1.transform.parent.SetActive(sticky.animate);
-		uiitem.SetActive(true);
-		sticky.RefreshButton();
-		uiitem.transform.SetAsFirstSibling();
-		this.layout.RebuildLayout(false);
-		if (animate)
-		{
-			this.anime.Play(uiitem.button1.transform, null, -1f, 0f);
-			SE.Play(sticky.idSound);
-		}
-	}
-
-	public void _Remove(BaseSticky sticky)
-	{
-		this.list.Remove(sticky);
-		UnityEngine.Object.Destroy(sticky.item.gameObject);
-	}
-
-	public void Refresh()
-	{
-		foreach (BaseSticky baseSticky in this.list)
-		{
-			bool shouldShow = baseSticky.ShouldShow;
-			baseSticky.item.SetActive(shouldShow);
-			if (shouldShow)
-			{
-				baseSticky.Refresh();
-			}
-		}
-	}
-
-	public override void OnSetContextMenu(UIContextMenu m)
-	{
-		UIContextMenu uicontextMenu = m.AddChild("setting");
-		uicontextMenu.AddToggle("showDate", this.extra.showDate, delegate(bool a)
-		{
-			this.extra.showDate = a;
-			this.Refresh();
-		});
-		uicontextMenu.AddToggle("showText", this.extra.showText, delegate(bool a)
-		{
-			this.extra.showText = a;
-			this.Refresh();
-		});
-		uicontextMenu.AddToggle("showNerun", this.extra.showNerun, delegate(bool a)
-		{
-			this.extra.showNerun = a;
-			this.Refresh();
-		});
-		m.AddChild("style").AddSlider("toggleButtonBG", (float a) => a.ToString() ?? "", (float)base.config.skin.button, delegate(float a)
-		{
-			base.config.skin.button = (int)a;
-			this.ApplySkin();
-		}, 0f, (float)(base.config.skin.Skin.buttons.Count - 1), true, true, false);
-		base.SetBaseContextMenu(m);
+		public bool showNerun;
 	}
 
 	public static WidgetSticky Instance;
@@ -127,12 +25,106 @@ public class WidgetSticky : Widget
 
 	public Anime anime;
 
-	public class Extra
+	public Extra extra => base.config.extra as Extra;
+
+	public override object CreateExtra()
 	{
-		public bool showDate;
+		return new Extra();
+	}
 
-		public bool showText;
+	public override void OnActivate()
+	{
+		Instance = this;
+		Init();
+	}
 
-		public bool showNerun;
+	public void Init()
+	{
+		Instance = this;
+		mold = layout.CreateMold<UIItem>();
+		_Add(new StickyMenu(), animate: false);
+		_Add(new StickyDate(), animate: false);
+		_Add(new StickyWelcome(), animate: false);
+		_Add(new StickyGacha(), animate: false);
+		InvokeRepeating("Refresh", 0f, 1f);
+	}
+
+	public static void Add(BaseSticky sticky, bool animate = true)
+	{
+		if ((bool)Instance)
+		{
+			Instance._Add(sticky);
+		}
+	}
+
+	public void _Add(BaseSticky sticky, bool animate = true)
+	{
+		if (!sticky.AllowMultiple)
+		{
+			list.ForeachReverse(delegate(BaseSticky i)
+			{
+				if (i.GetType().Equals(sticky.GetType()))
+				{
+					_Remove(i);
+				}
+			});
+		}
+		list.Add(sticky);
+		UIItem uIItem = (sticky.item = Util.Instantiate(mold, layout));
+		uIItem.image1.transform.parent.SetActive(sticky.animate);
+		uIItem.SetActive(enable: true);
+		sticky.RefreshButton();
+		uIItem.transform.SetAsFirstSibling();
+		layout.RebuildLayout();
+		if (animate)
+		{
+			anime.Play(uIItem.button1.transform);
+			SE.Play(sticky.idSound);
+		}
+	}
+
+	public void _Remove(BaseSticky sticky)
+	{
+		list.Remove(sticky);
+		Object.Destroy(sticky.item.gameObject);
+	}
+
+	public void Refresh()
+	{
+		foreach (BaseSticky item in list)
+		{
+			bool shouldShow = item.ShouldShow;
+			item.item.SetActive(shouldShow);
+			if (shouldShow)
+			{
+				item.Refresh();
+			}
+		}
+	}
+
+	public override void OnSetContextMenu(UIContextMenu m)
+	{
+		UIContextMenu uIContextMenu = m.AddChild("setting");
+		uIContextMenu.AddToggle("showDate", extra.showDate, delegate(bool a)
+		{
+			extra.showDate = a;
+			Refresh();
+		});
+		uIContextMenu.AddToggle("showText", extra.showText, delegate(bool a)
+		{
+			extra.showText = a;
+			Refresh();
+		});
+		uIContextMenu.AddToggle("showNerun", extra.showNerun, delegate(bool a)
+		{
+			extra.showNerun = a;
+			Refresh();
+		});
+		m.AddChild("style").AddSlider("toggleButtonBG", (float a) => a.ToString() ?? "", base.config.skin.button, delegate(float a)
+		{
+			base.config.skin.button = (int)a;
+			ApplySkin();
+		}, 0f, base.config.skin.Skin.buttons.Count - 1, isInt: true);
+		SetBaseContextMenu(m);
 	}
 }

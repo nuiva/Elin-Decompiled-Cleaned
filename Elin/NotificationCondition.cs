@@ -1,59 +1,44 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public class NotificationCondition : BaseNotification
 {
-	public override bool Visible
+	public Condition condition;
+
+	public override bool Visible => !text.IsEmpty();
+
+	public override bool Interactable => !condition.source.GetDetail().IsEmpty();
+
+	public override Action<UITooltip> onShowTooltip => delegate(UITooltip t)
 	{
-		get
-		{
-			return !this.text.IsEmpty();
-		}
-	}
+		condition.WriteNote(t.note);
+	};
+
+	public override Sprite Sprite => condition.GetSprite();
 
 	public override bool ShouldRemove()
 	{
-		return this.condition.IsKilled || (EClass.core.IsGameStarted && !EClass.pc.conditions.Contains(this.condition));
-	}
-
-	public override bool Interactable
-	{
-		get
+		if (condition.IsKilled)
 		{
-			return !this.condition.source.GetDetail().IsEmpty();
+			return true;
 		}
-	}
-
-	public override Action<UITooltip> onShowTooltip
-	{
-		get
+		if (EClass.core.IsGameStarted && !EClass.pc.conditions.Contains(condition))
 		{
-			return delegate(UITooltip t)
-			{
-				this.condition.WriteNote(t.note, null);
-			};
+			return true;
 		}
-	}
-
-	public override Sprite Sprite
-	{
-		get
-		{
-			return this.condition.GetSprite();
-		}
+		return false;
 	}
 
 	public override void OnClick()
 	{
-		if (this.condition.CanManualRemove)
+		if (condition.CanManualRemove)
 		{
 			SE.Trash();
-			this.condition.Kill(false);
+			condition.Kill();
 			WidgetStats.RefreshAll();
-			if (WidgetStats.Instance)
+			if ((bool)WidgetStats.Instance)
 			{
-				WidgetStats.Instance.layout.RebuildLayout(false);
-				return;
+				WidgetStats.Instance.layout.RebuildLayout();
 			}
 		}
 		else
@@ -64,9 +49,7 @@ public class NotificationCondition : BaseNotification
 
 	public override void OnRefresh()
 	{
-		this.text = this.condition.GetText() + (EClass.debug.showExtra ? (" " + this.condition.value.ToString()) : "");
-		this.item.button.mainText.color = this.condition.GetColor(this.item.button.skinRoot.GetButton().colorProf);
+		text = condition.GetText() + (EClass.debug.showExtra ? (" " + condition.value) : "");
+		item.button.mainText.color = condition.GetColor(item.button.skinRoot.GetButton().colorProf);
 	}
-
-	public Condition condition;
 }

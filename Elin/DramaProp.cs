@@ -1,12 +1,17 @@
-﻿using System;
 using UnityEngine;
 
 public class DramaProp : EMono
 {
+	public SpriteRenderer sr;
+
+	public AnimeTween aniEnter;
+
+	public AnimeTween aniLeave;
+
 	public void Enter()
 	{
-		this.aniEnter.Play(base.transform, null, -1f, 0f);
-		this.OnEnter();
+		aniEnter.Play(base.transform);
+		OnEnter();
 	}
 
 	public virtual void OnEnter()
@@ -15,11 +20,11 @@ public class DramaProp : EMono
 
 	public void Leave()
 	{
-		this.aniLeave.Play(base.transform, delegate
+		aniLeave.Play(base.transform, delegate
 		{
-			this.Kill();
-		}, -1f, 0f);
-		this.OnLeave();
+			Kill();
+		});
+		OnLeave();
 	}
 
 	public virtual void OnLeave()
@@ -28,12 +33,6 @@ public class DramaProp : EMono
 
 	public void Kill()
 	{
-		UnityEngine.Object.Destroy(base.gameObject);
+		Object.Destroy(base.gameObject);
 	}
-
-	public SpriteRenderer sr;
-
-	public AnimeTween aniEnter;
-
-	public AnimeTween aniLeave;
 }

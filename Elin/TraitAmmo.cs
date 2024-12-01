@@ -1,40 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 
 public class TraitAmmo : TraitItem
 {
-	public virtual bool ConsumeOnMiss
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public virtual bool ConsumeOnMiss => true;
 
-	public override int DefaultStock
-	{
-		get
-		{
-			return 20 + EClass.rnd(200);
-		}
-	}
+	public override int DefaultStock => 20 + EClass.rnd(200);
 
-	public override int CraftNum
-	{
-		get
-		{
-			return 40;
-		}
-	}
+	public override int CraftNum => 40;
 
-	public override string LangUse
-	{
-		get
-		{
-			return "ActReload";
-		}
-	}
+	public override string LangUse => "ActReload";
 
 	public override bool OnUse(Chara c)
 	{
@@ -43,20 +17,19 @@ public class TraitAmmo : TraitItem
 			Msg.Say("isReloading");
 			return false;
 		}
-		Thing thing = EClass.player.currentHotItem.Thing;
-		TraitToolRange traitToolRange = ((thing != null) ? thing.trait : null) as TraitToolRange;
+		TraitToolRange traitToolRange = EClass.player.currentHotItem.Thing?.trait as TraitToolRange;
 		if (traitToolRange == null)
 		{
-			foreach (BodySlot bodySlot in EClass.pc.body.slots)
+			foreach (BodySlot slot in EClass.pc.body.slots)
 			{
-				if (bodySlot.thing != null && bodySlot.thing.trait is TraitToolRange)
+				if (slot.thing != null && slot.thing.trait is TraitToolRange)
 				{
-					traitToolRange = (bodySlot.thing.trait as TraitToolRange);
+					traitToolRange = slot.thing.trait as TraitToolRange;
 					break;
 				}
 			}
 		}
-		if (traitToolRange == null || !traitToolRange.IsAmmo(this.owner as Thing))
+		if (traitToolRange == null || !traitToolRange.IsAmmo(owner as Thing))
 		{
 			if (traitToolRange == null)
 			{
@@ -64,23 +37,23 @@ public class TraitAmmo : TraitItem
 			}
 			else
 			{
-				Msg.Say("wrongAmmo", this.owner, traitToolRange.owner, null, null);
+				Msg.Say("wrongAmmo", owner, traitToolRange.owner);
 			}
 			return false;
 		}
-		return ActRanged.TryReload(traitToolRange.owner.Thing, this.owner.Thing);
+		return ActRanged.TryReload(traitToolRange.owner.Thing, owner.Thing);
 	}
 
 	public override bool CanStackTo(Thing to)
 	{
-		if (this.owner.elements.dict.Count<KeyValuePair<int, Element>>() != to.elements.dict.Count<KeyValuePair<int, Element>>())
+		if (owner.elements.dict.Count() != to.elements.dict.Count())
 		{
 			return false;
 		}
-		foreach (Element element in this.owner.elements.dict.Values)
+		foreach (Element value in owner.elements.dict.Values)
 		{
-			Element element2 = to.elements.GetElement(element.id);
-			if (element2 == null || element.vBase != element2.vBase)
+			Element element = to.elements.GetElement(value.id);
+			if (element == null || value.vBase != element.vBase)
 			{
 				return false;
 			}

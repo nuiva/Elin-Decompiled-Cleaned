@@ -1,22 +1,8 @@
-﻿using System;
-
 public class TraitAgingShelf : TraitBrewery
 {
-	public override TraitBrewery.Type type
-	{
-		get
-		{
-			return TraitBrewery.Type.Food;
-		}
-	}
+	public override Type type => Type.Food;
 
-	public override string idMsg
-	{
-		get
-		{
-			return "agedFood";
-		}
-	}
+	public override string idMsg => "agedFood";
 
 	public override string GetProductID(Card c)
 	{

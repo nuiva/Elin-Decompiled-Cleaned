@@ -1,12 +1,4 @@
-﻿using System;
-
 public class QuestMeal_noodle : QuestMeal
 {
-	public override string idCat
-	{
-		get
-		{
-			return "meal_noodle";
-		}
-	}
+	public override string idCat => "meal_noodle";
 }

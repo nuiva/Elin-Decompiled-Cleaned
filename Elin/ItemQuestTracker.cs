@@ -1,102 +1,11 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public class ItemQuestTracker : EMono
 {
-	public void Refresh()
-	{
-		if (!this.quest.track || !EMono.game.quests.list.Contains(this.quest))
-		{
-			this.Kill();
-			return;
-		}
-		this.sb.Clear();
-		if (this.quest.deadline > 0 && !this.quest.UseInstanceZone)
-		{
-			this.sb.Append("- " + "days1".lang() + this.quest.TextDeadline);
-			this.sb.Append(Environment.NewLine);
-		}
-		string value = this.quest.GetTrackerText().TrimEnd(Environment.NewLine.ToCharArray());
-		this.sb.Append(value);
-		bool enable = false;
-		if (this.quest is QuestDeliver)
-		{
-			QuestDeliver questDeliver = this.quest as QuestDeliver;
-			if (!questDeliver.IsDeliver || EMono._zone == questDeliver.DestZone)
-			{
-				ItemQuestTracker.<>c__DisplayClass7_0 CS$<>8__locals1 = new ItemQuestTracker.<>c__DisplayClass7_0();
-				ItemQuestTracker.<>c__DisplayClass7_0 CS$<>8__locals2 = CS$<>8__locals1;
-				Map map = EMono._map;
-				int uid;
-				if (!questDeliver.IsDeliver)
-				{
-					Chara chara = questDeliver.person.chara;
-					uid = ((chara != null) ? chara.uid : 0);
-				}
-				else
-				{
-					uid = questDeliver.uidTarget;
-				}
-				CS$<>8__locals2.tg = map.FindChara(uid);
-				if (CS$<>8__locals1.tg != null)
-				{
-					enable = true;
-					this.buttonGoto.SetOnClick(delegate
-					{
-						if (!EMono.pc.HasNoGoal)
-						{
-							SE.BeepSmall();
-							return;
-						}
-						EMono.pc.SetAIImmediate(new AI_Goto(CS$<>8__locals1.tg, 1, false, false));
-					});
-				}
-			}
-		}
-		this.buttonGoto.SetActive(enable);
-		if (this.sb.Equals(this.lastSb))
-		{
-			return;
-		}
-		this.SetActive(true);
-		this.textTitle.SetText(this.quest.GetTitle().TagColor(this.colorTitle));
-		this.text.SetText(this.sb.ToString());
-		this.lastSb.Set(this.sb);
-		this.RebuildLayout(false);
-	}
+	private FastString sb = new FastString();
 
-	public void OnClickClose()
-	{
-		if (EMono.ui.GetLayer<LayerJournal>(false))
-		{
-			return;
-		}
-		this.quest.track = false;
-		this.Kill();
-		SE.Trash();
-		if (this.quest is QuestTrackCraft)
-		{
-			EMono.game.quests.Remove(this.quest);
-			if (LayerCraft.Instance)
-			{
-				LayerCraft.Instance.RefreshTrackButton();
-			}
-		}
-	}
-
-	public void Kill()
-	{
-		if (!WidgetQuestTracker.Instance)
-		{
-			return;
-		}
-		WidgetQuestTracker.Instance.items.Remove(this);
-		UnityEngine.Object.DestroyImmediate(base.gameObject);
-	}
-
-	private FastString sb = new FastString(32);
-
-	private FastString lastSb = new FastString(32);
+	private FastString lastSb = new FastString();
 
 	public Color colorTitle;
 
@@ -107,4 +16,82 @@ public class ItemQuestTracker : EMono
 	public UIText textTitle;
 
 	public UIButton buttonGoto;
+
+	public void Refresh()
+	{
+		if (!quest.track || !EMono.game.quests.list.Contains(quest))
+		{
+			Kill();
+			return;
+		}
+		sb.Clear();
+		if (quest.deadline > 0 && !quest.UseInstanceZone)
+		{
+			sb.Append("- " + "days1".lang() + quest.TextDeadline);
+			sb.Append(Environment.NewLine);
+		}
+		string value = quest.GetTrackerText().TrimEnd(Environment.NewLine.ToCharArray());
+		sb.Append(value);
+		bool enable = false;
+		if (quest is QuestDeliver)
+		{
+			QuestDeliver questDeliver = quest as QuestDeliver;
+			if (!questDeliver.IsDeliver || EMono._zone == questDeliver.DestZone)
+			{
+				Chara tg = EMono._map.FindChara(questDeliver.IsDeliver ? questDeliver.uidTarget : (questDeliver.person.chara?.uid ?? 0));
+				if (tg != null)
+				{
+					enable = true;
+					buttonGoto.SetOnClick(delegate
+					{
+						if (!EMono.pc.HasNoGoal)
+						{
+							SE.BeepSmall();
+						}
+						else
+						{
+							EMono.pc.SetAIImmediate(new AI_Goto(tg, 1));
+						}
+					});
+				}
+			}
+		}
+		buttonGoto.SetActive(enable);
+		if (!sb.Equals(lastSb))
+		{
+			this.SetActive(enable: true);
+			textTitle.SetText(quest.GetTitle().TagColor(colorTitle));
+			text.SetText(sb.ToString());
+			lastSb.Set(sb);
+			this.RebuildLayout();
+		}
+	}
+
+	public void OnClickClose()
+	{
+		if ((bool)EMono.ui.GetLayer<LayerJournal>())
+		{
+			return;
+		}
+		quest.track = false;
+		Kill();
+		SE.Trash();
+		if (quest is QuestTrackCraft)
+		{
+			EMono.game.quests.Remove(quest);
+			if ((bool)LayerCraft.Instance)
+			{
+				LayerCraft.Instance.RefreshTrackButton();
+			}
+		}
+	}
+
+	public void Kill()
+	{
+		if ((bool)WidgetQuestTracker.Instance)
+		{
+			WidgetQuestTracker.Instance.items.Remove(this);
+			UnityEngine.Object.DestroyImmediate(base.gameObject);
+		}
+	}
 }

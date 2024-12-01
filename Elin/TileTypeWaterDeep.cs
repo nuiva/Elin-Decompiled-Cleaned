@@ -1,12 +1,4 @@
-﻿using System;
-
 public class TileTypeWaterDeep : TileTypeWater
 {
-	public override int LiquidLV
-	{
-		get
-		{
-			return 8;
-		}
-	}
+	public override int LiquidLV => 8;
 }

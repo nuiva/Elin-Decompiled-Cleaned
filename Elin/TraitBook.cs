@@ -1,28 +1,14 @@
-﻿using System;
-
 public class TraitBook : TraitScroll
 {
-	public bool IsParchment
-	{
-		get
-		{
-			return this is TraitParchment;
-		}
-	}
+	public bool IsParchment => this is TraitParchment;
 
-	public string IdItem
-	{
-		get
-		{
-			return this.owner.GetStr(53, null);
-		}
-	}
+	public string IdItem => owner.GetStr(53);
 
 	public string IdCat
 	{
 		get
 		{
-			if (!this.IsParchment)
+			if (!IsParchment)
 			{
 				return "Book";
 			}
@@ -30,48 +16,41 @@ public class TraitBook : TraitScroll
 		}
 	}
 
-	public BookList.Item Item
-	{
-		get
-		{
-			return BookList.GetItem(this.IdItem, this.IdCat);
-		}
-	}
+	public BookList.Item Item => BookList.GetItem(IdItem, IdCat);
 
 	public override bool CanStackTo(Thing to)
 	{
-		return to.GetStr(53, null) == this.IdItem;
+		return to.GetStr(53) == IdItem;
 	}
 
 	public override void OnCreate(int lv)
 	{
-		if (base.GetParam(1, null) != null)
+		if (GetParam(1) != null)
 		{
-			this.owner.SetStr(53, base.GetParam(1, null));
-			return;
+			owner.SetStr(53, GetParam(1));
 		}
-		if (this.IdItem.IsEmpty())
+		else if (IdItem.IsEmpty())
 		{
-			this.owner.SetStr(53, BookList.GetRandomItem(this.IdCat).id);
+			owner.SetStr(53, BookList.GetRandomItem(IdCat).id);
 		}
 	}
 
 	public override void OnImportMap()
 	{
-		if (base.GetParam(1, null) != null)
+		if (GetParam(1) != null)
 		{
-			this.owner.SetStr(53, base.GetParam(1, null));
+			owner.SetStr(53, GetParam(1));
 		}
 	}
 
 	public override void SetName(ref string s)
 	{
-		s = (this.IsParchment ? "_parchment" : "_book").lang(s, this.Item.title, null, null, null);
+		s = (IsParchment ? "_parchment" : "_book").lang(s, Item.title);
 	}
 
 	public override void OnRead(Chara c)
 	{
-		BookList.Item item = this.Item;
-		EClass.ui.AddLayer<LayerHelp>(this.IsParchment ? "LayerParchment" : "LayerBook").book.Show((this.IsParchment ? "Scroll/" : "Book/") + item.id, null, item.title, item);
+		BookList.Item item = Item;
+		EClass.ui.AddLayer<LayerHelp>(IsParchment ? "LayerParchment" : "LayerBook").book.Show((IsParchment ? "Scroll/" : "Book/") + item.id, null, item.title, item);
 	}
 }

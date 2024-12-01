@@ -1,32 +1,18 @@
-﻿using System;
-
 public class TraitKettle : TraitUniqueChara
 {
-	public override int CostRerollShop
-	{
-		get
-		{
-			return 0;
-		}
-	}
+	public override int CostRerollShop => 0;
 
-	public override bool CanInvest
-	{
-		get
-		{
-			return this.CanJoinParty;
-		}
-	}
+	public override bool CanInvest => CanJoinParty;
 
-	public override Trait.CopyShopType CopyShop
+	public override CopyShopType CopyShop
 	{
 		get
 		{
-			if (!this.CanJoinParty)
+			if (!CanJoinParty)
 			{
-				return Trait.CopyShopType.None;
+				return CopyShopType.None;
 			}
-			return Trait.CopyShopType.Item;
+			return CopyShopType.Item;
 		}
 	}
 
@@ -34,7 +20,7 @@ public class TraitKettle : TraitUniqueChara
 	{
 		get
 		{
-			if (!this.CanJoinParty)
+			if (!CanJoinParty)
 			{
 				return ShopType.None;
 			}
@@ -42,40 +28,34 @@ public class TraitKettle : TraitUniqueChara
 		}
 	}
 
-	public override PriceType PriceType
-	{
-		get
-		{
-			return PriceType.CopyShop;
-		}
-	}
+	public override PriceType PriceType => PriceType.CopyShop;
 
 	public override bool CanJoinParty
 	{
 		get
 		{
-			return EClass.game.quests.IsCompleted("vernis_gold") || EClass.debug.enable;
+			if (!EClass.game.quests.IsCompleted("vernis_gold"))
+			{
+				return EClass.debug.enable;
+			}
+			return true;
 		}
 	}
 
-	public override bool CanBeBanished
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeBanished => false;
 
-	public override int RestockDay
-	{
-		get
-		{
-			return 30;
-		}
-	}
+	public override int RestockDay => 30;
 
 	public override bool CanCopy(Thing t)
 	{
-		return !t.noSell && !t.HasElement(1229, 1) && (t.trait is TraitSeed || t.isCrafted);
+		if (t.noSell || t.HasElement(1229))
+		{
+			return false;
+		}
+		if (t.trait is TraitSeed)
+		{
+			return true;
+		}
+		return t.isCrafted;
 	}
 }

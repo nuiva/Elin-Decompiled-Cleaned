@@ -1,73 +1,69 @@
-﻿using System;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class TaskHarvest : BaseTaskHarvest
 {
-	public bool IsObj
-	{
-		get
-		{
-			return this.mode == BaseTaskHarvest.HarvestType.Obj;
-		}
-	}
+	public bool wasReapSeed;
+
+	public bool wasCrime;
+
+	public HarvestType mode = HarvestType.Obj;
+
+	public bool IsObj => mode == HarvestType.Obj;
 
 	public bool IsReapSeed
 	{
 		get
 		{
-			return this.IsObj && this.CanReapSeed && this.owner.Tool != null && (this.owner.Tool.trait is TraitToolSickle || this.owner.Tool.category.IsChildOf("scythe"));
+			if (IsObj && CanReapSeed && owner.Tool != null)
+			{
+				if (!(owner.Tool.trait is TraitToolSickle))
+				{
+					return owner.Tool.category.IsChildOf("scythe");
+				}
+				return true;
+			}
+			return false;
 		}
 	}
 
-	public override BaseTaskHarvest.HarvestType harvestType
-	{
-		get
-		{
-			return this.mode;
-		}
-	}
+	public override HarvestType harvestType => mode;
 
-	public override int RightHand
-	{
-		get
-		{
-			return 1005;
-		}
-	}
+	public override int RightHand => 1005;
 
-	public override int destDist
-	{
-		get
-		{
-			return 1;
-		}
-	}
+	public override int destDist => 1;
 
-	public override bool IsGrowth
-	{
-		get
-		{
-			return this.pos.growth != null;
-		}
-	}
+	public override bool IsGrowth => pos.growth != null;
 
 	public override bool IsHostileAct
 	{
 		get
 		{
-			if (!this.wasCrime)
+			if (!wasCrime)
 			{
-				if (this.mode == BaseTaskHarvest.HarvestType.Disassemble)
+				if (mode == HarvestType.Disassemble)
 				{
-					Thing target = this.target;
-					if (target != null && target.isNPCProperty)
+					Thing thing = target;
+					if (thing != null && thing.isNPCProperty)
 					{
-						return true;
+						goto IL_007b;
 					}
 				}
-				return this.mode == BaseTaskHarvest.HarvestType.Obj && (this.pos.sourceObj.ContainsTag("crime") || (this.pos.growth != null && this.pos.growth.IsCrimeToHarvest && !(EClass._zone is Zone_Harvest)));
+				if (mode == HarvestType.Obj)
+				{
+					if (!pos.sourceObj.ContainsTag("crime"))
+					{
+						if (pos.growth != null && pos.growth.IsCrimeToHarvest)
+						{
+							return !(EClass._zone is Zone_Harvest);
+						}
+						return false;
+					}
+					return true;
+				}
+				return false;
 			}
+			goto IL_007b;
+			IL_007b:
 			return true;
 		}
 	}
@@ -79,275 +75,289 @@ public class TaskHarvest : BaseTaskHarvest
 
 	public override string GetBaseText(string str)
 	{
-		if (this.IsReapSeed)
+		if (!IsReapSeed)
 		{
-			return "TaskHarvestSeed".lang();
+			if (mode != HarvestType.Disassemble)
+			{
+				if (!base.IsHarvest)
+				{
+					return base.GetBaseText(str);
+				}
+				return "actHarvest".lang();
+			}
+			return (HaveHarvestThing() ? "TaskDisassemble" : "TaskDisassemble_destroy").lang();
 		}
-		if (this.mode == BaseTaskHarvest.HarvestType.Disassemble)
-		{
-			return (this.HaveHarvestThing() ? "TaskDisassemble" : "TaskDisassemble_destroy").lang();
-		}
-		if (!base.IsHarvest)
-		{
-			return base.GetBaseText(str);
-		}
-		return "actHarvest".lang();
+		return "TaskHarvestSeed".lang();
 	}
 
 	public override string GetTextSmall(Card c)
 	{
-		if (this.IsObj)
+		if (IsObj)
 		{
 			return base.GetTextSmall(c);
 		}
-		if (this.target == null)
+		if (target == null)
 		{
 			return "";
 		}
-		return this.target.Name;
+		return target.Name;
 	}
 
 	public static TaskHarvest TryGetAct(Chara c, Point p)
 	{
-		TaskHarvest.<>c__DisplayClass20_0 CS$<>8__locals1;
-		CS$<>8__locals1.p = p;
-		CS$<>8__locals1.t = c.Tool;
-		CS$<>8__locals1.hasTool = (CS$<>8__locals1.t != null && (CS$<>8__locals1.t.HasElement(225, 1) || CS$<>8__locals1.t.HasElement(220, 1)));
-		CS$<>8__locals1.hasDiggingTool = (CS$<>8__locals1.t != null && CS$<>8__locals1.t.HasElement(230, 1));
-		if (CS$<>8__locals1.t != null)
+		Thing t = c.Tool;
+		bool hasTool = t != null && (t.HasElement(225) || t.HasElement(220));
+		bool hasDiggingTool = t != null && t.HasElement(230);
+		if (t != null)
 		{
-			if (CS$<>8__locals1.t.trait is TraitToolShears)
+			if (t.trait is TraitToolShears)
 			{
 				return null;
 			}
-			if (CS$<>8__locals1.t.trait is TraitToolWaterCan)
+			if (t.trait is TraitToolWaterCan)
 			{
 				return null;
 			}
-			if (CS$<>8__locals1.t.trait is TraitToolMusic)
+			if (t.trait is TraitToolMusic)
 			{
 				return null;
 			}
-			if (CS$<>8__locals1.t.trait is TraitToolSickle && !CS$<>8__locals1.p.cell.CanReapSeed())
+			if (t.trait is TraitToolSickle && !p.cell.CanReapSeed())
 			{
 				return null;
 			}
 		}
-		if (CS$<>8__locals1.p.HasObj && TaskHarvest.<TryGetAct>g__IsValidTarget|20_0(CS$<>8__locals1.p.sourceObj.reqHarvest, ref CS$<>8__locals1))
+		if (p.HasObj && IsValidTarget(p.sourceObj.reqHarvest))
 		{
 			return new TaskHarvest
 			{
-				pos = CS$<>8__locals1.p.Copy()
+				pos = p.Copy()
 			};
 		}
-		if (CS$<>8__locals1.p.HasThing)
+		if (p.HasThing)
 		{
-			for (int i = CS$<>8__locals1.p.Things.Count - 1; i >= 0; i--)
+			for (int num = p.Things.Count - 1; num >= 0; num--)
 			{
-				CS$<>8__locals1.t = CS$<>8__locals1.p.Things[i];
-				if (CS$<>8__locals1.t.trait.ReqHarvest != null && TaskHarvest.<TryGetAct>g__IsValidTarget|20_0(CS$<>8__locals1.t.trait.ReqHarvest.Split(',', StringSplitOptions.None), ref CS$<>8__locals1))
+				t = p.Things[num];
+				if (t.trait.ReqHarvest != null && IsValidTarget(t.trait.ReqHarvest.Split(',')))
 				{
 					return new TaskHarvest
 					{
-						pos = CS$<>8__locals1.p.Copy(),
-						mode = BaseTaskHarvest.HarvestType.Thing,
-						target = CS$<>8__locals1.t
+						pos = p.Copy(),
+						mode = HarvestType.Thing,
+						target = t
 					};
 				}
 			}
-			for (int j = CS$<>8__locals1.p.Things.Count - 1; j >= 0; j--)
+			for (int num2 = p.Things.Count - 1; num2 >= 0; num2--)
 			{
-				CS$<>8__locals1.t = CS$<>8__locals1.p.Things[j];
-				if (!CS$<>8__locals1.t.isHidden && !CS$<>8__locals1.t.isMasked && CS$<>8__locals1.t.trait.CanBeDisassembled)
+				t = p.Things[num2];
+				if (!t.isHidden && !t.isMasked && t.trait.CanBeDisassembled && c.Tool?.trait is TraitToolHammer)
 				{
-					Thing tool = c.Tool;
-					if (((tool != null) ? tool.trait : null) is TraitToolHammer)
+					return new TaskHarvest
 					{
-						return new TaskHarvest
-						{
-							pos = CS$<>8__locals1.p.Copy(),
-							mode = BaseTaskHarvest.HarvestType.Disassemble,
-							target = CS$<>8__locals1.t
-						};
-					}
+						pos = p.Copy(),
+						mode = HarvestType.Disassemble,
+						target = t
+					};
 				}
 			}
 		}
 		return null;
+		bool IsValidTarget(string[] raw)
+		{
+			if (raw[0] == "digging")
+			{
+				return hasDiggingTool;
+			}
+			bool num3 = p.cell.CanHarvest();
+			int num4 = (num3 ? 250 : EClass.sources.elements.alias[raw[0]].id);
+			bool flag = ((!num3 && num4 != 250) ? true : false);
+			if (!flag && t != null && !t.trait.CanHarvest)
+			{
+				return false;
+			}
+			return !flag || hasTool;
+		}
 	}
 
 	public override bool CanProgress()
 	{
-		if (this.tool != null && this.tool.trait is TraitToolSickle && !this.pos.cell.CanReapSeed())
+		if (tool != null && tool.trait is TraitToolSickle && !pos.cell.CanReapSeed())
 		{
 			return false;
 		}
-		if (this.IsObj)
+		if (IsObj)
 		{
-			base.SetTarget(this.owner ?? EClass.pc, null);
-			return base.CanProgress() && this.pos.HasObj;
+			SetTarget(owner ?? EClass.pc);
+			if (base.CanProgress())
+			{
+				return pos.HasObj;
+			}
+			return false;
 		}
-		return this.target != null && this.target.ExistsOnMap && base.CanProgress();
+		if (target == null || !target.ExistsOnMap)
+		{
+			return false;
+		}
+		return base.CanProgress();
 	}
 
 	public override HitResult GetHitResult()
 	{
-		if (this.IsObj)
+		if (IsObj)
 		{
 			if (base.IsHarvest)
 			{
 				return HitResult.Valid;
 			}
-			if (this.pos.HasObj)
+			if (pos.HasObj)
 			{
 				return HitResult.Valid;
 			}
-			if (this.pos.HasDecal && EClass.debug.godBuild && BuildMenu.Instance)
+			if (pos.HasDecal && EClass.debug.godBuild && (bool)BuildMenu.Instance)
 			{
 				return HitResult.Valid;
 			}
 			return HitResult.Default;
 		}
-		else
+		if (target == null || !target.ExistsOnMap)
 		{
-			if (this.target == null || !this.target.ExistsOnMap)
-			{
-				return HitResult.Default;
-			}
-			return HitResult.Valid;
+			return HitResult.Default;
 		}
+		return HitResult.Valid;
 	}
 
 	public override void OnCreateProgress(Progress_Custom p)
 	{
-		base.SetTarget(this.owner, null);
-		string n = this.IsObj ? this.pos.cell.GetObjName() : this.target.Name;
-		SourceMaterial.Row mat = this.IsObj ? this.pos.cell.matObj : this.target.material;
-		GrowSystem growth = this.pos.growth;
-		float num = base.IsHarvest ? 0.5f : ((!this.IsObj) ? 1f : ((growth != null) ? growth.MtpProgress : 1f));
+		SetTarget(owner);
+		string n = (IsObj ? pos.cell.GetObjName() : target.Name);
+		SourceMaterial.Row mat = (IsObj ? pos.cell.matObj : target.material);
+		GrowSystem growth = pos.growth;
+		float num = (base.IsHarvest ? 0.5f : ((!IsObj) ? 1f : ((growth != null) ? growth.MtpProgress : 1f)));
 		int exp = 50;
-		this.wasReapSeed = this.IsReapSeed;
-		this.wasCrime = this.IsHostileAct;
+		wasReapSeed = IsReapSeed;
+		wasCrime = IsHostileAct;
 		p.textHint = n;
-		p.maxProgress = (int)((float)(this.maxProgress * 150) * num / 100f);
+		p.maxProgress = (int)((float)(maxProgress * 150) * num / 100f);
 		p.interval = 1;
-		p.onProgressBegin = delegate()
+		p.onProgressBegin = delegate
 		{
-			if (this.IsTooHard)
+			if (base.IsTooHard)
 			{
-				this.owner.Say((this.mode == BaseTaskHarvest.HarvestType.Disassemble) ? "tooHardToDisassemble" : "tooHardToHarvest", this.owner, n, null);
+				owner.Say((mode == HarvestType.Disassemble) ? "tooHardToDisassemble" : "tooHardToHarvest", owner, n);
 				p.Cancel();
-				return;
 			}
-			if (this.mode == BaseTaskHarvest.HarvestType.Disassemble)
+			else if (mode == HarvestType.Disassemble)
 			{
-				this.owner.Say("disassemble_start", this.owner, this.owner.Tool, n, null);
-				return;
+				owner.Say("disassemble_start", owner, owner.Tool, n);
 			}
-			if (this.owner.Tool == null)
+			else if (owner.Tool == null)
 			{
-				this.owner.Say("harvestHand_start", this.owner, n, null);
-				return;
+				owner.Say("harvestHand_start", owner, n);
 			}
-			this.owner.Say("harvest_start", this.owner, this.owner.Tool, n, null);
+			else
+			{
+				owner.Say("harvest_start", owner, owner.Tool, n);
+			}
 		};
 		p.onProgress = delegate(Progress_Custom _p)
 		{
-			this.owner.LookAt(this.pos);
-			this.owner.renderer.NextFrame();
+			owner.LookAt(pos);
+			owner.renderer.NextFrame();
 			if (_p.progress % 2 == 0)
 			{
-				if (this.IsObj)
+				if (IsObj)
 				{
-					if (this.IsHarvest && growth != null)
+					if (base.IsHarvest && growth != null)
 					{
-						this.owner.PlaySound(growth.GetSoundProgress(), 1f, true);
-						if (growth.AnimeProgress != AnimeID.None)
+						owner.PlaySound(growth.GetSoundProgress());
+						if (growth.AnimeProgress != 0)
 						{
-							this.pos.Animate(growth.AnimeProgress, false);
+							pos.Animate(growth.AnimeProgress);
 						}
 						return;
 					}
-					this.pos.Animate(AnimeID.HitObj, false);
+					pos.Animate(AnimeID.HitObj);
 				}
 				else
 				{
-					this.target.PlayAnime(AnimeID.HitObj, false);
+					target.PlayAnime(AnimeID.HitObj);
 				}
-				this.pos.PlaySound(mat.GetSoundImpact(null), true, 1f, true);
-				mat.PlayHitEffect(this.pos);
-				mat.AddBlood(this.pos, 1);
-				this.effectFrame += this.maxProgress / 4 + 1;
-				if (EClass._zone.IsCrime(this.owner, this))
+				pos.PlaySound(mat.GetSoundImpact());
+				mat.PlayHitEffect(pos);
+				mat.AddBlood(pos);
+				effectFrame += maxProgress / 4 + 1;
+				if (EClass._zone.IsCrime(owner, this))
 				{
-					this.owner.pos.TryWitnessCrime(this.owner, null, 4, null);
+					owner.pos.TryWitnessCrime(owner);
 				}
 			}
 		};
-		p.onProgressComplete = delegate()
+		p.onProgressComplete = delegate
 		{
-			string idRecipe = this.IsObj ? this.pos.sourceObj.RecipeID : ((this.target != null) ? this.target.source.RecipeID : "");
-			SourceBacker.Row backerObj = EClass._map.GetBackerObj(this.pos);
-			int num2 = (EClass.rnd(3) == 0) ? 0 : 1;
-			if (this.IsObj)
+			string idRecipe = (IsObj ? pos.sourceObj.RecipeID : ((target != null) ? target.source.RecipeID : ""));
+			SourceBacker.Row backerObj = EClass._map.GetBackerObj(pos);
+			int num2 = ((EClass.rnd(3) != 0) ? 1 : 0);
+			if (IsObj)
 			{
-				SourceObj.Row sourceObj = this.pos.sourceObj;
+				SourceObj.Row sourceObj = pos.sourceObj;
 				bool flag = false;
-				if (this.difficulty >= 0 && EClass.rnd(6) == 0)
+				if (difficulty >= 0 && EClass.rnd(6) == 0)
 				{
 					flag = true;
 				}
-				if (this.difficulty >= 2 && EClass.rnd(3) == 0)
+				if (difficulty >= 2 && EClass.rnd(3) == 0)
 				{
 					flag = true;
 				}
 				if (flag && growth != null)
 				{
-					growth.OnHitFail(this.owner);
+					growth.OnHitFail(owner);
 				}
-				if (EClass._zone is Zone_Harvest && !this.IsHarvest && this.pos.IsFarmField)
+				if (EClass._zone is Zone_Harvest && !base.IsHarvest && pos.IsFarmField)
 				{
-					EClass._map.DestroyObj(this.pos);
-					this.pos.SetObj(0, 1, 0);
+					EClass._map.DestroyObj(pos);
+					pos.SetObj();
 				}
 				else
 				{
-					if (this.IsHarvest && !this.IsReapSeed)
+					if (base.IsHarvest && !IsReapSeed)
 					{
-						this.pos.growth.Harvest(this.owner);
+						pos.growth.Harvest(owner);
 					}
-					else if (growth != null && !this.IsReapSeed)
+					else if (growth != null && !IsReapSeed)
 					{
-						growth.OnProgressComplete(this.owner);
+						growth.OnProgressComplete(owner);
 					}
 					else
 					{
-						EClass._map.MineObj(this.pos, this, null);
+						EClass._map.MineObj(pos, this);
 					}
 					if (sourceObj.alias == "mound")
 					{
 						if (EClass.rnd(7) == 0)
 						{
-							EClass._zone.AddThing("plat", this.pos);
+							EClass._zone.AddThing("plat", pos);
 						}
 						else if (EClass.rnd(3) == 0)
 						{
-							EClass._zone.AddCard(ThingGen.CreateFromCategory("junk", -1), this.pos);
+							EClass._zone.AddCard(ThingGen.CreateFromCategory("junk"), pos);
 						}
 						else
 						{
-							EClass._zone.AddThing("bone", this.pos);
+							EClass._zone.AddThing("bone", pos);
 						}
 					}
 				}
 			}
 			else
 			{
-				exp = this.target.Num * 5;
-				num2 = this.target.Num / 3 + EClass.rnd(this.target.Num / 3 + 2);
-				this.HarvestThing();
+				exp = target.Num * 5;
+				num2 = target.Num / 3 + EClass.rnd(target.Num / 3 + 2);
+				HarvestThing();
 			}
-			if (EClass._zone.IsCrime(this.owner, this) && EClass.rnd(3) != 0)
+			if (EClass._zone.IsCrime(owner, this) && EClass.rnd(3) != 0)
 			{
 				EClass.player.ModKarma(-1);
 			}
@@ -357,140 +367,75 @@ public class TaskHarvest : BaseTaskHarvest
 				{
 					if (EClass.sources.cards.map.ContainsKey(backerObj.loot))
 					{
-						Thing thing = ThingGen.Create(backerObj.loot, -1, -1);
-						int id = backerObj.id;
-						if (id <= 2531)
+						Thing thing = ThingGen.Create(backerObj.loot);
+						switch (backerObj.id)
 						{
-							if (id <= 867)
-							{
-								if (id == 471)
-								{
-									goto IL_4BC;
-								}
-								if (id != 490 && id != 867)
-								{
-									goto IL_4F7;
-								}
-							}
-							else if (id <= 1828)
-							{
-								if (id == 1027)
-								{
-									thing.ChangeMaterial(25);
-									thing.SetBlessedState(BlessedState.Doomed);
-									thing.ChangeRarity(Rarity.Legendary);
-									goto IL_4F7;
-								}
-								if (id != 1828)
-								{
-									goto IL_4F7;
-								}
-								goto IL_4BC;
-							}
-							else
-							{
-								if (id == 1854)
-								{
-									thing.decay = 10000;
-									goto IL_4F7;
-								}
-								if (id != 2531)
-								{
-									goto IL_4F7;
-								}
-								thing.MakeFoodFrom("putty");
-								goto IL_4F7;
-							}
-						}
-						else if (id <= 4788)
-						{
-							if (id == 4565)
-							{
-								EClass._zone.AddThing("rod", this.pos);
-								EClass._zone.AddThing("money", this.pos).SetNum(121);
-								goto IL_4F7;
-							}
-							if (id == 4615)
-							{
-								thing.ChangeMaterial("meat");
-								goto IL_4F7;
-							}
-							if (id != 4788)
-							{
-								goto IL_4F7;
-							}
+						case 490:
+						case 867:
+						case 5160:
+							thing.c_charges = 0;
+							thing.c_priceFix = -100;
+							break;
+						case 2531:
+							thing.MakeFoodFrom("putty");
+							break;
+						case 1027:
+							thing.ChangeMaterial(25);
+							thing.SetBlessedState(BlessedState.Doomed);
+							thing.ChangeRarity(Rarity.Legendary);
+							break;
+						case 4565:
+							EClass._zone.AddThing("rod", pos);
+							EClass._zone.AddThing("money", pos).SetNum(121);
+							break;
+						case 5367:
+							thing.Dye("obsidian");
+							break;
+						case 471:
+						case 1828:
+						case 5765:
+							thing.SetBlessedState(BlessedState.Cursed);
+							break;
+						case 5529:
+							thing.ChangeMaterial(25);
+							break;
+						case 1854:
+							thing.decay = 10000;
+							break;
+						case 4788:
 							thing.SetEncLv(1);
-							goto IL_4F7;
+							break;
+						case 4615:
+							thing.ChangeMaterial("meat");
+							break;
 						}
-						else if (id <= 5367)
-						{
-							if (id != 5160)
-							{
-								if (id != 5367)
-								{
-									goto IL_4F7;
-								}
-								thing.Dye("obsidian");
-								goto IL_4F7;
-							}
-						}
-						else
-						{
-							if (id == 5529)
-							{
-								thing.ChangeMaterial(25);
-								goto IL_4F7;
-							}
-							if (id != 5765)
-							{
-								goto IL_4F7;
-							}
-							goto IL_4BC;
-						}
-						thing.c_charges = 0;
-						thing.c_priceFix = -100;
-						goto IL_4F7;
-						IL_4BC:
-						thing.SetBlessedState(BlessedState.Cursed);
-						IL_4F7:
-						EClass._zone.AddCard(thing, this.pos);
+						EClass._zone.AddCard(thing, pos);
 					}
 					else
 					{
-						Debug.LogError("exception: Backer Loot not valid:" + backerObj.id.ToString() + "/" + backerObj.loot);
+						Debug.LogError("exception: Backer Loot not valid:" + backerObj.id + "/" + backerObj.loot);
 					}
-					Debug.Log(string.Concat(new string[]
-					{
-						backerObj.id.ToString(),
-						"/",
-						backerObj.Name,
-						"/",
-						backerObj.loot
-					}));
+					Debug.Log(backerObj.id + "/" + backerObj.Name + "/" + backerObj.loot);
 				}
 				EClass.player.doneBackers.Add(backerObj.id);
 				if (!backerObj.Text.IsEmpty() && EClass.core.config.backer.Show(backerObj))
 				{
-					bool flag2 = backerObj.type == 1;
-					Msg.Say(flag2 ? "backerRemain_read" : "backerTree_read");
-					Msg.Say(flag2 ? "backerRemain" : "backerTree", backerObj.Text, null, null, null);
+					bool num3 = backerObj.type == 1;
+					Msg.Say(num3 ? "backerRemain_read" : "backerTree_read");
+					Msg.Say(num3 ? "backerRemain" : "backerTree", backerObj.Text);
 				}
 			}
-			if (this.owner.IsPC)
+			if (owner.IsPC)
 			{
 				EClass.pc.CalculateFOV();
 			}
-			this.owner.elements.ModExp(this.idEle, exp, false);
-			if (this.wasReapSeed)
+			owner.elements.ModExp(idEle, exp);
+			if (wasReapSeed)
 			{
-				this.owner.ModExp(286, 20);
+				owner.ModExp(286, 20);
 			}
-			this.owner.stamina.Mod(-num2);
-			if (this.owner == null)
-			{
-				return;
-			}
-			if (this.owner.IsPC)
+			owner.stamina.Mod(-num2);
+			if (owner != null && owner.IsPC)
 			{
 				EClass.player.recipes.ComeUpWithRecipe(idRecipe, 30);
 			}
@@ -499,72 +444,66 @@ public class TaskHarvest : BaseTaskHarvest
 
 	public bool HaveHarvestThing()
 	{
-		string text = this.target.source.components[0].Split('|', StringSplitOptions.None)[0].Split('/', StringSplitOptions.None)[0];
-		if (this.target.IsEquipmentOrRanged || this.target.IsAmmo)
+		string text = target.source.components[0].Split('|')[0].Split('/')[0];
+		if (target.IsEquipmentOrRanged || target.IsAmmo)
 		{
-			text = this.target.material.thing;
+			text = target.material.thing;
 		}
-		return !(this.target.trait is TraitGrave) && !text.Contains("$") && !text.Contains("#") && !text.Contains("@") && !text.Contains("-") && !(text == this.target.id) && EClass.sources.cards.map.ContainsKey(text) && !this.target.source.components.IsEmpty();
+		if (target.trait is TraitGrave)
+		{
+			return false;
+		}
+		if (text.Contains("$") || text.Contains("#") || text.Contains("@") || text.Contains("-"))
+		{
+			return false;
+		}
+		if (text == target.id || !EClass.sources.cards.map.ContainsKey(text))
+		{
+			return false;
+		}
+		if (target.source.components.IsEmpty())
+		{
+			return false;
+		}
+		return true;
 	}
 
 	public void HarvestThing()
 	{
-		string text = this.target.source.components[0].Split('|', StringSplitOptions.None)[0].Split('/', StringSplitOptions.None)[0];
-		if (this.target.IsEquipmentOrRanged || this.target.IsAmmo)
+		string text = target.source.components[0].Split('|')[0].Split('/')[0];
+		if (target.IsEquipmentOrRanged || target.IsAmmo)
 		{
-			text = this.target.material.thing;
+			text = target.material.thing;
 		}
-		float num = (float)this.target.Num;
+		float num = target.Num;
 		float num2 = 1.0999999f;
 		if (text == "log" || text == "rock")
 		{
 			num2 = 2.1999998f;
 		}
-		if (this.target.trait is TraitAmmo)
+		if (target.trait is TraitAmmo)
 		{
 			num2 = 50f;
 		}
 		float num3 = num % num2;
 		num /= num2;
-		Debug.Log(string.Concat(new string[]
-		{
-			"num:",
-			num.ToString(),
-			" div:",
-			num3.ToString(),
-			" chance:",
-			num2.ToString(),
-			" check:",
-			(num2 - num3 + 1f).ToString()
-		}));
+		Debug.Log("num:" + num + " div:" + num3 + " chance:" + num2 + " check:" + (num2 - num3 + 1f));
 		if (num3 > 0f && EClass.rndf(num2 - num3 + 1f) < 1f)
 		{
 			num += 1f;
 		}
-		if (this.target.sockets != null)
+		if (target.sockets != null)
 		{
-			this.target.EjectSockets();
+			target.EjectSockets();
 		}
-		int decay = this.target.decay;
-		int lv = this.target.LV;
-		this.target.Die(null, null, AttackSource.None);
-		if (this.target.trait is TraitGrave)
-		{
-			return;
-		}
-		if (text.Contains("$") || text.Contains("#") || text.Contains("@") || text.Contains("-"))
+		int decay = target.decay;
+		int lV = target.LV;
+		target.Die();
+		if (target.trait is TraitGrave || text.Contains("$") || text.Contains("#") || text.Contains("@") || text.Contains("-") || text == target.id || !EClass.sources.cards.map.ContainsKey(text) || (int)num <= 0 || target.source.components.IsEmpty())
 		{
 			return;
 		}
-		if (text == this.target.id || !EClass.sources.cards.map.ContainsKey(text))
-		{
-			return;
-		}
-		if ((int)num <= 0 || this.target.source.components.IsEmpty())
-		{
-			return;
-		}
-		if (this.target.isCopy)
+		if (target.isCopy)
 		{
 			text = "ash3";
 		}
@@ -572,36 +511,17 @@ public class TaskHarvest : BaseTaskHarvest
 		{
 			fixedQuality = true
 		});
-		Thing thing = ThingGen.Create(text, 1, Mathf.Max(1, lv * 2 / 3));
+		Thing thing = ThingGen.Create(text, 1, Mathf.Max(1, lV * 2 / 3));
 		if (thing != null)
 		{
 			thing.SetNum((int)num);
-			thing.ChangeMaterial(this.target.material);
+			thing.ChangeMaterial(target.material);
 			thing.decay = decay;
 			if (thing.IsDecayed && thing.IsFood)
 			{
-				thing.elements.SetBase(73, -10, 0);
+				thing.elements.SetBase(73, -10);
 			}
-			EClass._map.TrySmoothPick(this.pos.IsBlocked ? this.owner.pos : this.pos, thing, EClass.pc);
+			EClass._map.TrySmoothPick(pos.IsBlocked ? owner.pos : pos, thing, EClass.pc);
 		}
 	}
-
-	[CompilerGenerated]
-	internal static bool <TryGetAct>g__IsValidTarget|20_0(string[] raw, ref TaskHarvest.<>c__DisplayClass20_0 A_1)
-	{
-		if (raw[0] == "digging")
-		{
-			return A_1.hasDiggingTool;
-		}
-		bool flag = A_1.p.cell.CanHarvest();
-		int num = flag ? 250 : EClass.sources.elements.alias[raw[0]].id;
-		bool flag2 = !flag && num != 250;
-		return (flag2 || A_1.t == null || A_1.t.trait.CanHarvest) && (!flag2 | A_1.hasTool);
-	}
-
-	public bool wasReapSeed;
-
-	public bool wasCrime;
-
-	public BaseTaskHarvest.HarvestType mode = BaseTaskHarvest.HarvestType.Obj;
 }

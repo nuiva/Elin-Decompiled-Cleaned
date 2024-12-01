@@ -1,8 +1,16 @@
-﻿using System;
+using System;
 using System.Text;
 
 public class GameLang : EClass
 {
+	public static string refDrama1;
+
+	public static string refDrama2;
+
+	public static string refDrama3;
+
+	public static string refDrama4;
+
 	public static string ConvertDrama(string text, Chara c = null)
 	{
 		if (!EClass.core.IsGameStarted)
@@ -12,14 +20,14 @@ public class GameLang : EClass
 		StringBuilder stringBuilder = new StringBuilder();
 		string newValue = "";
 		string newValue2 = "";
-		string name = EClass.game.religions.GetRandomReligion(false, false).Name;
+		string name = EClass.game.religions.GetRandomReligion(onlyJoinable: false).Name;
 		string @ref = "-";
 		if (c != null)
 		{
 			newValue = c.NameBraced;
 			newValue2 = (c.IsMale ? "his" : "her").lang();
 			name = c.faith.Name;
-			@ref = (CalcGold.Hire(c).ToString() ?? "");
+			@ref = CalcGold.Hire(c).ToString() ?? "";
 		}
 		bool flag = false;
 		string text2 = "";
@@ -37,7 +45,7 @@ public class GameLang : EClass
 					string[] list = Lang.GetList(text2);
 					if (list != null)
 					{
-						stringBuilder.Append(list.RandomItem<string>());
+						stringBuilder.Append(list.RandomItem());
 					}
 					else
 					{
@@ -46,7 +54,7 @@ public class GameLang : EClass
 				}
 				else
 				{
-					text2 += text[i].ToString();
+					text2 += text[i];
 				}
 			}
 			else if (text[i] == '[')
@@ -68,14 +76,14 @@ public class GameLang : EClass
 			stringBuilder.Replace("#last_choice", DramaChoice.lastChoice.text);
 		}
 		stringBuilder.Replace("#newline", Environment.NewLine);
-		stringBuilder.Replace("#costHire", "costHire".lang(@ref, null, null, null, null));
+		stringBuilder.Replace("#costHire", "costHire".lang(@ref));
 		stringBuilder.Replace("#self", newValue);
 		stringBuilder.Replace("#his", newValue2);
 		stringBuilder.Replace("#me", newValue);
-		stringBuilder.Replace("#1", GameLang.refDrama1);
-		stringBuilder.Replace("#2", GameLang.refDrama2);
-		stringBuilder.Replace("#3", GameLang.refDrama3);
-		stringBuilder.Replace("#4", GameLang.refDrama4);
+		stringBuilder.Replace("#1", refDrama1);
+		stringBuilder.Replace("#2", refDrama2);
+		stringBuilder.Replace("#3", refDrama3);
+		stringBuilder.Replace("#4", refDrama4);
 		stringBuilder.Replace("#god", name);
 		stringBuilder.Replace("#player", EClass.player.title);
 		stringBuilder.Replace("#title", EClass.player.title);
@@ -87,19 +95,19 @@ public class GameLang : EClass
 		stringBuilder.Replace("#bigdaddy", "bigdaddy".lang());
 		stringBuilder.Replace("#festival", EClass._zone.IsFestival ? (EClass._zone.id + "_festival").lang() : "_festival".lang());
 		stringBuilder.Replace("#brother2", (EClass.pc.IsMale ? "brother" : "sister").lang());
-		stringBuilder.Replace("#brother", Lang.GetList(EClass.pc.IsMale ? "bro" : "sis").RandomItem<string>());
-		stringBuilder.Replace("#onii", Lang.GetList(EClass.pc.IsMale ? "onii" : "onee").RandomItem<string>());
+		stringBuilder.Replace("#brother", Lang.GetList(EClass.pc.IsMale ? "bro" : "sis").RandomItem());
+		stringBuilder.Replace("#onii", Lang.GetList(EClass.pc.IsMale ? "onii" : "onee").RandomItem());
 		stringBuilder.Replace("#gender", Lang.GetList("gendersDrama")[EClass.pc.bio.gender]);
 		stringBuilder.Replace("#he", ((EClass.pc.bio.gender == 2) ? "he" : "she").lang());
-		stringBuilder.Replace("#He", ((EClass.pc.bio.gender == 2) ? "he" : "she").lang().ToTitleCase(false));
-		return GameLang.Convert(stringBuilder);
+		stringBuilder.Replace("#He", ((EClass.pc.bio.gender == 2) ? "he" : "she").lang().ToTitleCase());
+		return Convert(stringBuilder);
 	}
 
 	public static string Convert(string text)
 	{
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.Append(text);
-		return GameLang.Convert(stringBuilder);
+		return Convert(stringBuilder);
 	}
 
 	public static string Convert(StringBuilder sb)
@@ -120,9 +128,9 @@ public class GameLang : EClass
 			if (Lang.articlesToRemove.Count > 0)
 			{
 				string text2 = val1;
-				foreach (char[] trimChars in Lang.articlesToRemove)
+				foreach (char[] item in Lang.articlesToRemove)
 				{
-					text2 = text2.TrimStart(trimChars);
+					text2 = text2.TrimStart(item);
 				}
 				stringBuilder.Replace("-#1", text2);
 			}
@@ -133,9 +141,9 @@ public class GameLang : EClass
 			if (Lang.articlesToRemove.Count > 0)
 			{
 				string text3 = val2;
-				foreach (char[] trimChars2 in Lang.articlesToRemove)
+				foreach (char[] item2 in Lang.articlesToRemove)
 				{
-					text3 = text3.TrimStart(trimChars2);
+					text3 = text3.TrimStart(item2);
 				}
 				stringBuilder.Replace("-#2", text3);
 			}
@@ -149,10 +157,9 @@ public class GameLang : EClass
 		{
 			stringBuilder.Replace("#4", val4);
 		}
-		int num;
-		if (int.TryParse(val1, out num))
+		if (int.TryParse(val1, out var result))
 		{
-			stringBuilder.Replace("#(s)", (num <= 1) ? "" : "_s".lang());
+			stringBuilder.Replace("#(s)", (result <= 1) ? "" : "_s".lang());
 		}
 		if (Msg.thirdPerson2.active)
 		{
@@ -173,17 +180,18 @@ public class GameLang : EClass
 		}
 		if (Lang.setting.thirdperson)
 		{
-			return GameLang.ConvertThirdPerson(stringBuilder.ToString(), thirdPerson);
+			return ConvertThirdPerson(stringBuilder.ToString(), thirdPerson);
 		}
-		return GameLang.Convert(stringBuilder);
+		return Convert(stringBuilder);
 	}
 
 	public static string ConvertThirdPerson(string text, bool thirdPerson)
 	{
-		string[] array = text.Split(' ', StringSplitOptions.None);
+		string[] array = text.Split(' ');
 		StringBuilder stringBuilder = new StringBuilder();
 		bool flag = true;
-		foreach (string text2 in array)
+		string[] array2 = array;
+		foreach (string text2 in array2)
 		{
 			if (flag)
 			{
@@ -195,7 +203,7 @@ public class GameLang : EClass
 			}
 			if (text2.Contains('/') && !text2.Contains('<'))
 			{
-				string[] array3 = text2.Split('/', StringSplitOptions.None);
+				string[] array3 = text2.Split('/');
 				stringBuilder.Append(thirdPerson ? array3[1] : array3[0]);
 			}
 			else
@@ -205,14 +213,6 @@ public class GameLang : EClass
 		}
 		stringBuilder.Replace("(s)", thirdPerson ? "s" : "");
 		stringBuilder.Replace("(es)", thirdPerson ? "es" : "");
-		return GameLang.Convert(stringBuilder);
+		return Convert(stringBuilder);
 	}
-
-	public static string refDrama1;
-
-	public static string refDrama2;
-
-	public static string refDrama3;
-
-	public static string refDrama4;
 }

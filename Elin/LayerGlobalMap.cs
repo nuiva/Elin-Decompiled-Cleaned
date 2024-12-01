@@ -1,30 +1,7 @@
-﻿using System;
+using System;
 
 public class LayerGlobalMap : ELayer
 {
-	public override void OnInit()
-	{
-		this.RefreshSummary();
-	}
-
-	public void RefreshSummary()
-	{
-		this.textName.SetText(string.Concat(new string[]
-		{
-			ELayer.world.Name,
-			Environment.NewLine,
-			"<size=18> (",
-			ELayer.pc.currentZone.Region.Name,
-			")</size>"
-		}));
-		this.textExplore.SetText("0%");
-		this.textTerritory.SetText(ELayer.Home.CountTerritories().ToString() ?? "");
-		this.textRestore.SetText("1 (0/20)");
-		this.textWealth.SetText(ELayer.Home.CountWealth().ToString() ?? "");
-		this.textPopu.SetText(ELayer.Home.CountMembers().ToString() ?? "");
-		this.textProgress.SetText("_progress".lang(ELayer.player.stats.days.ToString() ?? "", ELayer.player.stats.sieges.ToString() ?? "", null, null, null));
-	}
-
 	public UIText textName;
 
 	public UIText textExplore;
@@ -38,4 +15,20 @@ public class LayerGlobalMap : ELayer
 	public UIText textRestore;
 
 	public UIText textProgress;
+
+	public override void OnInit()
+	{
+		RefreshSummary();
+	}
+
+	public void RefreshSummary()
+	{
+		textName.SetText(ELayer.world.Name + Environment.NewLine + "<size=18> (" + ELayer.pc.currentZone.Region.Name + ")</size>");
+		textExplore.SetText("0%");
+		textTerritory.SetText(ELayer.Home.CountTerritories().ToString() ?? "");
+		textRestore.SetText("1 (0/20)");
+		textWealth.SetText(ELayer.Home.CountWealth().ToString() ?? "");
+		textPopu.SetText(ELayer.Home.CountMembers().ToString() ?? "");
+		textProgress.SetText("_progress".lang(ELayer.player.stats.days.ToString() ?? "", ELayer.player.stats.sieges.ToString() ?? ""));
+	}
 }

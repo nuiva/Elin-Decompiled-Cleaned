@@ -1,95 +1,92 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
 public class TextureManager
 {
-	public string pathTex
-	{
-		get
-		{
-			return CorePath.packageCore + "Texture/";
-		}
-	}
+	public Dictionary<string, TextureData> texMap = new Dictionary<string, TextureData>();
+
+	public string pathTex => CorePath.packageCore + "Texture/";
 
 	public void Init()
 	{
 		BaseTileMap tileMap = EClass.scene.screenElin.tileMap;
 		CoreRef.TextureDatas textureData = EClass.core.refs.textureData;
-		this.AddBase(textureData.block, "blocks.png", tileMap.passBlock, "_MainTex");
-		this.AddBase(textureData.floor, "floors.png", tileMap.passFloor, "_MainTex");
-		this.AddBase(textureData.objs_SS, "objs_SS.png", tileMap.passObjSS, "_MainTex");
-		this.AddBase(textureData.objs_S, "objs_S.png", tileMap.passObjS, "_MainTex");
-		this.AddBase(textureData.objs, "objs.png", tileMap.passObj, "_MainTex");
-		this.AddBase(textureData.objs_L, "objs_L.png", tileMap.passObjL, "_MainTex");
-		this.AddBase(textureData.roofs, "roofs.png", tileMap.passRoof, "_MainTex");
-		this.AddBase(textureData.shadows, "shadows.png", tileMap.passShadow, "_MainTex");
-		this.AddBase(textureData.fov, "fov.png", tileMap.passFov, "_MainTex");
-		this.AddBase(textureData.objs_C, "objs_C.png", tileMap.passChara, "_MainTex");
-		this.AddBase(textureData.objs_CLL, "objs_CLL.png", tileMap.passCharaLL, "_MainTex");
-		this.AddBase(textureData.block_snow, "blocks_snow.png", tileMap.passBlock.snowPass, "_MainTex");
-		this.AddBase(textureData.floor_snow, "floors_snow.png", tileMap.passFloor.snowPass, "_MainTex");
-		this.AddBase(textureData.objs_S_snow, "objs_S_snow.png", tileMap.passObjS.snowPass, "_MainTex");
-		this.AddBase(textureData.objs_snow, "objs_snow.png", tileMap.passObj.snowPass, "_MainTex");
-		this.AddBase(textureData.objs_L_snow, "objs_L_snow.png", tileMap.passObjL.snowPass, "_MainTex");
-		this.Add(tileMap.passRamp, textureData.block, "_MainTex");
-		this.Add(tileMap.passWaterBlock, textureData.block, "_MainTex");
-		this.Add(tileMap.passFog, textureData.block, "_MainTex");
-		this.Add(tileMap.passLiquid, textureData.block, "_MainTex");
-		this.Add(tileMap.passBlockEx, textureData.block, "_MainTex");
-		this.Add(tileMap.passInner, textureData.block, "_MainTex");
-		this.Add(tileMap.passBlockMarker, textureData.block, "_MainTex");
-		this.Add(tileMap.passEdge, textureData.floor, "_MainTex");
-		this.Add(tileMap.passFloorEx, textureData.floor, "_MainTex");
-		this.Add(tileMap.passFloorWater, textureData.floor, "_MainTex");
-		this.Add(tileMap.passAutoTile, textureData.floor, "_MainTex");
-		this.Add(tileMap.passShore, textureData.floor, "_MainTex");
-		this.Add(tileMap.passAutoTileWater, textureData.floor, "_MainTex");
-		this.Add(tileMap.passFloorMarker, textureData.floor, "_MainTex");
-		this.Add(tileMap.passCharaL, textureData.objs_C, "_MainTex");
-		this.Add(tileMap.passIcon, textureData.objs_S, "_MainTex");
-		this.AddList(textureData.world, "world.png");
-		this.AddList(textureData.bird, "bird1.png");
-		foreach (FileInfo fileInfo in new DirectoryInfo(CorePath.user + "/Texture Replace").GetFiles())
+		AddBase(textureData.block, "blocks.png", tileMap.passBlock);
+		AddBase(textureData.floor, "floors.png", tileMap.passFloor);
+		AddBase(textureData.objs_SS, "objs_SS.png", tileMap.passObjSS);
+		AddBase(textureData.objs_S, "objs_S.png", tileMap.passObjS);
+		AddBase(textureData.objs, "objs.png", tileMap.passObj);
+		AddBase(textureData.objs_L, "objs_L.png", tileMap.passObjL);
+		AddBase(textureData.roofs, "roofs.png", tileMap.passRoof);
+		AddBase(textureData.shadows, "shadows.png", tileMap.passShadow);
+		AddBase(textureData.fov, "fov.png", tileMap.passFov);
+		AddBase(textureData.objs_C, "objs_C.png", tileMap.passChara);
+		AddBase(textureData.objs_CLL, "objs_CLL.png", tileMap.passCharaLL);
+		AddBase(textureData.block_snow, "blocks_snow.png", tileMap.passBlock.snowPass);
+		AddBase(textureData.floor_snow, "floors_snow.png", tileMap.passFloor.snowPass);
+		AddBase(textureData.objs_S_snow, "objs_S_snow.png", tileMap.passObjS.snowPass);
+		AddBase(textureData.objs_snow, "objs_snow.png", tileMap.passObj.snowPass);
+		AddBase(textureData.objs_L_snow, "objs_L_snow.png", tileMap.passObjL.snowPass);
+		Add(tileMap.passRamp, textureData.block);
+		Add(tileMap.passWaterBlock, textureData.block);
+		Add(tileMap.passFog, textureData.block);
+		Add(tileMap.passLiquid, textureData.block);
+		Add(tileMap.passBlockEx, textureData.block);
+		Add(tileMap.passInner, textureData.block);
+		Add(tileMap.passBlockMarker, textureData.block);
+		Add(tileMap.passEdge, textureData.floor);
+		Add(tileMap.passFloorEx, textureData.floor);
+		Add(tileMap.passFloorWater, textureData.floor);
+		Add(tileMap.passAutoTile, textureData.floor);
+		Add(tileMap.passShore, textureData.floor);
+		Add(tileMap.passAutoTileWater, textureData.floor);
+		Add(tileMap.passFloorMarker, textureData.floor);
+		Add(tileMap.passCharaL, textureData.objs_C);
+		Add(tileMap.passIcon, textureData.objs_S);
+		AddList(textureData.world, "world.png");
+		AddList(textureData.bird, "bird1.png");
+		FileInfo[] files = new DirectoryInfo(CorePath.user + "/Texture Replace").GetFiles();
+		foreach (FileInfo fileInfo in files)
 		{
 			if (fileInfo.Name.EndsWith(".png"))
 			{
-				this.TryAddReplace(fileInfo, TextureReplace.Source.User, true, false);
+				TryAddReplace(fileInfo, TextureReplace.Source.User);
 			}
 		}
-		foreach (FileInfo file in EClass.core.mods.replaceFiles)
+		foreach (FileInfo replaceFile in EClass.core.mods.replaceFiles)
 		{
-			this.TryAddReplace(file, TextureReplace.Source.Mod, true, false);
+			TryAddReplace(replaceFile);
 		}
 	}
 
 	public void AddBase(TextureData data, string path, MeshPass pass, string texName = "_MainTex")
 	{
-		this.texMap[data.id] = data;
-		data.path = this.pathTex + path;
+		texMap[data.id] = data;
+		data.path = pathTex + path;
 		data.texName = texName;
 		data.dictReplace.Clear();
 		data.tileW = data.tex.width / (int)pass.pmesh.tiling.x;
 		data.tileH = data.tex.height / (int)pass.pmesh.tiling.y;
-		this.texMap[data.id].listPass.Add(pass);
+		texMap[data.id].listPass.Add(pass);
 	}
 
 	public void Add(MeshPass to, TextureData from, string texName = "_MainTex")
 	{
-		this.texMap[from.id].listPass.Add(to);
+		texMap[from.id].listPass.Add(to);
 	}
 
 	public void AddList(TextureData data, string path)
 	{
-		data.path = this.pathTex + path;
-		this.texMap[data.id] = data;
+		data.path = pathTex + path;
+		texMap[data.id] = data;
 	}
 
 	public void RefreshTextures()
 	{
-		foreach (TextureData textureData in this.texMap.Values)
+		foreach (TextureData value in texMap.Values)
 		{
-			textureData.TryRefresh();
+			value.TryRefresh();
 		}
 		if (EClass.core.IsGameStarted && EClass._zone != null && EClass._zone.isStarted)
 		{
@@ -100,48 +97,48 @@ public class TextureManager
 	public void OnDropFile(List<string> paths)
 	{
 		int num = 0;
-		foreach (string fileName in paths)
+		foreach (string path in paths)
 		{
-			FileInfo fileInfo = new FileInfo(fileName);
-			if (this.TryAddReplace(fileInfo, TextureReplace.Source.User, false, false))
+			FileInfo fileInfo = new FileInfo(path);
+			if (!TryAddReplace(fileInfo, TextureReplace.Source.User, add: false))
 			{
-				string text = CorePath.user + "/Texture Replace/" + fileInfo.Name;
-				try
-				{
-					if (File.Exists(text))
-					{
-						File.Delete(text);
-					}
-					fileInfo.CopyTo(text, true);
-				}
-				catch (Exception)
-				{
-				}
-				this.TryAddReplace(new FileInfo(text), TextureReplace.Source.User, true, true);
-				num++;
+				continue;
 			}
+			string text = CorePath.user + "/Texture Replace/" + fileInfo.Name;
+			try
+			{
+				if (File.Exists(text))
+				{
+					File.Delete(text);
+				}
+				fileInfo.CopyTo(text, overwrite: true);
+			}
+			catch (Exception)
+			{
+			}
+			TryAddReplace(new FileInfo(text), TextureReplace.Source.User, add: true, refresh: true);
+			num++;
 		}
-		Msg.Say("Imported " + num.ToString() + "image(s)");
+		Msg.Say("Imported " + num + "image(s)");
 	}
 
 	public bool TryAddReplace(FileInfo file, TextureReplace.Source source = TextureReplace.Source.Mod, bool add = true, bool refresh = false)
 	{
-		string[] array = Path.GetFileNameWithoutExtension(file.Name).Split('_', StringSplitOptions.None);
+		string[] array = Path.GetFileNameWithoutExtension(file.Name).Split('_');
 		if (array.Length == 1)
 		{
 			return false;
 		}
 		string key = array[0];
-		int index;
-		if (!int.TryParse(array[1], out index))
+		if (!int.TryParse(array[1], out var result))
 		{
 			return false;
 		}
-		if (!this.texMap.ContainsKey(key))
+		if (!texMap.ContainsKey(key))
 		{
 			return false;
 		}
-		TextureData textureData = this.texMap[key];
+		TextureData textureData = texMap[key];
 		if (textureData.listPass.Count == 0)
 		{
 			return false;
@@ -151,7 +148,7 @@ public class TextureManager
 			textureData.AddReplace(new TextureReplace
 			{
 				file = file,
-				index = index,
+				index = result,
 				data = textureData,
 				source = source
 			});
@@ -165,36 +162,35 @@ public class TextureManager
 
 	public void ApplyLocalReplace(string path)
 	{
-		foreach (TextureData textureData in this.texMap.Values)
+		foreach (TextureData value in texMap.Values)
 		{
-			if (textureData.listReplaceLocal.Count > 0)
+			if (value.listReplaceLocal.Count > 0)
 			{
-				textureData.forceRefresh = true;
-				foreach (TextureReplace textureReplace in textureData.listReplaceLocal)
+				value.forceRefresh = true;
+				foreach (TextureReplace item in value.listReplaceLocal)
 				{
-					textureReplace.DestoryTex();
-					if (textureReplace.original != null)
+					item.DestoryTex();
+					if (item.original != null)
 					{
-						textureData.dictReplace[textureReplace.index] = textureReplace.original;
+						value.dictReplace[item.index] = item.original;
 					}
 					else
 					{
-						textureData.dictReplace.Remove(textureReplace.index);
+						value.dictReplace.Remove(item.index);
 					}
 				}
 			}
-			textureData.listReplaceLocal.Clear();
+			value.listReplaceLocal.Clear();
 		}
 		string path2 = path + "Texture Replace";
 		if (Directory.Exists(path2))
 		{
-			foreach (FileInfo file in new DirectoryInfo(path2).GetFiles())
+			FileInfo[] files = new DirectoryInfo(path2).GetFiles();
+			foreach (FileInfo file in files)
 			{
-				this.TryAddReplace(file, TextureReplace.Source.Local, true, false);
+				TryAddReplace(file, TextureReplace.Source.Local);
 			}
 		}
-		this.RefreshTextures();
+		RefreshTextures();
 	}
-
-	public Dictionary<string, TextureData> texMap = new Dictionary<string, TextureData>();
 }

@@ -1,54 +1,16 @@
-﻿using System;
-
 public class TraitLoytelMart : TraitVendingMachine
 {
-	public int LV
-	{
-		get
-		{
-			return EClass.player.flags.loytelMartLv;
-		}
-	}
+	public int LV => EClass.player.flags.loytelMartLv;
 
-	public override int ShopLv
-	{
-		get
-		{
-			return this.LV * 10 + ((this.LV > 0) ? 10 : 1);
-		}
-	}
+	public override int ShopLv => LV * 10 + ((LV <= 0) ? 1 : 10);
 
-	public override bool IsHomeItem
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsHomeItem => true;
 
-	public override string IDInvStyle
-	{
-		get
-		{
-			return "default";
-		}
-	}
+	public override string IDInvStyle => "default";
 
-	public override bool CanBeOnlyBuiltInHome
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanBeOnlyBuiltInHome => true;
 
-	public override ShopType ShopType
-	{
-		get
-		{
-			return ShopType.LoytelMart;
-		}
-	}
+	public override ShopType ShopType => ShopType.LoytelMart;
 
 	public override int CostRerollShop
 	{
@@ -64,14 +26,18 @@ public class TraitLoytelMart : TraitVendingMachine
 
 	public override bool CanUse(Chara c)
 	{
-		return this.owner.IsInstalled && EClass._zone.IsPCFaction;
+		if (owner.IsInstalled)
+		{
+			return EClass._zone.IsPCFaction;
+		}
+		return false;
 	}
 
 	public override void SetName(ref string s)
 	{
-		if (this.LV > 0)
+		if (LV > 0)
 		{
-			s = s + Lang.space + "+" + this.LV.ToString();
+			s = s + Lang.space + "+" + LV;
 		}
 	}
 }

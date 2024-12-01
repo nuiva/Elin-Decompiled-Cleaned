@@ -1,13 +1,10 @@
-﻿using System;
+namespace Algorithms;
 
-namespace Algorithms
+public enum HeuristicFormula
 {
-	public enum HeuristicFormula
-	{
-		Manhattan = 1,
-		MaxDXDY,
-		DiagonalShortCut,
-		Euclidean,
-		EuclideanNoSQR
-	}
+	Manhattan = 1,
+	MaxDXDY,
+	DiagonalShortCut,
+	Euclidean,
+	EuclideanNoSQR
 }

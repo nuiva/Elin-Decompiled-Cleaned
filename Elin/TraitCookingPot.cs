@@ -1,44 +1,12 @@
-﻿using System;
-
 public class TraitCookingPot : TraitCooker
 {
-	public override ToggleType ToggleType
-	{
-		get
-		{
-			return ToggleType.Fire;
-		}
-	}
+	public override ToggleType ToggleType => ToggleType.Fire;
 
-	public override AnimeID IdAnimeProgress
-	{
-		get
-		{
-			return AnimeID.Shiver;
-		}
-	}
+	public override AnimeID IdAnimeProgress => AnimeID.Shiver;
 
-	public override TraitCrafter.AnimeType animeType
-	{
-		get
-		{
-			return TraitCrafter.AnimeType.Pot;
-		}
-	}
+	public override AnimeType animeType => AnimeType.Pot;
 
-	public override string idSoundProgress
-	{
-		get
-		{
-			return "cook_pot";
-		}
-	}
+	public override string idSoundProgress => "cook_pot";
 
-	public override string idSoundBG
-	{
-		get
-		{
-			return "bg_boil";
-		}
-	}
+	public override string idSoundBG => "bg_boil";
 }

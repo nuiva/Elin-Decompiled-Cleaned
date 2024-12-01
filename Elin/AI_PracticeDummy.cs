@@ -1,88 +1,75 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class AI_PracticeDummy : AIAct
 {
-	public override CursorInfo CursorIcon
-	{
-		get
-		{
-			return CursorSystem.IconMelee;
-		}
-	}
+	public Card target;
 
-	public override bool HasProgress
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public Thing throwItem;
+
+	public bool range;
+
+	public override CursorInfo CursorIcon => CursorSystem.IconMelee;
+
+	public override bool HasProgress => true;
 
 	public override bool CanManualCancel()
 	{
 		return true;
 	}
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		this.isFail = (() => !this.target.IsAliveInCurrentZone);
-		yield return base.DoProgress();
-		yield break;
+		isFail = () => !target.IsAliveInCurrentZone;
+		yield return DoProgress();
 	}
 
 	public override AIProgress CreateProgress()
 	{
-		Progress_Custom progress_Custom = new Progress_Custom();
-		progress_Custom.canProgress = (() => !this.isFail());
-		progress_Custom.onProgressBegin = delegate()
+		return new Progress_Custom
 		{
-		};
-		progress_Custom.onProgress = delegate(Progress_Custom p)
-		{
-			if (this.throwItem != null)
+			canProgress = () => !isFail(),
+			onProgressBegin = delegate
 			{
-				if (!ActThrow.CanThrow(EClass.pc, this.throwItem, this.target, null))
+			},
+			onProgress = delegate(Progress_Custom p)
+			{
+				if (throwItem != null)
+				{
+					if (!ActThrow.CanThrow(EClass.pc, throwItem, target))
+					{
+						p.Cancel();
+						return;
+					}
+					ActThrow.Throw(EClass.pc, target.pos, target, throwItem);
+				}
+				else if (range && owner.GetCondition<ConReload>() == null)
+				{
+					if (!ACT.Ranged.CanPerform(owner, target, target.pos))
+					{
+						p.Cancel();
+						return;
+					}
+					if (!ACT.Ranged.Perform(owner, target, target.pos))
+					{
+						p.Cancel();
+					}
+				}
+				else
+				{
+					ACT.Melee.Perform(owner, target);
+				}
+				if (owner != null && EClass.rnd(5) < 2)
+				{
+					owner.stamina.Mod(-1);
+				}
+				if (owner != null && owner.stamina.value < 0)
 				{
 					p.Cancel();
-					return;
 				}
-				ActThrow.Throw(EClass.pc, this.target.pos, this.target, this.throwItem, ThrowMethod.Default);
-			}
-			else if (this.range && this.owner.GetCondition<ConReload>() == null)
+			},
+			onProgressComplete = delegate
 			{
-				if (!ACT.Ranged.CanPerform(this.owner, this.target, this.target.pos))
-				{
-					p.Cancel();
-					return;
-				}
-				if (!ACT.Ranged.Perform(this.owner, this.target, this.target.pos))
-				{
-					p.Cancel();
-				}
 			}
-			else
-			{
-				ACT.Melee.Perform(this.owner, this.target, null);
-			}
-			if (this.owner != null && EClass.rnd(5) < 2)
-			{
-				this.owner.stamina.Mod(-1);
-			}
-			if (this.owner != null && this.owner.stamina.value < 0)
-			{
-				p.Cancel();
-			}
-		};
-		progress_Custom.onProgressComplete = delegate()
-		{
-		};
-		return progress_Custom.SetDuration(10000, 2);
+		}.SetDuration(10000);
 	}
-
-	public Card target;
-
-	public Thing throwItem;
-
-	public bool range;
 }

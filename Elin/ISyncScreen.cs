@@ -1,5 +1,3 @@
-﻿using System;
-
 public interface ISyncScreen
 {
 	long Sync { get; }

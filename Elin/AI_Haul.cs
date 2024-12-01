@@ -1,45 +1,47 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class AI_Haul : AIAct
 {
-	public override IEnumerable<AIAct.Status> Run()
+	public Thing dest;
+
+	public static List<Thing> _list = new List<Thing>();
+
+	public override IEnumerable<Status> Run()
 	{
-		if (this.dest.ExistsOnMap)
+		if (dest.ExistsOnMap)
 		{
-			yield return base.DoGoto(this.dest.pos, 1, false, null);
+			yield return DoGoto(dest.pos, 1);
 		}
-		if (!this.dest.ExistsOnMap)
+		if (!dest.ExistsOnMap)
 		{
-			yield return base.Success(null);
+			yield return Success();
 		}
-		if (EClass._zone.TryAddThingInSharedContainer(this.dest, null, true, false, null, true))
+		if (EClass._zone.TryAddThingInSharedContainer(dest))
 		{
-			this.owner.Say("haul", this.owner, this.dest, null, null);
-			if (this.dest.id == "731")
+			owner.Say("haul", owner, dest);
+			if (dest.id == "731")
 			{
-				this.owner.Talk("clean", null, null, false);
+				owner.Talk("clean");
 			}
 			else
 			{
-				this.owner.Talk("haul", null, null, false);
+				owner.Talk("haul");
 			}
 		}
-		yield return base.Success(null);
-		yield break;
+		yield return Success();
 	}
 
 	public static Thing GetThingToClean(Chara c = null)
 	{
-		AI_Haul._list.Clear();
+		_list.Clear();
 		foreach (Thing thing in EClass._map.things)
 		{
 			if (thing.placeState == PlaceState.roaming && !thing.isMasked && (thing.id == "731" || thing.id == "_egg" || thing.id == "egg_fertilized" || thing.id == "milk"))
 			{
-				AI_Haul._list.Add(thing);
+				_list.Add(thing);
 			}
 		}
-		if (AI_Haul._list.Count == 0)
+		if (_list.Count == 0)
 		{
 			return null;
 		}
@@ -47,23 +49,25 @@ public class AI_Haul : AIAct
 		{
 			Thing result = null;
 			int num = 9999;
-			foreach (Thing thing2 in AI_Haul._list)
 			{
-				int num2 = c.pos.Distance(thing2.pos);
-				if (num2 < num && EClass._zone.TryAddThingInSharedContainer(thing2, null, false, false, null, true))
+				foreach (Thing item in _list)
 				{
-					num = num2;
-					result = thing2;
+					int num2 = c.pos.Distance(item.pos);
+					if (num2 < num && EClass._zone.TryAddThingInSharedContainer(item, null, add: false))
+					{
+						num = num2;
+						result = item;
+					}
 				}
+				return result;
 			}
-			return result;
 		}
-		AI_Haul._list.Shuffle<Thing>();
-		foreach (Thing thing3 in AI_Haul._list)
+		_list.Shuffle();
+		foreach (Thing item2 in _list)
 		{
-			if (EClass._zone.TryAddThingInSharedContainer(thing3, null, false, false, null, true))
+			if (EClass._zone.TryAddThingInSharedContainer(item2, null, add: false))
 			{
-				return thing3;
+				return item2;
 			}
 		}
 		return null;
@@ -71,7 +75,7 @@ public class AI_Haul : AIAct
 
 	public static AI_Haul TryGetAI(Chara c)
 	{
-		Thing thingToClean = AI_Haul.GetThingToClean(c);
+		Thing thingToClean = GetThingToClean(c);
 		if (thingToClean != null)
 		{
 			return new AI_Haul
@@ -81,8 +85,4 @@ public class AI_Haul : AIAct
 		}
 		return null;
 	}
-
-	public Thing dest;
-
-	public static List<Thing> _list = new List<Thing>();
 }

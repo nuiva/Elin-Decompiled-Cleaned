@@ -1,73 +1,68 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class GoalSleep : Goal
 {
-	public override IEnumerable<AIAct.Status> Run()
+	public int timer = 20;
+
+	public Thing bed;
+
+	public override IEnumerable<Status> Run()
 	{
-		int i;
-		int num;
-		for (i = 0; i < 5; i = num + 1)
+		for (int i = 0; i < 5; i++)
 		{
-			yield return AIAct.Status.Running;
-			num = i;
+			yield return Status.Running;
 		}
-		TraitBed traitBed = this.owner.FindBed();
+		TraitBed traitBed = owner.FindBed();
 		if (traitBed == null)
 		{
-			traitBed = this.owner.TryAssignBed();
+			traitBed = owner.TryAssignBed();
 		}
 		if (traitBed != null)
 		{
-			this.bed = traitBed.owner.Thing;
+			bed = traitBed.owner.Thing;
 		}
-		if (this.bed != null)
+		if (bed != null)
 		{
-			yield return base.DoGoto(this.bed, new Func<AIAct.Status>(base.KeepRunning));
+			yield return DoGoto(bed, base.KeepRunning);
 		}
-		else if (this.owner.memberType != FactionMemberType.Livestock)
+		else if (owner.memberType != FactionMemberType.Livestock)
 		{
 			BaseArea baseArea = EClass._map.FindPublicArea();
 			if (baseArea != null)
 			{
-				yield return base.DoGoto(baseArea.GetRandomFreePos(), 0, false, new Func<AIAct.Status>(base.KeepRunning));
+				yield return DoGoto(baseArea.GetRandomFreePos(), 0, ignoreConnection: false, base.KeepRunning);
 			}
 		}
-		i = 0;
-		while (i < 5 && this.owner.pos.HasMultipleChara)
+		for (int i = 0; i < 5; i++)
 		{
-			this.owner.MoveRandom();
-			yield return AIAct.Status.Running;
-			num = i;
-			i = num + 1;
+			if (!owner.pos.HasMultipleChara)
+			{
+				break;
+			}
+			owner.MoveRandom();
+			yield return Status.Running;
 		}
-		this.owner.AddCondition<ConSleep>(3000, true);
-		yield return AIAct.Status.Running;
-		yield break;
+		owner.AddCondition<ConSleep>(3000, force: true);
+		yield return Status.Running;
 	}
 
 	public override void OnSimulatePosition()
 	{
-		this.owner.AddCondition<ConSleep>(2000, true);
-		TraitBed traitBed = this.owner.FindBed();
-		this.bed = (((traitBed != null) ? traitBed.owner.Thing : null) ?? null);
-		if (this.bed == null && EClass._zone.IsPCFaction)
+		owner.AddCondition<ConSleep>(2000, force: true);
+		bed = owner.FindBed()?.owner.Thing ?? null;
+		if (bed == null && EClass._zone.IsPCFaction)
 		{
-			this.owner.TryAssignBed();
+			owner.TryAssignBed();
 		}
-		if (this.bed != null && !this.bed.pos.HasChara)
+		if (bed != null && !bed.pos.HasChara)
 		{
-			this.owner.MoveImmediate(this.bed.pos, true, true);
+			owner.MoveImmediate(bed.pos);
 			return;
 		}
 		BaseArea baseArea = EClass._map.FindPublicArea();
 		if (baseArea != null)
 		{
-			this.owner.MoveImmediate(baseArea.GetRandomFreePos(), true, true);
+			owner.MoveImmediate(baseArea.GetRandomFreePos());
 		}
 	}
-
-	public int timer = 20;
-
-	public Thing bed;
 }

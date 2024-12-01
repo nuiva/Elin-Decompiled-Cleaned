@@ -1,60 +1,62 @@
-﻿using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 public class AI_Pray : AIAct
 {
+	public TraitAltar altar;
+
 	public static TraitAltar GetAltar(Chara c)
 	{
 		if (c.faith.IsEyth)
 		{
 			return null;
 		}
-		List<TraitAltar> list = EClass._map.props.installed.traits.List<TraitAltar>((TraitAltar t) => t.idDeity == c.faith.id && c.HasAccess(t.owner.pos));
+		List<TraitAltar> list = EClass._map.props.installed.traits.List((TraitAltar t) => t.idDeity == c.faith.id && c.HasAccess(t.owner.pos));
 		if (list.Count == 0)
 		{
 			return null;
 		}
-		return list.RandomItem<TraitAltar>();
+		return list.RandomItem();
 	}
 
 	public bool IsValid()
 	{
-		return this.altar != null && this.altar.ExistsOnMap;
+		if (altar != null)
+		{
+			return altar.ExistsOnMap;
+		}
+		return false;
 	}
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		yield return base.DoGoto(this.altar.owner, 1, null);
-		Progress_Custom progress_Custom = new Progress_Custom();
-		progress_Custom.cancelWhenMoved = false;
-		progress_Custom.canProgress = (() => this.IsValid());
-		progress_Custom.onProgressBegin = delegate()
+		yield return DoGoto(altar.owner, 1);
+		Progress_Custom seq = new Progress_Custom
 		{
-		};
-		progress_Custom.onProgress = delegate(Progress_Custom p)
-		{
-			this.owner.PlayAnime(AnimeID.Shiver, false);
-		};
-		progress_Custom.onProgressComplete = delegate()
-		{
-			AI_Pray.Pray(this.owner, false);
-		};
-		Progress_Custom seq = progress_Custom.SetDuration(30, 5);
-		yield return base.Do(seq, null);
-		yield break;
+			cancelWhenMoved = false,
+			canProgress = () => IsValid(),
+			onProgressBegin = delegate
+			{
+			},
+			onProgress = delegate
+			{
+				owner.PlayAnime(AnimeID.Shiver);
+			},
+			onProgressComplete = delegate
+			{
+				Pray(owner);
+			}
+		}.SetDuration(30, 5);
+		yield return Do(seq);
 	}
 
 	public static void Pray(Chara c, bool silent = false)
 	{
 		if (!silent)
 		{
-			c.Say("pray2", c, c.faith.Name, null);
-			c.PlaySound("pray", 1f, true);
-			c.PlayEffect("revive", true, 0f, default(Vector3));
+			c.Say("pray2", c, c.faith.Name);
+			c.PlaySound("pray");
+			c.PlayEffect("revive");
 		}
 		c.ModExp(306, 200);
 	}
-
-	public TraitAltar altar;
 }

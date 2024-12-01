@@ -1,67 +1,68 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class HotbarManager : EClass
 {
+	[JsonProperty]
+	public Hotbar[] bars = new Hotbar[8];
+
 	public void ResetHotbar(int id)
 	{
-		Hotbar hotbar = this.bars[id];
-		WidgetHotbar widgetHotbar = ((hotbar != null) ? hotbar.actor : null) ?? null;
-		Hotbar hotbar2 = null;
+		WidgetHotbar widgetHotbar = bars[id]?.actor ?? null;
+		Hotbar hotbar = null;
 		switch (id)
 		{
 		case 0:
-			hotbar2 = this.SetHobar(0, 4, null);
+			hotbar = SetHobar(0, 4);
 			break;
 		case 1:
-			hotbar2 = this.SetHobar(1, 4, null);
-			hotbar2.SetItem(new HotItemContext
+			hotbar = SetHobar(1, 4);
+			hotbar.SetItem(new HotItemContext
 			{
 				id = "system"
-			}, 0, -1, false);
-			hotbar2.SetItem(new HotItemToggleLog(), 1, -1, false);
-			hotbar2.SetItem(new HotItemContext
+			}, 0);
+			hotbar.SetItem(new HotItemToggleLog(), 1);
+			hotbar.SetItem(new HotItemContext
 			{
 				id = "mapTool"
-			}, 2, -1, false);
-			hotbar2.SetItem(new HotItemToggleWidget(), 3, -1, false);
+			}, 2);
+			hotbar.SetItem(new HotItemToggleWidget(), 3);
 			break;
 		case 2:
-			hotbar2 = this.SetHobar(2, 7, null);
-			hotbar2.SetItem(new HotItemLayer
+			hotbar = SetHobar(2, 7);
+			hotbar.SetItem(new HotItemLayer
 			{
 				id = "stash"
-			}, -1, -1, false);
-			hotbar2.SetItem(new HotItemLayer
+			});
+			hotbar.SetItem(new HotItemLayer
 			{
 				id = "LayerAbility"
-			}, -1, -1, false);
-			hotbar2.SetItem(new HotItemLayer
+			});
+			hotbar.SetItem(new HotItemLayer
 			{
 				id = "LayerChara"
-			}, -1, -1, false);
-			hotbar2.SetItem(new HotItemLayer
+			});
+			hotbar.SetItem(new HotItemLayer
 			{
 				id = "LayerJournal"
-			}, -1, -1, false);
+			});
 			if (EClass.core.IsGameStarted && EClass._zone.CanEnterBuildModeAnywhere)
 			{
-				hotbar2.SetItem(new HotItemActionMode
+				hotbar.SetItem(new HotItemActionMode
 				{
 					id = "Inspect"
-				}, -1, -1, false);
+				});
 			}
 			if (EClass.core.IsGameStarted && EClass._zone.IsRegion)
 			{
-				hotbar2.SetItem(new HotItemLayer
+				hotbar.SetItem(new HotItemLayer
 				{
 					id = "LayerTravel"
-				}, -1, -1, false);
+				});
 			}
 			break;
 		case 3:
 		{
-			hotbar2 = this.SetHobar(3, 12, null);
+			hotbar = SetHobar(3, 12);
 			if (!EClass.core.IsGameStarted)
 			{
 				return;
@@ -71,159 +72,159 @@ public class HotbarManager : EClass
 			{
 				if (flag || EClass.Branch.elements.Has(4006))
 				{
-					hotbar2.SetItem(new HotItemActionMode
+					hotbar.SetItem(new HotItemActionMode
 					{
 						id = "Inspect"
-					}, -1, -1, false).always = true;
+					}).always = true;
 				}
 				if (flag || EClass.Branch.elements.Has(4000))
 				{
-					hotbar2.SetItem(new HotItemActionMode
+					hotbar.SetItem(new HotItemActionMode
 					{
 						id = "Cut"
-					}, -1, -1, false);
+					});
 				}
 				if (flag || EClass.Branch.elements.Has(4001))
 				{
-					hotbar2.SetItem(new HotItemActionMode
+					hotbar.SetItem(new HotItemActionMode
 					{
 						id = "Mine"
-					}, -1, -1, false);
+					});
 				}
 				if (flag || EClass.Branch.elements.Has(4001))
 				{
-					hotbar2.SetItem(new HotItemActionMode
+					hotbar.SetItem(new HotItemActionMode
 					{
 						id = "Dig"
-					}, -1, -1, false);
+					});
 				}
 				if (flag || EClass.Branch.elements.Has(4002))
 				{
-					hotbar2.SetItem(new HotItemActionMode
+					hotbar.SetItem(new HotItemActionMode
 					{
 						id = "Terrain"
-					}, -1, -1, false);
+					});
 				}
 				if (flag)
 				{
-					hotbar2.SetItem(new HotItemActionMode
+					hotbar.SetItem(new HotItemActionMode
 					{
 						id = "Copy"
-					}, -1, -1, false);
+					});
 				}
 				if (flag)
 				{
-					hotbar2.SetItem(new HotItemActionMode
+					hotbar.SetItem(new HotItemActionMode
 					{
 						id = "Populate"
-					}, -1, -1, false);
+					});
 				}
 				if (flag || EClass.Branch.elements.Has(4004))
 				{
-					hotbar2.SetItem(new HotItemActionMode
+					hotbar.SetItem(new HotItemActionMode
 					{
 						id = "Deconstruct"
-					}, -1, -1, false);
+					});
 				}
-				hotbar2.SetItem(new HotItemActionMode
+				hotbar.SetItem(new HotItemActionMode
 				{
 					id = "ExitBuild"
-				}, -1, -1, false);
+				});
 			}
 			break;
 		}
 		case 4:
-			hotbar2 = this.SetHobar(4, 9, null);
+			hotbar = SetHobar(4, 9);
 			if (!EClass.core.IsGameStarted)
 			{
 				return;
 			}
 			if (EClass.debug.godBuild || EClass.Branch != null)
 			{
-				hotbar2.SetItem(new HotItemActionMode
+				hotbar.SetItem(new HotItemActionMode
 				{
 					id = "Cinema"
-				}, -1, -1, false);
-				hotbar2.SetItem(new HotItemActionMode
+				});
+				hotbar.SetItem(new HotItemActionMode
 				{
 					id = "FlagCell"
-				}, -1, -1, false);
+				});
 				if (EClass.debug.godBuild || EClass.Branch.elements.Has(4006))
 				{
-					hotbar2.SetItem(new HotItemActionMode
+					hotbar.SetItem(new HotItemActionMode
 					{
 						id = "Visibility"
-					}, -1, -1, false);
+					});
 				}
 				if (EClass.debug.godBuild)
 				{
-					hotbar2.SetItem(new HotItemActionMode
+					hotbar.SetItem(new HotItemActionMode
 					{
 						id = "EditMarker"
-					}, -1, -1, false);
+					});
 				}
 				if (EClass.debug.godBuild || EClass.Branch.elements.Has(4005))
 				{
-					hotbar2.SetItem(new HotItemActionMode
+					hotbar.SetItem(new HotItemActionMode
 					{
 						id = "Picker"
-					}, -1, -1, false);
+					});
 				}
 				if (EClass.debug.godBuild)
 				{
-					hotbar2.SetItem(new HotItemContext
+					hotbar.SetItem(new HotItemContext
 					{
 						id = "mapTool",
 						autoExpand = false
-					}, -1, -1, false);
+					});
 				}
 			}
 			break;
 		case 5:
-			hotbar2 = this.SetHobar(5, 9, null);
-			hotbar2.SetItem(new HotItemLayer
+			hotbar = SetHobar(5, 9);
+			hotbar.SetItem(new HotItemLayer
 			{
 				id = "LayerHelp"
-			}, 0, -1, false);
-			hotbar2.SetItem(new HotItemWidget
+			}, 0);
+			hotbar.SetItem(new HotItemWidget
 			{
 				id = "Codex"
-			}, 1, -1, false);
-			hotbar2.SetItem(new HotItemWidget
+			}, 1);
+			hotbar.SetItem(new HotItemWidget
 			{
 				id = "Memo"
-			}, 2, -1, false);
-			hotbar2.SetItem(new HotItemWidget
+			}, 2);
+			hotbar.SetItem(new HotItemWidget
 			{
 				id = "QuestTracker"
-			}, 3, -1, false);
-			hotbar2.SetItem(new HotItemActionSleep(), 4, -1, false);
+			}, 3);
+			hotbar.SetItem(new HotItemActionSleep(), 4);
 			break;
 		case 6:
-			hotbar2 = this.SetHobar(6, 9, null);
+			hotbar = SetHobar(6, 9);
 			break;
 		case 7:
-			hotbar2 = this.SetHobar(7, 7, null);
-			hotbar2.SetItem(new HotItemToggle
+			hotbar = SetHobar(7, 7);
+			hotbar.SetItem(new HotItemToggle
 			{
 				type = HotItemToggle.Type.SnapFreepos
-			}, -1, -1, false);
-			hotbar2.SetItem(new HotItemToggle
+			});
+			hotbar.SetItem(new HotItemToggle
 			{
 				type = HotItemToggle.Type.ToggleRoof
-			}, -1, -1, false);
-			hotbar2.SetItem(new HotItemToggle
+			});
+			hotbar.SetItem(new HotItemToggle
 			{
 				type = HotItemToggle.Type.ToggleSlope
-			}, -1, -1, false);
-			hotbar2.SetItem(new HotItemToggle
+			});
+			hotbar.SetItem(new HotItemToggle
 			{
 				type = HotItemToggle.Type.ToggleBuildLight
-			}, -1, -1, false);
+			});
 			break;
 		}
-		hotbar2.actor = widgetHotbar;
-		if (widgetHotbar)
+		hotbar.actor = widgetHotbar;
+		if ((bool)widgetHotbar)
 		{
 			widgetHotbar.Rebuild();
 		}
@@ -233,7 +234,7 @@ public class HotbarManager : EClass
 	{
 		Hotbar hotbar = new Hotbar();
 		hotbar.itemsPerPage = slots;
-		this.bars[id] = hotbar;
+		bars[id] = hotbar;
 		hotbar.AddPage();
 		hotbar.AddPage();
 		hotbar.id = id;
@@ -242,16 +243,13 @@ public class HotbarManager : EClass
 
 	public void OnCreateGame()
 	{
-		this.ResetHotbar(0);
-		this.ResetHotbar(1);
-		this.ResetHotbar(2);
-		this.ResetHotbar(3);
-		this.ResetHotbar(4);
-		this.ResetHotbar(5);
-		this.ResetHotbar(6);
-		this.ResetHotbar(7);
+		ResetHotbar(0);
+		ResetHotbar(1);
+		ResetHotbar(2);
+		ResetHotbar(3);
+		ResetHotbar(4);
+		ResetHotbar(5);
+		ResetHotbar(6);
+		ResetHotbar(7);
 	}
-
-	[JsonProperty]
-	public Hotbar[] bars = new Hotbar[8];
 }

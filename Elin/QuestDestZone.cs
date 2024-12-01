@@ -1,34 +1,27 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class QuestDestZone : QuestRandom
 {
-	public virtual bool IsDeliver
-	{
-		get
-		{
-			return true;
-		}
-	}
+	[JsonProperty]
+	public int uidDest;
 
-	public Zone DestZone
-	{
-		get
-		{
-			return RefZone.Get(this.uidDest);
-		}
-	}
+	[JsonProperty]
+	public int uidTarget;
+
+	public virtual bool IsDeliver => true;
+
+	public Zone DestZone => RefZone.Get(uidDest);
 
 	public override Chara DestChara
 	{
 		get
 		{
-			if (this.IsDeliver && this.DestZone == EClass._zone)
+			if (IsDeliver && DestZone == EClass._zone)
 			{
-				Chara chara = EClass._zone.FindChara(this.uidTarget);
-				if (chara != null && chara.IsAliveInCurrentZone)
+				Chara obj = EClass._zone.FindChara(uidTarget);
+				if (obj != null && obj.IsAliveInCurrentZone)
 				{
-					return EClass._zone.FindChara(this.uidTarget);
+					return EClass._zone.FindChara(uidTarget);
 				}
 			}
 			return base.chara;
@@ -39,12 +32,11 @@ public class QuestDestZone : QuestRandom
 	{
 		get
 		{
-			if (this.DestZone != null)
+			if (DestZone != null)
 			{
-				return this.DestZone.Name;
+				return DestZone.Name;
 			}
-			Zone clientZone = base.ClientZone;
-			return ((clientZone != null) ? clientZone.Name : null) ?? "???";
+			return base.ClientZone?.Name ?? "???";
 		}
 	}
 
@@ -52,31 +44,26 @@ public class QuestDestZone : QuestRandom
 	{
 		get
 		{
-			string result;
-			if (this.uidTarget != 0)
+			object obj;
+			if (uidTarget != 0)
 			{
-				if ((result = this.DestZone.dictCitizen.TryGetValue(this.uidTarget, null)) == null)
+				obj = DestZone.dictCitizen.TryGetValue(uidTarget);
+				if (obj == null)
 				{
 					return "???";
 				}
 			}
 			else
 			{
-				result = "";
+				obj = "";
 			}
-			return result;
+			return (string)obj;
 		}
 	}
 
 	public void SetDest(Zone z, int target)
 	{
-		this.uidDest = z.uid;
-		this.uidTarget = target;
+		uidDest = z.uid;
+		uidTarget = target;
 	}
-
-	[JsonProperty]
-	public int uidDest;
-
-	[JsonProperty]
-	public int uidTarget;
 }

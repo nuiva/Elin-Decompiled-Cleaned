@@ -1,12 +1,4 @@
-﻿using System;
-
 public class TargetTypeEnemy : TargetTypeChara
 {
-	public override bool CanOnlyTargetEnemy
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanOnlyTargetEnemy => true;
 }

@@ -1,11 +1,10 @@
-﻿using System;
 using UnityEngine;
 
 public class EUtil : EMono
 {
 	public void AddLayer(string s)
 	{
-		if (EMono.ui.contextMenu.currentMenu)
+		if ((bool)EMono.ui.contextMenu.currentMenu)
 		{
 			EMono.ui.contextMenu.currentMenu.Hide();
 		}
@@ -14,7 +13,7 @@ public class EUtil : EMono
 
 	public void ExitGame()
 	{
-		if (EMono.ui.contextMenu.currentMenu)
+		if ((bool)EMono.ui.contextMenu.currentMenu)
 		{
 			EMono.ui.contextMenu.currentMenu.Hide();
 		}
@@ -23,6 +22,6 @@ public class EUtil : EMono
 
 	public void DestroyGameObject()
 	{
-		UnityEngine.Object.Destroy(base.gameObject);
+		Object.Destroy(base.gameObject);
 	}
 }

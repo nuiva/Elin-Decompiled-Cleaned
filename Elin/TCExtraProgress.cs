@@ -1,45 +1,14 @@
-﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class TCExtraProgress : TCExtraUI
 {
-	public override void OnSetOwner()
+	public enum ProgressType
 	{
-		this.Refresh();
+		Gene
 	}
 
-	private void Update()
-	{
-		this.timer -= Core.delta;
-		if (this.timer < 0f)
-		{
-			this.timer += this.refreshInterval;
-			this.Refresh();
-		}
-	}
-
-	public void Refresh()
-	{
-		if (base.owner == null)
-		{
-			return;
-		}
-		TraitGeneMachine traitGeneMachine = base.owner.trait as TraitGeneMachine;
-		bool flag = base.owner.isOn && base.owner.IsInstalled && traitGeneMachine.IsTargetUsingGene();
-		this.goBar.SetActive(flag);
-		if (flag)
-		{
-			float progress = traitGeneMachine.GetProgress();
-			this.bar.rectTransform.sizeDelta = new Vector2(progress * this.bgBar.rectTransform.sizeDelta.x, this.bgBar.rectTransform.sizeDelta.y);
-			if (this.textProgress)
-			{
-				this.textProgress.text = traitGeneMachine.GetProgressText();
-			}
-		}
-	}
-
-	public TCExtraProgress.ProgressType progressType;
+	public ProgressType progressType;
 
 	public GameObject goBar;
 
@@ -53,8 +22,38 @@ public class TCExtraProgress : TCExtraUI
 
 	private float timer;
 
-	public enum ProgressType
+	public override void OnSetOwner()
 	{
-		Gene
+		Refresh();
+	}
+
+	private void Update()
+	{
+		timer -= Core.delta;
+		if (timer < 0f)
+		{
+			timer += refreshInterval;
+			Refresh();
+		}
+	}
+
+	public void Refresh()
+	{
+		if (base.owner == null)
+		{
+			return;
+		}
+		TraitGeneMachine traitGeneMachine = base.owner.trait as TraitGeneMachine;
+		bool flag = base.owner.isOn && base.owner.IsInstalled && traitGeneMachine.IsTargetUsingGene();
+		goBar.SetActive(flag);
+		if (flag)
+		{
+			float progress = traitGeneMachine.GetProgress();
+			bar.rectTransform.sizeDelta = new Vector2(progress * bgBar.rectTransform.sizeDelta.x, bgBar.rectTransform.sizeDelta.y);
+			if ((bool)textProgress)
+			{
+				textProgress.text = traitGeneMachine.GetProgressText();
+			}
+		}
 	}
 }

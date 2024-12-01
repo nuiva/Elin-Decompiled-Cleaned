@@ -1,49 +1,21 @@
-﻿using System;
-
 public class TraitAncientbook : TraitBaseSpellbook
 {
-	public override int Difficulty
-	{
-		get
-		{
-			return 10 + this.owner.refVal * 15;
-		}
-	}
+	public override int Difficulty => 10 + owner.refVal * 15;
 
-	public override TraitBaseSpellbook.Type BookType
-	{
-		get
-		{
-			return TraitBaseSpellbook.Type.Ancient;
-		}
-	}
+	public override Type BookType => Type.Ancient;
 
-	public override bool CanStack
-	{
-		get
-		{
-			return this.owner.isOn;
-		}
-	}
+	public override bool CanStack => owner.isOn;
+
+	public override bool HasCharges => !owner.isOn;
+
+	public override int eleParent => 74;
 
 	public override bool CanStackTo(Thing to)
 	{
-		return this.owner.isOn && to.isOn;
-	}
-
-	public override bool HasCharges
-	{
-		get
+		if (owner.isOn)
 		{
-			return !this.owner.isOn;
+			return to.isOn;
 		}
-	}
-
-	public override int eleParent
-	{
-		get
-		{
-			return 74;
-		}
+		return false;
 	}
 }

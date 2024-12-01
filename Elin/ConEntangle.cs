@@ -1,5 +1,3 @@
-﻿using System;
-
 public class ConEntangle : BadCondition
 {
 	public override int GetPhase()
@@ -14,9 +12,9 @@ public class ConEntangle : BadCondition
 
 	public override void Tick()
 	{
-		if (EClass.rnd(10) == 0 && this.owner.IsHumanSpeak)
+		if (EClass.rnd(10) == 0 && owner.IsHumanSpeak)
 		{
-			this.owner.Talk((EClass.rnd(3) == 0) ? "scold" : ((EClass.rnd(3) == 0) ? "pervert" : ((EClass.rnd(3) == 0) ? "labor" : "restrained")), null, null, false);
+			owner.Talk((EClass.rnd(3) == 0) ? "scold" : ((EClass.rnd(3) == 0) ? "pervert" : ((EClass.rnd(3) == 0) ? "labor" : "restrained")));
 		}
 		base.Tick();
 	}

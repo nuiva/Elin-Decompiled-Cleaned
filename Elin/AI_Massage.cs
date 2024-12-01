@@ -1,76 +1,55 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class AI_Massage : AIAct
 {
-	public override bool PushChara
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public Chara target;
 
-	public override bool IsAutoTurn
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool PushChara => false;
 
-	public override TargetType TargetType
-	{
-		get
-		{
-			return TargetType.Chara;
-		}
-	}
+	public override bool IsAutoTurn => true;
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override TargetType TargetType => TargetType.Chara;
+
+	public override IEnumerable<Status> Run()
 	{
-		this.target.Say("massage_start", this.target, this.owner, null, null);
-		this.isFail = (() => !this.target.IsAliveInCurrentZone || this.owner.Dist(this.target) > 3);
-		int num;
-		for (int i = 0; i < 30; i = num + 1)
+		target.Say("massage_start", target, owner);
+		isFail = () => !target.IsAliveInCurrentZone || owner.Dist(target) > 3;
+		for (int i = 0; i < 30; i++)
 		{
-			this.target.AddCondition<ConWait>(30, true);
-			yield return base.DoGoto(this.target.pos, 1, false, null);
-			this.owner.LookAt(this.target);
-			this.target.LookAt(this.owner);
+			_ = i;
+			target.AddCondition<ConWait>(30, force: true);
+			yield return DoGoto(target.pos, 1);
+			owner.LookAt(target);
+			target.LookAt(owner);
 			if (i % 3 == 0)
 			{
-				this.target.renderer.PlayAnime(AnimeID.Attack, this.owner);
-				this.owner.renderer.PlayAnime(AnimeID.Shiver, default(Vector3), false);
+				target.renderer.PlayAnime(AnimeID.Attack, owner);
+				owner.renderer.PlayAnime(AnimeID.Shiver);
 				if (EClass.rnd(5) == 0)
 				{
-					this.target.Talk("goodBoy", null, null, false);
+					target.Talk("goodBoy");
 				}
 			}
-			num = i;
 		}
-		this.target.Say("massage_end", this.target, null, null);
-		this.Finish(this.target, this.owner, 20);
-		yield break;
+		target.Say("massage_end", target);
+		Finish(target, owner, 20);
 	}
 
 	public void Finish(Chara cc, Chara tc, int stamina)
 	{
-		cc.Talk("ticket_finish", null, null, false);
-		cc.ShowEmo(Emo.love, 0f, false);
-		tc.ShowEmo(Emo.love, 0f, false);
-		tc.PlaySound("heal", 1f, true);
-		tc.PlayEffect("heal_stamina", true, 0f, default(Vector3));
+		cc.Talk("ticket_finish");
+		cc.ShowEmo(Emo.love, 0f, skipSame: false);
+		tc.ShowEmo(Emo.love, 0f, skipSame: false);
+		tc.PlaySound("heal");
+		tc.PlayEffect("heal_stamina");
 		tc.stamina.Mod(tc.stamina.max * stamina / 100);
-		tc.Say("feelgood", tc, null, null);
+		tc.Say("feelgood", tc);
 	}
 
-	public override AIAct.Status Cancel()
+	public override Status Cancel()
 	{
 		Debug.Log("Canceled massage");
 		return base.Cancel();
 	}
-
-	public Chara target;
 }

@@ -1,98 +1,54 @@
-﻿using System;
-
 public class TraitRod : TraitTool
 {
-	public override bool InvertHeldSprite
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool InvertHeldSprite => true;
 
-	public override bool HasCharges
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool HasCharges => true;
 
-	public virtual string aliasEle
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public virtual string aliasEle => null;
 
-	public virtual SourceElement.Row source
-	{
-		get
-		{
-			return null;
-		}
-	}
-
-	public override SourceElement.Row GetRefElement()
-	{
-		return this.source;
-	}
+	public virtual SourceElement.Row source => null;
 
 	public virtual int Power
 	{
 		get
 		{
-			if (this.owner.sourceCard.vals.Length <= 2)
+			if (owner.sourceCard.vals.Length <= 2)
 			{
 				return 100;
 			}
-			return this.owner.sourceCard.vals[2].ToInt();
+			return owner.sourceCard.vals[2].ToInt();
 		}
 	}
 
-	public virtual bool IsNegative
-	{
-		get
-		{
-			return this.owner.IsNegativeGift;
-		}
-	}
+	public virtual bool IsNegative => owner.IsNegativeGift;
 
-	public virtual EffectId IdEffect
-	{
-		get
-		{
-			return this.owner.sourceCard.vals[1].ToEnum(true);
-		}
-	}
+	public virtual EffectId IdEffect => owner.sourceCard.vals[1].ToEnum<EffectId>();
 
 	public virtual string N1
 	{
 		get
 		{
-			if (this.owner.sourceCard.vals.Length <= 3)
+			if (owner.sourceCard.vals.Length <= 3)
 			{
 				return "";
 			}
-			return this.owner.sourceCard.vals[3];
+			return owner.sourceCard.vals[3];
 		}
 	}
 
-	public override bool DisableAutoCombat
+	public override bool DisableAutoCombat => true;
+
+	public override SourceElement.Row GetRefElement()
 	{
-		get
-		{
-			return true;
-		}
+		return source;
 	}
 
 	public override void OnCreate(int lv)
 	{
-		this.owner.c_charges = EClass.rnd(12);
-		if (this.owner.id == "rod_wish")
+		owner.c_charges = EClass.rnd(12);
+		if (owner.id == "rod_wish")
 		{
-			this.owner.c_charges = 1;
+			owner.c_charges = 1;
 		}
 	}
 
@@ -101,6 +57,6 @@ public class TraitRod : TraitTool
 		p.TrySetAct(new ActZap
 		{
 			trait = this
-		}, this.owner);
+		}, owner);
 	}
 }

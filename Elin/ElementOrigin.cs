@@ -1,5 +1,3 @@
-﻿using System;
-
 public class ElementOrigin
 {
 	public const int DEFAULT = 0;

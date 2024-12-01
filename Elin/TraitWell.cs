@@ -1,75 +1,39 @@
-﻿using System;
-
 public class TraitWell : Trait
 {
-	public bool IsHoly
-	{
-		get
-		{
-			return this is TraitWellHoly;
-		}
-	}
+	public bool IsHoly => this is TraitWellHoly;
 
-	public override bool IsBlendBase
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsBlendBase => true;
 
-	public override bool HasCharges
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool HasCharges => true;
 
-	public override bool ShowCharges
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool ShowCharges => false;
 
-	public int pollution
-	{
-		get
-		{
-			return this.owner.GetInt(26, null);
-		}
-	}
+	public int pollution => owner.GetInt(26);
 
 	public int Charges
 	{
 		get
 		{
-			if (!this.IsHoly)
+			if (!IsHoly)
 			{
-				return this.owner.c_charges;
+				return owner.c_charges;
 			}
 			return EClass.player.holyWell;
 		}
 		set
 		{
-			if (this.IsHoly)
+			if (IsHoly)
 			{
 				EClass.player.holyWell = value;
-				return;
 			}
-			this.owner.c_charges = value;
+			else
+			{
+				owner.c_charges = value;
+			}
 		}
 	}
 
-	public bool polluted
-	{
-		get
-		{
-			return this.pollution >= 10;
-		}
-	}
+	public bool polluted => pollution >= 10;
 
 	public override bool CanBlend(Thing t)
 	{
@@ -78,74 +42,74 @@ public class TraitWell : Trait
 
 	public override void OnBlend(Thing t, Chara c)
 	{
-		bool polluted = this.polluted;
-		if (!this.IsHoly)
+		bool flag = polluted;
+		if (!IsHoly)
 		{
-			this.ModCharges(1);
+			ModCharges(1);
 		}
 		if ((t.id == "water" || t.id == "bucket") && t.IsBlessed)
 		{
-			if (this.IsHoly)
+			if (IsHoly)
 			{
-				this.ModCharges(1);
+				ModCharges(1);
 			}
-			if (this.polluted)
+			if (polluted)
 			{
-				Msg.Say("unpolluted", this.owner, null, null, null);
-				this.Charges = 1;
+				Msg.Say("unpolluted", owner);
+				Charges = 1;
 			}
-			this.owner.SetInt(26, 0);
+			owner.SetInt(26);
 		}
 		else
 		{
-			string name = this.owner.Name;
-			this.owner.SetInt(26, this.pollution + EClass.rnd(3) + ((t.blessedState <= BlessedState.Cursed) ? 10 : 0) + (this.IsHoly ? 10 : 0));
-			if (!polluted && this.polluted)
+			string name = owner.Name;
+			owner.SetInt(26, pollution + EClass.rnd(3) + ((t.blessedState <= BlessedState.Cursed) ? 10 : 0) + (IsHoly ? 10 : 0));
+			if (!flag && polluted)
 			{
-				Msg.Say("polluted", name, null, null, null);
+				Msg.Say("polluted", name);
 			}
 		}
-		t.ModNum(-1, true);
+		t.ModNum(-1);
 	}
 
 	public override void OnCreate(int lv)
 	{
-		if (!this.IsHoly)
+		if (!IsHoly)
 		{
-			this.owner.c_charges = EClass.rnd(6) + 2;
+			owner.c_charges = EClass.rnd(6) + 2;
 		}
 	}
 
 	public override void TrySetAct(ActPlan p)
 	{
-		p.TrySetAct("actDrink", delegate()
+		p.TrySetAct("actDrink", delegate
 		{
-			if (this.Charges <= 0)
+			if (Charges <= 0)
 			{
-				EClass.pc.Say("drinkWell_empty", EClass.pc, this.owner, null, null);
+				EClass.pc.Say("drinkWell_empty", EClass.pc, owner);
 				return false;
 			}
-			EClass.pc.Say("drinkWell", EClass.pc, this.owner, null, null);
-			EClass.pc.PlaySound("drink", 1f, true);
-			EClass.pc.PlayAnime(AnimeID.Shiver, false);
-			if (this.IsHoly || EClass.rnd(5) == 0)
+			EClass.pc.Say("drinkWell", EClass.pc, owner);
+			EClass.pc.PlaySound("drink");
+			EClass.pc.PlayAnime(AnimeID.Shiver);
+			if (IsHoly || EClass.rnd(5) == 0)
 			{
-				ActEffect.Proc(EffectId.ModPotential, EClass.pc, null, (!this.polluted && (this.IsHoly || EClass.rnd(2) == 0)) ? 100 : -100, default(ActRef));
+				ActEffect.Proc(EffectId.ModPotential, EClass.pc, null, (!polluted && (IsHoly || EClass.rnd(2) == 0)) ? 100 : (-100));
 			}
 			else if (EClass.rnd(5) == 0)
 			{
-				TraitWell.BadEffect(EClass.pc);
+				BadEffect(EClass.pc);
 			}
 			else if (EClass.rnd(4) == 0)
 			{
-				ActEffect.Proc(EffectId.Mutation, EClass.pc, null, 100, default(ActRef));
+				ActEffect.Proc(EffectId.Mutation, EClass.pc);
 			}
-			else if (EClass.rnd(EClass.debug.enable ? 2 : 10) == 0 && !this.polluted && !EClass.player.wellWished)
+			else if (EClass.rnd(EClass.debug.enable ? 2 : 10) == 0 && !polluted && !EClass.player.wellWished)
 			{
 				if (EClass.player.CountKeyItem("well_wish") > 0)
 				{
-					EClass.player.ModKeyItem("well_wish", -1, true);
-					ActEffect.Proc(EffectId.Wish, EClass.pc, null, 10 + EClass.player.CountKeyItem("well_enhance") * 10, default(ActRef));
+					EClass.player.ModKeyItem("well_wish", -1);
+					ActEffect.Proc(EffectId.Wish, EClass.pc, null, 10 + EClass.player.CountKeyItem("well_enhance") * 10);
 					EClass.player.wellWished = true;
 				}
 				else
@@ -153,26 +117,26 @@ public class TraitWell : Trait
 					Msg.SayNothingHappen();
 				}
 			}
-			else if (this.polluted)
+			else if (polluted)
 			{
-				EClass.pc.Say("drinkWater_dirty", null, null);
-				TraitWell.BadEffect(EClass.pc);
+				EClass.pc.Say("drinkWater_dirty");
+				BadEffect(EClass.pc);
 			}
 			else
 			{
-				EClass.pc.Say("drinkWater_clear", null, null);
+				EClass.pc.Say("drinkWater_clear");
 			}
-			this.ModCharges(-1);
+			ModCharges(-1);
 			return true;
-		}, this.owner, null, 1, false, true, false);
+		}, owner);
 	}
 
 	public void ModCharges(int a)
 	{
-		this.Charges += a;
-		if (this.Charges <= 0)
+		Charges += a;
+		if (Charges <= 0)
 		{
-			EClass.pc.Say("drinkWell_dry", EClass.pc, this.owner, null, null);
+			EClass.pc.Say("drinkWell_dry", EClass.pc, owner);
 		}
 	}
 
@@ -181,34 +145,34 @@ public class TraitWell : Trait
 		switch (EClass.rnd(7))
 		{
 		case 0:
-			ActEffect.Proc(EffectId.Blind, c, null, 100, default(ActRef));
-			return;
+			ActEffect.Proc(EffectId.Blind, c);
+			break;
 		case 1:
-			ActEffect.Proc(EffectId.Paralyze, c, null, 100, default(ActRef));
-			return;
+			ActEffect.Proc(EffectId.Paralyze, c);
+			break;
 		case 2:
-			ActEffect.Proc(EffectId.Sleep, c, null, 100, default(ActRef));
-			return;
+			ActEffect.Proc(EffectId.Sleep, c);
+			break;
 		case 3:
-			ActEffect.Proc(EffectId.Poison, c, null, 100, default(ActRef));
-			return;
+			ActEffect.Proc(EffectId.Poison, c);
+			break;
 		case 4:
-			ActEffect.Proc(EffectId.Faint, c, null, 100, default(ActRef));
-			return;
+			ActEffect.Proc(EffectId.Faint, c);
+			break;
 		case 5:
-			ActEffect.Proc(EffectId.Disease, c, null, 100, default(ActRef));
-			return;
+			ActEffect.Proc(EffectId.Disease, c);
+			break;
 		default:
-			ActEffect.Proc(EffectId.Confuse, c, null, 100, default(ActRef));
-			return;
+			ActEffect.Proc(EffectId.Confuse, c);
+			break;
 		}
 	}
 
 	public override void SetName(ref string s)
 	{
-		if (this.polluted)
+		if (polluted)
 		{
-			s = "_polluted".lang(s, null, null, null, null);
+			s = "_polluted".lang(s);
 		}
 	}
 }

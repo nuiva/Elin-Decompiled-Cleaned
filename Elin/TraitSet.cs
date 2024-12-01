@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,45 +6,35 @@ public class TraitSet : Dictionary<int, Card>
 {
 	public void Add(Card c)
 	{
-		base.Add(c.uid, c);
+		Add(c.uid, c);
 	}
 
 	public void Remove(Card c)
 	{
-		base.Remove(c.uid);
+		Remove(c.uid);
 	}
 
 	public Trait GetRandom()
 	{
-		Card card = this.RandomItem<int, Card>();
-		if (card == null)
-		{
-			return null;
-		}
-		return card.trait;
+		return this.RandomItem()?.trait;
 	}
 
 	public Trait GetRandom(Chara accessChara)
 	{
-		return this.GetRandom((Card t) => accessChara == null || accessChara.HasAccess(t));
+		return GetRandom((Card t) => accessChara == null || accessChara.HasAccess(t));
 	}
 
 	public Trait GetRandom(Func<Card, bool> func)
 	{
 		if (func == null)
 		{
-			return this.GetRandom();
+			return GetRandom();
 		}
-		Card card = base.Values.Where(func).RandomItem<Card>();
-		if (card == null)
-		{
-			return null;
-		}
-		return card.trait;
+		return base.Values.Where(func).RandomItem()?.trait;
 	}
 
 	public bool Contains(Card c)
 	{
-		return base.ContainsKey(c.uid);
+		return ContainsKey(c.uid);
 	}
 }

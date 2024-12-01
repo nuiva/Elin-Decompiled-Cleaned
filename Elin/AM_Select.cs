@@ -1,16 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public class AM_Select : AM_BaseTileSelect
 {
-	public override string idSound
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public override string idSound => null;
 
 	public bool ForceInnerBlockMode()
 	{
@@ -18,14 +11,11 @@ public class AM_Select : AM_BaseTileSelect
 		{
 			return false;
 		}
-		using (List<InspectGroup>.Enumerator enumerator = base.Summary.groups.GetEnumerator())
+		foreach (InspectGroup group in base.Summary.groups)
 		{
-			while (enumerator.MoveNext())
+			if (group is InspectGroupBlock)
 			{
-				if (enumerator.Current is InspectGroupBlock)
-				{
-					return true;
-				}
+				return true;
 			}
 		}
 		return false;
@@ -33,21 +23,20 @@ public class AM_Select : AM_BaseTileSelect
 
 	public override void OnUpdateInput()
 	{
-		this.RenderHighlights();
+		RenderHighlights();
 		if (EInput.rightMouse.down)
 		{
-			base.Deactivate();
-			return;
+			Deactivate();
 		}
-		if (!Input.GetMouseButton(0) && !EClass.ui.isPointerOverUI)
+		else if (!Input.GetMouseButton(0) && !EClass.ui.isPointerOverUI)
 		{
 			if (base.Summary.groups.Count > 0 && base.Summary.groups.Count != 1)
 			{
-				UIContextMenu uicontextMenu = EClass.ui.CreateContextMenu("ContextMenu");
-				uicontextMenu.onUpdate = new Action(this.RenderHighlights);
-				uicontextMenu.Show();
+				UIContextMenu uIContextMenu = EClass.ui.CreateContextMenu();
+				uIContextMenu.onUpdate = RenderHighlights;
+				uIContextMenu.Show();
 			}
-			base.Deactivate();
+			Deactivate();
 		}
 	}
 
@@ -61,40 +50,41 @@ public class AM_Select : AM_BaseTileSelect
 		{
 			return;
 		}
-		foreach (IInspect inspect in point.ListInspectorTargets())
+		foreach (IInspect item in point.ListInspectorTargets())
 		{
-			if (!(inspect is Area) && inspect.CanInspect)
+			if (item is Area || !item.CanInspect)
 			{
-				Type type = inspect.GetType();
-				InspectGroup inspectGroup = null;
-				foreach (InspectGroup inspectGroup2 in summary.groups)
-				{
-					if (inspectGroup2.type.Equals(type))
-					{
-						inspectGroup = inspectGroup2;
-						break;
-					}
-				}
-				if (inspectGroup == null)
-				{
-					inspectGroup = InspectGroup.Create(inspect);
-					summary.groups.Add(inspectGroup);
-				}
-				else if (!inspectGroup.Contains(inspect))
-				{
-					inspectGroup.targets.Add(inspect);
-				}
-				summary.targets.Add(inspect);
+				continue;
 			}
+			Type type = item.GetType();
+			InspectGroup inspectGroup = null;
+			foreach (InspectGroup group in summary.groups)
+			{
+				if (group.type.Equals(type))
+				{
+					inspectGroup = group;
+					break;
+				}
+			}
+			if (inspectGroup == null)
+			{
+				inspectGroup = InspectGroup.Create(item);
+				summary.groups.Add(inspectGroup);
+			}
+			else if (!inspectGroup.Contains(item))
+			{
+				inspectGroup.targets.Add(item);
+			}
+			summary.targets.Add(item);
 		}
 	}
 
 	public override ref string SetMouseInfo(ref string s)
 	{
-		foreach (InspectGroup inspectGroup in base.Summary.groups)
+		foreach (InspectGroup group in base.Summary.groups)
 		{
-			s = s + inspectGroup.GetName() + "\n";
+			s = s + group.GetName() + "\n";
 		}
-		return base.SetMouseInfo(ref s);
+		return ref base.SetMouseInfo(ref s);
 	}
 }

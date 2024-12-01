@@ -1,61 +1,50 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 public class AIWork : AIAct
 {
-	public override string Name
+	public enum Work_Type
 	{
-		get
-		{
-			return this.sourceWork.name_JP;
-		}
+		Default,
+		Explore
 	}
 
-	public virtual int destDist
-	{
-		get
-		{
-			return 0;
-		}
-	}
+	public BaseArea destArea;
 
-	public override int MaxRestart
-	{
-		get
-		{
-			return 3;
-		}
-	}
+	public Point destPos;
 
-	public virtual AIWork.Work_Type WorkType
-	{
-		get
-		{
-			return AIWork.Work_Type.Default;
-		}
-	}
+	public Thing destThing;
 
-	public override IEnumerable<AIAct.Status> Run()
+	public SourceHobby.Row sourceWork;
+
+	public override string Name => sourceWork.name_JP;
+
+	public virtual int destDist => 0;
+
+	public override int MaxRestart => 3;
+
+	public virtual Work_Type WorkType => Work_Type.Default;
+
+	public override IEnumerable<Status> Run()
 	{
-		yield return base.DoIdle(100);
-		AIWork.Work_Type workType = this.WorkType;
-		this.SetDestPos();
-		if (this.destPos != null)
+		yield return DoIdle(100);
+		_ = WorkType;
+		SetDestPos();
+		if (destPos != null)
 		{
-			yield return base.DoGoto(this.destPos, this.destDist, false, null);
+			yield return DoGoto(destPos, destDist);
 		}
 		else
 		{
-			this.destPos = new Point(this.owner.pos);
+			destPos = new Point(owner.pos);
 		}
-		AIAct work = this.GetWork(this.destPos);
+		AIAct work = GetWork(destPos);
 		if (work != null)
 		{
-			this.owner.Talk("work_" + this.sourceWork.talk, null, null, false);
-			yield return base.Do(work, new Func<AIAct.Status>(base.KeepRunning));
+			owner.Talk("work_" + sourceWork.talk);
+			yield return Do(work, base.KeepRunning);
 		}
-		yield return base.Restart();
-		yield break;
+		yield return Restart();
 	}
 
 	public virtual AIAct GetWork(Point p)
@@ -65,51 +54,59 @@ public class AIWork : AIAct
 
 	public bool SetDestination()
 	{
-		if (this.WorkType == AIWork.Work_Type.Explore)
+		if (WorkType == Work_Type.Explore)
 		{
-			return EClass.world.date.IsExpired(this.owner.GetInt(51, null));
-		}
-		if (!this.sourceWork.workTag.IsEmpty())
-		{
-			if (this.destArea != null)
+			if (!EClass.world.date.IsExpired(owner.GetInt(51)))
 			{
-				this.destThing = EClass._map.FindThing(this.sourceWork.workTag, this.destArea, null);
+				return false;
+			}
+			return true;
+		}
+		if (!sourceWork.workTag.IsEmpty())
+		{
+			if (destArea != null)
+			{
+				destThing = EClass._map.FindThing(sourceWork.workTag, destArea);
 			}
 			else
 			{
-				this.destThing = EClass._map.FindThing(this.sourceWork.workTag, this.owner);
+				destThing = EClass._map.FindThing(sourceWork.workTag, owner);
 			}
-			if (this.destThing != null)
+			if (destThing != null)
 			{
 				return true;
 			}
 		}
-		if (this.sourceWork.destTrait.IsEmpty())
+		if (!sourceWork.destTrait.IsEmpty())
 		{
-			this.SetDestPos();
-			return this.destPos != null;
+			if (destArea != null)
+			{
+				destThing = EClass._map.FindThing(Type.GetType("Trait" + sourceWork.destTrait + ", Elin"), destArea);
+				return destThing != null;
+			}
+			destThing = EClass._map.FindThing(Type.GetType("Trait" + sourceWork.destTrait + ", Elin"), owner);
+			return destThing != null;
 		}
-		if (this.destArea != null)
-		{
-			this.destThing = EClass._map.FindThing(Type.GetType("Trait" + this.sourceWork.destTrait + ", Elin"), this.destArea, null);
-			return this.destThing != null;
-		}
-		this.destThing = EClass._map.FindThing(Type.GetType("Trait" + this.sourceWork.destTrait + ", Elin"), this.owner);
-		return this.destThing != null;
+		SetDestPos();
+		return destPos != null;
 	}
 
 	public virtual void SetDestPos()
 	{
-		if (this.destThing != null && this.destThing.ExistsOnMap)
+		if (destThing != null && destThing.ExistsOnMap)
 		{
-			this.destPos = this.destThing.trait.GetRandomPoint(new Func<Point, bool>(this._FuncWorkPoint), null);
+			destPos = destThing.trait.GetRandomPoint(_FuncWorkPoint);
 		}
 	}
 
 	public bool _FuncWorkPoint(Point p)
 	{
-		Room room = this.destThing.pos.cell.room;
-		return p.cell.room == room && this.FuncWorkPoint(p);
+		Room room = destThing.pos.cell.room;
+		if (p.cell.room != room)
+		{
+			return false;
+		}
+		return FuncWorkPoint(p);
 	}
 
 	public virtual bool FuncWorkPoint(Point p)
@@ -121,18 +118,18 @@ public class AIWork : AIAct
 	{
 		WorkSession workSession = new WorkSession
 		{
-			id = this.sourceWork.id,
+			id = sourceWork.id,
 			efficiency = 80
 		};
-		if (this.destThing != null)
+		if (destThing != null)
 		{
-			workSession.efficiency = this.destThing.GetEfficiency();
+			workSession.efficiency = destThing.GetEfficiency();
 		}
-		else if (this.destArea != null)
+		else if (destArea != null)
 		{
-			workSession.efficiency = this.destArea.type.GetEfficiency();
+			workSession.efficiency = destArea.type.GetEfficiency();
 		}
-		this.OnGetSession(workSession);
+		OnGetSession(workSession);
 		return workSession;
 	}
 
@@ -142,7 +139,7 @@ public class AIWork : AIAct
 
 	public void AddDeliverable(Thing t)
 	{
-		this.owner.GetWorkSummary().AddThing(t);
+		owner.GetWorkSummary().AddThing(t);
 	}
 
 	public virtual void OnPerformWork(bool realtime)
@@ -151,19 +148,5 @@ public class AIWork : AIAct
 
 	public void DailyOutcome()
 	{
-	}
-
-	public BaseArea destArea;
-
-	public Point destPos;
-
-	public Thing destThing;
-
-	public SourceHobby.Row sourceWork;
-
-	public enum Work_Type
-	{
-		Default,
-		Explore
 	}
 }

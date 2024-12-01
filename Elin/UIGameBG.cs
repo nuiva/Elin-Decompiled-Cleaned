@@ -1,23 +1,32 @@
-﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class UIGameBG : EMono
 {
+	public static UIGameBG Instance;
+
+	public bool indoor;
+
+	private Image image;
+
 	public static bool IsActive
 	{
 		get
 		{
-			return UIGameBG.Instance && UIGameBG.Instance.image.color.a >= 1f;
+			if ((bool)Instance)
+			{
+				return Instance.image.color.a >= 1f;
+			}
+			return false;
 		}
 	}
 
 	private void Awake()
 	{
-		this.image = base.GetComponent<Image>();
-		base.InvokeRepeating("Refresh", 0.5f, 0.5f);
-		this.Refresh();
-		UIGameBG.Instance = this;
+		image = GetComponent<Image>();
+		InvokeRepeating("Refresh", 0.5f, 0.5f);
+		Refresh();
+		Instance = this;
 	}
 
 	public void Refresh()
@@ -31,15 +40,9 @@ public class UIGameBG : EMono
 		{
 			Mathf.Min((0.3f - timeRatio) * 10f, 1f);
 		}
-		if (!this.indoor)
+		if (!indoor)
 		{
-			this.image.color = color2;
+			image.color = color2;
 		}
 	}
-
-	public static UIGameBG Instance;
-
-	public bool indoor;
-
-	private Image image;
 }

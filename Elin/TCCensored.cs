@@ -1,4 +1,3 @@
-﻿using System;
 using UnityEngine;
 
 public class TCCensored : TC
@@ -9,7 +8,7 @@ public class TCCensored : TC
 		{
 			if (base.owner.IsPCC)
 			{
-				return TC._setting.censorPos.PlusY(base.owner.IsDeadOrSleeping ? -0.3f : -0.05f);
+				return TC._setting.censorPos.PlusY(base.owner.IsDeadOrSleeping ? (-0.3f) : (-0.05f));
 			}
 			return TC._setting.censorPos;
 		}

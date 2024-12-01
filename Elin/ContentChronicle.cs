@@ -1,28 +1,26 @@
-﻿using System;
-
 public class ContentChronicle : EContent
 {
+	public UIList list;
+
 	public override void OnSwitchContent(int idTab)
 	{
-		BaseList baseList = this.list;
-		UIList.Callback<MsgLog.Data, UIItem> callback = new UIList.Callback<MsgLog.Data, UIItem>();
-		callback.onInstantiate = delegate(MsgLog.Data a, UIItem b)
+		list.callbacks = new UIList.Callback<MsgLog.Data, UIItem>
 		{
-			b.text1.text = a.text;
-			if (!a.col.IsEmpty())
+			onInstantiate = delegate(MsgLog.Data a, UIItem b)
 			{
-				b.text1.SetColor(a.col.ToEnum(true));
+				b.text1.text = a.text;
+				if (!a.col.IsEmpty())
+				{
+					b.text1.SetColor(a.col.ToEnum<FontColor>());
+				}
 			}
 		};
-		baseList.callbacks = callback;
-		this.list.Clear();
-		foreach (MsgLog.Data o in EClass.game.log.GetList(false))
+		list.Clear();
+		foreach (MsgLog.Data item in EClass.game.log.GetList())
 		{
-			this.list.Add(o);
+			list.Add(item);
 		}
-		this.list.Refresh(false);
-		this.RebuildLayout(true);
+		list.Refresh();
+		this.RebuildLayout(recursive: true);
 	}
-
-	public UIList list;
 }

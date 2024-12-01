@@ -1,129 +1,77 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class ZoneEvent : EClass
 {
-	public SourceQuest.Row source
-	{
-		get
-		{
-			return EClass.sources.quests.map[this.id];
-		}
-	}
+	[JsonProperty]
+	public float time;
 
-	public virtual string id
-	{
-		get
-		{
-			return "";
-		}
-	}
+	[JsonProperty]
+	public int rounds;
 
-	public virtual string TextWidgetDate
-	{
-		get
-		{
-			return "";
-		}
-	}
+	[JsonProperty]
+	public int hoursElapsed;
 
-	public virtual float roundInterval
-	{
-		get
-		{
-			return 1f;
-		}
-	}
+	[JsonProperty]
+	public int minElapsed;
 
-	public virtual Playlist playlist
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public Zone zone;
 
-	public virtual bool debugSkip
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public bool firstTick = true;
 
-	public virtual string RefStr2
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public SourceQuest.Row source => EClass.sources.quests.map[id];
 
-	public virtual string RefStr3
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public virtual string id => "";
 
-	public virtual int hoursToKill
-	{
-		get
-		{
-			return 0;
-		}
-	}
+	public virtual string TextWidgetDate => "";
 
-	public virtual bool HasReport
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual float roundInterval => 1f;
+
+	public virtual Playlist playlist => null;
+
+	public virtual bool debugSkip => false;
+
+	public virtual string RefStr2 => null;
+
+	public virtual string RefStr3 => null;
+
+	public virtual int hoursToKill => 0;
+
+	public virtual bool HasReport => false;
+
+	public string Name => source.GetName();
 
 	public virtual string GetText()
 	{
-		return Lang.ParseRaw(this.source.GetDetail().Split('|', StringSplitOptions.None)[1], "", this.RefStr2, this.RefStr3, null, null);
-	}
-
-	public string Name
-	{
-		get
-		{
-			return this.source.GetName();
-		}
+		return Lang.ParseRaw(source.GetDetail().Split('|')[1], "", RefStr2, RefStr3);
 	}
 
 	public void Tick(float delta)
 	{
-		if (this.firstTick)
+		if (firstTick)
 		{
-			this.firstTick = false;
-			this.OnFirstTick();
+			firstTick = false;
+			OnFirstTick();
 		}
-		this.OnTick();
-		this.time += delta;
-		if (this.time > this.roundInterval * (float)this.rounds)
+		OnTick();
+		time += delta;
+		if (time > roundInterval * (float)rounds)
 		{
-			this.rounds++;
-			this.OnTickRound();
+			rounds++;
+			OnTickRound();
 		}
 	}
 
 	public void Init()
 	{
-		this.OnInit();
+		OnInit();
 	}
 
 	public void OnSimulateHour()
 	{
-		this.hoursElapsed++;
-		if (this.hoursToKill != 0 && this.hoursElapsed >= this.hoursToKill)
+		hoursElapsed++;
+		if (hoursToKill != 0 && hoursElapsed >= hoursToKill)
 		{
-			this.Kill();
-			return;
+			Kill();
 		}
 	}
 
@@ -161,28 +109,12 @@ public class ZoneEvent : EClass
 
 	public void OnLoad(Zone _zone)
 	{
-		this.zone = _zone;
+		zone = _zone;
 	}
 
 	public void Kill()
 	{
-		this.zone.events.list.Remove(this);
-		this.OnKill();
+		zone.events.list.Remove(this);
+		OnKill();
 	}
-
-	[JsonProperty]
-	public float time;
-
-	[JsonProperty]
-	public int rounds;
-
-	[JsonProperty]
-	public int hoursElapsed;
-
-	[JsonProperty]
-	public int minElapsed;
-
-	public Zone zone;
-
-	public bool firstTick = true;
 }

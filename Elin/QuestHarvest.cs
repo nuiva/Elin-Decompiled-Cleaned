@@ -1,63 +1,26 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class QuestHarvest : QuestInstance
 {
-	public override Quest.DifficultyType difficultyType
-	{
-		get
-		{
-			return Quest.DifficultyType.Farm;
-		}
-	}
+	[JsonProperty]
+	public int weightDelivered;
 
-	public override string IdZone
-	{
-		get
-		{
-			return "instance_harvest";
-		}
-	}
+	[JsonProperty]
+	public int destWeight;
 
-	public override string RewardSuffix
-	{
-		get
-		{
-			return "Harvest";
-		}
-	}
+	public override DifficultyType difficultyType => DifficultyType.Farm;
 
-	public override string RefDrama2
-	{
-		get
-		{
-			return Lang._weight(this.destWeight, true, 0);
-		}
-	}
+	public override string IdZone => "instance_harvest";
 
-	public override bool FameContent
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override string RewardSuffix => "Harvest";
 
-	public override int KarmaOnFail
-	{
-		get
-		{
-			return 0;
-		}
-	}
+	public override string RefDrama2 => Lang._weight(destWeight);
 
-	public override int DangerLv
-	{
-		get
-		{
-			return 3;
-		}
-	}
+	public override bool FameContent => true;
+
+	public override int KarmaOnFail => 0;
+
+	public override int DangerLv => 3;
 
 	public override ZoneEventQuest CreateEvent()
 	{
@@ -66,23 +29,17 @@ public class QuestHarvest : QuestInstance
 
 	public override string GetTextProgress()
 	{
-		return "progressHarvest".lang(Lang._weight(this.weightDelivered, true, 0), Lang._weight(this.destWeight, true, 0), null, null, null);
+		return "progressHarvest".lang(Lang._weight(weightDelivered), Lang._weight(destWeight));
 	}
 
 	public override void OnInit()
 	{
-		this.destWeight = this.difficulty * 30 * 1000;
-		this.destWeight += EClass.rnd(this.destWeight / 5) / 100 * 100;
+		destWeight = difficulty * 30 * 1000;
+		destWeight += EClass.rnd(destWeight / 5) / 100 * 100;
 	}
 
 	public override void OnBeforeComplete()
 	{
-		this.bonusMoney += this.weightDelivered * 4 / 1000;
+		bonusMoney += weightDelivered * 4 / 1000;
 	}
-
-	[JsonProperty]
-	public int weightDelivered;
-
-	[JsonProperty]
-	public int destWeight;
 }

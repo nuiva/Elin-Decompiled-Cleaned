@@ -1,44 +1,12 @@
-﻿using System;
-
 public class TraitCooker : TraitFactory
 {
-	public override Emo Icon
-	{
-		get
-		{
-			return Emo.cook;
-		}
-	}
+	public override Emo Icon => Emo.cook;
 
-	public virtual string DestFoodID
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public virtual string DestFoodID => null;
 
-	public override string CrafterTitle
-	{
-		get
-		{
-			return "invCook";
-		}
-	}
+	public override string CrafterTitle => "invCook";
 
-	public override AnimeID IdAnimeProgress
-	{
-		get
-		{
-			return AnimeID.Jump;
-		}
-	}
+	public override AnimeID IdAnimeProgress => AnimeID.Jump;
 
-	public override string idSoundProgress
-	{
-		get
-		{
-			return "cook";
-		}
-	}
+	public override string idSoundProgress => "cook";
 }

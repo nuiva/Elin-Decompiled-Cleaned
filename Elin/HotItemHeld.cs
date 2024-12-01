@@ -1,11 +1,28 @@
-﻿using System;
 using UnityEngine;
 
 public class HotItemHeld : HotItemThing
 {
+	public static Thing lastHeld;
+
+	public static TaskBuild taskBuild;
+
+	public static Recipe recipe;
+
+	public static bool disableTool;
+
+	public override Act act => GetAct();
+
 	public static bool CanChangeHeightByWheel()
 	{
-		return (!EClass.core.config.input.altChangeHeight || EClass.scene.actionMode.IsBuildMode || EInput.isShiftDown) && (!EClass._zone.IsRegion && EClass.pc.held != null && EClass.pc.held.trait.CanChangeHeight && HotItemHeld.taskBuild != null && HotItemHeld.recipe.MaxAltitude != 0) && HotItemHeld.taskBuild.CanPerform();
+		if (EClass.core.config.input.altChangeHeight && !EClass.scene.actionMode.IsBuildMode && !EInput.isShiftDown)
+		{
+			return false;
+		}
+		if (!EClass._zone.IsRegion && EClass.pc.held != null && EClass.pc.held.trait.CanChangeHeight && taskBuild != null && recipe.MaxAltitude != 0)
+		{
+			return taskBuild.CanPerform();
+		}
+		return false;
 	}
 
 	public static bool CanRotate()
@@ -26,24 +43,16 @@ public class HotItemHeld : HotItemThing
 		{
 			return true;
 		}
-		if (HotItemHeld.taskBuild == null)
+		if (taskBuild == null)
 		{
 			return false;
 		}
-		if (!HotItemHeld.taskBuild.CanPerform())
+		if (!taskBuild.CanPerform())
 		{
 			return false;
 		}
 		ActionMode.Adv.planAll.Update(EClass.scene.mouseTarget);
 		return !ActionMode.Adv.planAll.HasAct;
-	}
-
-	public override Act act
-	{
-		get
-		{
-			return this.GetAct();
-		}
 	}
 
 	public HotItemHeld()
@@ -52,114 +61,114 @@ public class HotItemHeld : HotItemThing
 
 	public HotItemHeld(Thing t)
 	{
-		this.thing = t;
+		thing = t;
 	}
 
 	public override void OnSetCurrentItem()
 	{
 		ActionMode.Build.altitude = 0;
-		HotItemHeld.disableTool = false;
-		if (EClass.pc.held != this.thing)
+		disableTool = false;
+		if (EClass.pc.held != thing)
 		{
-			EClass.pc.HoldCard(this.thing, -1);
+			EClass.pc.HoldCard(thing);
 		}
-		HotItemHeld.taskBuild = null;
+		taskBuild = null;
 		RecipeManager.BuildList();
-		HotItemHeld.recipe = this.thing.trait.GetRecipe();
-		if (this.thing.trait is TraitCatalyst)
+		recipe = thing.trait.GetRecipe();
+		if (thing.trait is TraitCatalyst)
 		{
-			this._act = (this.thing.trait as TraitCatalyst).CreateAct();
+			_act = (thing.trait as TraitCatalyst).CreateAct();
 		}
-		if (HotItemHeld.lastHeld != this.thing)
+		if (lastHeld != thing)
 		{
-			this.thing.trait.OnHeld();
+			thing.trait.OnHeld();
 		}
-		HotItemHeld.lastHeld = this.thing;
-		if (this.thing.trait is TraitToolRange)
+		lastHeld = thing;
+		if (thing.trait is TraitToolRange)
 		{
-			EClass.pc.ranged = this.thing;
+			EClass.pc.ranged = thing;
 		}
 	}
 
 	public override void OnUnselect()
 	{
-		HotItemHeld.taskBuild = null;
-		HotItemHeld.recipe = null;
-		if (EClass.pc.held == this.thing)
+		taskBuild = null;
+		recipe = null;
+		if (EClass.pc.held == thing)
 		{
-			EClass.pc.PickHeld(false);
+			EClass.pc.PickHeld();
 		}
 	}
 
 	public Act GetAct()
 	{
-		if (this.thing.trait is TraitRod)
+		if (thing.trait is TraitRod)
 		{
 			return new ActZap();
 		}
-		if (this.thing.trait is TraitToolRange)
+		if (thing.trait is TraitToolRange)
 		{
 			return ACT.Ranged;
 		}
-		if (this.thing.HasElement(241, 1))
+		if (thing.HasElement(241))
 		{
 			return new AI_PlayMusic();
 		}
-		if (this.thing.HasElement(225, 1))
+		if (thing.HasElement(225))
 		{
 			return new TaskCut();
 		}
-		if (this.thing.HasElement(220, 1))
+		if (thing.HasElement(220))
 		{
 			return new TaskMine();
 		}
-		if (this.thing.HasElement(230, 1))
+		if (thing.HasElement(230))
 		{
 			return new TaskDig
 			{
 				mode = TaskDig.Mode.RemoveFloor
 			};
 		}
-		if (this.thing.HasElement(286, 1))
+		if (thing.HasElement(286))
 		{
 			return new TaskPlow();
 		}
-		if (this.thing.HasElement(245, 1))
+		if (thing.HasElement(245))
 		{
 			return new AI_Fish();
 		}
-		if (this.thing.HasElement(237, 1))
+		if (thing.HasElement(237))
 		{
 			return new AI_TendAnimal();
 		}
-		return this._act;
+		return _act;
 	}
 
 	public Act GetSelfAct()
 	{
-		if (this.lost)
+		if (lost)
 		{
 			return null;
 		}
-		if (this.thing.trait.CanDrink(EClass.pc))
+		if (thing.trait.CanDrink(EClass.pc))
 		{
 			return new AI_Drink
 			{
-				target = this.thing
+				target = thing
 			};
 		}
-		if (this.thing.trait.CanEat(EClass.pc))
+		if (thing.trait.CanEat(EClass.pc))
 		{
 			return new AI_Eat
 			{
 				cook = false
 			};
 		}
-		if (this.thing.trait.CanRead(EClass.pc))
+		if (thing.trait.CanRead(EClass.pc))
 		{
 			return new AI_Read
 			{
-				target = this.thing
+				target = thing
 			};
 		}
 		return null;
@@ -167,61 +176,58 @@ public class HotItemHeld : HotItemThing
 
 	public override bool TrySetAct(ActPlan p)
 	{
-		HotItemHeld.taskBuild = null;
-		if (!HotItemHeld.disableTool)
+		taskBuild = null;
+		if (!disableTool)
 		{
-			if (p.IsSelf && this.thing.trait.CanUse(EClass.pc))
+			if (p.IsSelf && thing.trait.CanUse(EClass.pc))
 			{
-				return p.TrySetAct(this.thing.trait.LangUse, () => this.thing.trait.OnUse(p.cc), this.thing, null, -1, false, true, false);
+				return p.TrySetAct(thing.trait.LangUse, () => thing.trait.OnUse(p.cc), thing, null, -1);
 			}
-			if (EClass.scene.mouseTarget.target is Card && this.thing.trait.CanUse(EClass.pc, EClass.scene.mouseTarget.target as Card))
+			if (EClass.scene.mouseTarget.target is Card && thing.trait.CanUse(EClass.pc, EClass.scene.mouseTarget.target as Card))
 			{
-				return p.TrySetAct(this.thing.trait.LangUse, () => this.thing.trait.OnUse(p.cc, EClass.scene.mouseTarget.target as Card), this.thing, null, -1, false, true, false);
+				return p.TrySetAct(thing.trait.LangUse, () => thing.trait.OnUse(p.cc, EClass.scene.mouseTarget.target as Card), thing, null, -1);
 			}
-			if (this.thing.trait.CanUse(EClass.pc, p.pos))
+			if (thing.trait.CanUse(EClass.pc, p.pos))
 			{
-				return p.TrySetAct(this.thing.trait.LangUse, () => this.thing.trait.OnUse(p.cc, p.pos), this.thing, null, -1, false, true, false);
+				return p.TrySetAct(thing.trait.LangUse, () => thing.trait.OnUse(p.cc, p.pos), thing, null, -1);
 			}
-			if (this.thing.trait.IsTool)
+			if (thing.trait.IsTool)
 			{
-				if (this.TrySetToolAct(p))
+				if (TrySetToolAct(p))
 				{
 					return true;
 				}
 			}
 			else
 			{
-				this.thing.trait.TrySetHeldAct(p);
+				thing.trait.TrySetHeldAct(p);
 			}
-			if (p.HasAct || this.thing.trait.IsTool)
+			if (p.HasAct || thing.trait.IsTool)
 			{
 				return true;
 			}
 		}
 		if (p.pos.Equals(EClass.pc.pos))
 		{
-			Act selfAct = this.GetSelfAct();
+			Act selfAct = GetSelfAct();
 			if (selfAct != null)
 			{
-				p.TrySetAct(selfAct, this.thing);
+				p.TrySetAct(selfAct, thing);
 				return true;
 			}
 		}
 		bool flag = true;
-		if (this.thing.trait is TraitThrown && !HotItemHeld.disableTool)
+		if (thing.trait is TraitThrown && !disableTool)
 		{
 			flag = false;
 		}
+		Chara tg;
 		if (flag)
 		{
 			if (p.IsSelfOrNeighbor)
 			{
-				Thing installed = p.pos.Installed;
-				if (installed != null)
-				{
-					Trait trait = installed.trait;
-				}
-				Chara tg = p.pos.FirstVisibleChara();
+				_ = p.pos.Installed?.trait;
+				tg = p.pos.FirstVisibleChara();
 				if (tg != null && tg != EClass.pc && !tg.IsDisabled && tg.IsNeutralOrAbove() && EClass.pc.held != null && tg.CanAcceptGift(EClass.pc, EClass.pc.held))
 				{
 					string lang = "actGive";
@@ -229,57 +235,57 @@ public class HotItemHeld : HotItemThing
 					{
 						lang = "actMilk";
 					}
-					p.TrySetAct(lang, delegate()
+					p.TrySetAct(lang, delegate
 					{
 						if (!tg.IsValidGiftWeight(EClass.pc.held, 1))
 						{
-							tg.Talk("tooHeavy", null, null, false);
+							tg.Talk("tooHeavy");
 							return true;
 						}
 						if (EClass.core.config.game.confirmGive)
 						{
-							Dialog.YesNo("dialogGive".lang(EClass.pc.held.GetName(NameStyle.Full, 1), null, null, null, null), new Action(base.<TrySetAct>g__func|4), null, "yes", "no");
+							Dialog.YesNo("dialogGive".lang(EClass.pc.held.GetName(NameStyle.Full, 1)), func);
 						}
 						else
 						{
-							base.<TrySetAct>g__func|4();
+							func();
 						}
 						return true;
-					}, this.thing, null, 1, false, true, false);
+					}, thing);
 				}
 			}
 			if (p.HasAct)
 			{
 				return true;
 			}
-			if (!this.thing.c_isImportant && (p.IsSelfOrNeighbor || this.thing.trait.CanExtendBuild))
+			if (!thing.c_isImportant && (p.IsSelfOrNeighbor || thing.trait.CanExtendBuild))
 			{
 				Chara chara = p.pos.FirstVisibleChara();
-				if ((chara == null || chara == EClass.pc || chara.IsNeutralOrAbove()) && HotItemHeld.recipe != null && (!this.thing.trait.IsThrowMainAction || EInput.isShiftDown || HotItemHeld.disableTool))
+				if ((chara == null || chara == EClass.pc || chara.IsNeutralOrAbove()) && recipe != null && (!thing.trait.IsThrowMainAction || EInput.isShiftDown || disableTool))
 				{
-					HotItemHeld.taskBuild = new TaskBuild
+					taskBuild = new TaskBuild
 					{
-						recipe = HotItemHeld.recipe,
+						recipe = recipe,
 						held = EClass.pc.held,
 						pos = p.pos.Copy()
 					};
 					AM_Build build = ActionMode.Build;
 					build.bridgeHeight = -1;
-					build.recipe = HotItemHeld.taskBuild.recipe;
-					build.mold = HotItemHeld.taskBuild;
-					build.SetAltitude(HotItemHeld.recipe.tileType.AltitudeAsDir ? HotItemHeld.recipe._dir : build.altitude);
-					if (HotItemHeld.recipe.IsBlock && this.thing.trait is TraitBlock && p.pos.HasBlock && !this.thing.trait.IsDoor)
+					build.recipe = taskBuild.recipe;
+					build.mold = taskBuild;
+					build.SetAltitude(recipe.tileType.AltitudeAsDir ? recipe._dir : build.altitude);
+					if (recipe.IsBlock && thing.trait is TraitBlock && p.pos.HasBlock && !thing.trait.IsDoor)
 					{
-						p.TrySetAct("actRotateWall", delegate()
+						p.TrySetAct("actRotateWall", delegate
 						{
 							SE.Rotate();
 							p.pos.cell.RotateBlock(1);
 							return false;
-						}, null, 1);
+						});
 					}
 					else
 					{
-						p.TrySetAct(HotItemHeld.taskBuild, null);
+						p.TrySetAct(taskBuild);
 					}
 				}
 			}
@@ -288,34 +294,34 @@ public class HotItemHeld : HotItemThing
 		{
 			return true;
 		}
-		if (ActThrow.CanThrow(EClass.pc, this.thing, null, p.pos))
+		if (ActThrow.CanThrow(EClass.pc, thing, null, p.pos) && p.TrySetAct(new ActThrow
 		{
-			ActPlan p2 = p;
-			ActThrow actThrow = new ActThrow();
-			actThrow.target = this.thing;
-			Card card = p.pos.FindAttackTarget();
-			actThrow.pcTarget = ((card != null) ? card.Chara : null);
-			if (p2.TrySetAct(actThrow, this.thing))
-			{
-				return true;
-			}
+			target = thing,
+			pcTarget = p.pos.FindAttackTarget()?.Chara
+		}, thing))
+		{
+			return true;
 		}
 		return false;
+		void func()
+		{
+			EClass.pc.GiveGift(tg, EClass.pc.SplitHeld(1) as Thing);
+		}
 	}
 
 	public bool TrySetToolAct(ActPlan p)
 	{
-		this.thing.trait.TrySetHeldAct(p);
+		thing.trait.TrySetHeldAct(p);
 		if (p.HasAct)
 		{
 			return true;
 		}
 		Cell cell = p.pos.cell;
 		Point pos = p.pos;
-		if (cell.HasBlock && (!cell.HasObj || cell.sourceObj.tileType.IsMountBlock) && TaskMine.CanMine(pos, this.thing) && p.TrySetAct(new TaskMine
+		if (cell.HasBlock && (!cell.HasObj || cell.sourceObj.tileType.IsMountBlock) && TaskMine.CanMine(pos, thing) && p.TrySetAct(new TaskMine
 		{
 			pos = pos.Copy()
-		}, null))
+		}))
 		{
 			return true;
 		}
@@ -323,109 +329,103 @@ public class HotItemHeld : HotItemThing
 		{
 			return true;
 		}
-		if (this.thing.trait is TraitToolRange)
+		if (thing.trait is TraitToolRange)
 		{
 			if (!EClass.pc.CanSeeSimple(pos))
 			{
 				return true;
 			}
 			Card tc = null;
-			foreach (Chara chara in pos.ListVisibleCharas())
+			foreach (Chara item in pos.ListVisibleCharas())
 			{
-				if (chara.isSynced && chara.IsAliveInCurrentZone)
+				if (item.isSynced && item.IsAliveInCurrentZone)
 				{
-					tc = chara;
+					tc = item;
 					break;
 				}
 			}
-			EClass.pc.ranged = this.thing;
+			EClass.pc.ranged = thing;
 			p.TrySetAct(ACT.Ranged, tc);
 			return true;
 		}
+		if (cell.IsTopWaterAndNoSnow && thing.HasElement(245) && p.TrySetAct(new AI_Fish
+		{
+			pos = pos.Copy()
+		}))
+		{
+			return true;
+		}
+		if (p.IsNeighborBlocked)
+		{
+			return true;
+		}
+		TaskHarvest taskHarvest = TaskHarvest.TryGetAct(EClass.pc, pos);
+		if (taskHarvest != null && p.TrySetAct(taskHarvest))
+		{
+			return true;
+		}
+		TraitToolWaterPot traitToolWaterPot = thing.trait as TraitToolWaterPot;
+		if (cell.IsTopWaterAndNoSnow)
+		{
+			if (traitToolWaterPot != null && traitToolWaterPot.owner.c_charges < traitToolWaterPot.MaxCharge && p.TrySetAct(new TaskDrawWater
+			{
+				pot = traitToolWaterPot,
+				pos = pos.Copy()
+			}))
+			{
+				return true;
+			}
+		}
 		else
 		{
-			if (cell.IsTopWaterAndNoSnow && this.thing.HasElement(245, 1) && p.TrySetAct(new AI_Fish
+			if (traitToolWaterPot != null && !p.pos.HasBridge && traitToolWaterPot.owner.c_charges > 0 && pos.cell.sourceSurface.tag.Contains("soil") && p.TrySetAct(new TaskPourWater
+			{
+				pot = traitToolWaterPot,
+				pos = pos.Copy()
+			}))
+			{
+				return true;
+			}
+			if (thing.HasElement(286) && p.TrySetAct(new TaskPlow
 			{
 				pos = pos.Copy()
-			}, null))
+			}))
 			{
 				return true;
 			}
-			if (p.IsNeighborBlocked)
+			if (thing.HasElement(230) && p.TrySetAct(new TaskDig
+			{
+				pos = pos.Copy(),
+				mode = TaskDig.Mode.RemoveFloor
+			}))
 			{
 				return true;
 			}
-			TaskHarvest taskHarvest = TaskHarvest.TryGetAct(EClass.pc, pos);
-			if (taskHarvest != null && p.TrySetAct(taskHarvest, null))
+			if (TaskMine.CanMine(pos, thing) && p.TrySetAct(new TaskMine
+			{
+				pos = pos.Copy()
+			}))
 			{
 				return true;
 			}
-			TraitToolWaterPot traitToolWaterPot = this.thing.trait as TraitToolWaterPot;
-			if (cell.IsTopWaterAndNoSnow)
-			{
-				if (traitToolWaterPot != null && traitToolWaterPot.owner.c_charges < traitToolWaterPot.MaxCharge && p.TrySetAct(new TaskDrawWater
-				{
-					pot = traitToolWaterPot,
-					pos = pos.Copy()
-				}, null))
-				{
-					return true;
-				}
-			}
-			else
-			{
-				if (traitToolWaterPot != null && !p.pos.HasBridge && traitToolWaterPot.owner.c_charges > 0 && pos.cell.sourceSurface.tag.Contains("soil") && p.TrySetAct(new TaskPourWater
-				{
-					pot = traitToolWaterPot,
-					pos = pos.Copy()
-				}, null))
-				{
-					return true;
-				}
-				if (this.thing.HasElement(286, 1) && p.TrySetAct(new TaskPlow
-				{
-					pos = pos.Copy()
-				}, null))
-				{
-					return true;
-				}
-				if (this.thing.HasElement(230, 1) && p.TrySetAct(new TaskDig
-				{
-					pos = pos.Copy(),
-					mode = TaskDig.Mode.RemoveFloor
-				}, null))
-				{
-					return true;
-				}
-				if (TaskMine.CanMine(pos, this.thing) && p.TrySetAct(new TaskMine
-				{
-					pos = pos.Copy()
-				}, null))
-				{
-					return true;
-				}
-			}
-			if (pos.HasChara)
-			{
-				Chara firstChara = pos.FirstChara;
-				Chara pc = EClass.pc;
-			}
-			if (this.thing.HasTag(CTAG.throwWeapon) && ActThrow.CanThrow(EClass.pc, this.thing, null, p.pos))
-			{
-				ActThrow actThrow = new ActThrow();
-				actThrow.target = this.thing;
-				Card card = p.pos.FindAttackTarget();
-				actThrow.pcTarget = ((card != null) ? card.Chara : null);
-				if (p.TrySetAct(actThrow, this.thing))
-				{
-					return true;
-				}
-			}
-			return false;
 		}
+		if (pos.HasChara)
+		{
+			_ = pos.FirstChara;
+			_ = EClass.pc;
+		}
+		if (thing.HasTag(CTAG.throwWeapon) && ActThrow.CanThrow(EClass.pc, thing, null, p.pos) && p.TrySetAct(new ActThrow
+		{
+			target = thing,
+			pcTarget = p.pos.FindAttackTarget()?.Chara
+		}, thing))
+		{
+			return true;
+		}
+		return false;
 	}
 
-	public unsafe override void OnRenderTile(Point point, HitResult result, int dir)
+	public override void OnRenderTile(Point point, HitResult result, int dir)
 	{
 		if (EClass.game.config.showGuideGrid)
 		{
@@ -433,41 +433,25 @@ public class HotItemHeld : HotItemThing
 			{
 				for (int j = point.x - 1; j < point.x + 2; j++)
 				{
-					EClass.screen.guide.passGuideFloor.Add(Point.shared.Set(j, i), 1f, 0f);
+					EClass.screen.guide.passGuideFloor.Add(Point.shared.Set(j, i), 1f);
 				}
 			}
 		}
-		if (HotItemHeld.taskBuild == null || !HotItemHeld.taskBuild.IsRunning)
-		{
-			return;
-		}
-		if (!HotItemHeld.recipe.MultiSize && !HotItemHeld.taskBuild.CanProgress())
-		{
-			return;
-		}
-		if (!HotItemHeld.taskBuild.CanPerform(EClass.pc, null, point))
+		if (taskBuild == null || !taskBuild.IsRunning || (!recipe.MultiSize && !taskBuild.CanProgress()) || !taskBuild.CanPerform(EClass.pc, null, point))
 		{
 			return;
 		}
 		EClass.screen.guide.isActive = false;
-		ActionMode.Build.OnRenderTile(point, HitResult.Valid, HotItemHeld.taskBuild.recipe._dir);
+		ActionMode.Build.OnRenderTile(point, HitResult.Valid, taskBuild.recipe._dir);
 		EClass.screen.guide.isActive = true;
-		if (HotItemHeld.recipe.MultiSize)
+		if (recipe.MultiSize)
 		{
-			point.ForeachMultiSize(HotItemHeld.recipe.W, HotItemHeld.recipe.H, delegate(Point pos, bool main)
+			point.ForeachMultiSize(recipe.W, recipe.H, delegate(Point pos, bool main)
 			{
-				Vector3 vector = *pos.Position();
-				vector.z -= 0.01f;
-				EClass.screen.guide.passGuideFloor.Add(ref vector, 0f, 0f);
+				Vector3 v = pos.Position();
+				v.z -= 0.01f;
+				EClass.screen.guide.passGuideFloor.Add(ref v);
 			});
 		}
 	}
-
-	public static Thing lastHeld;
-
-	public static TaskBuild taskBuild;
-
-	public static Recipe recipe;
-
-	public static bool disableTool;
 }

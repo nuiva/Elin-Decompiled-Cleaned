@@ -1,28 +1,8 @@
-﻿using System;
-
 public class TraitMerchantDrug : TraitMerchant
 {
-	public override bool AllowCriminal
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool AllowCriminal => true;
 
-	public override ShopType ShopType
-	{
-		get
-		{
-			return ShopType.Drug;
-		}
-	}
+	public override ShopType ShopType => ShopType.Drug;
 
-	public override bool CanSellStolenGoods
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanSellStolenGoods => true;
 }

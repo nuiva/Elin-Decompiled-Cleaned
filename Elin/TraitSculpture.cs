@@ -1,36 +1,10 @@
-﻿using System;
-
 public class TraitSculpture : TraitCrafter
 {
-	public override string IdSource
-	{
-		get
-		{
-			return "Sculpture";
-		}
-	}
+	public override string IdSource => "Sculpture";
 
-	public override string CrafterTitle
-	{
-		get
-		{
-			return "invSculpt";
-		}
-	}
+	public override string CrafterTitle => "invSculpt";
 
-	public override AnimeID IdAnimeProgress
-	{
-		get
-		{
-			return AnimeID.Shiver;
-		}
-	}
+	public override AnimeID IdAnimeProgress => AnimeID.Shiver;
 
-	public override string idSoundProgress
-	{
-		get
-		{
-			return "craft_sculpt";
-		}
-	}
+	public override string idSoundProgress => "craft_sculpt";
 }

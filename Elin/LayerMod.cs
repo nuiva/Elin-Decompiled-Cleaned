@@ -1,149 +1,139 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 public class LayerMod : ELayer
 {
-	public ModManager manager
-	{
-		get
-		{
-			return ELayer.core.mods;
-		}
-	}
+	public static LayerMod Instance;
+
+	public UIList list;
+
+	public UIList list2;
+
+	public UIText textRestart;
+
+	public UIButton toggleDisableMods;
+
+	public ModManager manager => ELayer.core.mods;
 
 	public override void OnInit()
 	{
-		this.textRestart.SetActive(false);
-		this.toggleDisableMods.SetToggle(ELayer.config.other.disableMods, delegate(bool on)
+		textRestart.SetActive(enable: false);
+		toggleDisableMods.SetToggle(ELayer.config.other.disableMods, delegate(bool on)
 		{
 			ELayer.config.other.disableMods = on;
 			ELayer.config.Save();
-			this.textRestart.SetActive(true);
+			textRestart.SetActive(enable: true);
 		});
-		LayerMod.Instance = this;
-		BaseList baseList = this.list;
-		BaseList baseList2 = this.list2;
-		UIList.Callback<BaseModPackage, ItemMod> callback = new UIList.Callback<BaseModPackage, ItemMod>();
-		callback.onClick = delegate(BaseModPackage a, ItemMod b)
+		Instance = this;
+		UIList uIList = list;
+		UIList uIList2 = list2;
+		UIList.Callback<BaseModPackage, ItemMod> obj = new UIList.Callback<BaseModPackage, ItemMod>
 		{
-		};
-		callback.onInstantiate = delegate(BaseModPackage a, ItemMod b)
-		{
-			a.UpdateMeta(true);
-			b.package = a;
-			string s = (ELayer.core.mods.packages.IndexOf(a) + 1).ToString() + ". " + (a.isInPackages ? "[Private] " : "") + a.title;
-			b.buttonActivate.mainText.SetText(s, (!a.IsValidVersion()) ? FontColor.Bad : (a.activated ? FontColor.ButtonGeneral : FontColor.Passive));
-			b.buttonActivate.subText.text = a.version;
-			b.buttonLock.mainText.text = a.author;
-			b.buttonUp.SetActive(!a.builtin);
-			b.buttonDown.SetActive(!a.builtin);
-			b.buttonToggle.SetToggle(a.willActivate, null);
-			b.buttonUp.SetOnClick(delegate
+			onClick = delegate
 			{
-				this.<OnInit>g__Move|7_1(a, b, -1);
-			});
-			b.buttonDown.SetOnClick(delegate
+			},
+			onInstantiate = delegate(BaseModPackage a, ItemMod b)
 			{
-				this.<OnInit>g__Move|7_1(a, b, 1);
-			});
-			UIButton bt = b.buttonToggle;
-			bt.SetOnClick(delegate
-			{
-				a.willActivate = !a.willActivate;
-				bt.SetToggle(a.willActivate, null);
-				ELayer.core.mods.SaveLoadOrder();
-				this.textRestart.SetActive(true);
-			});
-			bt.interactable = !a.builtin;
-			Action <>9__13;
-			Action <>9__10;
-			Action <>9__11;
-			Action <>9__12;
-			b.buttonActivate.onClick.AddListener(delegate()
-			{
-				this.Refresh();
-				UIContextMenu uicontextMenu = ELayer.ui.CreateContextMenuInteraction();
-				if (ELayer.debug.enable || (!BaseCore.IsOffline && a.isInPackages && !a.builtin))
+				a.UpdateMeta(updateOnly: true);
+				b.package = a;
+				string s = ELayer.core.mods.packages.IndexOf(a) + 1 + ". " + (a.isInPackages ? "[Private] " : "") + a.title;
+				b.buttonActivate.mainText.SetText(s, (!a.IsValidVersion()) ? FontColor.Bad : (a.activated ? FontColor.ButtonGeneral : FontColor.Passive));
+				b.buttonActivate.subText.text = a.version;
+				b.buttonLock.mainText.text = a.author;
+				b.buttonUp.SetActive(!a.builtin);
+				b.buttonDown.SetActive(!a.builtin);
+				b.buttonToggle.SetToggle(a.willActivate);
+				b.buttonUp.SetOnClick(delegate
 				{
-					UIContextMenu uicontextMenu2 = uicontextMenu;
-					string idLang = "mod_publish";
-					Action action;
-					if ((action = <>9__10) == null)
+					Move(a, b, -1);
+				});
+				b.buttonDown.SetOnClick(delegate
+				{
+					Move(a, b, 1);
+				});
+				UIButton bt = b.buttonToggle;
+				bt.SetOnClick(delegate
+				{
+					a.willActivate = !a.willActivate;
+					bt.SetToggle(a.willActivate);
+					ELayer.core.mods.SaveLoadOrder();
+					textRestart.SetActive(enable: true);
+				});
+				bt.interactable = !a.builtin;
+				b.buttonActivate.onClick.AddListener(delegate
+				{
+					Refresh();
+					UIContextMenu uIContextMenu = ELayer.ui.CreateContextMenuInteraction();
+					if (ELayer.debug.enable || (!BaseCore.IsOffline && a.isInPackages && !a.builtin))
 					{
-						action = (<>9__10 = delegate()
+						uIContextMenu.AddButton("mod_publish", delegate
 						{
-							string langDetail = "mod_publish_warn".lang(a.title, a.id, a.author, null, null);
-							Action actionYes;
-							if ((actionYes = <>9__13) == null)
+							Dialog.YesNo("mod_publish_warn".lang(a.title, a.id, a.author), delegate
 							{
-								actionYes = (<>9__13 = delegate()
-								{
-									ELayer.core.steam.CreateUserContent(a);
-								});
-							}
-							Dialog.YesNo(langDetail, actionYes, null, "yes", "no");
+								ELayer.core.steam.CreateUserContent(a);
+							});
 						});
 					}
-					uicontextMenu2.AddButton(idLang, action, true);
-				}
-				if (!a.builtin)
-				{
-					UIContextMenu uicontextMenu3 = uicontextMenu;
-					string idLang2 = a.willActivate ? "mod_deactivate" : "mod_activate";
-					Action action2;
-					if ((action2 = <>9__11) == null)
+					if (!a.builtin)
 					{
-						action2 = (<>9__11 = delegate()
+						uIContextMenu.AddButton(a.willActivate ? "mod_deactivate" : "mod_activate", delegate
 						{
 							SE.Click();
 							a.willActivate = !a.willActivate;
 							ELayer.core.mods.SaveLoadOrder();
-							this.list.List(false);
-							this.textRestart.SetActive(true);
+							list.List();
+							textRestart.SetActive(enable: true);
 						});
 					}
-					uicontextMenu3.AddButton(idLang2, action2, true);
-				}
-				UIContextMenu uicontextMenu4 = uicontextMenu;
-				string idLang3 = "mod_info";
-				Action action3;
-				if ((action3 = <>9__12) == null)
-				{
-					action3 = (<>9__12 = delegate()
+					uIContextMenu.AddButton("mod_info", delegate
 					{
 						SE.Click();
-						Util.ShowExplorer(a.dirInfo.FullName + "/package.xml", false);
+						Util.ShowExplorer(a.dirInfo.FullName + "/package.xml");
 					});
-				}
-				uicontextMenu4.AddButton(idLang3, action3, true);
-				uicontextMenu.Show();
-			});
-			b.buttonLock.onClick.AddListener(delegate()
+					uIContextMenu.Show();
+				});
+				b.buttonLock.onClick.AddListener(delegate
+				{
+					Refresh();
+				});
+			},
+			onList = delegate
 			{
-				this.Refresh();
-			});
+				foreach (BaseModPackage package in manager.packages)
+				{
+					if (package.builtin)
+					{
+						list2.Add(package);
+					}
+					else
+					{
+						list.Add(package);
+					}
+				}
+			},
+			onRefresh = Refresh
 		};
-		callback.onList = delegate(UIList.SortMode a)
+		UIList.ICallback callbacks = obj;
+		uIList2.callbacks = obj;
+		uIList.callbacks = callbacks;
+		list.List();
+		list2.List();
+		void Move(BaseModPackage p, ItemMod b, int a)
 		{
-			foreach (BaseModPackage baseModPackage in this.manager.packages)
+			List<BaseModPackage> packages = ELayer.core.mods.packages;
+			int num = packages.IndexOf(p);
+			if (num + a < 0 || num + a >= packages.Count || packages[num + a].builtin)
 			{
-				if (baseModPackage.builtin)
-				{
-					this.list2.Add(baseModPackage);
-				}
-				else
-				{
-					this.list.Add(baseModPackage);
-				}
+				SE.BeepSmall();
 			}
-		};
-		callback.onRefresh = new Action(this.Refresh);
-		UIList.ICallback callbacks = callback;
-		baseList2.callbacks = callback;
-		baseList.callbacks = callbacks;
-		this.list.List(false);
-		this.list2.List(false);
+			else
+			{
+				packages.Move(p, a);
+				SE.Tab();
+				textRestart.SetActive(enable: true);
+				ELayer.core.mods.SaveLoadOrder();
+				list.List();
+			}
+		}
 	}
 
 	public void Refresh()
@@ -154,31 +144,4 @@ public class LayerMod : ELayer
 	{
 		ELayer.core.mods.SaveLoadOrder();
 	}
-
-	[CompilerGenerated]
-	private void <OnInit>g__Move|7_1(BaseModPackage p, ItemMod b, int a)
-	{
-		List<BaseModPackage> packages = ELayer.core.mods.packages;
-		int num = packages.IndexOf(p);
-		if (num + a < 0 || num + a >= packages.Count || packages[num + a].builtin)
-		{
-			SE.BeepSmall();
-			return;
-		}
-		packages.Move(p, a);
-		SE.Tab();
-		this.textRestart.SetActive(true);
-		ELayer.core.mods.SaveLoadOrder();
-		this.list.List(false);
-	}
-
-	public static LayerMod Instance;
-
-	public UIList list;
-
-	public UIList list2;
-
-	public UIText textRestart;
-
-	public UIButton toggleDisableMods;
 }

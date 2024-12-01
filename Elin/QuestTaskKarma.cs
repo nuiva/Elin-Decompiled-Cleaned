@@ -1,52 +1,11 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class QuestTaskKarma : QuestTask
 {
-	public override string RefDrama3
+	public enum Setup
 	{
-		get
-		{
-			return this.numRequired.ToString() ?? "";
-		}
-	}
-
-	public override bool IsComplete()
-	{
-		if (this.vec != 1)
-		{
-			return this.num <= this.numRequired;
-		}
-		return this.num >= this.numRequired;
-	}
-
-	public override void OnInit()
-	{
-		if (this.setup == QuestTaskKarma.Setup.ThiefGuild)
-		{
-			this.numRequired = -100;
-			this.vec = -1;
-			return;
-		}
-		this.numRequired = 10 + EClass.rnd(10);
-		this.vec = 1;
-	}
-
-	public override void OnModKarma(int a)
-	{
-		if (this.vec == 1 && a > 0)
-		{
-			this.num += a;
-		}
-		if (this.vec == -1 && a < 0)
-		{
-			this.num += a;
-		}
-	}
-
-	public override string GetTextProgress()
-	{
-		return "progressKarma".lang(this.num.ToString() ?? "", this.numRequired.ToString() ?? "", null, null, null);
+		Random,
+		ThiefGuild
 	}
 
 	[JsonProperty]
@@ -58,11 +17,47 @@ public class QuestTaskKarma : QuestTask
 	[JsonProperty]
 	public int vec;
 
-	public QuestTaskKarma.Setup setup;
+	public Setup setup;
 
-	public enum Setup
+	public override string RefDrama3 => numRequired.ToString() ?? "";
+
+	public override bool IsComplete()
 	{
-		Random,
-		ThiefGuild
+		if (vec != 1)
+		{
+			return num <= numRequired;
+		}
+		return num >= numRequired;
+	}
+
+	public override void OnInit()
+	{
+		if (setup == Setup.ThiefGuild)
+		{
+			numRequired = -100;
+			vec = -1;
+		}
+		else
+		{
+			numRequired = 10 + EClass.rnd(10);
+			vec = 1;
+		}
+	}
+
+	public override void OnModKarma(int a)
+	{
+		if (vec == 1 && a > 0)
+		{
+			num += a;
+		}
+		if (vec == -1 && a < 0)
+		{
+			num += a;
+		}
+	}
+
+	public override string GetTextProgress()
+	{
+		return "progressKarma".lang(num.ToString() ?? "", numRequired.ToString() ?? "");
 	}
 }

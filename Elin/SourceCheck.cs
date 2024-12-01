@@ -1,48 +1,10 @@
-﻿using System;
+using System;
 
 public class SourceCheck : SourceDataString<SourceCheck.Row>
 {
-	public override SourceCheck.Row CreateRow()
-	{
-		return new SourceCheck.Row
-		{
-			id = SourceData.GetString(0),
-			element = Core.GetElement(SourceData.GetStr(1, false)),
-			targetElement = Core.GetElement(SourceData.GetStr(2, false)),
-			subFactor = SourceData.GetFloat(3),
-			targetSubFactor = SourceData.GetFloat(4),
-			baseDC = SourceData.GetInt(5),
-			critRange = SourceData.GetInt(6),
-			fumbleRange = SourceData.GetInt(7),
-			dice = SourceData.GetInt(8),
-			lvMod = SourceData.GetFloat(9)
-		};
-	}
-
-	public override void SetRow(SourceCheck.Row r)
-	{
-		this.map[r.id] = r;
-	}
-
 	[Serializable]
-	public class Row : SourceData.BaseRow
+	public class Row : BaseRow
 	{
-		public override bool UseAlias
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		public override string GetAlias
-		{
-			get
-			{
-				return "n";
-			}
-		}
-
 		public string id;
 
 		public int element;
@@ -62,5 +24,31 @@ public class SourceCheck : SourceDataString<SourceCheck.Row>
 		public int dice;
 
 		public float lvMod;
+
+		public override bool UseAlias => false;
+
+		public override string GetAlias => "n";
+	}
+
+	public override Row CreateRow()
+	{
+		return new Row
+		{
+			id = SourceData.GetString(0),
+			element = Core.GetElement(SourceData.GetStr(1)),
+			targetElement = Core.GetElement(SourceData.GetStr(2)),
+			subFactor = SourceData.GetFloat(3),
+			targetSubFactor = SourceData.GetFloat(4),
+			baseDC = SourceData.GetInt(5),
+			critRange = SourceData.GetInt(6),
+			fumbleRange = SourceData.GetInt(7),
+			dice = SourceData.GetInt(8),
+			lvMod = SourceData.GetFloat(9)
+		};
+	}
+
+	public override void SetRow(Row r)
+	{
+		map[r.id] = r;
 	}
 }

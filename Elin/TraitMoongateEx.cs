@@ -1,4 +1,3 @@
-﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,11 +7,11 @@ public class TraitMoongateEx : TraitMoongate
 	public override bool OnUse(Chara c)
 	{
 		List<MapMetaData> list = new List<MapMetaData>();
-		foreach (FileInfo fileInfo in new DirectoryInfo(CorePath.ZoneSaveUser).GetFiles().Concat(MOD.listMaps))
+		foreach (FileInfo item in new DirectoryInfo(CorePath.ZoneSaveUser).GetFiles().Concat(MOD.listMaps))
 		{
-			if (!(fileInfo.Extension != ".z"))
+			if (!(item.Extension != ".z"))
 			{
-				MapMetaData metaData = Map.GetMetaData(fileInfo.FullName);
+				MapMetaData metaData = Map.GetMetaData(item.FullName);
 				if (metaData != null && metaData.IsValidVersion())
 				{
 					list.Add(metaData);
@@ -24,12 +23,13 @@ public class TraitMoongateEx : TraitMoongate
 			EClass.pc.SayNothingHappans();
 			return false;
 		}
-		EClass.ui.AddLayer<LayerList>().SetList2<MapMetaData>(list, (MapMetaData a) => a.name, delegate(MapMetaData a, ItemGeneral b)
+		EClass.ui.AddLayer<LayerList>().SetList2(list, (MapMetaData a) => a.name, delegate(MapMetaData a, ItemGeneral b)
 		{
-			base.LoadMap(a);
-		}, delegate(MapMetaData a, ItemGeneral b)
+			LoadMap(a);
+		}, delegate
 		{
-		}, true).SetSize(500f, -1f).SetTitles("wMoongate", null);
+		}).SetSize(500f)
+			.SetTitles("wMoongate");
 		return false;
 	}
 }

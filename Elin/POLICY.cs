@@ -1,4 +1,5 @@
-﻿using System;
+using Newtonsoft.Json;
+using UnityEngine;
 
 public class POLICY
 {
@@ -100,56 +101,99 @@ public class POLICY
 
 	public const int taxTransfer = 2705;
 
-	public static readonly int[] IDS = new int[]
+	public static readonly int[] IDS = new int[49]
 	{
-		2816,
-		2711,
-		2800,
-		2810,
-		2811,
-		2812,
-		2710,
-		2813,
-		2814,
-		2815,
-		2817,
-		2823,
-		2819,
-		2820,
-		2821,
-		2822,
-		2824,
-		2825,
-		2826,
-		2827,
-		2828,
-		2709,
-		2818,
-		2708,
-		2506,
-		2706,
-		2707,
-		2500,
-		2501,
-		2502,
-		2503,
-		2504,
-		2507,
-		2508,
-		2509,
-		2510,
-		2511,
-		2505,
-		2513,
-		2514,
-		2515,
-		2516,
-		2700,
-		2701,
-		2702,
-		2703,
-		2512,
-		2704,
-		2705
+		2816, 2711, 2800, 2810, 2811, 2812, 2710, 2813, 2814, 2815,
+		2817, 2823, 2819, 2820, 2821, 2822, 2824, 2825, 2826, 2827,
+		2828, 2709, 2818, 2708, 2506, 2706, 2707, 2500, 2501, 2502,
+		2503, 2504, 2507, 2508, 2509, 2510, 2511, 2505, 2513, 2514,
+		2515, 2516, 2700, 2701, 2702, 2703, 2512, 2704, 2705
 	};
+}
+public class Policy : EClass
+{
+	[JsonProperty]
+	public int id;
+
+	[JsonProperty]
+	public int days;
+
+	[JsonProperty]
+	public bool active;
+
+	public FactionBranch branch;
+
+	public Element Ele => branch.elements.GetElement(id);
+
+	public SourceElement.Row source => EClass.sources.elements.map[id];
+
+	public string Name => source.GetName();
+
+	public Sprite Sprite => Resources.Load<Sprite>("Media/Graphics/Image/Policy/" + id);
+
+	public int Next => 100;
+
+	public int Cost => source.cost[0];
+
+	public void SetOwner(FactionBranch _branch)
+	{
+		branch = _branch;
+	}
+
+	public void OnAdvanceHour(VirtualDate date)
+	{
+		EClass._zone.elements.ModExp(id, 10);
+	}
+
+	public void RefreshEffect(UINote note = null)
+	{
+		switch (source.alias)
+		{
+		case "humanRight":
+			ModHappiness(20, FactionMemberType.Default, note);
+			ModHappiness(-10, FactionMemberType.Livestock, note);
+			break;
+		case "nocturnalLife":
+			ModHappiness(-20, FactionMemberType.Default, note);
+			break;
+		case "inquisition":
+			break;
+		case "legalDrug":
+			break;
+		case "prohibition":
+			break;
+		}
+	}
+
+	public void ModHappiness(int a, FactionMemberType type, UINote note)
+	{
+		if ((bool)note)
+		{
+			note.AddText("peHappiness".lang(("member" + type).lang(), a.ToString() ?? "").TagColorGoodBad(() => a >= 0));
+		}
+		else
+		{
+			branch.happiness.list[(int)type].modPolicy += a;
+		}
+	}
+
+	public void WriteNote(UINote n)
+	{
+		if (Ele == null)
+		{
+			Debug.Log(id);
+			return;
+		}
+		Ele.WriteNote(n, EClass._zone.elements);
+		if (active)
+		{
+			n.Space();
+			n.AddText("activeFor".lang(days.ToString() ?? ""));
+		}
+	}
+
+	public int GetSortVal(UIList.SortMode m)
+	{
+		return 0;
+	}
 }

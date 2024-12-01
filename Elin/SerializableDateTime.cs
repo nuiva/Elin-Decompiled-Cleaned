@@ -1,27 +1,34 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 [Serializable]
 public class SerializableDateTime : IComparable<SerializableDateTime>
 {
+	[SerializeField]
+	private long m_ticks;
+
+	private bool initialized;
+
+	public DateTime m_dateTime;
+
 	public DateTime DateTime
 	{
 		get
 		{
-			if (!this.initialized)
+			if (!initialized)
 			{
-				this.m_dateTime = new DateTime(this.m_ticks);
-				this.initialized = true;
+				m_dateTime = new DateTime(m_ticks);
+				initialized = true;
 			}
-			return this.m_dateTime;
+			return m_dateTime;
 		}
 	}
 
 	public SerializableDateTime(DateTime dateTime)
 	{
-		this.m_ticks = dateTime.Ticks;
-		this.m_dateTime = dateTime;
-		this.initialized = true;
+		m_ticks = dateTime.Ticks;
+		m_dateTime = dateTime;
+		initialized = true;
 	}
 
 	public int CompareTo(SerializableDateTime other)
@@ -30,13 +37,6 @@ public class SerializableDateTime : IComparable<SerializableDateTime>
 		{
 			return 1;
 		}
-		return this.m_ticks.CompareTo(other.m_ticks);
+		return m_ticks.CompareTo(other.m_ticks);
 	}
-
-	[SerializeField]
-	private long m_ticks;
-
-	private bool initialized;
-
-	public DateTime m_dateTime;
 }

@@ -1,12 +1,4 @@
-﻿using System;
-
 public class TraitPillowOpatos : TraitPillowGod
 {
-	public override Religion Deity
-	{
-		get
-		{
-			return EClass.game.religions.Earth;
-		}
-	}
+	public override Religion Deity => EClass.game.religions.Earth;
 }

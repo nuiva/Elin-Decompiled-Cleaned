@@ -1,150 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class LayerNewspaper : ELayer
 {
-	public DayData data
-	{
-		get
-		{
-			return ELayer.world.dayData;
-		}
-	}
-
-	public override void OnInit()
-	{
-		if (ELayer.debug.enable)
-		{
-			NewsList.dict = null;
-			ELayer.world.CreateDayData();
-		}
-		this.seed = (ELayer.debug.enable ? -1 : ELayer.world.dayData.seed);
-		Rand.UseSeed(this.seed, delegate
-		{
-			this.imageAdRight.sprite = this.spritesAd.RandomItem<Sprite>();
-			this.imageAdRight.SetNativeSize();
-		});
-		this.textDate.text = "news_date".lang(Lang.GetList("monthEng")[ELayer.world.date.month - 1], ELayer.world.date.day.ToString() ?? "", ELayer.world.date.year.ToString() ?? "", null, null);
-		int luck = (int)ELayer.world.dayData.luck;
-		this.textFortune.text = "news_tellLuck".lang(Lang.GetList("dayLuck")[luck], Lang.GetList("dayLuck2")[luck], null, null, null);
-		this.RefreshAD();
-		this.RefreshChat();
-		this.RefreshVote();
-		this.RefreshWeather();
-		this.RefreshNews();
-		this.RefreshPage();
-	}
-
-	public void OnClickPage()
-	{
-		this.topPage = !this.topPage;
-		this.buttonPage.mainText.SetText((this.topPage ? "news_firstPage" : "news_secondPage").lang());
-		SE.Play("click_scroll");
-		this.RefreshPage();
-	}
-
-	public void RefreshPage()
-	{
-		this.goTop.SetActive(this.topPage);
-		this.goBack.SetActive(!this.topPage);
-	}
-
-	public void OnClickComic()
-	{
-		SE.Play("click_recipe");
-		ELayer.ui.AddLayer<LayerImage>().SetImage(this.spriteComicBig);
-	}
-
-	public void RefreshNews()
-	{
-		LayerNewspaper.<RefreshNews>d__30 <RefreshNews>d__;
-		<RefreshNews>d__.<>t__builder = AsyncVoidMethodBuilder.Create();
-		<RefreshNews>d__.<>4__this = this;
-		<RefreshNews>d__.<>1__state = -1;
-		<RefreshNews>d__.<>t__builder.Start<LayerNewspaper.<RefreshNews>d__30>(ref <RefreshNews>d__);
-	}
-
-	public void RefreshAD()
-	{
-		Rand.SetSeed(this.seed);
-		this.moldAdBottom = this.layoutAdBottom.CreateMold(null);
-		float num = this.layoutAdBottom.Rect().sizeDelta.x - 20f;
-		IList<Sprite> list = this.spritesSmallAd.Copy<Sprite>().Shuffle<Sprite>();
-		for (int i = 0; i < list.Count; i++)
-		{
-			Sprite sprite = list[i];
-			if (num > sprite.textureRect.width)
-			{
-				Image image = Util.Instantiate<Image>(this.moldAdBottom, this.layoutAdBottom);
-				num = num - sprite.textureRect.width - 5f;
-				image.sprite = sprite;
-				image.SetNativeSize();
-			}
-		}
-		this.layoutAdBottom.RebuildLayout(false);
-		Rand.SetSeed(-1);
-	}
-
-	public void RefreshChat()
-	{
-		LayerNewspaper.<RefreshChat>d__32 <RefreshChat>d__;
-		<RefreshChat>d__.<>t__builder = AsyncVoidMethodBuilder.Create();
-		<RefreshChat>d__.<>4__this = this;
-		<RefreshChat>d__.<>1__state = -1;
-		<RefreshChat>d__.<>t__builder.Start<LayerNewspaper.<RefreshChat>d__32>(ref <RefreshChat>d__);
-	}
-
-	public void RefreshVote()
-	{
-		LayerNewspaper.<RefreshVote>d__33 <RefreshVote>d__;
-		<RefreshVote>d__.<>t__builder = AsyncVoidMethodBuilder.Create();
-		<RefreshVote>d__.<>4__this = this;
-		<RefreshVote>d__.<>1__state = -1;
-		<RefreshVote>d__.<>t__builder.Start<LayerNewspaper.<RefreshVote>d__33>(ref <RefreshVote>d__);
-	}
-
-	public void RefreshWeather()
-	{
-		List<Weather.WeatherForecast> list = ELayer.world.weather.GetWeatherForecast();
-		BaseList baseList = this.listWeather;
-		UIList.Callback<Weather.WeatherForecast, UIItem> callback = new UIList.Callback<Weather.WeatherForecast, UIItem>();
-		callback.onInstantiate = delegate(Weather.WeatherForecast a, UIItem b)
-		{
-			string text = a.date.month.ToString() + "/" + a.date.day.ToString();
-			foreach (KeyValuePair<Weather.Condition, int> keyValuePair in from a in a.cons
-			orderby a.Value descending
-			select a)
-			{
-				if (b.image1.sprite == null)
-				{
-					b.image1.sprite = ELayer.core.refs.icons.weather[keyValuePair.Key];
-				}
-				else if (b.image2.sprite == null)
-				{
-					b.image2.sprite = ELayer.core.refs.icons.weather[keyValuePair.Key];
-					b.image2.SetActive(true);
-				}
-			}
-			b.text1.text = text;
-		};
-		callback.onList = delegate(UIList.SortMode m)
-		{
-			for (int i = 0; i < 7; i++)
-			{
-				if (list.Count > i && list[i].cons.Count > 0)
-				{
-					this.listWeather.Add(list[i]);
-				}
-			}
-		};
-		baseList.callbacks = callback;
-		this.listWeather.List(false);
-	}
-
 	public UIText textDate;
 
 	public UIText textFortune;
@@ -192,4 +53,241 @@ public class LayerNewspaper : ELayer
 	public bool topPage;
 
 	private int seed;
+
+	public DayData data => ELayer.world.dayData;
+
+	public override void OnInit()
+	{
+		if (ELayer.debug.enable)
+		{
+			NewsList.dict = null;
+			ELayer.world.CreateDayData();
+		}
+		seed = (ELayer.debug.enable ? (-1) : ELayer.world.dayData.seed);
+		Rand.UseSeed(seed, delegate
+		{
+			imageAdRight.sprite = spritesAd.RandomItem();
+			imageAdRight.SetNativeSize();
+		});
+		textDate.text = "news_date".lang(Lang.GetList("monthEng")[ELayer.world.date.month - 1], ELayer.world.date.day.ToString() ?? "", ELayer.world.date.year.ToString() ?? "");
+		int luck = (int)ELayer.world.dayData.luck;
+		textFortune.text = "news_tellLuck".lang(Lang.GetList("dayLuck")[luck], Lang.GetList("dayLuck2")[luck]);
+		RefreshAD();
+		RefreshChat();
+		RefreshVote();
+		RefreshWeather();
+		RefreshNews();
+		RefreshPage();
+	}
+
+	public void OnClickPage()
+	{
+		topPage = !topPage;
+		buttonPage.mainText.SetText((topPage ? "news_firstPage" : "news_secondPage").lang());
+		SE.Play("click_scroll");
+		RefreshPage();
+	}
+
+	public void RefreshPage()
+	{
+		goTop.SetActive(topPage);
+		goBack.SetActive(!topPage);
+	}
+
+	public void OnClickComic()
+	{
+		SE.Play("click_recipe");
+		ELayer.ui.AddLayer<LayerImage>().SetImage(spriteComicBig);
+	}
+
+	public async void RefreshNews()
+	{
+		moldPortrait = layoutPortrait.CreateMold<Portrait>();
+		List<NewsList.Item> list = NewsList.GetNews(seed);
+		if (desiredNews.Count > 0)
+		{
+			for (int i = 0; i < desiredNews.Count; i++)
+			{
+				foreach (NewsList.Item item2 in NewsList.listAll)
+				{
+					if (item2.title.Contains(desiredNews[i]))
+					{
+						list[i] = item2;
+						break;
+					}
+				}
+			}
+		}
+		listNews.callbacks = new UIList.Callback<NewsList.Item, UIItem>
+		{
+			onInstantiate = delegate(NewsList.Item a, UIItem b)
+			{
+				b.text1.text = a.title;
+				b.text2.SetText(a.content);
+			},
+			onList = delegate
+			{
+				foreach (NewsList.Item item3 in list)
+				{
+					listNews.Add(item3);
+				}
+			}
+		};
+		listNews.List();
+		Rand.UseSeed(seed, delegate
+		{
+			imageHeadline.sprite = spritesHeadline.RandomItem();
+		});
+		foreach (NewsList.Item item4 in list)
+		{
+			List<string> listImageId = item4.listImageId;
+			if (listImageId.Count == 0)
+			{
+				continue;
+			}
+			Sprite sprite = Resources.Load<Sprite>("UI/Layer/LayerNewspaper/Headline/headline_" + listImageId[0]);
+			if (!sprite)
+			{
+				continue;
+			}
+			imageHeadline.sprite = sprite;
+			if (listImageId.Count <= 1)
+			{
+				break;
+			}
+			for (int j = 1; j < listImageId.Count; j++)
+			{
+				ModItem<Sprite> item = Portrait.modPortraits.GetItem(listImageId[j], returnNull: true);
+				if (item != null)
+				{
+					Util.Instantiate(moldPortrait, layoutPortrait).SetPortrait(item.id);
+				}
+			}
+			layoutPortrait.RebuildLayout();
+			break;
+		}
+	}
+
+	public void RefreshAD()
+	{
+		Rand.SetSeed(seed);
+		moldAdBottom = layoutAdBottom.CreateMold<Image>();
+		float num = layoutAdBottom.Rect().sizeDelta.x - 20f;
+		IList<Sprite> list = spritesSmallAd.Copy().Shuffle();
+		for (int i = 0; i < list.Count; i++)
+		{
+			Sprite sprite = list[i];
+			if (num > sprite.textureRect.width)
+			{
+				Image image = Util.Instantiate(moldAdBottom, layoutAdBottom);
+				num = num - sprite.textureRect.width - 5f;
+				image.sprite = sprite;
+				image.SetNativeSize();
+			}
+		}
+		layoutAdBottom.RebuildLayout();
+		Rand.SetSeed();
+	}
+
+	public async void RefreshChat()
+	{
+		List<Net.ChatLog> logs = await Net.GetChat(ChatCategory.Test, Lang.langCode);
+		if (isDestroyed || logs.Count == 0)
+		{
+			return;
+		}
+		listChat.callbacks = new UIList.Callback<Net.ChatLog, UIItem>
+		{
+			onInstantiate = delegate(Net.ChatLog a, UIItem b)
+			{
+				b.text1.SetText(a.msg);
+			},
+			onList = delegate
+			{
+				foreach (Net.ChatLog item in logs)
+				{
+					listChat.Add(item);
+				}
+			}
+		};
+		listChat.List();
+	}
+
+	public async void RefreshVote()
+	{
+		List<Net.VoteLog> logs = await Net.GetVote(Lang.langCode);
+		if (isDestroyed || logs.Count == 0)
+		{
+			return;
+		}
+		textVote.SetText(logs[0].name.StripBrackets());
+		int num = (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
+		int num2 = (logs[0].time - num) / 60 / 60 / 24;
+		textVoteRemaining.SetText("news_voteLeft".lang(num2.ToString() ?? ""));
+		logs.RemoveAt(0);
+		logs.Sort((Net.VoteLog a, Net.VoteLog b) => b.count - a.count);
+		listVote.callbacks = new UIList.Callback<Net.VoteLog, UIItem>
+		{
+			onInstantiate = delegate(Net.VoteLog a, UIItem b)
+			{
+				b.text1.SetText(a.name);
+				b.text2.SetText(a.count.ToString() ?? "");
+				b.button1.SetOnClick(delegate
+				{
+					SE.Click();
+					Net.SendVote(a.index, Lang.langCode);
+					a.count++;
+					b.text2.SetText(a.count.ToString() ?? "");
+					foreach (UIList.ButtonPair button in listVote.buttons)
+					{
+						(button.component as UIItem).button1.SetActive(enable: false);
+					}
+				});
+			},
+			onList = delegate
+			{
+				foreach (Net.VoteLog item in logs)
+				{
+					listVote.Add(item);
+				}
+			}
+		};
+		listVote.List();
+	}
+
+	public void RefreshWeather()
+	{
+		List<Weather.WeatherForecast> list = ELayer.world.weather.GetWeatherForecast();
+		listWeather.callbacks = new UIList.Callback<Weather.WeatherForecast, UIItem>
+		{
+			onInstantiate = delegate(Weather.WeatherForecast a, UIItem b)
+			{
+				string text = a.date.month + "/" + a.date.day;
+				foreach (KeyValuePair<Weather.Condition, int> item in a.cons.OrderByDescending((KeyValuePair<Weather.Condition, int> a) => a.Value))
+				{
+					if (b.image1.sprite == null)
+					{
+						b.image1.sprite = ELayer.core.refs.icons.weather[item.Key];
+					}
+					else if (b.image2.sprite == null)
+					{
+						b.image2.sprite = ELayer.core.refs.icons.weather[item.Key];
+						b.image2.SetActive(enable: true);
+					}
+				}
+				b.text1.text = text;
+			},
+			onList = delegate
+			{
+				for (int i = 0; i < 7; i++)
+				{
+					if (list.Count > i && list[i].cons.Count > 0)
+					{
+						listWeather.Add(list[i]);
+					}
+				}
+			}
+		};
+		listWeather.List();
+	}
 }

@@ -1,41 +1,5 @@
-﻿using System;
-
 public class DramaEvent : EClass
 {
-	public DramaActor actor
-	{
-		get
-		{
-			return this.sequence.GetActor(this.idActor);
-		}
-	}
-
-	public DramaManager manager
-	{
-		get
-		{
-			return this.sequence.manager;
-		}
-	}
-
-	public LayerDrama layer
-	{
-		get
-		{
-			return this.manager.layer;
-		}
-	}
-
-	public virtual bool Play()
-	{
-		return true;
-	}
-
-	public virtual void Reset()
-	{
-		this.progress = 0;
-	}
-
 	public int progress;
 
 	public string idJump;
@@ -49,4 +13,20 @@ public class DramaEvent : EClass
 	public bool temp;
 
 	public DramaSequence sequence;
+
+	public DramaActor actor => sequence.GetActor(idActor);
+
+	public DramaManager manager => sequence.manager;
+
+	public LayerDrama layer => manager.layer;
+
+	public virtual bool Play()
+	{
+		return true;
+	}
+
+	public virtual void Reset()
+	{
+		progress = 0;
+	}
 }

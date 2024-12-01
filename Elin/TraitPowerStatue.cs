@@ -1,64 +1,55 @@
-﻿using System;
-using UnityEngine;
-
 public class TraitPowerStatue : TraitItem
 {
-	public override bool CanUseFromInventory
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanUseFromInventory => false;
 
-	public override bool UseExtra
-	{
-		get
-		{
-			return this.owner.isOn;
-		}
-	}
+	public override bool UseExtra => owner.isOn;
+
+	public override bool CanStack => false;
 
 	public override void OnCreate(int lv)
 	{
-		this.owner.isOn = true;
-		this.owner.ChangeMaterial(12);
-		this.owner.c_seed = EClass.rnd(20000);
-		this.owner.SetLv(lv);
+		owner.isOn = true;
+		owner.ChangeMaterial(12);
+		owner.c_seed = EClass.rnd(20000);
+		owner.SetLv(lv);
 	}
 
 	public override bool CanUse(Chara c)
 	{
-		return base.CanUse(c) && this.owner.isOn && !EClass._zone.IsUserZone;
+		if (base.CanUse(c) && owner.isOn)
+		{
+			return !EClass._zone.IsUserZone;
+		}
+		return false;
 	}
 
 	public override bool OnUse(Chara c)
 	{
 		bool flag = this is TraitGodStatue;
-		if (!this.IsImplemented())
+		if (!IsImplemented())
 		{
 			Msg.SayNothingHappen();
 			return true;
 		}
-		Msg.Say("shrine_power", this.owner, null, null, null);
+		Msg.Say("shrine_power", owner);
 		if (flag)
 		{
 			SE.Play("godbless");
-			this.owner.PlayEffect("aura_heaven", true, 0f, default(Vector3));
+			owner.PlayEffect("aura_heaven");
 		}
 		else
 		{
 			SE.Play("shrine");
-			this.owner.PlayEffect("buff", true, 0f, default(Vector3));
+			owner.PlayEffect("buff");
 		}
-		this._OnUse(c);
-		this.owner.isOn = false;
+		_OnUse(c);
+		owner.isOn = false;
 		if (flag)
 		{
-			this.owner.ChangeMaterial("onyx");
-			this.owner.rarity = Rarity.Normal;
+			owner.ChangeMaterial("onyx");
+			owner.rarity = Rarity.Normal;
 		}
-		this.owner.renderer.RefreshExtra();
+		owner.renderer.RefreshExtra();
 		return true;
 	}
 
@@ -69,13 +60,5 @@ public class TraitPowerStatue : TraitItem
 	public virtual bool IsImplemented()
 	{
 		return true;
-	}
-
-	public override bool CanStack
-	{
-		get
-		{
-			return false;
-		}
 	}
 }

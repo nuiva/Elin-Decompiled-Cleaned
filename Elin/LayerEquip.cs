@@ -1,40 +1,49 @@
-﻿using System;
 using UnityEngine;
 
 public class LayerEquip : ELayer
 {
+	public static LayerEquip Instance;
+
+	public static bool dirty;
+
+	public UIList listMain;
+
+	public UIList listEtc;
+
+	public Chara chara;
+
 	public static void SetDirty()
 	{
-		LayerEquip.dirty = true;
+		dirty = true;
 	}
 
 	public override void OnInit()
 	{
-		this.windows[0].layer = this;
-		if (!Window.dictData.ContainsKey(this.windows[0].idWindow) && !ELayer.ui.widgets.GetWidget("BottomBar"))
+		windows[0].layer = this;
+		if (!Window.dictData.ContainsKey(windows[0].idWindow) && !ELayer.ui.widgets.GetWidget("BottomBar"))
 		{
-			RectTransform rectTransform = this.windows[0].Rect();
-			this.windows[0].Rect().anchoredPosition = new Vector2(rectTransform.anchoredPosition.x, 45f);
+			RectTransform rectTransform = windows[0].Rect();
+			windows[0].Rect().anchoredPosition = new Vector2(rectTransform.anchoredPosition.x, 45f);
 		}
-		this.chara = ELayer.pc;
-		LayerEquip.Instance = this;
-		this.Rebuild();
+		chara = ELayer.pc;
+		Instance = this;
+		Rebuild();
 	}
 
 	public void Rebuild()
 	{
-		this.RefreshEquipment(this.listMain, false);
-		this.RefreshEquipment(this.listEtc, true);
-		this.RefreshToolBelt(false);
-		this.windows[0].RebuildLayout(true);
-		LayerEquip.dirty = true;
+		RefreshEquipment(listMain);
+		RefreshEquipment(listEtc, etc: true);
+		RefreshToolBelt();
+		windows[0].RebuildLayout(recursive: true);
+		dirty = true;
 	}
 
 	public void Redraw()
 	{
-		LayerEquip.dirty = false;
-		this.listMain.Redraw();
-		this.listEtc.Redraw();
+		dirty = false;
+		listMain.Redraw();
+		listEtc.Redraw();
 	}
 
 	public void RefreshToolBelt(bool rebuildLayout = false)
@@ -48,20 +57,20 @@ public class LayerEquip : ELayer
 		{
 			onInstantiate = delegate(BodySlot a, ButtonGridDrag b)
 			{
-				b.SetBodySlot(a, new InvOwnerEquip(this.chara, a, null, CurrencyType.None), true);
+				b.SetBodySlot(a, new InvOwnerEquip(chara, a), showIndex: true);
 			},
 			onRedraw = delegate(BodySlot a, ButtonGridDrag b, int i)
 			{
-				b.SetBodySlot(a, new InvOwnerEquip(this.chara, a, null, CurrencyType.None), true);
+				b.SetBodySlot(a, new InvOwnerEquip(chara, a), showIndex: true);
 			},
-			onSort = ((BodySlot a, UIList.SortMode b) => this.chara.body.GetSortVal(a)),
-			onList = delegate(UIList.SortMode m)
+			onSort = (BodySlot a, UIList.SortMode b) => chara.body.GetSortVal(a),
+			onList = delegate
 			{
-				foreach (BodySlot bodySlot in this.chara.body.slots)
+				foreach (BodySlot slot in chara.body.slots)
 				{
-					if (bodySlot.elementId != 44)
+					if (slot.elementId != 44)
 					{
-						if (bodySlot.elementId == 36 || bodySlot.elementId == 31 || bodySlot.elementId == 37 || bodySlot.elementId == 45)
+						if (slot.elementId == 36 || slot.elementId == 31 || slot.elementId == 37 || slot.elementId == 45)
 						{
 							if (!etc)
 							{
@@ -72,22 +81,12 @@ public class LayerEquip : ELayer
 						{
 							continue;
 						}
-						list.Add(bodySlot);
+						list.Add(slot);
 					}
 				}
 			}
 		};
 		list.sortMode = UIList.SortMode.ByNumber;
-		list.List(false);
+		list.List();
 	}
-
-	public static LayerEquip Instance;
-
-	public static bool dirty;
-
-	public UIList listMain;
-
-	public UIList listEtc;
-
-	public Chara chara;
 }

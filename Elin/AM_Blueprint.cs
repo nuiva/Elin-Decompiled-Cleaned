@@ -1,52 +1,38 @@
-﻿using System;
-
 public class AM_Blueprint : AM_Copy
 {
-	public override bool ShowBuildWidgets
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public TraitBlueprint bp;
 
-	public override BuildMenu.Mode buildMenuMode
-	{
-		get
-		{
-			return BuildMenu.Mode.None;
-		}
-	}
+	public override bool ShowBuildWidgets => false;
 
-	public override AM_Copy.Mode mode
+	public override BuildMenu.Mode buildMenuMode => BuildMenu.Mode.None;
+
+	public override Mode mode
 	{
 		get
 		{
-			if (this.bp == null || !this.bp.path.IsEmpty())
+			if (bp == null || !bp.path.IsEmpty())
 			{
-				return AM_Copy.Mode.Place;
+				return Mode.Place;
 			}
-			return AM_Copy.Mode.Create;
+			return Mode.Create;
 		}
 	}
 
 	public void SetBlueprint(TraitBlueprint _bp)
 	{
-		this.bp = _bp;
-		if (!this.bp.path.IsEmpty())
+		bp = _bp;
+		if (!bp.path.IsEmpty())
 		{
-			base.Import(this.bp.path);
+			Import(bp.path);
 		}
 	}
 
 	public override void OnSave(PartialMap _partial)
 	{
-		Thing thing = this.bp.owner.Split(1);
+		Thing thing = bp.owner.Split(1);
 		(thing.trait as TraitBlueprint).path = _partial.path;
 		thing.c_idRefName = _partial.name;
-		EClass.pc.Pick(thing, true, true);
-		base.Deactivate();
+		EClass.pc.Pick(thing);
+		Deactivate();
 	}
-
-	public TraitBlueprint bp;
 }

@@ -1,34 +1,32 @@
-﻿using System;
-
 public class TraitItem : Trait
 {
-	public virtual bool CanUseFromInventory
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public virtual bool CanUseFromInventory => true;
 
-	public virtual bool CanUseInUserZone
-	{
-		get
-		{
-			return !this.owner.isNPCProperty;
-		}
-	}
+	public virtual bool CanUseInUserZone => !owner.isNPCProperty;
 
 	public override bool CanUse(Chara c)
 	{
-		return (this.CanUseFromInventory || this.owner.IsInstalled) && (this.CanUseInUserZone || !EClass._zone.IsUserZone || !this.owner.isNPCProperty) && (this.Electricity >= 0 || this.owner.isOn);
+		if (!CanUseFromInventory && !owner.IsInstalled)
+		{
+			return false;
+		}
+		if (!CanUseInUserZone && EClass._zone.IsUserZone && owner.isNPCProperty)
+		{
+			return false;
+		}
+		if (Electricity < 0)
+		{
+			return owner.isOn;
+		}
+		return true;
 	}
 
 	public override void WriteNote(UINote n, bool identified)
 	{
-		if (!this.langNote.IsEmpty())
+		if (!langNote.IsEmpty())
 		{
-			n.Space(20, 1);
-			n.AddText(this.langNote.lang(), FontColor.Good);
+			n.Space(20);
+			n.AddText(langNote.lang(), FontColor.Good);
 		}
 	}
 }

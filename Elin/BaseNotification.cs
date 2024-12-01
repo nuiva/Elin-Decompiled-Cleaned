@@ -1,48 +1,24 @@
-﻿using System;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class BaseNotification : EClass
 {
-	public virtual Sprite Sprite
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public ItemNotice item;
 
-	public virtual int idSprite
-	{
-		get
-		{
-			return -1;
-		}
-	}
+	public string text;
 
-	public virtual bool Visible
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public string lastText;
 
-	public virtual bool Interactable
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public virtual Sprite Sprite => null;
 
-	public virtual Action<UITooltip> onShowTooltip
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public virtual int idSprite => -1;
+
+	public virtual bool Visible => true;
+
+	public virtual bool Interactable => true;
+
+	public virtual Action<UITooltip> onShowTooltip => null;
 
 	public virtual ItemNotice GetMold()
 	{
@@ -56,14 +32,14 @@ public class BaseNotification : EClass
 
 	public void Refresh()
 	{
-		this.OnRefresh();
-		if (this.text != this.lastText)
+		OnRefresh();
+		if (text != lastText)
 		{
-			this.item.button.mainText.text = this.text;
-			this.lastText = this.text;
-			if (this.item.gameObject.activeInHierarchy)
+			item.button.mainText.text = text;
+			lastText = text;
+			if (item.gameObject.activeInHierarchy)
 			{
-				this.item.button.RebuildLayout(true);
+				item.button.RebuildLayout(recursive: true);
 			}
 		}
 	}
@@ -85,10 +61,4 @@ public class BaseNotification : EClass
 	public virtual void OnInstantiate()
 	{
 	}
-
-	public ItemNotice item;
-
-	public string text;
-
-	public string lastText;
 }

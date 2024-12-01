@@ -1,11 +1,84 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 public class SourceObj : SourceDataInt<SourceObj.Row>
 {
-	public override SourceObj.Row CreateRow()
+	[Serializable]
+	public class Row : TileRow
 	{
-		return new SourceObj.Row
+		public string[] _growth;
+
+		public int costSoil;
+
+		public string objType;
+
+		public string[] vals;
+
+		public string[] reqHarvest;
+
+		public string valType;
+
+		public string matCategory;
+
+		public int idRoof;
+
+		[NonSerialized]
+		public bool HasGrowth;
+
+		[NonSerialized]
+		public bool autoTile;
+
+		public GrowSystem growth;
+
+		public ObjValType objValType;
+
+		public string name_L;
+
+		public string detail_L;
+
+		public override bool UseAlias => true;
+
+		public override string GetAlias => alias;
+
+		public override string RecipeID => "o" + id;
+
+		public override RenderData defaultRenderData => FallbackRenderData;
+
+		public override void OnInit()
+		{
+			objValType = ((!valType.IsEmpty()) ? valType.ToEnum<ObjValType>() : ObjValType.None);
+			autoTile = tag.Contains("autotile");
+			if (!_growth.IsEmpty())
+			{
+				growth = ClassCache.Create<GrowSystem>("GrowSystem" + _growth[0], "Elin");
+				growth.Init(this);
+				HasGrowth = true;
+			}
+			else
+			{
+				HasGrowth = false;
+			}
+		}
+	}
+
+	public class Stage
+	{
+		public int step;
+
+		public int[] tiles;
+
+		public string idThing;
+
+		public bool harvest;
+	}
+
+	public Dictionary<int, Row> _rows = new Dictionary<int, Row>();
+
+	public static RenderData FallbackRenderData;
+
+	public override Row CreateRow()
+	{
+		return new Row
 		{
 			id = SourceData.GetInt(0),
 			alias = SourceData.GetString(1),
@@ -41,33 +114,31 @@ public class SourceObj : SourceDataInt<SourceObj.Row>
 		};
 	}
 
-	public override void SetRow(SourceObj.Row r)
+	public override void SetRow(Row r)
 	{
-		this.map[r.id] = r;
+		map[r.id] = r;
 	}
 
 	public override void BackupPref()
 	{
-		this._rows.Clear();
-		foreach (SourceObj.Row row in this.rows)
+		_rows.Clear();
+		foreach (Row row in rows)
 		{
-			this._rows[row.id] = row;
+			_rows[row.id] = row;
 		}
 	}
 
 	public override void RestorePref()
 	{
-		foreach (SourceObj.Row row in this.rows)
+		foreach (Row row in rows)
 		{
-			RenderRow renderRow = row;
-			SourceObj.Row row2 = this._rows.TryGetValue(row.id, null);
-			renderRow.pref = (((row2 != null) ? row2.pref : null) ?? new SourcePref());
+			row.pref = _rows.TryGetValue(row.id)?.pref ?? new SourcePref();
 		}
 	}
 
 	public override void ValidatePref()
 	{
-		foreach (SourceObj.Row row in this.rows)
+		foreach (Row row in rows)
 		{
 			row.pref.Validate();
 		}
@@ -75,13 +146,13 @@ public class SourceObj : SourceDataInt<SourceObj.Row>
 
 	public string GetName(int id)
 	{
-		return this.map[id].GetName().ToTitleCase(false);
+		return map[id].GetName().ToTitleCase();
 	}
 
 	public override void OnAfterImportData()
 	{
 		int num = 0;
-		foreach (SourceObj.Row row in this.rows)
+		foreach (Row row in rows)
 		{
 			if (row.sort != 0)
 			{
@@ -90,111 +161,16 @@ public class SourceObj : SourceDataInt<SourceObj.Row>
 			row.sort = num;
 			num++;
 		}
-		this.rows.Sort((SourceObj.Row a, SourceObj.Row b) => a.id - b.id);
+		rows.Sort((Row a, Row b) => a.id - b.id);
 	}
 
 	public override void OnInit()
 	{
-		SourceObj.FallbackRenderData = ResourceCache.Load<RenderData>("Scene/Render/Data/obj");
-		Cell.objList = this.rows;
-		foreach (SourceObj.Row row in this.rows)
+		FallbackRenderData = ResourceCache.Load<RenderData>("Scene/Render/Data/obj");
+		Cell.objList = rows;
+		foreach (Row row in rows)
 		{
 			row.Init();
 		}
-	}
-
-	public Dictionary<int, SourceObj.Row> _rows = new Dictionary<int, SourceObj.Row>();
-
-	public static RenderData FallbackRenderData;
-
-	[Serializable]
-	public class Row : TileRow
-	{
-		public override bool UseAlias
-		{
-			get
-			{
-				return true;
-			}
-		}
-
-		public override string GetAlias
-		{
-			get
-			{
-				return this.alias;
-			}
-		}
-
-		public override string RecipeID
-		{
-			get
-			{
-				return "o" + this.id.ToString();
-			}
-		}
-
-		public override RenderData defaultRenderData
-		{
-			get
-			{
-				return SourceObj.FallbackRenderData;
-			}
-		}
-
-		public override void OnInit()
-		{
-			this.objValType = (this.valType.IsEmpty() ? ObjValType.None : this.valType.ToEnum(true));
-			this.autoTile = this.tag.Contains("autotile");
-			if (!this._growth.IsEmpty())
-			{
-				this.growth = ClassCache.Create<GrowSystem>("GrowSystem" + this._growth[0], "Elin");
-				this.growth.Init(this);
-				this.HasGrowth = true;
-				return;
-			}
-			this.HasGrowth = false;
-		}
-
-		public string[] _growth;
-
-		public int costSoil;
-
-		public string objType;
-
-		public string[] vals;
-
-		public string[] reqHarvest;
-
-		public string valType;
-
-		public string matCategory;
-
-		public int idRoof;
-
-		[NonSerialized]
-		public bool HasGrowth;
-
-		[NonSerialized]
-		public bool autoTile;
-
-		public GrowSystem growth;
-
-		public ObjValType objValType;
-
-		public string name_L;
-
-		public string detail_L;
-	}
-
-	public class Stage
-	{
-		public int step;
-
-		public int[] tiles;
-
-		public string idThing;
-
-		public bool harvest;
 	}
 }

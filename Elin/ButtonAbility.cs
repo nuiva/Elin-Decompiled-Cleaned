@@ -1,80 +1,104 @@
-﻿using System;
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class ButtonAbility : UIButton, IMouseHint
 {
+	public SourceElement.Row source;
+
+	public IDragParent dragParent;
+
+	public UIText textStock;
+
+	public Image imageType;
+
+	public Image imageFav;
+
+	public Transform attach;
+
+	public Transform transFav;
+
+	public Chara chara;
+
+	public Act act;
+
+	[NonSerialized]
+	public bool dragged;
+
+	public static float hotkeyTimer;
+
 	public void SetAct(Chara _chara, Element e)
 	{
-		this.source = e.source;
-		this.chara = _chara;
-		this.act = ACT.Create(this.source);
-		if (this.act == null)
+		source = e.source;
+		chara = _chara;
+		act = ACT.Create(source);
+		if (act == null)
 		{
-			Debug.Log(this.source.alias);
+			Debug.Log(source.alias);
 		}
-		Sprite iconType = this.act.TargetType.IconType;
-		this.imageType.SetActive(iconType);
-		this.imageType.sprite = iconType;
-		this.act.SetImage(this.icon);
+		Sprite iconType = act.TargetType.IconType;
+		imageType.SetActive(iconType);
+		imageType.sprite = iconType;
+		act.SetImage(icon);
 		if (EClass.game.altAbility)
 		{
-			this.textStock.SetActive(e is Spell);
-			this.textStock.text = (e.vPotential.ToString() ?? "");
-			this.onRightClick = delegate()
+			textStock.SetActive(e is Spell);
+			textStock.text = e.vPotential.ToString() ?? "";
+			onRightClick = delegate
 			{
 				if (EClass.ui.IsActive)
 				{
 					SE.BeepSmall();
-					return;
 				}
-				this.Use();
+				else
+				{
+					Use();
+				}
 			};
 		}
 		else
 		{
-			this.mainText.SetText(e.Name);
+			mainText.SetText(e.Name);
 		}
-		base.SetTooltip("note", delegate(UITooltip t)
+		SetTooltip("note", delegate(UITooltip t)
 		{
-			e.WriteNote(t.note, this.chara.elements, delegate(UINote n)
+			e.WriteNote(t.note, chara.elements, delegate
 			{
-				e._WriteNote(t.note, this.chara, this.act);
+				e._WriteNote(t.note, chara, act);
 			});
-		}, true);
-		this.RefreshFavIcon();
+		});
+		RefreshFavIcon();
 	}
 
 	public void OnDrag(PointerEventData data)
 	{
-		if (this.dragParent == null)
+		if (dragParent != null && data.button == PointerEventData.InputButton.Left)
 		{
-			return;
+			if (!dragged)
+			{
+				dragged = true;
+				dragParent.OnStartDrag(this);
+				OnPointerUpOnDrag(data);
+			}
+			else
+			{
+				dragParent.OnDrag(this);
+			}
 		}
-		if (data.button != PointerEventData.InputButton.Left)
-		{
-			return;
-		}
-		if (!this.dragged)
-		{
-			this.dragged = true;
-			this.dragParent.OnStartDrag(this);
-			base.OnPointerUpOnDrag(data);
-			return;
-		}
-		this.dragParent.OnDrag(this);
 	}
 
 	public override void OnPointerUp(PointerEventData eventData)
 	{
-		if (this.dragged)
+		if (dragged)
 		{
-			this.dragged = false;
-			this.dragParent.OnEndDrag(this, false);
-			return;
+			dragged = false;
+			dragParent.OnEndDrag(this);
 		}
-		base.OnPointerUp(eventData);
+		else
+		{
+			base.OnPointerUp(eventData);
+		}
 	}
 
 	public void Use()
@@ -82,19 +106,17 @@ public class ButtonAbility : UIButton, IMouseHint
 		if (!EClass.pc.HasNoGoal)
 		{
 			SE.BeepSmall();
-			return;
 		}
-		if (this.CanAutoUse(this.act))
+		else if (CanAutoUse(act))
 		{
-			if (ButtonAbility.TryUse(this.act, null, null, null, true, true) && EClass.pc.ai.IsNoGoal)
+			if (TryUse(act) && EClass.pc.ai.IsNoGoal)
 			{
-				EClass.player.EndTurn(true);
-				return;
+				EClass.player.EndTurn();
 			}
 		}
 		else
 		{
-			this.HoldAbility();
+			HoldAbility();
 		}
 	}
 
@@ -112,23 +134,23 @@ public class ButtonAbility : UIButton, IMouseHint
 		if (first && EInput.GetHotkey() != -1)
 		{
 			mouse = false;
-			ButtonAbility.hotkeyTimer = 0f;
+			hotkeyTimer = 0f;
 			Debug.Log(EInput.GetHotkey());
 		}
 		if (act.HaveLongPressAction)
 		{
-			if ((mouse && EInput.rightMouse.pressedLong) || (!mouse && ButtonAbility.hotkeyTimer >= 0.45f))
+			if ((mouse && EInput.rightMouse.pressedLong) || (!mouse && hotkeyTimer >= 0.45f))
 			{
 				EInput.rightMouse.Consume();
 				flag = true;
-				ButtonAbility.hotkeyTimer = 1f;
+				hotkeyTimer = 1f;
 			}
-			if ((mouse && EInput.rightMouse.pressing) || (!mouse && EInput.GetHotkey() != -1 && ButtonAbility.hotkeyTimer < 1f))
+			if ((mouse && EInput.rightMouse.pressing) || (!mouse && EInput.GetHotkey() != -1 && hotkeyTimer < 1f))
 			{
-				ButtonAbility.hotkeyTimer += Core.delta;
+				hotkeyTimer += Core.delta;
 				EClass.core.actionsNextFrame.Add(delegate
 				{
-					ButtonAbility.TryUse(act, tg, pos, catalyst, false, mouse);
+					TryUse(act, tg, pos, catalyst, first: false, mouse);
 				});
 				if (first)
 				{
@@ -143,13 +165,13 @@ public class ButtonAbility : UIButton, IMouseHint
 				return false;
 			}
 		}
-		if (flag && ButtonAbility.SpecialHoldAction(act))
+		if (flag && SpecialHoldAction(act))
 		{
-			EClass.player.EndTurn(true);
+			EClass.player.EndTurn();
 		}
 		else if (EClass.pc.UseAbility(act.source.alias, tg, pos, flag))
 		{
-			EClass.player.EndTurn(true);
+			EClass.player.EndTurn();
 		}
 		if (catalyst != null)
 		{
@@ -173,31 +195,24 @@ public class ButtonAbility : UIButton, IMouseHint
 			int count = 0;
 			EClass.pc.things.Foreach(delegate(Thing t)
 			{
-				if (t.IsIdentified)
+				if (!t.IsIdentified)
 				{
-					return;
+					if (EClass.pc.mana.value < e.GetCost(EClass.pc).cost && !first)
+					{
+						stop = true;
+					}
+					if (e.vPotential <= 0)
+					{
+						stop = true;
+					}
+					if (!stop && (t.rarity < Rarity.Mythical || e.id != 8230))
+					{
+						EClass.pc.UseAbility(act.source.alias, t, EClass.pc.pos);
+						count++;
+						first = false;
+					}
 				}
-				if (EClass.pc.mana.value < e.GetCost(EClass.pc).cost && !first)
-				{
-					stop = true;
-				}
-				if (e.vPotential <= 0)
-				{
-					stop = true;
-				}
-				if (stop)
-				{
-					return;
-				}
-				if (t.rarity >= Rarity.Mythical && e.id == 8230)
-				{
-					return;
-				}
-				EClass.pc.UseAbility(act.source.alias, t, EClass.pc.pos, false);
-				int count = count;
-				count++;
-				first = false;
-			}, true);
+			});
 			if (count == 0)
 			{
 				Msg.Say("identify_nothing");
@@ -209,13 +224,21 @@ public class ButtonAbility : UIButton, IMouseHint
 
 	public void HoldAbility()
 	{
-		EClass.player.SetCurrentHotItem(new HotItemAct(this.source));
+		EClass.player.SetCurrentHotItem(new HotItemAct(source));
 		SE.SelectHotitem();
 	}
 
 	public bool CanAutoUse(Act _act)
 	{
-		return _act.TargetType.CanSelectSelf && (!EClass._zone.IsRegion || !_act.LocalAct);
+		if (_act.TargetType.CanSelectSelf)
+		{
+			if (EClass._zone.IsRegion)
+			{
+				return !_act.LocalAct;
+			}
+			return true;
+		}
+		return false;
 	}
 
 	public bool ShowMouseHintLeft()
@@ -230,7 +253,7 @@ public class ButtonAbility : UIButton, IMouseHint
 
 	public bool ShowMouseHintRight()
 	{
-		return this.CanAutoUse(ACT.Create(this.source));
+		return CanAutoUse(ACT.Create(source));
 	}
 
 	public string GetTextMouseHintRight()
@@ -247,60 +270,37 @@ public class ButtonAbility : UIButton, IMouseHint
 	{
 		if (EInput.middleMouse.clicked)
 		{
-			this.ToggleFav();
+			ToggleFav();
 		}
-		EInput.middleMouse.pressedLongAction = delegate()
+		EInput.middleMouse.pressedLongAction = delegate
 		{
 			if (EClass.ui.AllowInventoryInteractions)
 			{
-				this.HoldAbility();
-				EInput.Consume(false, 1);
+				HoldAbility();
+				EInput.Consume();
 			}
 		};
 	}
 
 	public void ToggleFav()
 	{
-		if (EClass.player.favAbility.Contains(this.source.id))
+		if (EClass.player.favAbility.Contains(source.id))
 		{
-			EClass.player.favAbility.Remove(this.source.id);
+			EClass.player.favAbility.Remove(source.id);
 			SE.Tab();
 		}
 		else
 		{
-			EClass.player.favAbility.Add(this.source.id);
+			EClass.player.favAbility.Add(source.id);
 			SE.Tab();
 		}
-		this.RefreshFavIcon();
+		RefreshFavIcon();
 		LayerAbility.Instance.list.Redraw();
 	}
 
 	public void RefreshFavIcon()
 	{
-		bool enable = EClass.player.favAbility.Contains(this.source.id);
-		this.imageFav.SetActive(enable);
+		bool enable = EClass.player.favAbility.Contains(source.id);
+		imageFav.SetActive(enable);
 	}
-
-	public SourceElement.Row source;
-
-	public IDragParent dragParent;
-
-	public UIText textStock;
-
-	public Image imageType;
-
-	public Image imageFav;
-
-	public Transform attach;
-
-	public Transform transFav;
-
-	public Chara chara;
-
-	public Act act;
-
-	[NonSerialized]
-	public bool dragged;
-
-	public static float hotkeyTimer;
 }

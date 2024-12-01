@@ -1,14 +1,6 @@
-﻿using System;
-
 public class TraitPotionEmpty : TraitDrink
 {
-	public override ThrowType ThrowType
-	{
-		get
-		{
-			return ThrowType.Vase;
-		}
-	}
+	public override ThrowType ThrowType => ThrowType.Vase;
 
 	public override bool CanDrink(Chara c)
 	{
@@ -17,35 +9,36 @@ public class TraitPotionEmpty : TraitDrink
 
 	public override bool CanUse(Chara c, Point p)
 	{
-		return this.GetWell(p) != null || p.cell.IsTopWaterAndNoSnow;
+		if (GetWell(p) == null)
+		{
+			return p.cell.IsTopWaterAndNoSnow;
+		}
+		return true;
 	}
 
 	public override bool OnUse(Chara c, Point p)
 	{
-		TraitWell well = this.GetWell(p);
+		TraitWell well = GetWell(p);
 		if (well != null && well.Charges <= 0)
 		{
-			c.Say("drinkWell_empty", c, well.owner, null, null);
+			c.Say("drinkWell_empty", c, well.owner);
 			return false;
 		}
 		SE.Play("water_farm");
-		this.owner.ModNum(-1, true);
-		Thing thing;
+		owner.ModNum(-1);
+		Thing thing = null;
 		if (well != null && well.IsHoly)
 		{
-			thing = ThingGen.Create((this.owner.id == "bucket_empty") ? "bucket" : "water", -1, -1);
+			thing = ThingGen.Create((owner.id == "bucket_empty") ? "bucket" : "water");
 			thing.SetBlessedState(BlessedState.Blessed);
 		}
 		else
 		{
 			thing = ThingGen.Create("potion", -1, 10);
 		}
-		c.Say("drawWater", this.owner.Duplicate(1), thing, null, null);
-		c.Pick(thing, true, true);
-		if (well != null)
-		{
-			well.ModCharges(-1);
-		}
+		c.Say("drawWater", owner.Duplicate(1), thing);
+		c.Pick(thing);
+		well?.ModCharges(-1);
 		return true;
 	}
 
@@ -55,12 +48,11 @@ public class TraitPotionEmpty : TraitDrink
 
 	public TraitWell GetWell(Point p)
 	{
-		foreach (Card card in p.ListCards(false))
+		foreach (Card item in p.ListCards())
 		{
-			TraitWell traitWell = card.trait as TraitWell;
-			if (traitWell != null)
+			if (item.trait is TraitWell result)
 			{
-				return traitWell;
+				return result;
 			}
 		}
 		return null;

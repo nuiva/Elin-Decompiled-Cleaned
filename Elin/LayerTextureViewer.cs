@@ -1,161 +1,9 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class LayerTextureViewer : ELayer
 {
-	public override void OnInit()
-	{
-		this.windows[0].AddBottomSpace(20);
-		this.windows[0].AddBottomButton("openUser", delegate
-		{
-			Util.ShowExplorer(CorePath.user + "Texture Replace/dummy.txt", false);
-		}, false);
-		this.windows[0].AddBottomButton("toggleSnowTexture", delegate
-		{
-			SE.Tab();
-			this.snow = !this.snow;
-			this.OnSwitchContent(this.windows[0]);
-		}, false);
-	}
-
-	public override void OnSwitchContent(Window window)
-	{
-		this.data = (ELayer.core.textures.texMap.TryGetValue(window.CurrentTab.idLang + (this.snow ? "Snow" : ""), null) ?? ELayer.core.textures.texMap[window.CurrentTab.idLang]);
-		this.RefreshPage();
-		this.scrollbarH.value = 0f;
-		this.scrollvarV.value = 1f;
-	}
-
-	public void RefreshPage()
-	{
-		this.scale = 0.5f;
-		string id = this.data.id;
-		if (id == "objS" || id == "objSS" || id == "objSSnow" || id == "objSSSnow")
-		{
-			this.scale = 1f;
-		}
-		if (this.zoom)
-		{
-			this.scale *= 2f;
-		}
-		if (this.fixZoom)
-		{
-			this.scale /= ELayer.ui.canvasScaler.scaleFactor;
-		}
-		this.imageTex.texture = null;
-		this.imageTex.texture = this.data.tex;
-		this.imageTex.rectTransform.sizeDelta = new Vector2((float)this.data.tex.width * this.scale, (float)this.data.tex.height * this.scale);
-		this.imageTex.RebuildLayoutTo<Layer>();
-		foreach (Image image in this.markers)
-		{
-			UnityEngine.Object.Destroy(image.gameObject);
-		}
-		this.markers.Clear();
-		foreach (TextureReplace textureReplace in this.data.dictReplace.Values)
-		{
-			Image image2 = Util.Instantiate<Image>(this.moldMarker, this.imageTex.transform.parent);
-			image2.rectTransform.sizeDelta = new Vector2(((float)Mathf.Max(textureReplace.w, this.data.tileW) + this.highlightSize * 2f) * this.scale, ((float)Mathf.Max(textureReplace.h, this.data.tileH) + this.highlightSize * 2f) * this.scale);
-			this.SetPos(image2, textureReplace.index % 100, textureReplace.index / 100 * -1, this.highlightSize, this.markerFix);
-			image2.color = ((textureReplace.source == TextureReplace.Source.Local) ? this.colorLocal : ((textureReplace.source == TextureReplace.Source.User) ? this.colorUser : this.colorMod));
-			this.markers.Add(image2);
-		}
-	}
-
-	public void SetPos(Component r, int x, int y, float size = 0f, Vector2 posFix = default(Vector2))
-	{
-		r.Rect().anchoredPosition = new Vector2((float)(x * this.data.tileW) * this.scale * this.test.x - this.highlightSize * this.scale, (float)(y * this.data.tileH) * this.scale * this.test.y + this.highlightSize * this.scale) + posFix;
-	}
-
-	private void Update()
-	{
-		RectTransform rectTransform = this.imageTex.rectTransform;
-		Vector2 vector;
-		RectTransformUtility.ScreenPointToLocalPointInRectangle(this.imageTex.rectTransform, Input.mousePosition, ELayer.ui.canvas.worldCamera, out vector);
-		int num = (int)vector.x / (int)((float)this.data.tileW * this.scale);
-		int num2 = (int)vector.y / (int)((float)this.data.tileH * this.scale);
-		if (EInput.axis != Vector2.zero)
-		{
-			this.sizeX = Mathf.Clamp(this.sizeX + (int)EInput.axis.x, 1, 5);
-			this.sizeY = Mathf.Clamp(this.sizeY + (int)EInput.axis.y * -1, 1, 5);
-			EInput.requireAxisReset = true;
-		}
-		if (EInput.middleMouse.clicked)
-		{
-			SE.Tab();
-			this.zoom = !this.zoom;
-			this.RefreshPage();
-		}
-		bool flag = InputModuleEX.IsPointerOver(this.transMask);
-		this.highlight.SetActive(flag);
-		if (flag)
-		{
-			this.highlight.rectTransform.sizeDelta = new Vector2(((float)(this.data.tileW * this.sizeX) + this.highlightSize * 2f) * this.scale, ((float)(this.data.tileH * this.sizeY) + this.highlightSize * 2f) * this.scale);
-			this.SetPos(this.highlight, num, num2, this.highlightSize, default(Vector2));
-			string str = this.data.id + "_";
-			int index = Mathf.Abs(num2) * 100 + num;
-			str += index.ToString();
-			this.textHint.text = str + ((this.sizeX == 1 && this.sizeY == 1) ? "" : string.Concat(new string[]
-			{
-				"(",
-				this.sizeX.ToString(),
-				"x",
-				this.sizeY.ToString(),
-				")"
-			}));
-			if (EInput.leftMouse.clicked)
-			{
-				UIContextMenu uicontextMenu = ELayer.ui.CreateContextMenuInteraction();
-				TextureReplace replace = this.data.dictReplace.TryGetValue(index, null);
-				if (replace != null)
-				{
-					uicontextMenu.AddButton("open_replace", delegate()
-					{
-						Util.Run(replace.file.FullName);
-					}, true);
-					if (replace.source != TextureReplace.Source.Mod)
-					{
-						uicontextMenu.AddButton("delete_replace", delegate()
-						{
-							try
-							{
-								this.data.DeleteReplace(replace);
-								this.data.ForceRefresh();
-							}
-							catch
-							{
-							}
-							SE.Trash();
-							this.RefreshPage();
-						}, true);
-					}
-				}
-				else
-				{
-					uicontextMenu.AddButton("create_replace", delegate()
-					{
-						this.data.CreateReplace(index, CorePath.user + "Texture Replace/", TextureReplace.Source.User, this.sizeX, this.sizeY);
-						SE.Change();
-						this.RefreshPage();
-					}, true);
-				}
-				if (ELayer._zone.isMapSaved && (replace == null || replace.source != TextureReplace.Source.Local))
-				{
-					uicontextMenu.AddButton("create_replaceLocal", delegate()
-					{
-						string text = ELayer._zone.pathSave + "Texture Replace";
-						IO.CreateDirectory(text);
-						this.data.CreateReplace(index, text + "/", TextureReplace.Source.Local, this.sizeX, this.sizeY);
-						SE.Change();
-						this.RefreshPage();
-					}, true);
-				}
-				uicontextMenu.Show();
-			}
-		}
-	}
-
 	public RawImage imageTex;
 
 	public Image highlight;
@@ -199,4 +47,153 @@ public class LayerTextureViewer : ELayer
 	public Vector2 test;
 
 	private bool zoom;
+
+	public override void OnInit()
+	{
+		windows[0].AddBottomSpace();
+		windows[0].AddBottomButton("openUser", delegate
+		{
+			Util.ShowExplorer(CorePath.user + "Texture Replace/dummy.txt");
+		});
+		windows[0].AddBottomButton("toggleSnowTexture", delegate
+		{
+			SE.Tab();
+			snow = !snow;
+			OnSwitchContent(windows[0]);
+		});
+	}
+
+	public override void OnSwitchContent(Window window)
+	{
+		data = ELayer.core.textures.texMap.TryGetValue(window.CurrentTab.idLang + (snow ? "Snow" : "")) ?? ELayer.core.textures.texMap[window.CurrentTab.idLang];
+		RefreshPage();
+		scrollbarH.value = 0f;
+		scrollvarV.value = 1f;
+	}
+
+	public void RefreshPage()
+	{
+		scale = 0.5f;
+		switch (data.id)
+		{
+		case "objS":
+		case "objSS":
+		case "objSSnow":
+		case "objSSSnow":
+			scale = 1f;
+			break;
+		}
+		if (zoom)
+		{
+			scale *= 2f;
+		}
+		if (fixZoom)
+		{
+			scale /= ELayer.ui.canvasScaler.scaleFactor;
+		}
+		imageTex.texture = null;
+		imageTex.texture = data.tex;
+		imageTex.rectTransform.sizeDelta = new Vector2((float)data.tex.width * scale, (float)data.tex.height * scale);
+		imageTex.RebuildLayoutTo<Layer>();
+		foreach (Image marker in markers)
+		{
+			Object.Destroy(marker.gameObject);
+		}
+		markers.Clear();
+		foreach (TextureReplace value in data.dictReplace.Values)
+		{
+			Image image = Util.Instantiate(moldMarker, imageTex.transform.parent);
+			image.rectTransform.sizeDelta = new Vector2(((float)Mathf.Max(value.w, data.tileW) + highlightSize * 2f) * scale, ((float)Mathf.Max(value.h, data.tileH) + highlightSize * 2f) * scale);
+			SetPos(image, value.index % 100, value.index / 100 * -1, highlightSize, markerFix);
+			image.color = ((value.source == TextureReplace.Source.Local) ? colorLocal : ((value.source == TextureReplace.Source.User) ? colorUser : colorMod));
+			markers.Add(image);
+		}
+	}
+
+	public void SetPos(Component r, int x, int y, float size = 0f, Vector2 posFix = default(Vector2))
+	{
+		r.Rect().anchoredPosition = new Vector2((float)(x * data.tileW) * scale * test.x - highlightSize * scale, (float)(y * data.tileH) * scale * test.y + highlightSize * scale) + posFix;
+	}
+
+	private void Update()
+	{
+		_ = imageTex.rectTransform;
+		RectTransformUtility.ScreenPointToLocalPointInRectangle(imageTex.rectTransform, Input.mousePosition, ELayer.ui.canvas.worldCamera, out var localPoint);
+		int num = (int)localPoint.x / (int)((float)data.tileW * scale);
+		int num2 = (int)localPoint.y / (int)((float)data.tileH * scale);
+		if (EInput.axis != Vector2.zero)
+		{
+			sizeX = Mathf.Clamp(sizeX + (int)EInput.axis.x, 1, 5);
+			sizeY = Mathf.Clamp(sizeY + (int)EInput.axis.y * -1, 1, 5);
+			EInput.requireAxisReset = true;
+		}
+		if (EInput.middleMouse.clicked)
+		{
+			SE.Tab();
+			zoom = !zoom;
+			RefreshPage();
+		}
+		bool flag = InputModuleEX.IsPointerOver(transMask);
+		highlight.SetActive(flag);
+		if (!flag)
+		{
+			return;
+		}
+		highlight.rectTransform.sizeDelta = new Vector2(((float)(data.tileW * sizeX) + highlightSize * 2f) * scale, ((float)(data.tileH * sizeY) + highlightSize * 2f) * scale);
+		SetPos(highlight, num, num2, highlightSize);
+		string text = data.id + "_";
+		int index = Mathf.Abs(num2) * 100 + num;
+		text += index;
+		textHint.text = text + ((sizeX == 1 && sizeY == 1) ? "" : ("(" + sizeX + "x" + sizeY + ")"));
+		if (!EInput.leftMouse.clicked)
+		{
+			return;
+		}
+		UIContextMenu uIContextMenu = ELayer.ui.CreateContextMenuInteraction();
+		TextureReplace replace = data.dictReplace.TryGetValue(index);
+		if (replace != null)
+		{
+			uIContextMenu.AddButton("open_replace", delegate
+			{
+				Util.Run(replace.file.FullName);
+			});
+			if (replace.source != TextureReplace.Source.Mod)
+			{
+				uIContextMenu.AddButton("delete_replace", delegate
+				{
+					try
+					{
+						data.DeleteReplace(replace);
+						data.ForceRefresh();
+					}
+					catch
+					{
+					}
+					SE.Trash();
+					RefreshPage();
+				});
+			}
+		}
+		else
+		{
+			uIContextMenu.AddButton("create_replace", delegate
+			{
+				data.CreateReplace(index, CorePath.user + "Texture Replace/", TextureReplace.Source.User, sizeX, sizeY);
+				SE.Change();
+				RefreshPage();
+			});
+		}
+		if (ELayer._zone.isMapSaved && (replace == null || replace.source != TextureReplace.Source.Local))
+		{
+			uIContextMenu.AddButton("create_replaceLocal", delegate
+			{
+				string text2 = ELayer._zone.pathSave + "Texture Replace";
+				IO.CreateDirectory(text2);
+				data.CreateReplace(index, text2 + "/", TextureReplace.Source.Local, sizeX, sizeY);
+				SE.Change();
+				RefreshPage();
+			});
+		}
+		uIContextMenu.Show();
+	}
 }

@@ -1,16 +1,14 @@
-﻿using System;
-
 public class WordSearch : EClass
 {
+	public string lastWord;
+
 	public void OnValueChanged(string s)
 	{
-		s == this.lastWord;
+		_ = s == lastWord;
 	}
 
 	public void OnSubmit(string s)
 	{
-		s == this.lastWord;
+		_ = s == lastWord;
 	}
-
-	public string lastWord;
 }

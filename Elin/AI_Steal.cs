@@ -1,36 +1,41 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class AI_Steal : AI_TargetCard
 {
-	public override TargetType TargetType
-	{
-		get
-		{
-			return TargetType.SelfAndNeighbor;
-		}
-	}
+	public override TargetType TargetType => TargetType.SelfAndNeighbor;
+
+	public override int MaxRadius => 2;
+
+	public override bool IsHostileAct => true;
 
 	public override bool IsValidTC(Card c)
 	{
-		return !EClass._zone.IsUserZone && !(c.isThing & EClass._zone is Zone_LittleGarden) && (c.isNPCProperty || !c.isThing) && c.trait.CanBeStolen && c.c_lockLv <= 0 && (c.isThing || !c.IsPCFaction);
-	}
-
-	public override int MaxRadius
-	{
-		get
+		if (EClass._zone.IsUserZone)
 		{
-			return 2;
+			return false;
 		}
-	}
-
-	public override bool IsHostileAct
-	{
-		get
+		if (c.isThing & (EClass._zone is Zone_LittleGarden))
 		{
-			return true;
+			return false;
 		}
+		if (!c.isNPCProperty && c.isThing)
+		{
+			return false;
+		}
+		if (!c.trait.CanBeStolen)
+		{
+			return false;
+		}
+		if (c.c_lockLv > 0)
+		{
+			return false;
+		}
+		if (!c.isThing)
+		{
+			return !c.IsPCFaction;
+		}
+		return true;
 	}
 
 	public override bool CanPerform()
@@ -40,158 +45,150 @@ public class AI_Steal : AI_TargetCard
 
 	public override bool Perform()
 	{
-		this.target = Act.TC;
+		target = Act.TC;
 		return base.Perform();
 	}
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		Chara chara = this.target.Chara;
+		Chara chara = target.Chara;
 		if (chara != null)
 		{
-			this.target = chara.things.FindStealable();
-			if (this.target == null && chara.GetInt(30, null) < EClass.world.date.GetRaw(0))
+			target = chara.things.FindStealable();
+			if (target == null && chara.GetInt(30) < EClass.world.date.GetRaw())
 			{
 				if (EClass.rnd(2) == 0)
 				{
-					this.target = chara.AddThing(ThingGen.Create("money", -1, -1).SetNum(1 + EClass.rnd(chara.LV * 10)), true, -1, -1);
+					target = chara.AddThing(ThingGen.Create("money").SetNum(1 + EClass.rnd(chara.LV * 10)));
 				}
 				else
 				{
-					this.target = chara.AddThing(ThingGen.CreateFromFilter("steal", chara.LV), true, -1, -1);
-					chara.SetInt(30, EClass.world.date.GetRaw(0) + 1440);
+					target = chara.AddThing(ThingGen.CreateFromFilter("steal", chara.LV));
+					chara.SetInt(30, EClass.world.date.GetRaw() + 1440);
 				}
 			}
-			if (this.target == null)
+			if (target == null)
 			{
-				this.owner.Say("steal_chara_nothing", this.owner, chara, null, null);
-				yield return this.Cancel();
+				owner.Say("steal_chara_nothing", owner, chara);
+				yield return Cancel();
 			}
-			this.owner.Say("steal_chara", this.owner, chara, null, null);
+			owner.Say("steal_chara", owner, chara);
 		}
 		else
 		{
-			if (this.target.things.Count > 0)
+			if (target.things.Count > 0)
 			{
-				Thing thing = this.target.things.FindStealable();
+				Thing thing = target.things.FindStealable();
 				if (thing != null)
 				{
-					this.target = thing;
+					target = thing;
 				}
 			}
-			this.owner.Say("steal_thing", this.owner, this.target, null, null);
+			owner.Say("steal_thing", owner, target);
 		}
-		ICardParent targetParent = this.target.parent;
+		ICardParent targetParent = target.parent;
 		Card card = chara;
 		if (card == null)
 		{
-			card = this.target;
+			card = target;
 		}
 		Card root = card.GetRootCard();
-		Progress_Custom progress_Custom = new Progress_Custom();
-		progress_Custom.canProgress = (() => this.target.parent == targetParent && (chara == null || chara.ExistsOnMap));
-		progress_Custom.onProgressBegin = delegate()
+		Progress_Custom seq = new Progress_Custom
 		{
-		};
-		Func<Chara, bool> <>9__4;
-		progress_Custom.onProgress = delegate(Progress_Custom p)
-		{
-			this.owner.LookAt(root);
-			this.owner.PlaySound("steal", 1f, true);
-			root.renderer.PlayAnime(AnimeID.Shiver, default(Vector3), false);
-			if (EClass.debug.godMode)
+			canProgress = () => target.parent == targetParent && (chara == null || chara.ExistsOnMap),
+			onProgressBegin = delegate
 			{
-				return;
-			}
-			Chara chara;
-			if (chara != null && this.owner.Dist(chara) > 1)
+			},
+			onProgress = delegate(Progress_Custom p)
 			{
-				EClass.pc.TryMoveTowards(chara.pos);
-				if (this.owner == null)
+				owner.LookAt(root);
+				owner.PlaySound("steal");
+				root.renderer.PlayAnime(AnimeID.Shiver);
+				if (!EClass.debug.godMode)
 				{
-					p.Cancel();
-					return;
-				}
-				if (chara != null && this.owner.Dist(chara) > 1)
-				{
-					EClass.pc.Say("targetTooFar", null, null);
-					p.Cancel();
-					return;
-				}
-			}
-			if (this.target.ChildrenAndSelfWeight > this.owner.Evalue(281) * 200 + this.owner.STR * 100 + 1000)
-			{
-				EClass.pc.Say("tooHeavy", this.target, null, null);
-				p.Cancel();
-				return;
-			}
-			int count = this.owner.pos.ListWitnesses(this.owner, 4, WitnessType.crime, chara).Count;
-			Point pos = this.owner.pos;
-			Chara owner = this.owner;
-			chara = chara;
-			int radius = 4;
-			Func<Chara, bool> funcWitness;
-			if ((funcWitness = <>9__4) == null)
-			{
-				funcWitness = (<>9__4 = delegate(Chara c)
-				{
-					int num = c.CanSee(this.owner) ? 0 : 30;
-					int num2 = c.PER * 250 / 100;
-					if (this.target.isThing && (this.target.Thing.isEquipped || this.target.IsRangedWeapon || this.target.IsThrownWeapon))
+					if (chara != null && owner.Dist(chara) > 1)
 					{
-						num2 *= 2;
-						if (this.target.rarity >= Rarity.Legendary)
+						EClass.pc.TryMoveTowards(chara.pos);
+						if (owner == null)
 						{
-							num2 *= 2;
+							p.Cancel();
+							return;
 						}
-						if (this.target.rarity >= Rarity.Artifact)
+						if (chara != null && owner.Dist(chara) > 1)
 						{
-							num2 *= 2;
+							EClass.pc.Say("targetTooFar");
+							p.Cancel();
+							return;
 						}
 					}
-					if (c.IsUnique)
+					if (target.ChildrenAndSelfWeight > owner.Evalue(281) * 200 + owner.STR * 100 + 1000)
 					{
-						num2 *= 2;
+						EClass.pc.Say("tooHeavy", target);
+						p.Cancel();
 					}
-					return EClass.rnd(num2) > this.owner.Evalue(281) + this.owner.DEX + num;
-				});
-			}
-			if (pos.TryWitnessCrime(owner, chara, radius, funcWitness))
+					else
+					{
+						int count = owner.pos.ListWitnesses(owner, 4, WitnessType.crime, chara).Count;
+						if (owner.pos.TryWitnessCrime(owner, chara, 4, delegate(Chara c)
+						{
+							int num = ((!c.CanSee(owner)) ? 30 : 0);
+							int num2 = c.PER * 250 / 100;
+							if (target.isThing && (target.Thing.isEquipped || target.IsRangedWeapon || target.IsThrownWeapon))
+							{
+								num2 *= 2;
+								if (target.rarity >= Rarity.Legendary)
+								{
+									num2 *= 2;
+								}
+								if (target.rarity >= Rarity.Artifact)
+								{
+									num2 *= 2;
+								}
+							}
+							if (c.IsUnique)
+							{
+								num2 *= 2;
+							}
+							return EClass.rnd(num2) > owner.Evalue(281) + owner.DEX + num;
+						}))
+						{
+							p.Cancel();
+						}
+						else
+						{
+							owner.elements.ModExp(281, Mathf.Min(count * 5 + 5, 25));
+						}
+					}
+				}
+			},
+			onProgressComplete = delegate
 			{
-				p.Cancel();
-				return;
+				if (target.isThing && target.IsInstalled)
+				{
+					target.SetPlaceState(PlaceState.roaming);
+				}
+				owner.Say("steal_end", owner, target);
+				if (chara != null && (chara.IsPCFaction || chara.OriginalHostility >= Hostility.Friend))
+				{
+					EClass.player.ModKarma(-1);
+				}
+				else if (chara == null || chara.hostility > Hostility.Enemy)
+				{
+					EClass.player.ModKarma(-1);
+				}
+				target.isNPCProperty = false;
+				if (!target.category.IsChildOf("currency"))
+				{
+					target.isStolen = true;
+				}
+				owner.Pick(target.Thing);
+				owner.elements.ModExp(281, 50);
+				if (EClass.rnd(2) == 0)
+				{
+					EClass.pc.stamina.Mod(-1);
+				}
 			}
-			this.owner.elements.ModExp(281, Mathf.Min(count * 5 + 5, 25), false);
-		};
-		progress_Custom.onProgressComplete = delegate()
-		{
-			if (this.target.isThing && this.target.IsInstalled)
-			{
-				this.target.SetPlaceState(PlaceState.roaming, false);
-			}
-			this.owner.Say("steal_end", this.owner, this.target, null, null);
-			if (chara != null && (chara.IsPCFaction || chara.OriginalHostility >= Hostility.Friend))
-			{
-				EClass.player.ModKarma(-1);
-			}
-			else if (chara == null || chara.hostility > Hostility.Enemy)
-			{
-				EClass.player.ModKarma(-1);
-			}
-			this.target.isNPCProperty = false;
-			if (!this.target.category.IsChildOf("currency"))
-			{
-				this.target.isStolen = true;
-			}
-			this.owner.Pick(this.target.Thing, true, true);
-			this.owner.elements.ModExp(281, 50, false);
-			if (EClass.rnd(2) == 0)
-			{
-				EClass.pc.stamina.Mod(-1);
-			}
-		};
-		Progress_Custom seq = progress_Custom.SetDuration(20, 4);
-		yield return base.Do(seq, null);
-		yield break;
+		}.SetDuration(20, 4);
+		yield return Do(seq);
 	}
 }

@@ -1,44 +1,12 @@
-﻿using System;
-
 public class TileTypeWallOpen : TileTypeWall
 {
-	public override bool CastAmbientShadowBack
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CastAmbientShadowBack => false;
 
-	public override bool CastAmbientShadow
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CastAmbientShadow => false;
 
-	public override bool CastShadowSelf
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CastShadowSelf => false;
 
-	public override bool IsBlockSight
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool IsBlockSight => false;
 
-	public override bool IsOpenSight
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsOpenSight => true;
 }

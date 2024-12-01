@@ -1,66 +1,28 @@
-﻿using System;
-
 public class QuestRandom : Quest
 {
-	public override bool CanAutoAdvance
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanAutoAdvance => false;
 
-	public override bool IsRandomQuest
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsRandomQuest => true;
 
-	public override int RangeDeadLine
-	{
-		get
-		{
-			return 12;
-		}
-	}
+	public override int RangeDeadLine => 12;
 
-	public override int KarmaOnFail
-	{
-		get
-		{
-			return -5;
-		}
-	}
+	public override int KarmaOnFail => -5;
 
-	public override int FameOnComplete
-	{
-		get
-		{
-			return 4 + this.difficulty * 2;
-		}
-	}
+	public override int FameOnComplete => 4 + difficulty * 2;
 
-	public override string RefDrama1
-	{
-		get
-		{
-			return Lang._currency(this.rewardMoney, true, 0);
-		}
-	}
+	public override string RefDrama1 => Lang._currency(rewardMoney, showUnit: true, 0);
 
 	public override void OnDropReward()
 	{
-		int num = this.bonusMoney * (55 + this.difficulty * 15) / 100;
-		int num2 = this.rewardMoney + num;
+		int num = bonusMoney * (55 + difficulty * 15) / 100;
+		int num2 = rewardMoney + num;
 		if (num2 > 0)
 		{
 			if (num > 0)
 			{
-				Msg.Say("reward_bonus", num.ToString() ?? "", null, null, null);
+				Msg.Say("reward_bonus", num.ToString() ?? "");
 			}
-			base.DropReward(ThingGen.CreateCurrency(num2, "money"));
+			DropReward(ThingGen.CreateCurrency(num2));
 		}
 		Zone zone = EClass._zone.GetTopZone();
 		if ((!zone.IsTown || zone.IsPCFaction) && base.ClientZone != null)
@@ -71,32 +33,32 @@ public class QuestRandom : Quest
 				zone = topZone;
 			}
 		}
-		Rand.SetSeed(this.uid);
-		string id = Util.EnumToList<Quest.SubReward>().RandomItem<Quest.SubReward>().ToString();
+		Rand.SetSeed(uid);
+		string text = Util.EnumToList<SubReward>().RandomItem().ToString();
 		if (EClass.rnd(5) == 0)
 		{
-			id = "gacha_coin_silver";
+			text = "gacha_coin_silver";
 		}
 		if (EClass.rnd(15) == 0)
 		{
-			id = "gacha_coin_gold";
+			text = "gacha_coin_gold";
 		}
-		Thing thing = ThingGen.Create(id, -1, -1);
+		Thing thing = ThingGen.Create(text);
 		if (thing.id == "ticket_furniture")
 		{
 			TraitTicketFurniture.SetZone(zone, thing);
 		}
-		base.DropReward(thing);
-		thing = ThingGen.Create("plat", -1, -1).SetNum(this.GetRewardPlat(num2));
-		base.DropReward(thing);
-		Rand.SetSeed(-1);
+		DropReward(thing);
+		thing = ThingGen.Create("plat").SetNum(GetRewardPlat(num2));
+		DropReward(thing);
+		Rand.SetSeed();
 		if (zone.IsTown || zone.IsPCFaction)
 		{
 			zone.GetTopZone().ModInfluence(1);
 		}
-		if (this.FameOnComplete > 0)
+		if (FameOnComplete > 0)
 		{
-			EClass.player.ModFame(EClass.rndHalf(this.FameOnComplete));
+			EClass.player.ModFame(EClass.rndHalf(FameOnComplete));
 		}
 	}
 }

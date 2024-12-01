@@ -1,68 +1,18 @@
-﻿using System;
-
 public class TileTypePillar : TileTypeBaseBlock
 {
-	public override bool RepeatBlock
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool RepeatBlock => true;
 
-	public override bool UseLowWallTiles
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool UseLowWallTiles => false;
 
-	public override bool ForceRpeatBlock
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool ForceRpeatBlock => true;
 
-	public override int MaxAltitude
-	{
-		get
-		{
-			return 7;
-		}
-	}
+	public override int MaxAltitude => 7;
 
-	public override bool AltitudeAsDir
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool AltitudeAsDir => true;
 
-	public override bool IsBlockPass
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsBlockPass => true;
 
-	public override bool IsOccupyCell
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool IsOccupyCell => false;
 
-	public override BlockRenderMode blockRenderMode
-	{
-		get
-		{
-			return BlockRenderMode.Pillar;
-		}
-	}
+	public override BlockRenderMode blockRenderMode => BlockRenderMode.Pillar;
 }

@@ -1,236 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class LayerInteraction : ELayer
 {
-	public override void OnInit()
-	{
-		LayerInteraction.Instance = this;
-		this.first = true;
-	}
-
-	public override void OnKill()
-	{
-		LayerInteraction.Target = null;
-	}
-
-	private unsafe void Update()
-	{
-		if (this.mode != LayerInteraction.Mode.Map)
-		{
-			return;
-		}
-		BaseTileSelector tileSelector = ELayer.screen.tileSelector;
-		MeshPass meshPass = (this.point.HasBlock || this.point.cell.liquidLv > 0) ? ELayer.screen.guide.passGuideBlock : ELayer.screen.guide.passGuideFloor;
-		int num = 0;
-		Vector3 vector = *this.point.Position();
-		meshPass.Add(vector.x, vector.y, vector.z, (float)num, 0.3f);
-	}
-
-	public override void OnUpdateInput()
-	{
-	}
-
-	public static void Show(IInspect newTarget)
-	{
-		if (LayerInteraction.Target == newTarget)
-		{
-			return;
-		}
-		LayerInteraction.Target = newTarget;
-		LayerInteraction.Page page = LayerInteraction.GetPage(LayerInteraction.Target);
-		((LayerInteraction.Instance != null) ? LayerInteraction.Instance : ELayer.ui.AddLayer<LayerInteraction>()).ShowPage(page);
-	}
-
-	public static bool TryShow(bool quick)
-	{
-		if (!Scene.HitPoint.IsValid)
-		{
-			return false;
-		}
-		LayerInteraction.Show(ELayer.scene.mouseTarget.pos.ListInspectorTargets().NextItem(LayerInteraction.Target));
-		return true;
-	}
-
-	public static LayerInteraction.Page GetPage(IInspect o)
-	{
-		LayerInteraction.Page page = new LayerInteraction.Page();
-		List<LayerInteraction.Item> items = page.items;
-		if (o is Area)
-		{
-			Area area = o as Area;
-			page.area = area;
-		}
-		else if (o is Chara)
-		{
-			Chara t = o as Chara;
-			string text = "charaInfo".lang();
-			if (!t.IsHomeMember())
-			{
-				text = text + "(" + "unidentified".lang() + ")";
-			}
-			if (t.IsHomeMember())
-			{
-				page.Add(t, "tTalk".lang(), "", delegate()
-				{
-					t.ShowDialog();
-				}, 0, false);
-			}
-			else
-			{
-				page.Add(t, text, "", delegate()
-				{
-					if (!t.IsHomeMember())
-					{
-						SE.Beep();
-						return;
-					}
-				}, 0, false);
-			}
-		}
-		else if (o is Thing)
-		{
-			Thing t = o as Thing;
-			page.Add(t, "objInfo", "", delegate()
-			{
-				ELayer.ui.AddLayer<LayerInfo>().Set(t, false);
-			}, 0, false);
-			if (t.trait is TraitQuestBoard)
-			{
-				page.Add(t, "quest", "", delegate()
-				{
-					ELayer.ui.AddLayer<LayerQuestBoard>();
-				}, 20, true);
-				page.Add(t, "hire", "", delegate()
-				{
-					ELayer.ui.AddLayer<LayerHire>();
-				}, 20, true);
-			}
-			if (t.trait is TraitGacha)
-			{
-				page.Add(t, "gacha", "", delegate()
-				{
-					ELayer.ui.AddLayer<LayerGacha>();
-				}, 10, true);
-			}
-			if (t.trait.IsFactory)
-			{
-				page.Add(t, "craft", "icon_Inspect", delegate()
-				{
-					ELayer.ui.AddLayer<LayerCraft>().SetFactory(t);
-				}, 100, true);
-			}
-			if (t.IsInstalled)
-			{
-				page.Add(t, "move", "", delegate()
-				{
-					ActionMode.Inspect.Activate(t);
-				}, 0, false);
-			}
-		}
-		return page;
-	}
-
-	public void Show(List<LayerInteraction.Page> _pages, LayerInteraction.Mode _mode)
-	{
-		this.pages = _pages;
-		this.mode = _mode;
-		LayerInteraction.Mode mode = this.mode;
-		if (mode != LayerInteraction.Mode.Map)
-		{
-			if (mode == LayerInteraction.Mode.EloMap)
-			{
-				LayerInteraction.Page page = new LayerInteraction.Page();
-				this.pages = new List<LayerInteraction.Page>();
-				this.pages.Add(page);
-				page.Add(null, "test1", "", delegate()
-				{
-				}, 0, false);
-				page.Add(null, "test2", "", delegate()
-				{
-				}, 0, false);
-			}
-		}
-		else
-		{
-			this.point.Set(Scene.HitPoint);
-		}
-		foreach (LayerInteraction.Page page2 in this.pages)
-		{
-			ButtonGrid buttonGrid = this.menu.Add() as ButtonGrid;
-			page2.button = buttonGrid;
-			buttonGrid.SetObject(page2.items[0].target);
-			LayerInteraction.Page _page = page2;
-			buttonGrid.onClick.AddListener(delegate()
-			{
-				this.ShowPage(_page);
-				SE.Click();
-			});
-			buttonGrid.RebuildLayout(true);
-		}
-		this.menu.Show();
-		this.ShowPage(0);
-	}
-
-	public void ShowPage(int index)
-	{
-		this.ShowPage(this.pages[index]);
-	}
-
-	public void ShowPage(LayerInteraction.Page page)
-	{
-		this.menu.Clear();
-		using (List<LayerInteraction.Item>.Enumerator enumerator = page.items.GetEnumerator())
-		{
-			while (enumerator.MoveNext())
-			{
-				LayerInteraction.Item item = enumerator.Current;
-				UIButton uibutton = this.menu.Add();
-				uibutton.icon.sprite = (SpriteSheet.Get(item.idSprite.IsEmpty("icon_" + item.text)) ?? uibutton.icon.sprite);
-				uibutton.mainText.SetText((item.textFunc != null) ? item.textFunc() : item.text.lang());
-				uibutton.onClick.AddListener(delegate()
-				{
-					item.action();
-					if (item.reload)
-					{
-						this.Reload();
-						this.ShowPage(page);
-					}
-				});
-				uibutton.RebuildLayout(true);
-			}
-		}
-		Chara chara = LayerInteraction.Target as Chara;
-		bool flag = chara != null && chara.IsHomeMember();
-		this.windowChara.SetActive(flag);
-		if (flag)
-		{
-			this.windowChara.SetChara(chara);
-		}
-		this.menu.Show();
-	}
-
-	public void Reload()
-	{
-	}
-
-	public static LayerInteraction Instance;
-
-	public static IInspect Target;
-
-	public LayerInteraction.Mode mode;
-
-	public Point point;
-
-	public List<LayerInteraction.Page> pages = new List<LayerInteraction.Page>();
-
-	private bool first = true;
-
-	public InteractionMenu menu;
-
-	public WindowChara windowChara;
-
 	public enum Mode
 	{
 		Map,
@@ -242,9 +15,15 @@ public class LayerInteraction : ELayer
 
 	public class Page
 	{
-		public LayerInteraction.Item Add(object target, string text, string idSprite, Action action, int priority = 0, bool auto = false)
+		public UIButton button;
+
+		public Area area;
+
+		public List<Item> items = new List<Item>();
+
+		public Item Add(object target, string text, string idSprite, Action action, int priority = 0, bool auto = false)
 		{
-			LayerInteraction.Item item = new LayerInteraction.Item
+			Item item = new Item
 			{
 				target = target,
 				text = text,
@@ -253,45 +32,31 @@ public class LayerInteraction : ELayer
 				priority = priority,
 				auto = auto
 			};
-			this.items.Add(item);
+			items.Add(item);
 			return item;
 		}
 
-		public LayerInteraction.Item Add(object target, string text, Func<bool> valueFunc, Action<bool> action)
+		public Item Add(object target, string text, Func<bool> valueFunc, Action<bool> action)
 		{
-			Action action2 = delegate()
+			Action action2 = delegate
 			{
 				SE.Click();
 				action(!valueFunc());
 			};
-			LayerInteraction.Item item = new LayerInteraction.Item
+			Item item = new Item
 			{
 				target = target,
-				textFunc = (() => text.lang() + " (" + (valueFunc() ? "on" : "off") + ")"),
+				textFunc = () => text.lang() + " (" + (valueFunc() ? "on" : "off") + ")",
 				action = action2,
 				reload = true
 			};
-			this.items.Add(item);
+			items.Add(item);
 			return item;
 		}
-
-		public UIButton button;
-
-		public Area area;
-
-		public List<LayerInteraction.Item> items = new List<LayerInteraction.Item>();
 	}
 
 	public class Item
 	{
-		public bool IsArea
-		{
-			get
-			{
-				return this.target is Area;
-			}
-		}
-
 		public object target;
 
 		public string text;
@@ -307,5 +72,225 @@ public class LayerInteraction : ELayer
 		public bool reload;
 
 		public Func<string> textFunc;
+
+		public bool IsArea => target is Area;
+	}
+
+	public static LayerInteraction Instance;
+
+	public static IInspect Target;
+
+	public Mode mode;
+
+	public Point point;
+
+	public List<Page> pages = new List<Page>();
+
+	private bool first = true;
+
+	public InteractionMenu menu;
+
+	public WindowChara windowChara;
+
+	public override void OnInit()
+	{
+		Instance = this;
+		first = true;
+	}
+
+	public override void OnKill()
+	{
+		Target = null;
+	}
+
+	private void Update()
+	{
+		if (mode == Mode.Map)
+		{
+			_ = ELayer.screen.tileSelector;
+			MeshPass obj = ((point.HasBlock || point.cell.liquidLv > 0) ? ELayer.screen.guide.passGuideBlock : ELayer.screen.guide.passGuideFloor);
+			int num = 0;
+			Vector3 vector = point.Position();
+			obj.Add(vector.x, vector.y, vector.z, num, 0.3f);
+		}
+	}
+
+	public override void OnUpdateInput()
+	{
+	}
+
+	public static void Show(IInspect newTarget)
+	{
+		if (Target != newTarget)
+		{
+			Target = newTarget;
+			Page page = GetPage(Target);
+			((Instance != null) ? Instance : ELayer.ui.AddLayer<LayerInteraction>()).ShowPage(page);
+		}
+	}
+
+	public static bool TryShow(bool quick)
+	{
+		if (!Scene.HitPoint.IsValid)
+		{
+			return false;
+		}
+		Show(ELayer.scene.mouseTarget.pos.ListInspectorTargets().NextItem(Target));
+		return true;
+	}
+
+	public static Page GetPage(IInspect o)
+	{
+		Page page = new Page();
+		_ = page.items;
+		if (o is Area)
+		{
+			Area area = o as Area;
+			page.area = area;
+		}
+		else if (o is Chara)
+		{
+			Chara t = o as Chara;
+			string text = "charaInfo".lang();
+			if (!t.IsHomeMember())
+			{
+				text = text + "(" + "unidentified".lang() + ")";
+			}
+			if (t.IsHomeMember())
+			{
+				page.Add(t, "tTalk".lang(), "", delegate
+				{
+					t.ShowDialog();
+				});
+			}
+			else
+			{
+				page.Add(t, text, "", delegate
+				{
+					if (!t.IsHomeMember())
+					{
+						SE.Beep();
+					}
+				});
+			}
+		}
+		else if (o is Thing)
+		{
+			Thing t2 = o as Thing;
+			page.Add(t2, "objInfo", "", delegate
+			{
+				ELayer.ui.AddLayer<LayerInfo>().Set(t2);
+			});
+			if (t2.trait is TraitQuestBoard)
+			{
+				page.Add(t2, "quest", "", delegate
+				{
+					ELayer.ui.AddLayer<LayerQuestBoard>();
+				}, 20, auto: true);
+				page.Add(t2, "hire", "", delegate
+				{
+					ELayer.ui.AddLayer<LayerHire>();
+				}, 20, auto: true);
+			}
+			if (t2.trait is TraitGacha)
+			{
+				page.Add(t2, "gacha", "", delegate
+				{
+					ELayer.ui.AddLayer<LayerGacha>();
+				}, 10, auto: true);
+			}
+			if (t2.trait.IsFactory)
+			{
+				page.Add(t2, "craft", "icon_Inspect", delegate
+				{
+					ELayer.ui.AddLayer<LayerCraft>().SetFactory(t2);
+				}, 100, auto: true);
+			}
+			if (t2.IsInstalled)
+			{
+				page.Add(t2, "move", "", delegate
+				{
+					ActionMode.Inspect.Activate(t2);
+				});
+			}
+		}
+		return page;
+	}
+
+	public void Show(List<Page> _pages, Mode _mode)
+	{
+		pages = _pages;
+		mode = _mode;
+		switch (mode)
+		{
+		case Mode.Map:
+			point.Set(Scene.HitPoint);
+			break;
+		case Mode.EloMap:
+		{
+			Page page = new Page();
+			pages = new List<Page>();
+			pages.Add(page);
+			page.Add(null, "test1", "", delegate
+			{
+			});
+			page.Add(null, "test2", "", delegate
+			{
+			});
+			break;
+		}
+		}
+		foreach (Page page2 in pages)
+		{
+			ButtonGrid buttonGrid = (ButtonGrid)(page2.button = menu.Add() as ButtonGrid);
+			buttonGrid.SetObject(page2.items[0].target);
+			Page _page = page2;
+			buttonGrid.onClick.AddListener(delegate
+			{
+				ShowPage(_page);
+				SE.Click();
+			});
+			buttonGrid.RebuildLayout(recursive: true);
+		}
+		menu.Show();
+		ShowPage(0);
+	}
+
+	public void ShowPage(int index)
+	{
+		ShowPage(pages[index]);
+	}
+
+	public void ShowPage(Page page)
+	{
+		menu.Clear();
+		foreach (Item item in page.items)
+		{
+			UIButton uIButton = menu.Add();
+			uIButton.icon.sprite = SpriteSheet.Get(item.idSprite.IsEmpty("icon_" + item.text)) ?? uIButton.icon.sprite;
+			uIButton.mainText.SetText((item.textFunc != null) ? item.textFunc() : item.text.lang());
+			uIButton.onClick.AddListener(delegate
+			{
+				item.action();
+				if (item.reload)
+				{
+					Reload();
+					ShowPage(page);
+				}
+			});
+			uIButton.RebuildLayout(recursive: true);
+		}
+		Chara chara = Target as Chara;
+		bool flag = chara?.IsHomeMember() ?? false;
+		windowChara.SetActive(flag);
+		if (flag)
+		{
+			windowChara.SetChara(chara);
+		}
+		menu.Show();
+	}
+
+	public void Reload()
+	{
 	}
 }

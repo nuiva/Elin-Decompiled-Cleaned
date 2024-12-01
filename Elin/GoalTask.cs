@@ -1,57 +1,57 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class GoalTask : Goal
 {
-	public TaskManager.Designations Designations
-	{
-		get
-		{
-			return EClass._map.tasks.designations;
-		}
-	}
+	public Task task;
 
-	public override IEnumerable<AIAct.Status> Run()
+	public Area area;
+
+	public bool manual;
+
+	public TaskList taskList;
+
+	public TaskManager.Designations Designations => EClass._map.tasks.designations;
+
+	public override IEnumerable<Status> Run()
 	{
-		if (this.manual)
+		if (manual)
 		{
-			yield return base.Do(this.task, null);
-			yield return base.Success(null);
+			yield return Do(task);
+			yield return Success();
 		}
 		if (EClass.rnd(2) == 0)
 		{
-			yield return base.Do(new AI_Clean(), null);
+			yield return Do(new AI_Clean());
 		}
 		if (EClass.rnd(3) == 0 && EClass._map.props.deconstructing.Count > 0)
 		{
-			yield return base.Do(new AI_Deconstruct(), null);
+			yield return Do(new AI_Deconstruct());
 		}
-		this.area = null;
-		this.taskList = null;
-		if (!this.TryAssignDesignations())
+		area = null;
+		taskList = null;
+		if (!TryAssignDesignations())
 		{
-			yield return AIAct.Status.Running;
-			if (!this.TryAssignAreaTask())
+			yield return Status.Running;
+			if (!TryAssignAreaTask())
 			{
-				yield return this.Cancel();
+				yield return Cancel();
 			}
 		}
 		do
 		{
-			yield return base.Do(this.task, null);
+			yield return Do(task);
 		}
-		while (this.taskList != null && (this.TryAssignTask(1) || this.TryAssignTask(3) || this.TryAssignTask(9)));
-		yield break;
+		while (taskList != null && (TryAssignTask(1) || TryAssignTask(3) || TryAssignTask(9)));
 	}
 
 	public bool TryAssignAreaTask()
 	{
-		foreach (Area area in EClass._map.rooms.listArea)
+		foreach (Area item in EClass._map.rooms.listArea)
 		{
-			if (this.TryAssignAreaTask(area))
+			if (TryAssignAreaTask(item))
 			{
-				this.area = area;
-				this.taskList = area.taskList;
+				area = item;
+				taskList = item.taskList;
 				return true;
 			}
 		}
@@ -60,22 +60,46 @@ public class GoalTask : Goal
 
 	public bool TryAssignAreaTask(Area a)
 	{
-		this.task = a.taskList.GetTask(this.owner, -1);
-		return this.task != null;
+		task = a.taskList.GetTask(owner);
+		return task != null;
 	}
 
 	public bool TryAssignDesignations()
 	{
-		TaskManager.Designations designations = this.Designations;
-		return (EClass.rnd(2) == 0 && this.TryAssignTask(designations.moveInstalled)) || (EClass.rnd(2) == 0 && this.TryAssignTask(designations.cut)) || (EClass.rnd(2) == 0 && this.TryAssignTask(designations.harvest)) || (EClass.rnd(2) == 0 && this.TryAssignTask(designations.mine)) || (EClass.rnd(2) == 0 && this.TryAssignTask(designations.dig)) || (EClass.rnd(2) == 0 && this.TryAssignTask(designations.build));
+		TaskManager.Designations designations = Designations;
+		if (EClass.rnd(2) == 0 && TryAssignTask(designations.moveInstalled))
+		{
+			return true;
+		}
+		if (EClass.rnd(2) == 0 && TryAssignTask(designations.cut))
+		{
+			return true;
+		}
+		if (EClass.rnd(2) == 0 && TryAssignTask(designations.harvest))
+		{
+			return true;
+		}
+		if (EClass.rnd(2) == 0 && TryAssignTask(designations.mine))
+		{
+			return true;
+		}
+		if (EClass.rnd(2) == 0 && TryAssignTask(designations.dig))
+		{
+			return true;
+		}
+		if (EClass.rnd(2) == 0 && TryAssignTask(designations.build))
+		{
+			return true;
+		}
+		return false;
 	}
 
 	public bool TryAssignTask(TaskList list)
 	{
-		this.task = list.GetTask(this.owner, -1);
-		if (this.task != null)
+		task = list.GetTask(owner);
+		if (task != null)
 		{
-			this.taskList = list;
+			taskList = list;
 			return true;
 		}
 		return false;
@@ -83,24 +107,16 @@ public class GoalTask : Goal
 
 	public bool TryAssignTask(int radius)
 	{
-		if (this.area == null)
+		if (area != null)
 		{
-			this.task = this.taskList.GetTask(this.owner, radius);
-			return this.task != null;
+			if (area.isDestroyed)
+			{
+				return false;
+			}
+			task = taskList.GetTask(owner, radius);
+			return task != null;
 		}
-		if (this.area.isDestroyed)
-		{
-			return false;
-		}
-		this.task = this.taskList.GetTask(this.owner, radius);
-		return this.task != null;
+		task = taskList.GetTask(owner, radius);
+		return task != null;
 	}
-
-	public Task task;
-
-	public Area area;
-
-	public bool manual;
-
-	public TaskList taskList;
 }

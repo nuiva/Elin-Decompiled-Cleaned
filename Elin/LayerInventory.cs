@@ -1,22 +1,41 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class LayerInventory : ELayer
 {
+	public static List<LayerInventory> listInv = new List<LayerInventory>();
+
+	public static InvOwner highlightInv;
+
+	public List<UIInventory> invs = new List<UIInventory>();
+
+	public UICurrency uiCurrency;
+
+	public bool floatInv;
+
+	public bool mainInv;
+
+	public WindowCharaMini mini;
+
+	[NonSerialized]
+	public bool wasInventoryOpen;
+
+	public InvOwner Inv => invs[0].tabs[0].owner;
+
 	public static LayerInventory GetTopLayer(Thing t, bool includePlayer = false, InvOwner exclude = null)
 	{
 		LayerInventory result = null;
 		int num = -1;
-		foreach (LayerInventory layerInventory in LayerInventory.listInv)
+		foreach (LayerInventory item in listInv)
 		{
-			if (layerInventory.IsPlayerContainer(includePlayer) && layerInventory.Inv != exclude && !layerInventory.Inv.Container.IsToolbelt && !layerInventory.Inv.Container.things.IsFull(t, false, true))
+			if (item.IsPlayerContainer(includePlayer) && item.Inv != exclude && !item.Inv.Container.IsToolbelt && !item.Inv.Container.things.IsFull(t, recursive: false))
 			{
-				int siblingIndex = layerInventory.transform.GetSiblingIndex();
+				int siblingIndex = item.transform.GetSiblingIndex();
 				if (siblingIndex > num)
 				{
 					num = siblingIndex;
-					result = layerInventory;
+					result = item;
 				}
 			}
 		}
@@ -26,11 +45,11 @@ public class LayerInventory : ELayer
 	public static LayerInventory GetPCLayer()
 	{
 		LayerInventory result = null;
-		foreach (LayerInventory layerInventory in LayerInventory.listInv)
+		foreach (LayerInventory item in listInv)
 		{
-			if (layerInventory.Inv.Container.IsPC)
+			if (item.Inv.Container.IsPC)
 			{
-				return layerInventory;
+				return item;
 			}
 		}
 		return result;
@@ -38,11 +57,11 @@ public class LayerInventory : ELayer
 
 	public static void Close(Thing t)
 	{
-		foreach (LayerInventory layerInventory in LayerInventory.listInv)
+		foreach (LayerInventory item in listInv)
 		{
-			if (layerInventory.invs[0].owner.Container == t)
+			if (item.invs[0].owner.Container == t)
 			{
-				layerInventory.Close();
+				item.Close();
 				break;
 			}
 		}
@@ -50,14 +69,11 @@ public class LayerInventory : ELayer
 
 	public static bool IsOpen(Thing t)
 	{
-		using (List<LayerInventory>.Enumerator enumerator = LayerInventory.listInv.GetEnumerator())
+		foreach (LayerInventory item in listInv)
 		{
-			while (enumerator.MoveNext())
+			if (item.invs[0].owner.Container == t)
 			{
-				if (enumerator.Current.invs[0].owner.Container == t)
-				{
-					return true;
-				}
+				return true;
 			}
 		}
 		return false;
@@ -69,11 +85,11 @@ public class LayerInventory : ELayer
 		{
 			return;
 		}
-		foreach (LayerInventory layerInventory in LayerInventory.listInv)
+		foreach (LayerInventory item in listInv)
 		{
-			if (layerInventory.invs[0].owner.Container == t.parent || (layerInventory.mini && layerInventory.mini.gameObject.activeInHierarchy))
+			if (item.invs[0].owner.Container == t.parent || ((bool)item.mini && item.mini.gameObject.activeInHierarchy))
 			{
-				layerInventory.invs[0].dirty = true;
+				item.invs[0].dirty = true;
 			}
 		}
 		if (t.invY == 1 || ELayer.pc.held == t)
@@ -88,15 +104,15 @@ public class LayerInventory : ELayer
 
 	public static void SetDirtyAll(bool immediate = false)
 	{
-		foreach (LayerInventory layerInventory in LayerInventory.listInv)
+		foreach (LayerInventory item in listInv)
 		{
-			layerInventory.invs[0].dirty = true;
+			item.invs[0].dirty = true;
 			if (immediate)
 			{
-				layerInventory.invs[0].CheckDirty();
+				item.invs[0].CheckDirty();
 			}
 		}
-		if (WidgetEquip.Instance)
+		if ((bool)WidgetEquip.Instance)
 		{
 			WidgetEquip.dirty = true;
 			if (immediate)
@@ -114,52 +130,55 @@ public class LayerInventory : ELayer
 	public static void TryShowGuide(UIList list)
 	{
 		List<ButtonGrid> list2 = new List<ButtonGrid>();
-		foreach (UIList.ButtonPair buttonPair in list.buttons)
+		foreach (UIList.ButtonPair button in list.buttons)
 		{
-			ButtonGrid buttonGrid = buttonPair.component as ButtonGrid;
-			if (buttonGrid)
+			ButtonGrid buttonGrid = button.component as ButtonGrid;
+			if ((bool)buttonGrid)
 			{
 				list2.Add(buttonGrid);
 			}
 		}
-		LayerInventory.TryShowGuide(list2);
+		TryShowGuide(list2);
 	}
 
 	public static void TryShowGuide(List<ButtonGrid> list)
 	{
 		bool flag = InvOwner.HasTrader && InvOwner.Trader.UseGuide;
-		bool flag2 = WidgetSearch.Instance && WidgetSearch.selected != null;
+		bool flag2 = (bool)WidgetSearch.Instance && WidgetSearch.selected != null;
 		if (!flag2 && WidgetEquip.dragEquip == null && LayerAbility.hotElement == null && !flag)
 		{
 			return;
 		}
-		foreach (ButtonGrid buttonGrid in list)
+		foreach (ButtonGrid item in list)
 		{
-			Thing thing = buttonGrid.card as Thing;
+			Thing thing = item.card as Thing;
 			if (LayerAbility.hotElement != null)
 			{
-				if (buttonGrid && buttonGrid.invOwner != null && (thing == null || thing.trait is TraitAbility) && buttonGrid.invOwner.owner == ELayer.pc && !(buttonGrid.invOwner is InvOwnerEquip))
+				if ((bool)item && item.invOwner != null && (thing == null || thing.trait is TraitAbility) && item.invOwner.owner == ELayer.pc && !(item.invOwner is InvOwnerEquip))
 				{
-					buttonGrid.Attach("guide", false);
+					item.Attach("guide", rightAttach: false);
 				}
 			}
 			else if (WidgetEquip.dragEquip != null && !flag)
 			{
-				InvOwnerEquip invOwnerEquip = buttonGrid.invOwner as InvOwnerEquip;
-				if (invOwnerEquip != null && invOwnerEquip.slot.elementId == WidgetEquip.dragEquip.category.slot)
+				if (item.invOwner is InvOwnerEquip invOwnerEquip && invOwnerEquip.slot.elementId == WidgetEquip.dragEquip.category.slot)
 				{
-					buttonGrid.Attach("guide", false);
+					item.Attach("guide", rightAttach: false);
 				}
 			}
 			else if (flag2)
 			{
-				if (buttonGrid.card == WidgetSearch.selected || buttonGrid.card == WidgetSearch.selected.parent)
+				if (item.card == WidgetSearch.selected || item.card == WidgetSearch.selected.parent)
 				{
-					buttonGrid.Attach("guide", false);
+					item.Attach("guide", rightAttach: false);
 				}
 			}
-			else if (thing != null)
+			else
 			{
+				if (thing == null)
+				{
+					continue;
+				}
 				bool show = InvOwner.Trader.ShouldShowGuide(thing);
 				if (!show && thing.CanSearchContents)
 				{
@@ -169,33 +188,33 @@ public class LayerInventory : ELayer
 						{
 							show = true;
 						}
-					}, true);
+					});
 				}
 				if (show)
 				{
-					buttonGrid.Attach("guide", false);
+					item.Attach("guide", rightAttach: false);
 				}
 			}
 		}
 	}
 
-	public InvOwner Inv
-	{
-		get
-		{
-			return this.invs[0].tabs[0].owner;
-		}
-	}
-
 	public bool IsPlayerContainer(bool includePlayer = false)
 	{
-		return this.invs[0].tabs[0].mode == UIInventory.Mode.All && (includePlayer || this.invs[0].owner.Container != ELayer.pc) && this.invs[0].owner.Container.GetRootCard() == ELayer.pc;
+		if (invs[0].tabs[0].mode != UIInventory.Mode.All)
+		{
+			return false;
+		}
+		if (!includePlayer && invs[0].owner.Container == ELayer.pc)
+		{
+			return false;
+		}
+		return invs[0].owner.Container.GetRootCard() == ELayer.pc;
 	}
 
 	public Card GetPlayerContainer()
 	{
-		UIInventory.Tab tab = this.invs[0].tabs[0];
-		if (!this.IsPlayerContainer(false))
+		UIInventory.Tab tab = invs[0].tabs[0];
+		if (!IsPlayerContainer())
 		{
 			return null;
 		}
@@ -209,22 +228,22 @@ public class LayerInventory : ELayer
 
 	public override void OnInit()
 	{
-		foreach (UIInventory uiinventory in this.invs)
+		foreach (UIInventory inv in invs)
 		{
-			uiinventory.OnInit();
+			inv.OnInit();
 		}
-		LayerInventory.listInv.Add(this);
-		if (this.Inv.Container == ELayer.pc)
+		listInv.Add(this);
+		if (Inv.Container == ELayer.pc)
 		{
-			InvOwner.Main = this.Inv;
+			InvOwner.Main = Inv;
 		}
-		if (!this.floatInv)
+		if (!floatInv)
 		{
-			InvOwner.Trader = this.Inv;
-			this.wasInventoryOpen = ELayer.ui.IsInventoryOpen;
-			if (!this.wasInventoryOpen)
+			InvOwner.Trader = Inv;
+			wasInventoryOpen = ELayer.ui.IsInventoryOpen;
+			if (!wasInventoryOpen)
 			{
-				ELayer.ui.OpenFloatInv(true);
+				ELayer.ui.OpenFloatInv(ignoreSound: true);
 			}
 		}
 	}
@@ -235,9 +254,9 @@ public class LayerInventory : ELayer
 		{
 			ELayer.core.actionsNextFrame.Add(delegate
 			{
-				if (this.invs[0] && this.invs[0].gameObject)
+				if ((bool)invs[0] && (bool)invs[0].gameObject)
 				{
-					this.invs[0].RefreshHighlight();
+					invs[0].RefreshHighlight();
 				}
 			});
 		});
@@ -245,17 +264,17 @@ public class LayerInventory : ELayer
 
 	public UIInventory SetInv(int idWindow = 0)
 	{
-		UIInventory uiinventory = this.invs[idWindow];
-		uiinventory.window = this.windows[idWindow];
-		uiinventory.layer = this;
-		return uiinventory;
+		UIInventory uIInventory = invs[idWindow];
+		uIInventory.window = windows[idWindow];
+		uIInventory.layer = this;
+		return uIInventory;
 	}
 
 	public override void OnUpdateInput()
 	{
 		if (EInput.action == EAction.MenuInventory || Input.GetKeyDown(KeyCode.Tab))
 		{
-			this.Close();
+			Close();
 			EInput.WaitReleaseKey();
 			return;
 		}
@@ -268,25 +287,25 @@ public class LayerInventory : ELayer
 
 	public override void OnKill()
 	{
-		LayerInventory.listInv.Remove(this);
+		listInv.Remove(this);
 		EInput.haltInput = false;
-		if (this.Inv == InvOwner.Trader)
+		if (Inv == InvOwner.Trader)
 		{
-			if (this.Inv.UseGuide)
+			if (Inv.UseGuide)
 			{
-				LayerInventory.SetDirtyAll(false);
+				SetDirtyAll();
 			}
 			InvOwner.Trader = null;
-			if (!this.wasInventoryOpen && ELayer.ui.IsInventoryOpen)
+			if (!wasInventoryOpen && ELayer.ui.IsInventoryOpen)
 			{
-				ELayer.ui.ToggleInventory(false);
+				ELayer.ui.ToggleInventory();
 			}
 		}
-		if (this.Inv.Container == ELayer.pc)
+		if (Inv.Container == ELayer.pc)
 		{
 			InvOwner.Main = null;
 		}
-		if (!ELayer.game.isKilling && this.Inv.owner == ELayer.pc)
+		if (!ELayer.game.isKilling && Inv.owner == ELayer.pc)
 		{
 			SE.Play("pop_inventory_deactivate");
 		}
@@ -294,22 +313,22 @@ public class LayerInventory : ELayer
 
 	private void OnDestroy()
 	{
-		if (this.invs.Count > 0)
+		if (invs.Count > 0)
 		{
-			LayerInventory.SetDirty(this.invs[0].owner.Container.Thing);
+			SetDirty(invs[0].owner.Container.Thing);
 		}
-		LayerInventory.listInv.Remove(this);
+		listInv.Remove(this);
 	}
 
 	public override void OnRightClick()
 	{
-		if (this.invs[0].isList)
+		if (invs[0].isList)
 		{
 			base.OnRightClick();
 		}
-		if (!this.invs[0].floatMode && InputModuleEX.GetComponentOf<ButtonGrid>() == null)
+		if (!invs[0].floatMode && InputModuleEX.GetComponentOf<ButtonGrid>() == null)
 		{
-			this.Close();
+			Close();
 		}
 	}
 
@@ -324,24 +343,24 @@ public class LayerInventory : ELayer
 
 	public static LayerInventory CreatePCBackpack(bool mousePos = false)
 	{
-		LayerInventory layerInventory = LayerInventory._Create("LayerInventoryFloatMain");
+		LayerInventory layerInventory = _Create("LayerInventoryFloatMain");
 		Window window = layerInventory.windows[0];
 		layerInventory.mainInv = true;
 		window.setting.saveWindow = true;
-		UIInventory uiinventory = layerInventory.SetInv(0);
-		uiinventory.AddTab(new InvOwner(ELayer.pc, null, CurrencyType.None, PriceType.Default), UIInventory.Mode.All);
-		uiinventory.SetHeader("stash");
-		uiinventory.floatMode = true;
+		UIInventory uIInventory = layerInventory.SetInv();
+		uIInventory.AddTab(new InvOwner(ELayer.pc));
+		uIInventory.SetHeader("stash");
+		uIInventory.floatMode = true;
 		return layerInventory;
 	}
 
 	public static bool CloseAllyInv(Chara c)
 	{
-		foreach (LayerInventory layerInventory in LayerInventory.listInv.Copy<LayerInventory>())
+		foreach (LayerInventory item in listInv.Copy())
 		{
-			if (layerInventory.Inv.owner == c)
+			if (item.Inv.owner == c)
 			{
-				ELayer.ui.layerFloat.RemoveLayer(layerInventory);
+				ELayer.ui.layerFloat.RemoveLayer(item);
 				return true;
 			}
 		}
@@ -350,26 +369,26 @@ public class LayerInventory : ELayer
 
 	public static void CloseAllyInv()
 	{
-		foreach (LayerInventory layerInventory in LayerInventory.listInv.Copy<LayerInventory>())
+		foreach (LayerInventory item in listInv.Copy())
 		{
-			if (!layerInventory.IsPlayerContainer(true))
+			if (!item.IsPlayerContainer(includePlayer: true))
 			{
-				ELayer.ui.layerFloat.RemoveLayer(layerInventory);
+				ELayer.ui.layerFloat.RemoveLayer(item);
 			}
 		}
 	}
 
 	public static LayerInventory CreateContainerAlly(Chara owner, Card container)
 	{
-		LayerInventory.SetDirty(container.Thing);
-		LayerInventory.CloseAllyInv();
-		LayerInventory layerInventory = LayerInventory._Create("LayerInventoryFloat");
-		UIInventory uiinventory = layerInventory.SetInv(0);
+		SetDirty(container.Thing);
+		CloseAllyInv();
+		LayerInventory layerInventory = _Create("LayerInventoryFloat");
+		UIInventory uIInventory = layerInventory.SetInv();
 		Window window = layerInventory.windows[0];
-		window.buttonClose.SetActive(true);
-		uiinventory.AddTab(new InvOwnerAlly(owner, container.Thing, CurrencyType.Money), UIInventory.Mode.All);
-		uiinventory.tabs[0].textTab = container.Name;
-		uiinventory.floatMode = true;
+		window.buttonClose.SetActive(enable: true);
+		uIInventory.AddTab(new InvOwnerAlly(owner, container.Thing));
+		uIInventory.tabs[0].textTab = container.Name;
+		uIInventory.floatMode = true;
 		if (ELayer.player.windowAllyInv == null)
 		{
 			Vector2 sizeDelta = window.Rect().sizeDelta;
@@ -394,14 +413,11 @@ public class LayerInventory : ELayer
 
 	public static bool IsOpen(Card container)
 	{
-		using (List<LayerInventory>.Enumerator enumerator = LayerInventory.listInv.GetEnumerator())
+		foreach (LayerInventory item in listInv)
 		{
-			while (enumerator.MoveNext())
+			if (item.GetPlayerContainer() == container)
 			{
-				if (enumerator.Current.GetPlayerContainer() == container)
-				{
-					return true;
-				}
+				return true;
 			}
 		}
 		return false;
@@ -409,32 +425,32 @@ public class LayerInventory : ELayer
 
 	public static LayerInventory CreateContainerPC(Card container)
 	{
-		LayerInventory.SetDirty(container.Thing);
-		foreach (LayerInventory layerInventory in LayerInventory.listInv)
+		SetDirty(container.Thing);
+		foreach (LayerInventory item in listInv)
 		{
-			if (layerInventory.GetPlayerContainer() == container)
+			if (item.GetPlayerContainer() == container)
 			{
-				ELayer.ui.layerFloat.RemoveLayer(layerInventory);
+				ELayer.ui.layerFloat.RemoveLayer(item);
 				return null;
 			}
 		}
-		LayerInventory layerInventory2 = LayerInventory._Create("LayerInventoryFloat");
-		UIInventory uiinventory = layerInventory2.SetInv(0);
-		Window window = layerInventory2.windows[0];
-		Vector2 vector = default(Vector2);
+		LayerInventory layerInventory = _Create("LayerInventoryFloat");
+		UIInventory uIInventory = layerInventory.SetInv();
+		Window window = layerInventory.windows[0];
+		Vector2 anchoredPosition = default(Vector2);
 		bool flag = container.c_windowSaveData == null;
-		window.buttonClose.SetActive(true);
-		uiinventory.AddTab(new InvOwner(ELayer.pc, container.Thing, CurrencyType.None, PriceType.Default), UIInventory.Mode.All);
-		uiinventory.tabs[0].textTab = container.Name;
-		uiinventory.floatMode = true;
+		window.buttonClose.SetActive(enable: true);
+		uIInventory.AddTab(new InvOwner(ELayer.pc, container.Thing));
+		uIInventory.tabs[0].textTab = container.Name;
+		uIInventory.floatMode = true;
 		if (container.c_windowSaveData == null)
 		{
-			vector = window.Rect().anchoredPosition + new Vector2(-80f, -80f);
+			anchoredPosition = window.Rect().anchoredPosition + new Vector2(-80f, -80f);
 			Vector2 sizeDelta = window.Rect().sizeDelta;
 			container.c_windowSaveData = new Window.SaveData
 			{
-				x = vector.x,
-				y = vector.y,
+				x = anchoredPosition.x,
+				y = anchoredPosition.y,
 				w = sizeDelta.x,
 				h = sizeDelta.y,
 				anchor = RectPosition.Auto,
@@ -454,9 +470,9 @@ public class LayerInventory : ELayer
 		window.saveData.open = true;
 		if (container.IsToolbelt)
 		{
-			return layerInventory2;
+			return layerInventory;
 		}
-		ELayer.ui.layerFloat.AddLayer(layerInventory2);
+		ELayer.ui.layerFloat.AddLayer(layerInventory);
 		if (flag)
 		{
 			RectTransform rectTransform = window.Rect();
@@ -464,17 +480,17 @@ public class LayerInventory : ELayer
 			{
 				rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
 				rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-				vector = new Vector2(0f, rectTransform.sizeDelta.y / 2f);
+				anchoredPosition = new Vector2(0f, rectTransform.sizeDelta.y / 2f);
 			}
 			else
 			{
 				RectTransform rectTransform2 = null;
 				RectTransform rectTransform3 = null;
-				foreach (LayerInventory layerInventory3 in LayerInventory.listInv)
+				foreach (LayerInventory item2 in listInv)
 				{
-					if (!(layerInventory3 == layerInventory2) && layerInventory3.IsFloat)
+					if (!(item2 == layerInventory) && item2.IsFloat)
 					{
-						RectTransform rectTransform4 = layerInventory3.windows[0].Rect();
+						RectTransform rectTransform4 = item2.windows[0].Rect();
 						if (!rectTransform3 || rectTransform4.Rect().localPosition.x < rectTransform3.Rect().localPosition.x)
 						{
 							rectTransform3 = rectTransform4;
@@ -485,39 +501,39 @@ public class LayerInventory : ELayer
 						}
 					}
 				}
-				if (uiinventory.tabs[0].owner.Container.things.width < 3 && rectTransform3)
+				if (uIInventory.tabs[0].owner.Container.things.width < 3 && (bool)rectTransform3)
 				{
 					rectTransform.anchorMin = rectTransform3.anchorMin;
 					rectTransform.anchorMax = rectTransform3.anchorMax;
-					vector.x = rectTransform3.anchoredPosition.x - rectTransform.sizeDelta.x - rectTransform3.sizeDelta.x * 0.5f + 35f;
-					vector.y = rectTransform3.anchoredPosition.y;
+					anchoredPosition.x = rectTransform3.anchoredPosition.x - rectTransform.sizeDelta.x - rectTransform3.sizeDelta.x * 0.5f + 35f;
+					anchoredPosition.y = rectTransform3.anchoredPosition.y;
 				}
-				else if (rectTransform2)
+				else if ((bool)rectTransform2)
 				{
 					rectTransform.anchorMin = rectTransform2.anchorMin;
 					rectTransform.anchorMax = rectTransform2.anchorMax;
-					vector.x = rectTransform2.anchoredPosition.x;
-					vector.y = rectTransform2.anchoredPosition.y + rectTransform.sizeDelta.y - 25f;
+					anchoredPosition.x = rectTransform2.anchoredPosition.x;
+					anchoredPosition.y = rectTransform2.anchoredPosition.y + rectTransform.sizeDelta.y - 25f;
 				}
 				else
 				{
 					rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
 					rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-					vector = Vector2.one;
+					anchoredPosition = Vector2.one;
 				}
 			}
-			rectTransform.anchoredPosition = vector;
+			rectTransform.anchoredPosition = anchoredPosition;
 			window.ClampToScreen();
 			window.UpdateSaveData();
 		}
-		return layerInventory2;
+		return layerInventory;
 	}
 
 	public static LayerInventory CreateContainer(Card owner)
 	{
 		if (owner.GetRootCard() == ELayer.pc)
 		{
-			return LayerInventory.CreateContainerPC(owner);
+			return CreateContainerPC(owner);
 		}
 		Card container = owner;
 		if (owner.trait is TraitShippingChest)
@@ -530,7 +546,7 @@ public class LayerInventory : ELayer
 			container = ELayer.game.cards.container_deliver;
 			Tutorial.Play("deliver_box");
 		}
-		return LayerInventory.CreateContainer(owner, container);
+		return CreateContainer(owner, container);
 	}
 
 	public static LayerInventory CreateContainer(Card owner, Card container)
@@ -539,8 +555,8 @@ public class LayerInventory : ELayer
 		{
 			SE.PopInventory();
 		}
-		LayerInventory layerInventory = LayerInventory._Create("");
-		layerInventory.SetInv(0).AddTab(owner, UIInventory.Mode.Take, container.Thing).dest = ELayer.pc;
+		LayerInventory layerInventory = _Create();
+		layerInventory.SetInv().AddTab(owner, UIInventory.Mode.Take, container.Thing).dest = ELayer.pc;
 		if (container.c_windowSaveData == null)
 		{
 			container.c_windowSaveData = new Window.SaveData
@@ -559,15 +575,10 @@ public class LayerInventory : ELayer
 
 	public static LayerInventory CreateContainer<T>(Card c, Card container, CurrencyType currency = CurrencyType.None) where T : InvOwner
 	{
-		LayerInventory layerInventory = LayerInventory._Create("");
-		UIInventory uiinventory = layerInventory.SetInv(0);
-		T t = Activator.CreateInstance(typeof(T), new object[]
-		{
-			c,
-			container,
-			currency
-		}) as T;
-		uiinventory.AddTab(t, UIInventory.Mode.Buy).dest = ELayer.pc;
+		LayerInventory layerInventory = _Create();
+		UIInventory uIInventory = layerInventory.SetInv();
+		T owner = Activator.CreateInstance(typeof(T), c, container, currency) as T;
+		uIInventory.AddTab(owner, UIInventory.Mode.Buy).dest = ELayer.pc;
 		if (container.c_windowSaveData == null)
 		{
 			container.c_windowSaveData = new Window.SaveData
@@ -582,13 +593,13 @@ public class LayerInventory : ELayer
 
 	public static LayerInventory CreateBuy(Card c, CurrencyType currency = CurrencyType.Money, PriceType price = PriceType.Default)
 	{
-		LayerInventory layerInventory = LayerInventory._Create("");
-		UIInventory uiinventory = layerInventory.SetInv(0);
-		Thing thing = c.things.Find("chest_merchant", -1, -1);
+		LayerInventory layerInventory = _Create();
+		UIInventory uIInventory = layerInventory.SetInv();
+		Thing thing = c.things.Find("chest_merchant");
 		SE.Play("shop_open");
 		InvOwnerShop invOwnerShop = new InvOwnerShop(c, thing, currency, price);
-		uiinventory.AddTab(invOwnerShop, UIInventory.Mode.Buy).dest = ELayer.pc;
-		if (Window.dictData.TryGetValue("ChestMerchant", null) == null)
+		uIInventory.AddTab(invOwnerShop, UIInventory.Mode.Buy).dest = ELayer.pc;
+		if (Window.dictData.TryGetValue("ChestMerchant") == null)
 		{
 			Window.dictData.Add("ChestMerchant", new Window.SaveData
 			{
@@ -596,29 +607,12 @@ public class LayerInventory : ELayer
 			});
 		}
 		layerInventory.windows[0].saveData = thing.GetWindowSaveData();
-		uiinventory.tabs[0].owner.BuildUICurrency(layerInventory.uiCurrency, c.trait.CostRerollShop != 0);
+		uIInventory.tabs[0].owner.BuildUICurrency(layerInventory.uiCurrency, c.trait.CostRerollShop != 0);
 		ShopTransaction.current = new ShopTransaction
 		{
 			trader = invOwnerShop
 		};
-		layerInventory.SetOnKill(new Action(ShopTransaction.current.OnEndTransaction));
+		layerInventory.SetOnKill(ShopTransaction.current.OnEndTransaction);
 		return layerInventory;
 	}
-
-	public static List<LayerInventory> listInv = new List<LayerInventory>();
-
-	public static InvOwner highlightInv;
-
-	public List<UIInventory> invs = new List<UIInventory>();
-
-	public UICurrency uiCurrency;
-
-	public bool floatInv;
-
-	public bool mainInv;
-
-	public WindowCharaMini mini;
-
-	[NonSerialized]
-	public bool wasInventoryOpen;
 }

@@ -1,12 +1,10 @@
-﻿using System;
-
 public class Zone_Kapul : Zone_Town
 {
 	public override string IDPlaylistOverwrite
 	{
 		get
 		{
-			if (!this.IsFestival)
+			if (!IsFestival)
 			{
 				return null;
 			}
@@ -18,15 +16,13 @@ public class Zone_Kapul : Zone_Town
 	{
 		get
 		{
-			return base.lv == 0 && EClass.world.date.month == 6;
+			if (base.lv == 0)
+			{
+				return EClass.world.date.month == 6;
+			}
+			return false;
 		}
 	}
 
-	public override float VolumeSea
-	{
-		get
-		{
-			return 1f;
-		}
-	}
+	public override float VolumeSea => 1f;
 }

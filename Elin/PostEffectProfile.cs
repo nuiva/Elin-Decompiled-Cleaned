@@ -1,46 +1,8 @@
-﻿using System;
 using UnityEngine;
 using UnityStandardAssets.ImageEffects;
 
 public class PostEffectProfile : EScriptable
 {
-	private void OnValidate()
-	{
-		if (Application.isPlaying)
-		{
-			this.Apply(EClass.scene.cam);
-		}
-	}
-
-	public void OnChangeProfile()
-	{
-		CoreConfig.GraphicSetting graphic = EClass.core.config.graphic;
-		graphic.sharpen = this.sharpen;
-		graphic.sharpen2 = this.sharpen2;
-		graphic.blur = this.blur;
-		graphic.kuwahara = this.kuwahara;
-	}
-
-	public void Apply(Camera cam)
-	{
-		Antialiasing component = cam.transform.GetComponent<Antialiasing>();
-		if (component)
-		{
-			component.enabled = this.enableAA;
-			component.mode = this.aaMode;
-			component.offsetScale = this.offsetScale;
-			component.blurRadius = this.blurRadius;
-		}
-		if (this.enableCharaAA)
-		{
-			EClass.scene.screenElin.tileMap.passChara.mat.EnableKeyword("AA_ON");
-			EClass.scene.screenElin.tileMap.passCharaL.mat.EnableKeyword("AA_ON");
-			return;
-		}
-		EClass.scene.screenElin.tileMap.passChara.mat.DisableKeyword("AA_ON");
-		EClass.scene.screenElin.tileMap.passCharaL.mat.DisableKeyword("AA_ON");
-	}
-
 	public float Brightness;
 
 	public float Saturation;
@@ -66,4 +28,43 @@ public class PostEffectProfile : EScriptable
 	public float offsetScale;
 
 	public float blurRadius;
+
+	private void OnValidate()
+	{
+		if (Application.isPlaying)
+		{
+			Apply(EClass.scene.cam);
+		}
+	}
+
+	public void OnChangeProfile()
+	{
+		CoreConfig.GraphicSetting graphic = EClass.core.config.graphic;
+		graphic.sharpen = sharpen;
+		graphic.sharpen2 = sharpen2;
+		graphic.blur = blur;
+		graphic.kuwahara = kuwahara;
+	}
+
+	public void Apply(Camera cam)
+	{
+		Antialiasing component = cam.transform.GetComponent<Antialiasing>();
+		if ((bool)component)
+		{
+			component.enabled = enableAA;
+			component.mode = aaMode;
+			component.offsetScale = offsetScale;
+			component.blurRadius = blurRadius;
+		}
+		if (enableCharaAA)
+		{
+			EClass.scene.screenElin.tileMap.passChara.mat.EnableKeyword("AA_ON");
+			EClass.scene.screenElin.tileMap.passCharaL.mat.EnableKeyword("AA_ON");
+		}
+		else
+		{
+			EClass.scene.screenElin.tileMap.passChara.mat.DisableKeyword("AA_ON");
+			EClass.scene.screenElin.tileMap.passCharaL.mat.DisableKeyword("AA_ON");
+		}
+	}
 }

@@ -1,69 +1,11 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public class WidgetNotice : BaseWidgetNotice
 {
-	public override object CreateExtra()
+	public class Extra
 	{
-		return new WidgetNotice.Extra();
-	}
-
-	public WidgetNotice.Extra extra
-	{
-		get
-		{
-			return base.config.extra as WidgetNotice.Extra;
-		}
-	}
-
-	public static void RefreshAll()
-	{
-		if (!WidgetNotice.Instance)
-		{
-			return;
-		}
-		WidgetNotice.Instance._RefreshAll();
-	}
-
-	public override void _OnActivate()
-	{
-		WidgetNotice.Instance = this;
-		LittlePopper.showStock = this.extra.showStock;
-		base.Add(new NotificationHome(), this.H1);
-		this.itemBattle = base.Add(new NotificationBattle(), this.H4);
-		this.itemGuest = base.Add(new NotificationGuest(), this.H4);
-	}
-
-	public override void OnRefresh()
-	{
-		this.battles = 0;
-		this.guests = 0;
-		foreach (Chara chara in EMono._map.charas)
-		{
-			if (chara.IsHomeMember())
-			{
-				if (chara.enemy != null && chara.IsAliveInCurrentZone)
-				{
-					this.battles++;
-				}
-			}
-			else if (chara.IsGuest())
-			{
-				this.guests++;
-			}
-		}
-		this.H4.SetActive(this.itemBattle.gameObject.activeSelf || this.itemGuest.gameObject.activeSelf);
-	}
-
-	public override void OnSetContextMenu(UIContextMenu m)
-	{
-		m.AddToggle("showStockPop", this.extra.showStock, delegate(bool a)
-		{
-			WidgetNotice.Extra extra = this.extra;
-			LittlePopper.showStock = a;
-			extra.showStock = a;
-		});
-		base.OnSetContextMenu(m);
+		public bool showStock;
 	}
 
 	public static WidgetNotice Instance;
@@ -86,8 +28,57 @@ public class WidgetNotice : BaseWidgetNotice
 	[NonSerialized]
 	public int guests;
 
-	public class Extra
+	public Extra extra => base.config.extra as Extra;
+
+	public override object CreateExtra()
 	{
-		public bool showStock;
+		return new Extra();
+	}
+
+	public static void RefreshAll()
+	{
+		if ((bool)Instance)
+		{
+			Instance._RefreshAll();
+		}
+	}
+
+	public override void _OnActivate()
+	{
+		Instance = this;
+		LittlePopper.showStock = extra.showStock;
+		Add(new NotificationHome(), H1);
+		itemBattle = Add(new NotificationBattle(), H4);
+		itemGuest = Add(new NotificationGuest(), H4);
+	}
+
+	public override void OnRefresh()
+	{
+		battles = 0;
+		guests = 0;
+		foreach (Chara chara in EMono._map.charas)
+		{
+			if (chara.IsHomeMember())
+			{
+				if (chara.enemy != null && chara.IsAliveInCurrentZone)
+				{
+					battles++;
+				}
+			}
+			else if (chara.IsGuest())
+			{
+				guests++;
+			}
+		}
+		H4.SetActive(itemBattle.gameObject.activeSelf || itemGuest.gameObject.activeSelf);
+	}
+
+	public override void OnSetContextMenu(UIContextMenu m)
+	{
+		m.AddToggle("showStockPop", extra.showStock, delegate(bool a)
+		{
+			extra.showStock = (LittlePopper.showStock = a);
+		});
+		base.OnSetContextMenu(m);
 	}
 }

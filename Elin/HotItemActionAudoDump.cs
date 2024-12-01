@@ -1,14 +1,6 @@
-﻿using System;
-
 public class HotItemActionAudoDump : HotAction
 {
-	public override string Id
-	{
-		get
-		{
-			return "AutoDump";
-		}
-	}
+	public override string Id => "AutoDump";
 
 	public override void Perform()
 	{

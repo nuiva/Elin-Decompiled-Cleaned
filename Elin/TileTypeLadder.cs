@@ -1,36 +1,10 @@
-﻿using System;
-
 public class TileTypeLadder : TileTypeBaseBlock
 {
-	public override bool IsLadder
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsLadder => true;
 
-	public override bool CanInstaComplete
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanInstaComplete => true;
 
-	public override bool IsOccupyCell
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool IsOccupyCell => false;
 
-	public override byte slopeHeight
-	{
-		get
-		{
-			return 6;
-		}
-	}
+	public override byte slopeHeight => 6;
 }

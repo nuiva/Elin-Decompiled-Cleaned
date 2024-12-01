@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,759 +6,725 @@ using UnityEngine;
 
 public class DramaCustomSequence : EClass
 {
-	public string StepDefault
-	{
-		get
-		{
-			return this.idDefault;
-		}
-	}
+	public Card destCard;
 
-	public string StepEnd
-	{
-		get
-		{
-			return "end";
-		}
-	}
+	public Chara destChara;
+
+	public Quest destQuest;
+
+	public Thing destThing;
+
+	public string idDefault;
+
+	public string idCustom;
+
+	public DramaSetup setup;
+
+	public DramaSequence sequence;
+
+	public List<DramaEvent> events;
+
+	public DramaManager manager;
+
+	public string StepDefault => idDefault;
+
+	public string StepEnd => "end";
 
 	public void Build(Chara c)
 	{
-		DramaCustomSequence.<>c__DisplayClass14_0 CS$<>8__locals1 = new DramaCustomSequence.<>c__DisplayClass14_0();
-		CS$<>8__locals1.<>4__this = this;
-		CS$<>8__locals1.c = c;
-		bool flag = this.idCustom == "Unique";
-		bool flag2 = CS$<>8__locals1.c.bio.IsUnderAge || EClass.pc.bio.IsUnderAge;
-		CS$<>8__locals1.isInGuild = (Guild.Fighter.IsCurrentZone || Guild.Mage.IsCurrentZone || Guild.Thief.IsCurrentZone || Guild.Merchant.IsCurrentZone);
-		CS$<>8__locals1.bird = (flag2 ? "bird" : "tail");
-		string name = CS$<>8__locals1.c.Name;
-		CS$<>8__locals1.rumor = (CS$<>8__locals1.c.IsPCParty ? CS$<>8__locals1.<Build>g__GetTalk|6("sup") : this.GetRumor(CS$<>8__locals1.c));
-		CS$<>8__locals1.layer = null;
-		bool flag3 = CS$<>8__locals1.c.IsHuman || EClass.pc.HasElement(1640, 1);
+		bool flag = idCustom == "Unique";
+		bool flag2 = c.bio.IsUnderAge || EClass.pc.bio.IsUnderAge;
+		bool isInGuild = Guild.Fighter.IsCurrentZone || Guild.Mage.IsCurrentZone || Guild.Thief.IsCurrentZone || Guild.Merchant.IsCurrentZone;
+		string bird = (flag2 ? "bird" : "tail");
+		_ = c.Name;
+		string rumor = (c.IsPCParty ? GetTalk("sup") : GetRumor(c));
+		Layer layer = null;
+		bool flag3 = c.IsHuman || EClass.pc.HasElement(1640);
 		if (!flag)
 		{
-			this.Step("Resident");
-			this._Talk("tg", () => CS$<>8__locals1.rumor, null);
+			Step("Resident");
+			_Talk("tg", () => rumor);
 			if (flag3)
 			{
-				DramaChoice choice = this.Choice2("letsTalk", this.StepDefault);
+				DramaChoice choice = Choice2("letsTalk", StepDefault);
 				choice.SetOnClick(delegate
 				{
-					DramaEventTalk firstTalk = CS$<>8__locals1.<>4__this.sequence.firstTalk;
-					Func<string> funcText;
-					if ((funcText = CS$<>8__locals1.<>9__92) == null)
-					{
-						funcText = (CS$<>8__locals1.<>9__92 = (() => CS$<>8__locals1.rumor));
-					}
-					firstTalk.funcText = funcText;
-					List<Hobby> list = CS$<>8__locals1.c.ListHobbies(true);
-					Hobby hobby = (list.Count > 0) ? list[0] : null;
+					sequence.firstTalk.funcText = () => rumor;
+					List<Hobby> list2 = c.ListHobbies();
+					Hobby hobby = ((list2.Count > 0) ? list2[0] : null);
 					if (EClass.rnd(20) == 0 || EClass.debug.showFav)
 					{
 						if (EClass.rnd(2) == 0 || hobby == null)
 						{
-							GameLang.refDrama1 = CS$<>8__locals1.c.GetFavCat().GetName().ToLower();
-							GameLang.refDrama2 = CS$<>8__locals1.c.GetFavFood().GetName();
-							CS$<>8__locals1.rumor = CS$<>8__locals1.<>4__this.GetText(CS$<>8__locals1.c, "general", "talk_fav");
-							CS$<>8__locals1.c.knowFav = true;
+							GameLang.refDrama1 = c.GetFavCat().GetName().ToLower();
+							GameLang.refDrama2 = c.GetFavFood().GetName();
+							rumor = GetText(c, "general", "talk_fav");
+							c.knowFav = true;
 						}
 						else
 						{
 							GameLang.refDrama1 = hobby.Name.ToLower();
-							CS$<>8__locals1.rumor = CS$<>8__locals1.<>4__this.GetText(CS$<>8__locals1.c, "general", "talk_hobby");
+							rumor = GetText(c, "general", "talk_hobby");
 						}
 					}
 					else
 					{
-						CS$<>8__locals1.rumor = CS$<>8__locals1.<>4__this.GetRumor(CS$<>8__locals1.c);
+						rumor = GetRumor(c);
 					}
-					CS$<>8__locals1.c.affinity.OnTalkRumor();
+					c.affinity.OnTalkRumor();
 					choice.forceHighlight = true;
-				}).SetCondition(() => CS$<>8__locals1.c.interest > 0);
+				}).SetCondition(() => c.interest > 0);
 			}
 		}
 		bool flag4 = false;
-		if (!CS$<>8__locals1.c.IsPCFaction && CS$<>8__locals1.c.affinity.CanInvite() && !EClass._zone.IsInstance && CS$<>8__locals1.c.c_bossType == BossType.none)
+		if (!c.IsPCFaction && c.affinity.CanInvite() && !EClass._zone.IsInstance && c.c_bossType == BossType.none)
 		{
-			if ((CS$<>8__locals1.c.trait.IsUnique || CS$<>8__locals1.c.IsGlobal) && CS$<>8__locals1.c.GetInt(111, null) == 0 && !CS$<>8__locals1.c.IsPCFaction)
+			if ((c.trait.IsUnique || c.IsGlobal) && c.GetInt(111) == 0 && !c.IsPCFaction)
 			{
-				this.Choice2("daBout", "_bout");
+				Choice2("daBout", "_bout");
 				flag4 = true;
 			}
 			else
 			{
-				this.Choice2("daInvite", "_invite");
+				Choice2("daInvite", "_invite");
 			}
 		}
-		Thing t;
-		foreach (Quest quest in EClass.game.quests.list)
+		foreach (Quest item in EClass.game.quests.list)
 		{
-			Quest _quest = quest;
-			if (quest.CanDeliverToClient(CS$<>8__locals1.c))
+			Quest _quest = item;
+			if (!item.CanDeliverToClient(c))
 			{
-				QuestDeliver questDeliver = _quest as QuestDeliver;
-				using (List<Thing>.Enumerator enumerator2 = questDeliver.ListDestThing(false).GetEnumerator())
+				continue;
+			}
+			QuestDeliver questDeliver = _quest as QuestDeliver;
+			foreach (Thing item2 in questDeliver.ListDestThing())
+			{
+				Thing _t2 = item2;
+				Choice2("daDeliver".lang(item.GetTitle() ?? "", _t2.GetName(NameStyle.Full, questDeliver.num)), "_deliver").SetOnClick(delegate
 				{
-					while (enumerator2.MoveNext())
+					destThing = _t2;
+					destQuest = _quest;
+				}).SetOnTooltip(delegate(UITooltip a)
+				{
+					_t2.WriteNote(a.note);
+				});
+			}
+		}
+		if (c.IsPCParty)
+		{
+			if (!c.isSummon)
+			{
+				if (EClass._zone.IsPCFaction && c.homeBranch != EClass._zone.branch)
+				{
+					Choice2("daMakeHome", "_makeHome");
+				}
+				if (c.host == null && c.homeZone != null)
+				{
+					Choice2("daLeaveParty".lang(c.homeZone.Name), "_leaveParty");
+				}
+			}
+		}
+		else if (c.memberType != FactionMemberType.Livestock && !c.IsGuest())
+		{
+			if (c.trait.CanGuide)
+			{
+				foreach (Quest item3 in EClass.game.quests.list)
+				{
+					if (!item3.IsRandomQuest)
 					{
-						t = enumerator2.Current;
-						Thing _t = t;
-						this.Choice2("daDeliver".lang(quest.GetTitle() ?? "", _t.GetName(NameStyle.Full, questDeliver.num), null, null, null), "_deliver").SetOnClick(delegate
+						continue;
+					}
+					Chara dest = ((item3.chara != null && item3.chara.IsAliveInCurrentZone) ? item3.chara : null);
+					if (dest != null)
+					{
+						Choice2("daGoto".lang(dest.Name, item3.GetTitle() ?? ""), "_goto").SetOnClick(delegate
 						{
-							CS$<>8__locals1.<>4__this.destThing = _t;
-							CS$<>8__locals1.<>4__this.destQuest = _quest;
-						}).SetOnTooltip(delegate(UITooltip a)
+							destCard = dest;
+						});
+					}
+					if (!(item3 is QuestDeliver { IsDeliver: not false } questDeliver2) || questDeliver2.DestZone != EClass._zone || !EClass._zone.dictCitizen.ContainsKey(questDeliver2.uidTarget))
+					{
+						continue;
+					}
+					Chara dest2 = EClass._zone.FindChara(questDeliver2.uidTarget);
+					if (dest2 != null)
+					{
+						Choice2("daGoto".lang(dest2.Name, item3.GetTitle() ?? ""), "_goto").SetOnClick(delegate
 						{
-							_t.WriteNote(a.note, null, IInspect.NoteMode.Default, null);
+							destCard = dest2;
 						});
 					}
 				}
-			}
-		}
-		if (CS$<>8__locals1.c.IsPCParty)
-		{
-			if (!CS$<>8__locals1.c.isSummon)
-			{
-				if (EClass._zone.IsPCFaction && CS$<>8__locals1.c.homeBranch != EClass._zone.branch)
+				if (GetListGuide().Count > 0)
 				{
-					this.Choice2("daMakeHome", "_makeHome");
-				}
-				if (CS$<>8__locals1.c.host == null && CS$<>8__locals1.c.homeZone != null)
-				{
-					this.Choice2("daLeaveParty".lang(CS$<>8__locals1.c.homeZone.Name, null, null, null, null), "_leaveParty");
+					Choice2("daGuide", "_Guide");
 				}
 			}
-		}
-		else if (CS$<>8__locals1.c.memberType != FactionMemberType.Livestock && !CS$<>8__locals1.c.IsGuest())
-		{
-			if (CS$<>8__locals1.c.trait.CanGuide)
-			{
-				foreach (Quest quest2 in EClass.game.quests.list)
-				{
-					if (quest2.IsRandomQuest)
-					{
-						Chara dest = (quest2.chara != null && quest2.chara.IsAliveInCurrentZone) ? quest2.chara : null;
-						if (dest != null)
-						{
-							this.Choice2("daGoto".lang(dest.Name, quest2.GetTitle() ?? "", null, null, null), "_goto").SetOnClick(delegate
-							{
-								CS$<>8__locals1.<>4__this.destCard = dest;
-							});
-						}
-						QuestDeliver questDeliver2 = quest2 as QuestDeliver;
-						if (questDeliver2 != null && questDeliver2.IsDeliver && questDeliver2.DestZone == EClass._zone && EClass._zone.dictCitizen.ContainsKey(questDeliver2.uidTarget))
-						{
-							Chara dest2 = EClass._zone.FindChara(questDeliver2.uidTarget);
-							if (dest2 != null)
-							{
-								this.Choice2("daGoto".lang(dest2.Name, quest2.GetTitle() ?? "", null, null, null), "_goto").SetOnClick(delegate
-								{
-									CS$<>8__locals1.<>4__this.destCard = dest2;
-								});
-							}
-						}
-					}
-				}
-				if (this.GetListGuide().Count > 0)
-				{
-					this.Choice2("daGuide", "_Guide");
-				}
-			}
-			string s = "daQuest";
-			Quest quest3 = CS$<>8__locals1.c.quest;
-			this.Choice2(s.lang(((quest3 != null) ? quest3.GetTitle() : null) ?? "", null, null, null, null), "_quest").SetCondition(() => CS$<>8__locals1.c.quest != null);
-			if (CS$<>8__locals1.c.trait is TraitGuard)
+			Choice2("daQuest".lang(c.quest?.GetTitle() ?? ""), "_quest").SetCondition(() => c.quest != null);
+			if (c.trait is TraitGuard)
 			{
 				EClass.pc.things.Foreach(delegate(Thing _t)
 				{
 					if (_t.isLostProperty)
 					{
-						CS$<>8__locals1.<>4__this.Choice2("daLostProperty".lang(_t.Name, null, null, null, null), "_lostProperty").SetOnClick(delegate
+						Choice2("daLostProperty".lang(_t.Name), "_lostProperty").SetOnClick(delegate
 						{
-							CS$<>8__locals1.<>4__this.destThing = _t;
+							destThing = _t;
 						});
 					}
-				}, true);
+				});
 			}
-			if (CS$<>8__locals1.c.trait is TraitGM_Mage && Guild.Mage.relation.rank >= 4)
+			if (c.trait is TraitGM_Mage && Guild.Mage.relation.rank >= 4)
 			{
-				this.Choice2("daChangeDomain", "_changeDomain").DisableSound();
+				Choice2("daChangeDomain", "_changeDomain").DisableSound();
 			}
-			if (CS$<>8__locals1.c.trait.ShopType != ShopType.None)
+			if (c.trait.ShopType != 0)
 			{
-				this.Choice2(CS$<>8__locals1.c.trait.TextNextRestock, "_buy").DisableSound();
+				Choice2(c.trait.TextNextRestock, "_buy").DisableSound();
 			}
-			if (CS$<>8__locals1.c.trait.SlaverType != SlaverType.None)
+			if (c.trait.SlaverType != 0)
 			{
-				this.Choice2(CS$<>8__locals1.c.trait.TextNextRestockPet, "_buySlave").DisableSound();
+				Choice2(c.trait.TextNextRestockPet, "_buySlave").DisableSound();
 			}
-			if (CS$<>8__locals1.c.trait.CopyShop != Trait.CopyShopType.None)
+			if (c.trait.CopyShop != 0)
 			{
-				this.Choice2(("daCopy" + CS$<>8__locals1.c.trait.CopyShop.ToString()).lang(CS$<>8__locals1.c.trait.NumCopyItem.ToString() ?? "", null, null, null, null), "_copyItem").DisableSound();
+				Choice2(("daCopy" + c.trait.CopyShop).lang(c.trait.NumCopyItem.ToString() ?? ""), "_copyItem").DisableSound();
 			}
-			if (CS$<>8__locals1.c.trait.HaveNews && CS$<>8__locals1.c.GetInt(33, null) + 10080 < EClass.world.date.GetRaw(0))
+			if (c.trait.HaveNews && c.GetInt(33) + 10080 < EClass.world.date.GetRaw())
 			{
-				this.Choice2("daNews", "_news");
+				Choice2("daNews", "_news");
 			}
-			if (!flag4 && !EClass._zone.IsInstance && !CS$<>8__locals1.c.IsPCFaction && CS$<>8__locals1.c.trait.CanBout && CS$<>8__locals1.c.IsGlobal && CS$<>8__locals1.c.GetInt(59, null) + 10080 < EClass.world.date.GetRaw(0))
+			if (!flag4 && !EClass._zone.IsInstance && !c.IsPCFaction && c.trait.CanBout && c.IsGlobal && c.GetInt(59) + 10080 < EClass.world.date.GetRaw())
 			{
-				this.Choice2("daBout", "_bout");
+				Choice2("daBout", "_bout");
 			}
-			if (CS$<>8__locals1.c.isDrunk)
+			if (c.isDrunk)
 			{
-				this.Choice2(flag2 ? "daBird" : "daTail", "_tail");
+				Choice2(flag2 ? "daBird" : "daTail", "_tail");
 			}
-			if (CS$<>8__locals1.c.trait.CanRevive)
+			if (c.trait.CanRevive)
 			{
-				this.Choice2("daRevive", "_revive").DisableSound();
+				Choice2("daRevive", "_revive").DisableSound();
 			}
-			if (!CS$<>8__locals1.c.trait.IDTrainer.IsEmpty() && !EClass._zone.IsUserZone && (Guild.GetCurrentGuild() == null || Guild.GetCurrentGuild().relation.IsMember()))
+			if (!c.trait.IDTrainer.IsEmpty() && !EClass._zone.IsUserZone && (Guild.GetCurrentGuild() == null || Guild.GetCurrentGuild().relation.IsMember()))
 			{
-				this.Choice2("daTrain", "_train").DisableSound();
+				Choice2("daTrain", "_train").DisableSound();
 			}
-			if (CS$<>8__locals1.c.trait.CanWhore)
+			if (c.trait.CanWhore)
 			{
-				this.Choice2(flag2 ? "daBirdBuy" : "daTailBuy", "_whore");
+				Choice2(flag2 ? "daBirdBuy" : "daTailBuy", "_whore");
 			}
-			if (CS$<>8__locals1.c.trait.CanHeal)
+			if (c.trait.CanHeal)
 			{
-				this.Choice2("daHeal", "_heal");
+				Choice2("daHeal", "_heal");
 			}
-			if (CS$<>8__locals1.c.trait.CanServeFood)
+			if (c.trait.CanServeFood)
 			{
-				this.Choice2("daFood", "_food");
+				Choice2("daFood", "_food");
 			}
-			if (CS$<>8__locals1.c.trait is TraitInformer)
+			if (c.trait is TraitInformer)
 			{
-				this.Choice2("daSellFame", "_sellFame");
+				Choice2("daSellFame", "_sellFame");
 			}
-			if (CS$<>8__locals1.c.trait.CanInvestTown && Guild.GetCurrentGuild() == null)
+			if (c.trait.CanInvestTown && Guild.GetCurrentGuild() == null)
 			{
-				this.Choice2("daInvest", "_investZone");
+				Choice2("daInvest", "_investZone");
 			}
-			if (CS$<>8__locals1.c.trait.CanInvest)
+			if (c.trait.CanInvest)
 			{
-				this.Choice2("daInvest", "_investShop");
+				Choice2("daInvest", "_investShop");
 			}
-			if (CS$<>8__locals1.c.trait.CanIdentify)
+			if (c.trait.CanIdentify)
 			{
-				this.Choice2("daIdentify", "_identify").DisableSound();
-				this.Choice2("daIdentifyAll", "_identifyAll");
-				this.Choice2("daIdentifySP", "_identifySP").DisableSound();
+				Choice2("daIdentify", "_identify").DisableSound();
+				Choice2("daIdentifyAll", "_identifyAll");
+				Choice2("daIdentifySP", "_identifySP").DisableSound();
 			}
-			if (CS$<>8__locals1.c.trait.CanPicklock)
+			if (c.trait.CanPicklock)
 			{
-				if (CS$<>8__locals1.c.Evalue(280) < 20)
+				if (c.Evalue(280) < 20)
 				{
-					CS$<>8__locals1.c.elements.SetBase(280, 20, 0);
+					c.elements.SetBase(280, 20);
 				}
-				foreach (Thing t2 in EClass.pc.things.List((Thing a) => a.c_lockLv > 0, true))
+				foreach (Thing item4 in EClass.pc.things.List((Thing a) => a.c_lockLv > 0, onlyAccessible: true))
 				{
-					Thing _t = t2;
-					this.Choice2("daPicklock".lang(_t.Name, null, null, null, null), "_picklock").SetOnClick(delegate
+					Thing _t3 = item4;
+					Choice2("daPicklock".lang(_t3.Name), "_picklock").SetOnClick(delegate
 					{
-						CS$<>8__locals1.<>4__this.destThing = _t;
+						destThing = _t3;
 					});
 				}
 			}
-			if (CS$<>8__locals1.c.trait is TraitBanker)
+			if (c.trait is TraitBanker)
 			{
-				this.Choice2("daDeposit", "_deposit");
+				Choice2("daDeposit", "_deposit");
 			}
-			if (CS$<>8__locals1.c.IsMaid || (CS$<>8__locals1.c.trait.CanInvestTown && (EClass._zone.source.faction == "mysilia" || EClass._zone.IsPCFaction)))
+			if (c.IsMaid || (c.trait.CanInvestTown && (EClass._zone.source.faction == "mysilia" || EClass._zone.IsPCFaction)))
 			{
-				this.Choice2("daExtraTax", "_extraTax");
+				Choice2("daExtraTax", "_extraTax");
 			}
-			if (CS$<>8__locals1.c.IsMaid)
+			if (c.IsMaid)
 			{
 				if (EClass.Branch.meetings.CanStartMeeting)
 				{
-					this.Choice2("daMeeting".lang(EClass.Branch.meetings.list.Count.ToString() ?? "", null, null, null, null), "_meeting");
+					Choice2("daMeeting".lang(EClass.Branch.meetings.list.Count.ToString() ?? ""), "_meeting");
 				}
-				this.Choice2("daBuyLand", "_buyLand");
-				this.Choice2("daChangeTitle", "_changeTitle");
+				Choice2("daBuyLand", "_buyLand");
+				Choice2("daChangeTitle", "_changeTitle");
 			}
-			if ((CS$<>8__locals1.c.trait is TraitMiko_Mifu || CS$<>8__locals1.c.trait is TraitMiko_Nefu || CS$<>8__locals1.c.trait is TraitEureka) && EClass.world.date.IsExpired(CS$<>8__locals1.c.c_dateStockExpire))
+			if ((c.trait is TraitMiko_Mifu || c.trait is TraitMiko_Nefu || c.trait is TraitEureka) && EClass.world.date.IsExpired(c.c_dateStockExpire))
 			{
-				this.Choice2("daBlessing", "_blessing");
+				Choice2("daBlessing", "_blessing");
 			}
 		}
-		if (CS$<>8__locals1.c.IsHomeMember())
+		if (c.IsHomeMember())
 		{
-			if (CS$<>8__locals1.c.noMove)
+			if (c.noMove)
 			{
-				this.Choice2("enableMove", "_enableMove");
+				Choice2("enableMove", "_enableMove");
 			}
-			if (!CS$<>8__locals1.c.IsPCParty && CS$<>8__locals1.c.memberType != FactionMemberType.Livestock && CS$<>8__locals1.c.trait.CanJoinParty)
+			if (!c.IsPCParty && c.memberType != FactionMemberType.Livestock && c.trait.CanJoinParty)
 			{
-				this.Choice2("daJoinParty", "_joinParty");
+				Choice2("daJoinParty", "_joinParty");
 			}
-			this.Choice2("daFactionOther", "_factionOther");
+			Choice2("daFactionOther", "_factionOther");
 		}
-		if (CS$<>8__locals1.c.trait is TraitLoytel && EClass.game.quests.Get<QuestDebt>() != null)
+		if (c.trait is TraitLoytel && EClass.game.quests.Get<QuestDebt>() != null)
 		{
-			this.Choice2("daGreatDebt", "_greatDebt");
+			Choice2("daGreatDebt", "_greatDebt");
 		}
 		if (!flag)
 		{
-			this.Choice2("bye", "_bye");
-			this.EnableCancel(null);
+			Choice2("bye", "_bye");
+			EnableCancel();
 		}
-		this.Step("_factionOther");
-		CS$<>8__locals1.<Build>g__Talk|0("what", this.StepDefault);
-		if (CS$<>8__locals1.c.trait is TraitLoytel)
+		Step("_factionOther");
+		Talk("what", StepDefault);
+		if (c.trait is TraitLoytel)
 		{
 			QuestDebt questDebt = EClass.game.quests.Get<QuestDebt>();
 			if (questDebt != null && questDebt.gaveBill)
 			{
-				this.Choice("daGreatDebt2", "_greatDebt2", false);
+				Choice("daGreatDebt2", "_greatDebt2");
 			}
 		}
-		if (CS$<>8__locals1.c.IsPCParty)
+		if (c.IsPCParty)
 		{
-			if (!CS$<>8__locals1.c.isSummon)
+			if (!c.isSummon)
 			{
-				this.Choice((CS$<>8__locals1.c.GetInt(106, null) == 0) ? "daShutup" : "daShutup2", "_shutup", false);
-				if (CS$<>8__locals1.c.CanInsult())
+				Choice((c.GetInt(106) == 0) ? "daShutup" : "daShutup2", "_shutup");
+				if (c.CanInsult())
 				{
-					this.Choice((CS$<>8__locals1.c.GetInt(108, null) == 0) ? "daInsult" : "daInsult2", "_insult", false);
+					Choice((c.GetInt(108) == 0) ? "daInsult" : "daInsult2", "_insult");
 				}
 			}
 		}
-		else if (!CS$<>8__locals1.c.noMove)
+		else if (!c.noMove)
 		{
-			this.Choice("disableMove", "_disableMove", false);
+			Choice("disableMove", "_disableMove");
 		}
-		if (CS$<>8__locals1.c.GetInt(113, null) == 0)
+		if (c.GetInt(113) == 0)
 		{
-			this.Choice("daEquipSharedOff", "_toggleSharedEquip", false);
+			Choice("daEquipSharedOff", "_toggleSharedEquip");
 		}
 		else
 		{
-			this.Choice("daEquipSharedOn", "_toggleSharedEquip", false);
+			Choice("daEquipSharedOn", "_toggleSharedEquip");
 		}
-		if (!CS$<>8__locals1.c.IsMaid && CS$<>8__locals1.c.homeBranch == EClass.Branch)
+		if (!c.IsMaid && c.homeBranch == EClass.Branch)
 		{
-			this.Choice("daMakeMaid", "_daMakeMaid", false);
+			Choice("daMakeMaid", "_daMakeMaid");
 		}
-		if (CS$<>8__locals1.c.trait.CanBeBanished && !CS$<>8__locals1.c.IsPCParty)
+		if (c.trait.CanBeBanished && !c.IsPCParty)
 		{
-			this.Choice("daBanish", "_depart", false);
+			Choice("daBanish", "_depart");
 		}
-		this.Choice("daNothing", this.StepDefault, true);
-		this.Step("_toggleSharedEquip");
-		this.Method(delegate
+		Choice("daNothing", StepDefault, cancel: true);
+		Step("_toggleSharedEquip");
+		Method(delegate
 		{
-			CS$<>8__locals1.c.SetInt(113, (CS$<>8__locals1.c.GetInt(113, null) == 0) ? 1 : 0);
-		}, null, null);
-		this._Talk("tg", this.GetTopic(CS$<>8__locals1.c, (CS$<>8__locals1.c.GetInt(113, null) == 0) ? "shutup" : "shutup2"), null);
-		this.End();
-		this.Step("_daMakeMaid");
-		this.Method(delegate
+			c.SetInt(113, (c.GetInt(113) == 0) ? 1 : 0);
+		});
+		_Talk("tg", GetTopic(c, (c.GetInt(113) == 0) ? "shutup" : "shutup2"));
+		End();
+		Step("_daMakeMaid");
+		Method(delegate
 		{
-			EClass.Branch.uidMaid = CS$<>8__locals1.c.uid;
-		}, null, null);
-		this._Talk("tg", this.GetTopic(CS$<>8__locals1.c, "becomeMaid"), null);
-		this.End();
-		this.Step("_joinParty");
-		this.Method(delegate
+			EClass.Branch.uidMaid = c.uid;
+		});
+		_Talk("tg", GetTopic(c, "becomeMaid"));
+		End();
+		Step("_joinParty");
+		Method(delegate
 		{
-			if (!CS$<>8__locals1.c.trait.CanJoinPartyResident)
+			if (!c.trait.CanJoinPartyResident)
 			{
-				GameLang.refDrama1 = (CS$<>8__locals1.c.GetBestAttribute().ToString() ?? "");
-				base.<Build>g__TempTalkTopic|4("invite3", CS$<>8__locals1.<>4__this.StepDefault);
-				return;
+				GameLang.refDrama1 = c.GetBestAttribute().ToString() ?? "";
+				TempTalkTopic("invite3", StepDefault);
 			}
-			EClass.pc.party.AddMemeber(CS$<>8__locals1.c);
-		}, null, null);
-		CS$<>8__locals1.<Build>g__Talk|0("hired", this.StepEnd);
-		this.Step("_leaveParty");
-		this.Method(delegate
-		{
-			EClass.pc.party.RemoveMember(CS$<>8__locals1.c);
-			if (EClass.game.activeZone != CS$<>8__locals1.c.homeZone)
+			else
 			{
-				EClass.pc.Say("tame_send", CS$<>8__locals1.c, CS$<>8__locals1.c.homeZone.Name, null);
-				CS$<>8__locals1.c.MoveZone(CS$<>8__locals1.c.homeZone, ZoneTransition.EnterState.Auto);
+				EClass.pc.party.AddMemeber(c);
 			}
-		}, null, null);
-		this.Goto("_bye");
-		this.Step("_banish");
-		this.Goto("_bye");
-		this.Step("_makeLivestock");
-		this.Method(delegate
+		});
+		Talk("hired", StepEnd);
+		Step("_leaveParty");
+		Method(delegate
 		{
-			CS$<>8__locals1.c.memberType = FactionMemberType.Livestock;
-		}, null, null);
-		CS$<>8__locals1.<Build>g__Talk|0("becomeLivestock", this.StepEnd);
-		this.Step("_makeResident");
-		this.Method(delegate
-		{
-			CS$<>8__locals1.c.memberType = FactionMemberType.Default;
-		}, null, null);
-		CS$<>8__locals1.<Build>g__Talk|0("becomeResident", this.StepEnd);
-		this.Step("_depart");
-		CS$<>8__locals1.<Build>g__Talk|0("depart_choice", this.StepDefault);
-		this.Choice("depart1", "_depart1", false);
-		this.Choice("depart2", "_depart2", false);
-		this.Step("_depart1");
-		this.Method(delegate
-		{
-			Layer instance = LayerDrama.Instance;
-			Action onKill;
-			if ((onKill = CS$<>8__locals1.<>9__100) == null)
+			EClass.pc.party.RemoveMember(c);
+			if (EClass.game.activeZone != c.homeZone)
 			{
-				onKill = (CS$<>8__locals1.<>9__100 = delegate()
-				{
-					CS$<>8__locals1.c.homeBranch.BanishMember(CS$<>8__locals1.c, false);
-				});
+				EClass.pc.Say("tame_send", c, c.homeZone.Name);
+				c.MoveZone(c.homeZone);
 			}
-			instance.SetOnKill(onKill);
-		}, null, null);
-		CS$<>8__locals1.<Build>g__Talk|0("depart1", this.StepEnd);
-		this.Step("_depart2");
-		CS$<>8__locals1.<Build>g__Talk|0("depart2", this.StepDefault);
-		this.Step("_gift");
-		CS$<>8__locals1.<Build>g__Talk|0("gift_good", null);
-		this.End();
-		this.Step("_goto");
-		this.Method(delegate
+		});
+		Goto("_bye");
+		Step("_banish");
+		Goto("_bye");
+		Step("_makeLivestock");
+		Method(delegate
 		{
-			GameLang.refDrama1 = CS$<>8__locals1.<>4__this.destCard.Name;
-			if (CS$<>8__locals1.<>4__this.destCard == CS$<>8__locals1.c)
+			c.memberType = FactionMemberType.Livestock;
+		});
+		Talk("becomeLivestock", StepEnd);
+		Step("_makeResident");
+		Method(delegate
+		{
+			c.memberType = FactionMemberType.Default;
+		});
+		Talk("becomeResident", StepEnd);
+		Step("_depart");
+		Talk("depart_choice", StepDefault);
+		Choice("depart1", "_depart1");
+		Choice("depart2", "_depart2");
+		Step("_depart1");
+		Method(delegate
+		{
+			LayerDrama.Instance.SetOnKill(delegate
 			{
-				base.<Build>g__TempTalkTopic|4("goto2", CS$<>8__locals1.<>4__this.StepDefault);
-				return;
-			}
-			base.<Build>g__TempTalkTopic|4("goto", "_goto2");
-		}, null, null);
-		this.Step("_goto2");
-		this.Method(delegate
+				c.homeBranch.BanishMember(c);
+			});
+		});
+		Talk("depart1", StepEnd);
+		Step("_depart2");
+		Talk("depart2", StepDefault);
+		Step("_gift");
+		Talk("gift_good", null);
+		End();
+		Step("_goto");
+		Method(delegate
 		{
-			if (CS$<>8__locals1.<>4__this.destCard.isChara && !PathManager.Instance.RequestPathImmediate(EClass.pc.pos, CS$<>8__locals1.<>4__this.destCard.pos, EClass.pc, PathManager.MoveType.Default, -1, 0).HasPath)
+			GameLang.refDrama1 = destCard.Name;
+			if (destCard == c)
 			{
-				CS$<>8__locals1.<>4__this.destCard.Teleport(EClass.pc.pos.GetNearestPoint(false, false, true, true) ?? EClass.pc.pos, true, true);
+				TempTalkTopic("goto2", StepDefault);
 			}
-			EClass.pc.SetAIImmediate(new AI_Goto(CS$<>8__locals1.<>4__this.destCard, 1, false, false));
-			EInput.Consume(false, 20);
-		}, null, null);
-		this.End();
-		this.Step("_rumor");
-		CS$<>8__locals1.<Build>g__Talk|0("rumor", this.StepDefault);
-		this.Step("_lostProperty");
-		this.Method(delegate
+			else
+			{
+				TempTalkTopic("goto", "_goto2");
+			}
+		});
+		Step("_goto2");
+		Method(delegate
 		{
-			GameLang.refDrama1 = CS$<>8__locals1.<>4__this.destThing.Name;
-			CS$<>8__locals1.<>4__this.destThing.Destroy();
+			if (destCard.isChara && !PathManager.Instance.RequestPathImmediate(EClass.pc.pos, destCard.pos, EClass.pc).HasPath)
+			{
+				destCard.Teleport(EClass.pc.pos.GetNearestPoint(allowBlock: false, allowChara: false, allowInstalled: true, ignoreCenter: true) ?? EClass.pc.pos, silent: true, force: true);
+			}
+			EClass.pc.SetAIImmediate(new AI_Goto(destCard, 1));
+			EInput.Consume(consumeAxis: false, 20);
+		});
+		End();
+		Step("_rumor");
+		Talk("rumor", StepDefault);
+		Step("_lostProperty");
+		Method(delegate
+		{
+			GameLang.refDrama1 = destThing.Name;
+			destThing.Destroy();
 			EClass.player.ModKarma(5);
-		}, null, null);
-		this._Talk("tg", this.GetTopic(CS$<>8__locals1.c, "deliver_purse"), this.StepEnd);
-		Quest quest4 = CS$<>8__locals1.c.quest;
-		string text = (!this.setup.forceJump.IsEmpty()) ? this.StepEnd : this.StepDefault;
-		this.Step("_deliver");
-		this.Method(delegate
+		});
+		_Talk("tg", GetTopic(c, "deliver_purse"), StepEnd);
+		_ = c.quest;
+		string text = ((!setup.forceJump.IsEmpty()) ? StepEnd : StepDefault);
+		Step("_deliver");
+		Method(delegate
 		{
-			GameLang.refDrama1 = CS$<>8__locals1.<>4__this.destQuest.NameDeliver;
-			CS$<>8__locals1.<>4__this.destQuest.Deliver(CS$<>8__locals1.c, CS$<>8__locals1.<>4__this.destThing);
-		}, null, null);
-		this._Talk("tg", delegate()
+			GameLang.refDrama1 = destQuest.NameDeliver;
+			destQuest.Deliver(c, destThing);
+		});
+		_Talk("tg", () => (destQuest != null) ? destQuest.GetTalkComplete().IsEmpty(GetTopic(c, (destQuest.bonusMoney > 0) ? "questCompleteDeliverExtra" : "questCompleteDeliver")) : "", StepEnd);
+		Step("_quest");
+		_Talk("tg", delegate
 		{
-			if (CS$<>8__locals1.<>4__this.destQuest != null)
-			{
-				return CS$<>8__locals1.<>4__this.destQuest.GetTalkComplete().IsEmpty(CS$<>8__locals1.<>4__this.GetTopic(CS$<>8__locals1.c, (CS$<>8__locals1.<>4__this.destQuest.bonusMoney > 0) ? "questCompleteDeliverExtra" : "questCompleteDeliver"));
-			}
-			return "";
-		}, this.StepEnd);
-		this.Step("_quest");
-		this._Talk("tg", delegate()
-		{
-			if (CS$<>8__locals1.c.quest == null)
+			if (c.quest == null)
 			{
 				return "";
 			}
-			GameLang.refDrama1 = CS$<>8__locals1.c.quest.RefDrama1;
-			GameLang.refDrama2 = CS$<>8__locals1.c.quest.RefDrama2;
-			GameLang.refDrama3 = CS$<>8__locals1.c.quest.RefDrama3;
-			if (!base.<Build>g__taken|20())
-			{
-				return CS$<>8__locals1.c.quest.GetDetail(false);
-			}
-			return CS$<>8__locals1.c.quest.GetTalkProgress().IsEmpty(CS$<>8__locals1.<>4__this.GetTopic(CS$<>8__locals1.c, "questInProgress"));
+			GameLang.refDrama1 = c.quest.RefDrama1;
+			GameLang.refDrama2 = c.quest.RefDrama2;
+			GameLang.refDrama3 = c.quest.RefDrama3;
+			return (!taken()) ? c.quest.GetDetail() : c.quest.GetTalkProgress().IsEmpty(GetTopic(c, "questInProgress"));
 		}, text);
 		string text2 = "daAccept".lang();
-		if (CS$<>8__locals1.c.quest != null && CS$<>8__locals1.c.quest.deadline != 0)
+		if (c.quest != null && c.quest.deadline != 0)
 		{
-			text2 += "hintDeadline".lang(CS$<>8__locals1.c.quest.TextDeadline, null, null, null, null).ToLower();
+			text2 += "hintDeadline".lang(c.quest.TextDeadline).ToLower();
 		}
-		this.Choice(text2, (CS$<>8__locals1.c.quest != null && CS$<>8__locals1.c.quest.UseInstanceZone) ? "_questAccept_instance" : "_questAccept", false).SetOnClick(delegate
+		Choice(text2, (c.quest != null && c.quest.UseInstanceZone) ? "_questAccept_instance" : "_questAccept").SetOnClick(delegate
 		{
-			EClass.game.quests.Start(CS$<>8__locals1.c.quest);
-		}).SetCondition(() => !base.<Build>g__taken|20() && EClass.game.quests.CountRandomQuest() < 5);
-		this.Choice(text2, "_questFull", false).SetOnClick(delegate
+			EClass.game.quests.Start(c.quest);
+		}).SetCondition(() => !taken() && EClass.game.quests.CountRandomQuest() < 5);
+		Choice(text2, "_questFull").SetOnClick(delegate
 		{
-		}).SetCondition(() => !base.<Build>g__taken|20() && EClass.game.quests.CountRandomQuest() >= 5);
-		this.Choice("daDecline", text, false).SetOnClick(new Action(CS$<>8__locals1.<Build>g__RumorChill|5)).SetCondition(() => !base.<Build>g__taken|20());
-		if (CS$<>8__locals1.c.quest != null && EClass.game.quests.Get(CS$<>8__locals1.c.quest.uid) == null)
+		}).SetCondition(() => !taken() && EClass.game.quests.CountRandomQuest() >= 5);
+		Choice("daDecline", text).SetOnClick(RumorChill).SetCondition(() => !taken());
+		if (c.quest != null && EClass.game.quests.Get(c.quest.uid) == null)
 		{
-			QuestSupply supply = CS$<>8__locals1.c.quest as QuestSupply;
+			QuestSupply supply = c.quest as QuestSupply;
 			if (supply != null)
 			{
-				foreach (Thing t3 in supply.ListDestThing(false))
+				foreach (Thing item5 in supply.ListDestThing())
 				{
-					Thing _t = t3;
-					this.Choice("daDeliver".lang(supply.GetTitle() ?? "", _t.GetName(NameStyle.Full, supply.num), null, null, null), "_deliver", false).SetOnClick(delegate
+					Thing _t4 = item5;
+					Choice("daDeliver".lang(supply.GetTitle() ?? "", _t4.GetName(NameStyle.Full, supply.num)), "_deliver").SetOnClick(delegate
 					{
-						EClass.game.quests.Start(CS$<>8__locals1.c.quest);
-						CS$<>8__locals1.<>4__this.destThing = _t;
-						CS$<>8__locals1.<>4__this.destQuest = supply;
+						EClass.game.quests.Start(c.quest);
+						destThing = _t4;
+						destQuest = supply;
 					}).SetOnTooltip(delegate(UITooltip a)
 					{
-						_t.WriteNote(a.note, null, IInspect.NoteMode.Default, null);
+						_t4.WriteNote(a.note);
 					});
 				}
 			}
 		}
-		this.EnableCancel(text);
-		this.Step("_questAccept");
-		this._Talk("tg", this.GetTopic(CS$<>8__locals1.c, "questAccept"), this.StepEnd);
-		this.Step("_questAccept_instance");
-		this._Talk("tg", this.GetTopic(CS$<>8__locals1.c, "questAccept"), null);
-		this.Method(delegate
+		EnableCancel(text);
+		Step("_questAccept");
+		_Talk("tg", GetTopic(c, "questAccept"), StepEnd);
+		Step("_questAccept_instance");
+		_Talk("tg", GetTopic(c, "questAccept"));
+		Method(delegate
 		{
-			Zone z = CS$<>8__locals1.c.quest.CreateInstanceZone(CS$<>8__locals1.c);
+			Zone z = c.quest.CreateInstanceZone(c);
 			EClass.pc.MoveZone(z, ZoneTransition.EnterState.Center);
-		}, null, this.StepEnd);
-		this.Step("_questFull");
-		this._Talk("tg", this.GetTopic(CS$<>8__locals1.c, "questFull"), text);
-		this.Step("_greatDebt");
-		this.Method(delegate
+		}, null, StepEnd);
+		Step("_questFull");
+		_Talk("tg", GetTopic(c, "questFull"), text);
+		Step("_greatDebt");
+		Method(delegate
 		{
 			QuestDebt questDebt2 = EClass.game.quests.Get<QuestDebt>();
 			if (!questDebt2.CanGiveBill())
 			{
-				base.<Build>g__TempTalkTopic|4("loytel_bill_give_wait", CS$<>8__locals1.<>4__this.StepDefault);
-				return;
+				TempTalkTopic("loytel_bill_give_wait", StepDefault);
 			}
-			if (questDebt2.gaveBill)
+			else if (questDebt2.gaveBill)
 			{
-				base.<Build>g__TempTalkTopic|4("loytel_bill_give_given", CS$<>8__locals1.<>4__this.StepDefault);
-				return;
+				TempTalkTopic("loytel_bill_give_given", StepDefault);
 			}
-			base.<Build>g__TempTalkTopic|4(questDebt2.GetIdTalk_GiveBill(), CS$<>8__locals1.<>4__this.StepEnd);
-			questDebt2.GiveBill();
-		}, null, null);
-		this.Step("_greatDebt2");
-		this.Method(delegate
-		{
-			QuestDebt questDebt2 = EClass.game.quests.Get<QuestDebt>();
-			base.<Build>g__TempTalkTopic|4("loytel_bill_give_lost", CS$<>8__locals1.<>4__this.StepEnd);
-			questDebt2.GiveBill();
-		}, null, null);
-		this.Step("_shutup");
-		this.Method(delegate
-		{
-			CS$<>8__locals1.c.SetInt(106, (CS$<>8__locals1.c.GetInt(106, null) == 0) ? 1 : 0);
-		}, null, null);
-		this._Talk("tg", this.GetTopic(CS$<>8__locals1.c, (CS$<>8__locals1.c.GetInt(106, null) == 0) ? "shutup" : "shutup2"), null);
-		this.End();
-		this.Step("_insult");
-		this.Method(delegate
-		{
-			CS$<>8__locals1.c.SetInt(108, (CS$<>8__locals1.c.GetInt(108, null) == 0) ? 1 : 0);
-		}, null, null);
-		this._Talk("tg", this.GetTopic(CS$<>8__locals1.c, (CS$<>8__locals1.c.GetInt(108, null) == 0) ? "insult" : "insult2"), null);
-		this.Method(delegate
-		{
-			if (CS$<>8__locals1.c.GetInt(108, null) == 1)
+			else
 			{
-				CS$<>8__locals1.c.Talk("insult", null, null, false);
+				TempTalkTopic(questDebt2.GetIdTalk_GiveBill(), StepEnd);
+				questDebt2.GiveBill();
 			}
-		}, null, null);
-		this.End();
-		this.Step("_makeHome");
-		this.Method(delegate
+		});
+		Step("_greatDebt2");
+		Method(delegate
 		{
-			EClass._zone.branch.AddMemeber(CS$<>8__locals1.c);
-		}, null, null);
-		this._Talk("tg", this.GetTopic(CS$<>8__locals1.c, "ok"), null);
-		this.End();
-		this.Step("_hire");
-		CS$<>8__locals1.<Build>g__Talk|0("rumor", this.StepDefault);
-		this.Choice("daAccept", this.StepDefault, false).SetOnClick(delegate
+			QuestDebt questDebt3 = EClass.game.quests.Get<QuestDebt>();
+			TempTalkTopic("loytel_bill_give_lost", StepEnd);
+			questDebt3.GiveBill();
+		});
+		Step("_shutup");
+		Method(delegate
+		{
+			c.SetInt(106, (c.GetInt(106) == 0) ? 1 : 0);
+		});
+		_Talk("tg", GetTopic(c, (c.GetInt(106) == 0) ? "shutup" : "shutup2"));
+		End();
+		Step("_insult");
+		Method(delegate
+		{
+			c.SetInt(108, (c.GetInt(108) == 0) ? 1 : 0);
+		});
+		_Talk("tg", GetTopic(c, (c.GetInt(108) == 0) ? "insult" : "insult2"));
+		Method(delegate
+		{
+			if (c.GetInt(108) == 1)
+			{
+				c.Talk("insult");
+			}
+		});
+		End();
+		Step("_makeHome");
+		Method(delegate
+		{
+			EClass._zone.branch.AddMemeber(c);
+		});
+		_Talk("tg", GetTopic(c, "ok"));
+		End();
+		Step("_hire");
+		Talk("rumor", StepDefault);
+		Choice("daAccept", StepDefault).SetOnClick(delegate
 		{
 		});
-		this.Choice("daDecline", this.StepDefault, false).SetOnClick(delegate
+		Choice("daDecline", StepDefault).SetOnClick(delegate
 		{
 		});
-		this.Step("_invite");
-		this.Method(delegate
+		Step("_invite");
+		Method(delegate
 		{
-			if (!CS$<>8__locals1.c.trait.CanInvite)
+			if (!c.trait.CanInvite)
 			{
-				base.<Build>g__TempTalkTopic|4("invite2", CS$<>8__locals1.<>4__this.StepDefault);
-				return;
+				TempTalkTopic("invite2", StepDefault);
 			}
-			if (CS$<>8__locals1.c.GetBestAttribute() > EClass.pc.CHA && !EClass.debug.godMode)
+			else if (c.GetBestAttribute() > EClass.pc.CHA && !EClass.debug.godMode)
 			{
-				GameLang.refDrama1 = (CS$<>8__locals1.c.GetBestAttribute().ToString() ?? "");
-				base.<Build>g__TempTalkTopic|4("invite3", CS$<>8__locals1.<>4__this.StepDefault);
-				return;
+				GameLang.refDrama1 = c.GetBestAttribute().ToString() ?? "";
+				TempTalkTopic("invite3", StepDefault);
 			}
-			base.<Build>g__TempTalkTopic|4("invite", null);
-			DramaCustomSequence <>4__this = CS$<>8__locals1.<>4__this;
-			string lang = "yes";
-			Action onJump;
-			if ((onJump = CS$<>8__locals1.<>9__103) == null)
+			else
 			{
-				onJump = (CS$<>8__locals1.<>9__103 = delegate()
+				TempTalkTopic("invite", null);
+				Choice("yes", delegate
 				{
-					base.<Build>g__TempTalk|3("hired", CS$<>8__locals1.<>4__this.StepEnd);
+					TempTalk("hired", StepEnd);
 					EClass.Sound.Play("good");
-					CS$<>8__locals1.c.MakeAlly(true);
+					c.MakeAlly();
+				});
+				Choice("no", StepDefault, cancel: true).SetOnClick(RumorChill);
+			}
+		});
+		Step("_Guide");
+		Method(delegate
+		{
+			TempTalkTopic("guide", null);
+			foreach (Card guide in GetListGuide())
+			{
+				Choice("daGotoGuide".lang(guide.Name, ""), "_goto").SetOnClick(delegate
+				{
+					destCard = guide;
 				});
 			}
-			<>4__this.Choice(lang, onJump);
-			CS$<>8__locals1.<>4__this.Choice("no", CS$<>8__locals1.<>4__this.StepDefault, true).SetOnClick(new Action(base.<Build>g__RumorChill|5));
-		}, null, null);
-		this.Step("_Guide");
-		this.Method(delegate
+			Choice("no", StepDefault, cancel: true).SetOnClick(RumorChill);
+			TempCancel();
+		});
+		BackChill();
+		Step("_tail");
+		Method(delegate
 		{
-			base.<Build>g__TempTalkTopic|4("guide", null);
-			using (List<Card>.Enumerator enumerator3 = CS$<>8__locals1.<>4__this.GetListGuide().GetEnumerator())
+			TempTalkTopic(bird + "1", null);
+			Choice("yes2", delegate
 			{
-				while (enumerator3.MoveNext())
-				{
-					Card guide = enumerator3.Current;
-					CS$<>8__locals1.<>4__this.Choice("daGotoGuide".lang(guide.Name, "", null, null, null), "_goto", false).SetOnClick(delegate
-					{
-						CS$<>8__locals1.<>4__this.destCard = guide;
-					});
-				}
-			}
-			CS$<>8__locals1.<>4__this.Choice("no", CS$<>8__locals1.<>4__this.StepDefault, true).SetOnClick(new Action(base.<Build>g__RumorChill|5));
-			base.<Build>g__TempCancel|88();
-		}, null, null);
-		CS$<>8__locals1.<Build>g__BackChill|89();
-		this.Step("_tail");
-		this.Method(delegate
-		{
-			base.<Build>g__TempTalkTopic|4(CS$<>8__locals1.bird + "1", null);
-			DramaCustomSequence <>4__this = CS$<>8__locals1.<>4__this;
-			string lang = "yes2";
-			Action onJump;
-			if ((onJump = CS$<>8__locals1.<>9__105) == null)
-			{
-				onJump = (CS$<>8__locals1.<>9__105 = delegate()
-				{
-					base.<Build>g__TempTalkTopic|4(CS$<>8__locals1.bird + "2", CS$<>8__locals1.<>4__this.StepEnd);
-					EClass.pc.SetAI(new AI_Fuck
-					{
-						target = CS$<>8__locals1.c,
-						sell = true
-					});
-				});
-			}
-			<>4__this.Choice(lang, onJump);
-			CS$<>8__locals1.<>4__this.Choice("no2", CS$<>8__locals1.<>4__this.StepDefault, true).SetOnClick(new Action(base.<Build>g__RumorChill|5));
-		}, null, null);
-		this.Step("_whore");
-		this.Method(delegate
-		{
-			int costWhore = CalcMoney.Whore(CS$<>8__locals1.c);
-			GameLang.refDrama1 = (costWhore.ToString() ?? "");
-			base.<Build>g__TempTalkTopic|4(CS$<>8__locals1.bird + "3", null);
-			CS$<>8__locals1.<>4__this.Choice("yes2", delegate()
-			{
-				if (EClass.pc.GetCurrency("money") < costWhore)
-				{
-					CS$<>8__locals1.<Build>g__TempTalkTopic|4("nomoney", CS$<>8__locals1.<>4__this.StepDefault);
-					return;
-				}
-				SE.Pay();
-				EClass.pc.ModCurrency(-costWhore, "money");
-				CS$<>8__locals1.<Build>g__TempTalkTopic|4(CS$<>8__locals1.bird + "2", CS$<>8__locals1.<>4__this.StepEnd);
+				TempTalkTopic(bird + "2", StepEnd);
 				EClass.pc.SetAI(new AI_Fuck
 				{
-					target = CS$<>8__locals1.c
+					target = c,
+					sell = true
 				});
 			});
-			CS$<>8__locals1.<>4__this.Choice("no2", CS$<>8__locals1.<>4__this.StepDefault, true).SetOnClick(new Action(base.<Build>g__RumorChill|5));
-		}, null, null);
-		this.Step("_picklock");
-		this.Method(delegate
+			Choice("no2", StepDefault, cancel: true).SetOnClick(RumorChill);
+		});
+		Step("_whore");
+		Method(delegate
 		{
-			int cost = CalcMoney.Picklock(EClass.pc, CS$<>8__locals1.<>4__this.destThing);
-			GameLang.refDrama1 = (cost.ToString() ?? "");
-			base.<Build>g__TempTalkTopic|4("bird3", null);
-			CS$<>8__locals1.<>4__this.Choice("yes2", delegate()
+			int costWhore = CalcMoney.Whore(c);
+			GameLang.refDrama1 = costWhore.ToString() ?? "";
+			TempTalkTopic(bird + "3", null);
+			Choice("yes2", delegate
 			{
-				if (CS$<>8__locals1.<>4__this.destThing.c_lockedHard)
+				if (EClass.pc.GetCurrency() < costWhore)
 				{
-					CS$<>8__locals1.<Build>g__TempTalkTopic|4("lockTooHard", CS$<>8__locals1.<>4__this.StepDefault);
-					return;
+					TempTalkTopic("nomoney", StepDefault);
 				}
-				if (EClass.pc.GetCurrency("money") < cost)
+				else
 				{
-					CS$<>8__locals1.<Build>g__TempTalkTopic|4("nomoney", CS$<>8__locals1.<>4__this.StepDefault);
-					return;
-				}
-				SE.Pay();
-				EClass.pc.ModCurrency(-cost, "money");
-				Layer layer = CS$<>8__locals1.<>4__this.manager.layer;
-				Action onKill;
-				if ((onKill = CS$<>8__locals1.<>9__108) == null)
-				{
-					onKill = (CS$<>8__locals1.<>9__108 = delegate()
+					SE.Pay();
+					EClass.pc.ModCurrency(-costWhore);
+					TempTalkTopic(bird + "2", StepEnd);
+					EClass.pc.SetAI(new AI_Fuck
 					{
-						CS$<>8__locals1.c.PlaySound("lock_open", 1f, true);
-						CS$<>8__locals1.c.Say("lockpick_success", CS$<>8__locals1.c, CS$<>8__locals1.<>4__this.destThing, null, null);
-						CS$<>8__locals1.c.ModExp(280, 200 + CS$<>8__locals1.<>4__this.destThing.c_lockLv * 20);
-						CS$<>8__locals1.<>4__this.destThing.c_lockLv = 0;
-						if (CS$<>8__locals1.<>4__this.destThing.isLostProperty)
+						target = c
+					});
+				}
+			});
+			Choice("no2", StepDefault, cancel: true).SetOnClick(RumorChill);
+		});
+		Step("_picklock");
+		Method(delegate
+		{
+			int cost = CalcMoney.Picklock(EClass.pc, destThing);
+			GameLang.refDrama1 = cost.ToString() ?? "";
+			TempTalkTopic("bird3", null);
+			Choice("yes2", delegate
+			{
+				if (destThing.c_lockedHard)
+				{
+					TempTalkTopic("lockTooHard", StepDefault);
+				}
+				else if (EClass.pc.GetCurrency() < cost)
+				{
+					TempTalkTopic("nomoney", StepDefault);
+				}
+				else
+				{
+					SE.Pay();
+					EClass.pc.ModCurrency(-cost);
+					manager.layer.SetOnKill(delegate
+					{
+						c.PlaySound("lock_open");
+						c.Say("lockpick_success", c, destThing);
+						c.ModExp(280, 200 + destThing.c_lockLv * 20);
+						destThing.c_lockLv = 0;
+						if (destThing.isLostProperty)
 						{
 							EClass.player.ModKarma(-8);
 						}
-						CS$<>8__locals1.<>4__this.destThing.isLostProperty = false;
+						destThing.isLostProperty = false;
 					});
+					TempTalkTopic(destThing.isLostProperty ? "lockpick_purse" : "bird2", StepEnd);
 				}
-				layer.SetOnKill(onKill);
-				CS$<>8__locals1.<Build>g__TempTalkTopic|4(CS$<>8__locals1.<>4__this.destThing.isLostProperty ? "lockpick_purse" : "bird2", CS$<>8__locals1.<>4__this.StepEnd);
 			});
-			CS$<>8__locals1.<>4__this.Choice("no2", CS$<>8__locals1.<>4__this.StepDefault, true).SetOnClick(new Action(base.<Build>g__RumorChill|5));
-		}, null, null);
-		this.Step("_buy");
-		this.Method(delegate
+			Choice("no2", StepDefault, cancel: true).SetOnClick(RumorChill);
+		});
+		Step("_buy");
+		Method(delegate
 		{
-			if (CS$<>8__locals1.c.id == "miral")
+			if (c.id == "miral")
 			{
 				SE.Play("click_chat");
 				if (EClass.pc.GetCurrency("medal") > 0)
 				{
-					base.<Build>g__TempTalkTopic|4("miral_medal", null);
-					return;
+					TempTalkTopic("miral_medal", null);
 				}
-				base.<Build>g__TempTalkTopic|4("miral_medal2", CS$<>8__locals1.<>4__this.StepDefault);
+				else
+				{
+					TempTalkTopic("miral_medal2", StepDefault);
+				}
 			}
-		}, null, null);
-		this.Method(delegate
+		});
+		Method(delegate
 		{
-			if (EClass.player.IsCriminal && !EClass._zone.AllowCriminal && !EClass._zone.IsPCFaction && !CS$<>8__locals1.c.trait.AllowCriminal)
+			if (EClass.player.IsCriminal && !EClass._zone.AllowCriminal && !EClass._zone.IsPCFaction && !c.trait.AllowCriminal)
 			{
 				SE.Play("click_chat");
-				base.<Build>g__TempTalkTopic|4("shop_criminal", CS$<>8__locals1.<>4__this.StepEnd);
-				return;
+				TempTalkTopic("shop_criminal", StepEnd);
 			}
-			CS$<>8__locals1.<>4__this.sequence.Exit();
-			CS$<>8__locals1.<>4__this.manager.layer.Close();
-			CS$<>8__locals1.c.trait.OnBarter();
-			if (WidgetFeed.Instance)
+			else
 			{
-				WidgetFeed.Instance.Talk(CS$<>8__locals1.c, "barter");
+				sequence.Exit();
+				manager.layer.Close();
+				c.trait.OnBarter();
+				if ((bool)WidgetFeed.Instance)
+				{
+					WidgetFeed.Instance.Talk(c, "barter");
+				}
+				layer = EClass.ui.AddLayer(LayerInventory.CreateBuy(c, c.trait.CurrencyType, c.trait.PriceType));
 			}
-			CS$<>8__locals1.layer = EClass.ui.AddLayer(LayerInventory.CreateBuy(CS$<>8__locals1.c, CS$<>8__locals1.c.trait.CurrencyType, CS$<>8__locals1.c.trait.PriceType));
-		}, () => !CS$<>8__locals1.layer, this.StepDefault);
-		this.Step("_buyPlan");
-		this.Method(delegate
+		}, () => !layer, StepDefault);
+		Step("_buyPlan");
+		Method(delegate
 		{
 			List<ResearchPlan> plans = new List<ResearchPlan>();
 			foreach (SourceResearch.Row row in EClass.sources.researches.rows)
@@ -776,677 +742,746 @@ public class DramaCustomSequence : EClass
 					onInstantiate = delegate(ResearchPlan a, ItemGeneral b)
 					{
 						b.button1.mainText.text = a.Name;
-						UIItem uiitem = Util.Instantiate<UIItem>("UI/Element/Item/Extra/costBarter", b.layout);
-						HomeResource.Cost c = new HomeResource.Cost(EClass.BranchOrHomeBranch.resources.money, a.source.money);
-						uiitem.text1.SetText(c.cost.ToString() ?? "", (c.resource.value >= c.cost) ? FontColor.Good : FontColor.Bad);
-						uiitem.image1.sprite = c.resource.Sprite;
+						UIItem uIItem = Util.Instantiate<UIItem>("UI/Element/Item/Extra/costBarter", b.layout);
+						HomeResource.Cost c2 = new HomeResource.Cost(EClass.BranchOrHomeBranch.resources.money, a.source.money);
+						uIItem.text1.SetText(c2.cost.ToString() ?? "", (c2.resource.value >= c2.cost) ? FontColor.Good : FontColor.Bad);
+						uIItem.image1.sprite = c2.resource.Sprite;
 						b.button1.SetTooltip(delegate(UITooltip t)
 						{
 							a.WriteNote(t.note);
-						}, true);
-						b.button1.onClick.AddListener(delegate()
+						});
+						b.button1.onClick.AddListener(delegate
 						{
-							if (c.resource.value < c.cost)
+							if (c2.resource.value < c2.cost)
 							{
 								SE.Beep();
-								return;
 							}
-							c.resource.Mod(-c.cost, true);
-							plans.Remove(a);
-							EClass.BranchOrHomeBranch.researches.AddPlan(a);
-							SE.Pay();
-							list.List(true);
+							else
+							{
+								c2.resource.Mod(-c2.cost);
+								plans.Remove(a);
+								EClass.BranchOrHomeBranch.researches.AddPlan(a);
+								SE.Pay();
+								list.List(refreshHighlight: true);
+							}
 						});
-						b.RebuildLayout(true);
+						b.RebuildLayout(recursive: true);
 					},
-					onList = delegate(UIList.SortMode m)
+					onList = delegate
 					{
-						foreach (ResearchPlan o in plans)
+						foreach (ResearchPlan item6 in plans)
 						{
-							list.Add(o);
+							list.Add(item6);
 						}
 					}
 				};
-			}).SetSize(450f, -1f).windows[0].AttachCurrency().Build(new UICurrency.Options
+			}).SetSize()
+				.windows[0].AttachCurrency().Build(new UICurrency.Options
 			{
 				branchMoney = true
 			});
-		}, () => !CS$<>8__locals1.layer, this.StepDefault);
-		this.Step("_upgradeHearth");
-		this.Method(delegate
+		}, () => !layer, StepDefault);
+		Step("_upgradeHearth");
+		Method(delegate
 		{
-			int cost = EClass.Branch.GetUpgradeCost();
-			GameLang.refDrama1 = Lang._currency(cost, "money");
-			GameLang.refDrama2 = ((EClass.Branch.lv + 1).ToString() ?? "");
-			GameLang.refDrama3 = "hearth_dialog".lang(EClass.Branch.GetHearthHint(EClass.Branch.lv + 1), null, null, null, null);
-			base.<Build>g__TempTalkTopic|4("upgrade_heath1", null);
-			CS$<>8__locals1.<>4__this.Choice("yes", delegate()
+			int cost2 = EClass.Branch.GetUpgradeCost();
+			GameLang.refDrama1 = Lang._currency(cost2, "money");
+			GameLang.refDrama2 = (EClass.Branch.lv + 1).ToString() ?? "";
+			GameLang.refDrama3 = "hearth_dialog".lang(EClass.Branch.GetHearthHint(EClass.Branch.lv + 1));
+			TempTalkTopic("upgrade_heath1", null);
+			Choice("yes", delegate
 			{
-				if (EClass.pc.GetCurrency("money") < cost)
+				if (EClass.pc.GetCurrency() < cost2)
 				{
-					CS$<>8__locals1.<Build>g__TempTalkTopic|4("nomoney", CS$<>8__locals1.<>4__this.StepDefault);
-					return;
+					TempTalkTopic("nomoney", StepDefault);
 				}
-				EClass.pc.ModCurrency(-cost, "money");
-				SE.Pay();
-				LayerDrama.Instance.SetOnKill(delegate
+				else
 				{
-					EClass.Branch.Upgrade();
-				});
-				CS$<>8__locals1.<Build>g__TempTalkTopic|4("upgrade_heath2", CS$<>8__locals1.<>4__this.StepEnd);
+					EClass.pc.ModCurrency(-cost2);
+					SE.Pay();
+					LayerDrama.Instance.SetOnKill(delegate
+					{
+						EClass.Branch.Upgrade();
+					});
+					TempTalkTopic("upgrade_heath2", StepEnd);
+				}
 			});
-			CS$<>8__locals1.<>4__this.Choice("no", CS$<>8__locals1.<>4__this.StepDefault, true).SetOnClick(new Action(base.<Build>g__RumorChill|5));
-		}, null, null);
-		this.Step("_sellFame");
-		this.Method(delegate
+			Choice("no", StepDefault, cancel: true).SetOnClick(RumorChill);
+		});
+		Step("_sellFame");
+		Method(delegate
 		{
-			int cost = EClass.player.fame / 5;
-			GameLang.refDrama1 = (cost.ToString() ?? "");
-			if (cost == 0)
+			int cost3 = EClass.player.fame / 5;
+			GameLang.refDrama1 = cost3.ToString() ?? "";
+			if (cost3 == 0)
 			{
-				base.<Build>g__TempTalkTopic|4("goto2", CS$<>8__locals1.<>4__this.StepDefault);
-				return;
+				TempTalkTopic("goto2", StepDefault);
 			}
-			base.<Build>g__TempTalkTopic|4("sellFame1", null);
-			CS$<>8__locals1.<>4__this.Choice("yes", delegate()
+			else
 			{
-				EClass.pc.ModCurrency(cost, "money");
-				SE.Pay();
-				EClass.player.ModFame(-cost);
-				CS$<>8__locals1.<Build>g__TempTalkTopic|4("sellFame2", CS$<>8__locals1.<>4__this.StepDefault);
-			});
-			CS$<>8__locals1.<>4__this.Choice("no", CS$<>8__locals1.<>4__this.StepDefault, true).SetOnClick(new Action(base.<Build>g__RumorChill|5));
-		}, null, null);
-		this.Step("_investZone");
-		this.Method(delegate
+				TempTalkTopic("sellFame1", null);
+				Choice("yes", delegate
+				{
+					EClass.pc.ModCurrency(cost3);
+					SE.Pay();
+					EClass.player.ModFame(-cost3);
+					TempTalkTopic("sellFame2", StepDefault);
+				});
+				Choice("no", StepDefault, cancel: true).SetOnClick(RumorChill);
+			}
+		});
+		Step("_investZone");
+		Method(delegate
 		{
-			int cost = CalcMoney.InvestZone(EClass.pc);
-			GameLang.refDrama1 = (cost.ToString() ?? "");
-			GameLang.refDrama2 = (EClass._zone.investment.ToString() ?? "");
-			base.<Build>g__TempTalkTopic|4("invest1", null);
-			CS$<>8__locals1.<>4__this.Choice("yes", delegate()
+			int cost4 = CalcMoney.InvestZone(EClass.pc);
+			GameLang.refDrama1 = cost4.ToString() ?? "";
+			GameLang.refDrama2 = EClass._zone.investment.ToString() ?? "";
+			TempTalkTopic("invest1", null);
+			Choice("yes", delegate
 			{
-				base.<Build>g__Invest|117(false);
+				Invest(quick: false);
 			});
-			CS$<>8__locals1.<>4__this.Choice("no", CS$<>8__locals1.<>4__this.StepDefault, true).SetOnClick(new Action(base.<Build>g__RumorChill|5));
-			CS$<>8__locals1.<>4__this.Choice("quickInvest", delegate()
+			Choice("no", StepDefault, cancel: true).SetOnClick(RumorChill);
+			Choice("quickInvest", delegate
 			{
-				base.<Build>g__Invest|117(true);
+				Invest(quick: true);
 			});
-		}, null, null);
-		this.Step("_investShop");
-		this.Method(delegate
+			void Invest(bool quick)
+			{
+				if (EClass.pc.GetCurrency() < cost4)
+				{
+					TempTalkTopic("nomoney", StepDefault);
+				}
+				else
+				{
+					EClass.pc.ModCurrency(-cost4);
+					SE.Pay();
+					EClass._zone.investment += cost4;
+					EClass._zone.ModDevelopment(5 + EClass.rnd(5));
+					EClass._zone.ModInfluence(2);
+					EClass.pc.ModExp(292, 100 + EClass._zone.development * 2);
+					if (quick)
+					{
+						TempGoto("_investZone");
+					}
+					else
+					{
+						TempTalkTopic("invest2", StepDefault);
+					}
+				}
+			}
+		});
+		Step("_investShop");
+		Method(delegate
 		{
-			int cost = CalcMoney.InvestShop(EClass.pc, CS$<>8__locals1.c);
-			GameLang.refDrama1 = (cost.ToString() ?? "");
-			GameLang.refDrama2 = (CS$<>8__locals1.c.trait.ShopLv.ToString() ?? "");
-			base.<Build>g__TempTalkTopic|4("invest_shop1", null);
-			CS$<>8__locals1.<>4__this.Choice("yes", delegate()
+			int cost5 = CalcMoney.InvestShop(EClass.pc, c);
+			GameLang.refDrama1 = cost5.ToString() ?? "";
+			GameLang.refDrama2 = c.trait.ShopLv.ToString() ?? "";
+			TempTalkTopic("invest_shop1", null);
+			Choice("yes", delegate
 			{
-				base.<Build>g__Invest|120(false);
+				Invest(quick: false);
 			});
-			CS$<>8__locals1.<>4__this.Choice("no", CS$<>8__locals1.<>4__this.StepDefault, true).SetOnClick(new Action(base.<Build>g__RumorChill|5));
-			CS$<>8__locals1.<>4__this.Choice("quickInvest", delegate()
+			Choice("no", StepDefault, cancel: true).SetOnClick(RumorChill);
+			Choice("quickInvest", delegate
 			{
-				base.<Build>g__Invest|120(true);
+				Invest(quick: true);
 			});
-		}, null, null);
-		this.Step("_changeTitle");
-		this.Method(delegate
+			void Invest(bool quick)
+			{
+				if (EClass.pc.GetCurrency() < cost5)
+				{
+					TempTalkTopic("nomoney", StepDefault);
+				}
+				else
+				{
+					EClass.pc.ModCurrency(-cost5);
+					SE.Pay();
+					c.c_invest++;
+					EClass._zone.ModInfluence(1);
+					EClass.pc.ModExp(292, 50 + c.c_invest * 20);
+					Guild.Merchant.AddContribution(5 + c.c_invest);
+					if (quick)
+					{
+						TempGoto("_investShop");
+					}
+					else
+					{
+						TempTalkTopic("invest_shop2", StepDefault);
+					}
+				}
+			}
+		});
+		Step("_changeTitle");
+		Method(delegate
 		{
 			EClass.player.title = WordGen.Get("title");
 			GameLang.refDrama1 = EClass.player.title;
-			base.<Build>g__TempTalk|3("changeTitle", CS$<>8__locals1.<>4__this.StepDefault);
-		}, null, this.StepDefault);
-		this.Step("_buyLand");
-		this.Method(delegate
+			TempTalk("changeTitle", StepDefault);
+		}, null, StepDefault);
+		Step("_buyLand");
+		Method(delegate
 		{
-			bool flag5 = EClass._map.bounds.CanExpand(1);
+			bool num = EClass._map.bounds.CanExpand(1);
 			int costLand = CalcGold.ExpandLand();
 			GameLang.refDrama1 = "";
-			GameLang.refDrama2 = (costLand.ToString() ?? "");
-			if (!flag5)
+			GameLang.refDrama2 = costLand.ToString() ?? "";
+			if (!num)
 			{
-				base.<Build>g__TempTalkTopic|4("expand3", CS$<>8__locals1.<>4__this.StepDefault);
-				return;
+				TempTalkTopic("expand3", StepDefault);
 			}
-			base.<Build>g__TempTalkTopic|4("expand1", CS$<>8__locals1.<>4__this.StepDefault);
-			CS$<>8__locals1.<>4__this.Choice("yes", delegate()
+			else
 			{
-				if (EClass.pc.GetCurrency("money2") < costLand)
+				TempTalkTopic("expand1", StepDefault);
+				Choice("yes", delegate
 				{
-					CS$<>8__locals1.<Build>g__TempTalkTopic|4("nomoney", CS$<>8__locals1.<>4__this.StepDefault);
-					return;
-				}
-				SE.Pay();
-				EClass.pc.ModCurrency(-costLand, "money2");
-				CS$<>8__locals1.<Build>g__TempTalkTopic|4("expand2", CS$<>8__locals1.<>4__this.StepDefault);
-				EClass._map.bounds.Expand(1);
-				SE.Play("good");
-				EClass._map.RefreshAllTiles();
-				ScreenEffect.Play("Firework");
-			});
-			CS$<>8__locals1.<>4__this.Choice("no", CS$<>8__locals1.<>4__this.StepDefault, true).SetOnClick(new Action(base.<Build>g__RumorChill|5));
-		}, null, null);
-		this.Step("_meeting");
-		this.Method(delegate
-		{
-			CS$<>8__locals1.<>4__this.sequence.Exit();
-			CS$<>8__locals1.<>4__this.manager.layer.Close();
-			EClass.Branch.meetings.Start();
-		}, null, null);
-		this.End();
-		this.Step("_give");
-		this.Method(delegate
-		{
-			CS$<>8__locals1.<>4__this.manager.Hide();
-			CS$<>8__locals1.layer = LayerDragGrid.CreateGive(CS$<>8__locals1.c);
-			CS$<>8__locals1.layer.SetOnKill(new Action(CS$<>8__locals1.<>4__this.manager.Show));
-		}, () => !CS$<>8__locals1.layer, this.StepDefault);
-		this.Step("_blessing");
-		this.Method(delegate
-		{
-			bool flag5 = CS$<>8__locals1.c.trait is TraitMiko_Mifu;
-			base.<Build>g__TempTalkTopic|4("blessing", CS$<>8__locals1.<>4__this.StepEnd);
-			Layer instance = LayerDrama.Instance;
-			Action onKill;
-			if ((onKill = CS$<>8__locals1.<>9__124) == null)
-			{
-				onKill = (CS$<>8__locals1.<>9__124 = delegate()
-				{
-					foreach (Chara chara in EClass.pc.party.members)
+					if (EClass.pc.GetCurrency("money2") < costLand)
 					{
-						if (CS$<>8__locals1.c.trait is TraitMiko_Mifu)
-						{
-							Condition condition = chara.AddCondition<ConHolyVeil>(100, false);
-							if (condition != null)
-							{
-								condition.SetPerfume(3);
-							}
-						}
-						else if (CS$<>8__locals1.c.trait is TraitMiko_Nefu)
-						{
-							Condition condition2 = chara.AddCondition<ConEuphoric>(100, false);
-							if (condition2 != null)
-							{
-								condition2.SetPerfume(3);
-							}
-						}
-						else
-						{
-							Condition condition3 = chara.AddCondition<ConNightVision>(100, false);
-							if (condition3 != null)
-							{
-								condition3.SetPerfume(3);
-							}
-						}
-						chara.Say("blessing", chara, null, null);
-						chara.PlaySound("pray", 1f, true);
-						chara.PlayEffect("holyveil", true, 0f, default(Vector3));
+						TempTalkTopic("nomoney", StepDefault);
 					}
-					CS$<>8__locals1.c.isRestocking = true;
-				});
-			}
-			instance.SetOnKill(onKill);
-			CS$<>8__locals1.c.c_dateStockExpire = EClass.world.date.GetRaw(0) + (flag5 ? 180 : 180) * 1440;
-		}, null, null);
-		this.Step("_train");
-		this.Method(delegate
-		{
-			LayerList layerList = EClass.ui.AddLayer<LayerList>();
-			Action<UIList, LayerList> onInit;
-			if ((onInit = CS$<>8__locals1.<>9__125) == null)
-			{
-				onInit = (CS$<>8__locals1.<>9__125 = delegate(UIList list, LayerList l)
-				{
-					list.moldItem = Resources.Load<ButtonElement>("UI/Element/Button/ButtonElementTrain").transform;
-					BaseList list2 = list;
-					UIList.Callback<Element, ButtonElement> callback = new UIList.Callback<Element, ButtonElement>();
-					callback.onClick = delegate(Element a, ButtonElement b)
+					else
 					{
-						int num = EClass.pc.elements.HasBase(a.id) ? CalcPlat.Train(EClass.pc, a) : CalcPlat.Learn(EClass.pc, a);
-						if (num == 0)
+						SE.Pay();
+						EClass.pc.ModCurrency(-costLand, "money2");
+						TempTalkTopic("expand2", StepDefault);
+						EClass._map.bounds.Expand(1);
+						SE.Play("good");
+						EClass._map.RefreshAllTiles();
+						ScreenEffect.Play("Firework");
+					}
+				});
+				Choice("no", StepDefault, cancel: true).SetOnClick(RumorChill);
+			}
+		});
+		Step("_meeting");
+		Method(delegate
+		{
+			sequence.Exit();
+			manager.layer.Close();
+			EClass.Branch.meetings.Start();
+		});
+		End();
+		Step("_give");
+		Method(delegate
+		{
+			manager.Hide();
+			layer = LayerDragGrid.CreateGive(c);
+			layer.SetOnKill(manager.Show);
+		}, () => !layer, StepDefault);
+		Step("_blessing");
+		Method(delegate
+		{
+			bool flag5 = c.trait is TraitMiko_Mifu;
+			TempTalkTopic("blessing", StepEnd);
+			LayerDrama.Instance.SetOnKill(delegate
+			{
+				foreach (Chara member in EClass.pc.party.members)
+				{
+					if (c.trait is TraitMiko_Mifu)
+					{
+						member.AddCondition<ConHolyVeil>()?.SetPerfume();
+					}
+					else if (c.trait is TraitMiko_Nefu)
+					{
+						member.AddCondition<ConEuphoric>()?.SetPerfume();
+					}
+					else
+					{
+						member.AddCondition<ConNightVision>()?.SetPerfume();
+					}
+					member.Say("blessing", member);
+					member.PlaySound("pray");
+					member.PlayEffect("holyveil");
+				}
+				c.isRestocking = true;
+			});
+			c.c_dateStockExpire = EClass.world.date.GetRaw() + (flag5 ? 180 : 180) * 1440;
+		});
+		Step("_train");
+		Method(delegate
+		{
+			layer = EClass.ui.AddLayer<LayerList>().ManualList(delegate(UIList list, LayerList l)
+			{
+				list.moldItem = Resources.Load<ButtonElement>("UI/Element/Button/ButtonElementTrain").transform;
+				list.callbacks = new UIList.Callback<Element, ButtonElement>
+				{
+					onClick = delegate(Element a, ButtonElement b)
+					{
+						int num2 = (EClass.pc.elements.HasBase(a.id) ? CalcPlat.Train(EClass.pc, a) : CalcPlat.Learn(EClass.pc, a));
+						if (num2 == 0)
 						{
 							SE.Beep();
-							return;
 						}
-						if (!EClass.pc.TryPay(num, "plat"))
+						else if (EClass.pc.TryPay(num2, "plat"))
 						{
-							return;
-						}
-						if (EClass.pc.elements.HasBase(a.id))
-						{
-							EClass.pc.elements.Train(a.id, 10);
-						}
-						else
-						{
-							EClass.pc.elements.Learn(a.id, 1);
-						}
-						list.Redraw();
-						UIButton.TryShowTip(null, true, true);
-					};
-					callback.onRedraw = delegate(Element a, ButtonElement b, int i)
-					{
-						bool flag5 = EClass.pc.elements.HasBase(a.id);
-						b.imagePotential.enabled = flag5;
-						b.SetElement(EClass.pc.elements.GetElement(a.id) ?? a, EClass.pc.elements, ButtonElement.Mode.Skill);
-						int plat = EClass.pc.GetCurrency("plat");
-						int cost = EClass.pc.elements.HasBase(a.id) ? CalcPlat.Train(EClass.pc, a) : CalcPlat.Learn(EClass.pc, a);
-						b.mainText.text = b.mainText.text + " " + (flag5 ? "" : ("notLearned".lang() + " "));
-						b.subText2.text = ((cost == 0) ? "-" : (cost.ToString() ?? "")).TagColor(() => plat >= cost && cost != 0, null);
-						b.RebuildLayout(false);
-					};
-					callback.onInstantiate = delegate(Element a, ButtonElement b)
-					{
-					};
-					callback.onList = delegate(UIList.SortMode m)
-					{
-						IEnumerable<SourceElement.Row> rows = EClass.sources.elements.rows;
-						Func<SourceElement.Row, bool> predicate;
-						if ((predicate = CS$<>8__locals1.<>9__131) == null)
-						{
-							predicate = (CS$<>8__locals1.<>9__131 = delegate(SourceElement.Row a)
+							if (EClass.pc.elements.HasBase(a.id))
 							{
-								if (a.tag.Contains("unused"))
-								{
-									return false;
-								}
-								if (a.tag.Contains("guild"))
-								{
-									return (a.tag.Contains("fighter") && Guild.Fighter.IsCurrentZone) || (a.tag.Contains("mage") && Guild.Mage.IsCurrentZone) || (a.tag.Contains("thief") && Guild.Thief.IsCurrentZone) || (a.tag.Contains("merchant") && Guild.Merchant.IsCurrentZone);
-								}
-								return !CS$<>8__locals1.isInGuild && a.category == "skill" && a.categorySub == CS$<>8__locals1.c.trait.IDTrainer;
-							});
+								EClass.pc.elements.Train(a.id);
+							}
+							else
+							{
+								EClass.pc.elements.Learn(a.id);
+							}
+							list.Redraw();
+							UIButton.TryShowTip();
 						}
-						foreach (SourceElement.Row row in rows.Where(predicate).ToList<SourceElement.Row>())
+					},
+					onRedraw = delegate(Element a, ButtonElement b, int i)
+					{
+						bool flag6 = EClass.pc.elements.HasBase(a.id);
+						b.imagePotential.enabled = flag6;
+						b.SetElement(EClass.pc.elements.GetElement(a.id) ?? a, EClass.pc.elements);
+						int plat = EClass.pc.GetCurrency("plat");
+						int cost6 = (EClass.pc.elements.HasBase(a.id) ? CalcPlat.Train(EClass.pc, a) : CalcPlat.Learn(EClass.pc, a));
+						b.mainText.text = b.mainText.text + " " + (flag6 ? "" : ("notLearned".lang() + " "));
+						b.subText2.text = ((cost6 == 0) ? "-" : (cost6.ToString() ?? "")).TagColor(() => plat >= cost6 && cost6 != 0);
+						b.RebuildLayout();
+					},
+					onInstantiate = delegate
+					{
+					},
+					onList = delegate
+					{
+						foreach (SourceElement.Row item7 in EClass.sources.elements.rows.Where(delegate(SourceElement.Row a)
 						{
-							list.Add(Element.Create(row.id, 0));
+							if (a.tag.Contains("unused"))
+							{
+								return false;
+							}
+							if (a.tag.Contains("guild"))
+							{
+								if (a.tag.Contains("fighter") && Guild.Fighter.IsCurrentZone)
+								{
+									return true;
+								}
+								if (a.tag.Contains("mage") && Guild.Mage.IsCurrentZone)
+								{
+									return true;
+								}
+								if (a.tag.Contains("thief") && Guild.Thief.IsCurrentZone)
+								{
+									return true;
+								}
+								if (a.tag.Contains("merchant") && Guild.Merchant.IsCurrentZone)
+								{
+									return true;
+								}
+								return false;
+							}
+							if (isInGuild)
+							{
+								return false;
+							}
+							return a.category == "skill" && a.categorySub == c.trait.IDTrainer;
+						}).ToList())
+						{
+							list.Add(Element.Create(item7.id));
 						}
-					};
-					list2.callbacks = callback;
-				});
-			}
-			CS$<>8__locals1.layer = layerList.ManualList(onInit).SetSize(450f, -1f).SetTitles("wTrain", null).SetOnKill(new Action(SE.PopDrama));
-			CS$<>8__locals1.layer.windows[0].AttachCurrency().Build(new UICurrency.Options
+					}
+				};
+			}).SetSize()
+				.SetTitles("wTrain")
+				.SetOnKill(SE.PopDrama);
+			layer.windows[0].AttachCurrency().Build(new UICurrency.Options
 			{
 				plat = true
 			});
-		}, () => !CS$<>8__locals1.layer, this.StepDefault);
-		this.Step("_changeDomain");
-		this.Method(delegate
+		}, () => !layer, StepDefault);
+		Step("_changeDomain");
+		Method(delegate
 		{
-			CS$<>8__locals1.layer = EClass.player.SelectDomain(new Action(SE.PopDrama));
-		}, () => !CS$<>8__locals1.layer, this.StepDefault);
-		this.Step("_revive");
-		this.Method(delegate
+			layer = EClass.player.SelectDomain(SE.PopDrama);
+		}, () => !layer, StepDefault);
+		Step("_revive");
+		Method(delegate
 		{
-			CS$<>8__locals1.layer = EClass.ui.AddLayer(LayerPeople.Create<ListPeopleRevive>("h_revive", null));
-			CS$<>8__locals1.layer.SetOnKill(new Action(SE.PopDrama));
-			CS$<>8__locals1.layer.windows[0].AttachCurrency().Build(new UICurrency.Options
+			layer = EClass.ui.AddLayer(LayerPeople.Create<ListPeopleRevive>("h_revive"));
+			layer.SetOnKill(SE.PopDrama);
+			layer.windows[0].AttachCurrency().Build(new UICurrency.Options
 			{
 				money = true
 			});
-		}, () => !CS$<>8__locals1.layer, this.StepDefault);
-		this.Step("_buySlave");
-		this.Method(delegate
+		}, () => !layer, StepDefault);
+		Step("_buySlave");
+		Method(delegate
 		{
 			LayerPeople.slaveToBuy = null;
-			CS$<>8__locals1.layer = EClass.ui.AddLayer(LayerPeople.Create<ListPeopleBuySlave>("h_invBuy", CS$<>8__locals1.c));
-			CS$<>8__locals1.layer.SetOnKill(new Action(SE.PopDrama));
-			CS$<>8__locals1.layer.windows[0].AttachCurrency().Build(new UICurrency.Options
+			layer = EClass.ui.AddLayer(LayerPeople.Create<ListPeopleBuySlave>("h_invBuy", c));
+			layer.SetOnKill(SE.PopDrama);
+			layer.windows[0].AttachCurrency().Build(new UICurrency.Options
 			{
 				money = true
 			});
-			CS$<>8__locals1.<>4__this.manager.Load();
-		}, () => !CS$<>8__locals1.layer, "_buySlaveConfirm");
-		this.Step("_buySlaveConfirm");
-		this.Method(delegate
+			manager.Load();
+		}, () => !layer, "_buySlaveConfirm");
+		Step("_buySlaveConfirm");
+		Method(delegate
 		{
 			Chara tc = LayerPeople.slaveToBuy;
 			if (tc == null)
 			{
-				base.<Build>g__RumorChill|5();
-				return;
+				RumorChill();
 			}
-			int cost = CalcMoney.BuySlave(tc);
-			GameLang.refDrama1 = (cost.ToString() ?? "");
-			GameLang.refDrama2 = tc.Name;
-			base.<Build>g__TempTalkTopic|4("slave_buy", null);
-			CS$<>8__locals1.<>4__this.Choice("yes", delegate()
+			else
 			{
-				if (!EClass.pc.TryPay(cost, "money"))
+				int cost7 = CalcMoney.BuySlave(tc);
+				GameLang.refDrama1 = cost7.ToString() ?? "";
+				GameLang.refDrama2 = tc.Name;
+				TempTalkTopic("slave_buy", null);
+				Choice("yes", delegate
 				{
-					CS$<>8__locals1.<Build>g__TempTalkTopic|4("nomoney", CS$<>8__locals1.<>4__this.StepDefault);
-					return;
-				}
-				GameLang.refDrama1 = tc.Name;
-				EClass._zone.AddCard(tc, EClass.pc.pos.GetNearestPoint(false, true, true, false));
-				tc.MakeAlly(true);
-				CS$<>8__locals1.c.GetObj<SlaverData>(5).list.Remove(tc);
-				CS$<>8__locals1.<Build>g__TempTalkTopic|4("slave_buy2", CS$<>8__locals1.<>4__this.StepEnd);
-			}).DisableSound();
-			CS$<>8__locals1.<>4__this.Choice("no", CS$<>8__locals1.<>4__this.StepDefault, true).SetOnClick(new Action(base.<Build>g__RumorChill|5));
-		}, null, null);
-		this.Goto(this.StepDefault);
-		this.Step("_trade");
-		this.Method(delegate
+					if (!EClass.pc.TryPay(cost7))
+					{
+						TempTalkTopic("nomoney", StepDefault);
+					}
+					else
+					{
+						GameLang.refDrama1 = tc.Name;
+						EClass._zone.AddCard(tc, EClass.pc.pos.GetNearestPoint());
+						tc.MakeAlly();
+						c.GetObj<SlaverData>(5).list.Remove(tc);
+						TempTalkTopic("slave_buy2", StepEnd);
+					}
+				}).DisableSound();
+				Choice("no", StepDefault, cancel: true).SetOnClick(RumorChill);
+			}
+		});
+		Goto(StepDefault);
+		Step("_trade");
+		Method(delegate
 		{
-			CS$<>8__locals1.layer = EClass.ui.AddLayer(LayerInventory.CreateContainer(CS$<>8__locals1.c));
-		}, () => !CS$<>8__locals1.layer, this.StepDefault);
-		this.Step("_identify");
-		this.Method(delegate
+			layer = EClass.ui.AddLayer(LayerInventory.CreateContainer(c));
+		}, () => !layer, StepDefault);
+		Step("_identify");
+		Method(delegate
 		{
-			CS$<>8__locals1.<>4__this.manager.Hide();
-			CS$<>8__locals1.c.trait.OnBarter();
-			CS$<>8__locals1.layer = LayerDragGrid.CreateIdentify(EClass.pc, false, BlessedState.Normal, CalcMoney.Identify(EClass.pc, false), -1);
-			CS$<>8__locals1.layer.SetOnKill(new Action(CS$<>8__locals1.<>4__this.manager.Show));
-		}, () => !CS$<>8__locals1.layer, this.StepDefault);
-		this.Step("_identifyAll");
-		this.Method(delegate
+			manager.Hide();
+			c.trait.OnBarter();
+			layer = LayerDragGrid.CreateIdentify(EClass.pc, superior: false, BlessedState.Normal, CalcMoney.Identify(EClass.pc, superior: false), -1);
+			layer.SetOnKill(manager.Show);
+		}, () => !layer, StepDefault);
+		Step("_identifyAll");
+		Method(delegate
 		{
 			int costIdentify = 0;
 			int numIdentify = 0;
 			int numSuperior = 0;
 			EClass.pc.things.Foreach(delegate(Thing t)
 			{
-				if (t.IsIdentified || t.c_IDTState == 1)
+				if (!t.IsIdentified && t.c_IDTState != 1)
 				{
-					return;
+					numIdentify++;
+					costIdentify += CalcMoney.Identify(EClass.pc, superior: false);
 				}
-				int numIdentify = numIdentify;
-				numIdentify++;
-				costIdentify += CalcMoney.Identify(EClass.pc, false);
-			}, true);
-			GameLang.refDrama1 = (costIdentify.ToString() ?? "");
-			GameLang.refDrama2 = (numIdentify.ToString() ?? "");
+			});
+			GameLang.refDrama1 = costIdentify.ToString() ?? "";
+			GameLang.refDrama2 = numIdentify.ToString() ?? "";
 			if (numIdentify == 0)
 			{
-				base.<Build>g__TempTalkTopic|4("appraise3", CS$<>8__locals1.<>4__this.StepDefault);
-				return;
+				TempTalkTopic("appraise3", StepDefault);
 			}
-			base.<Build>g__TempTalkTopic|4("appraise1", CS$<>8__locals1.<>4__this.StepDefault);
-			CS$<>8__locals1.<>4__this.Choice("yes", delegate()
+			else
 			{
-				if (EClass.pc.GetCurrency("money") < costIdentify)
+				TempTalkTopic("appraise1", StepDefault);
+				Choice("yes", delegate
 				{
-					CS$<>8__locals1.<Build>g__TempTalkTopic|4("nomoney", CS$<>8__locals1.<>4__this.StepDefault);
-					return;
-				}
-				SE.Pay();
-				EClass.pc.ModCurrency(-costIdentify, "money");
-				foreach (Thing thing in EClass.pc.things.List((Thing t) => !t.IsIdentified, true))
-				{
-					thing.Thing.Identify(false, IDTSource.Identify);
-					if (!thing.IsInstalled)
+					if (EClass.pc.GetCurrency() < costIdentify)
 					{
-						int numSuperior = numSuperior;
-						numSuperior++;
+						TempTalkTopic("nomoney", StepDefault);
 					}
-				}
-				CS$<>8__locals1.<Build>g__TempTalkTopic|4("appraise2", CS$<>8__locals1.<>4__this.StepDefault);
-			});
-			CS$<>8__locals1.<>4__this.Choice("no", CS$<>8__locals1.<>4__this.StepDefault, true).SetOnClick(new Action(base.<Build>g__RumorChill|5));
-		}, null, null);
-		this.Step("_identifySP");
-		this.Method(delegate
-		{
-			CS$<>8__locals1.<>4__this.manager.Hide();
-			CS$<>8__locals1.c.trait.OnBarter();
-			CS$<>8__locals1.layer = LayerDragGrid.CreateIdentify(EClass.pc, true, BlessedState.Normal, CalcMoney.Identify(EClass.pc, true), -1);
-			CS$<>8__locals1.layer.SetOnKill(new Action(CS$<>8__locals1.<>4__this.manager.Show));
-		}, () => !CS$<>8__locals1.layer, this.StepDefault);
-		this.Step("_bout");
-		this.Method(delegate
-		{
-			base.<Build>g__TempTalkTopic|4("bout1", CS$<>8__locals1.<>4__this.StepDefault);
-			DramaCustomSequence <>4__this = CS$<>8__locals1.<>4__this;
-			string lang = "yes";
-			Action onJump;
-			if ((onJump = CS$<>8__locals1.<>9__136) == null)
-			{
-				onJump = (CS$<>8__locals1.<>9__136 = delegate()
-				{
-					Zone z = SpatialGen.CreateInstance("field", new ZoneInstanceBout
+					else
 					{
-						uidTarget = CS$<>8__locals1.c.uid,
-						targetX = CS$<>8__locals1.c.pos.x,
-						targetZ = CS$<>8__locals1.c.pos.z
-					});
-					CS$<>8__locals1.c.SetGlobal();
-					z.events.AddPreEnter(new ZonePreEnterBout
-					{
-						target = CS$<>8__locals1.c
-					}, true);
-					CS$<>8__locals1.c.SetInt(59, EClass.world.date.GetRaw(0));
-					LayerDrama.Instance.SetOnKill(delegate
-					{
-						EClass.pc.MoveZone(z, ZoneTransition.EnterState.Center);
-					});
-					base.<Build>g__TempTalkTopic|4("bout2", CS$<>8__locals1.<>4__this.StepEnd);
+						SE.Pay();
+						EClass.pc.ModCurrency(-costIdentify);
+						foreach (Thing item8 in EClass.pc.things.List((Thing t) => !t.IsIdentified, onlyAccessible: true))
+						{
+							item8.Thing.Identify(show: false);
+							if (!item8.IsInstalled)
+							{
+								numSuperior++;
+							}
+						}
+						TempTalkTopic("appraise2", StepDefault);
+					}
 				});
+				Choice("no", StepDefault, cancel: true).SetOnClick(RumorChill);
 			}
-			<>4__this.Choice(lang, onJump);
-			CS$<>8__locals1.<>4__this.Choice("no", CS$<>8__locals1.<>4__this.StepDefault, true).SetOnClick(new Action(base.<Build>g__RumorChill|5));
-		}, null, this.StepDefault);
-		this.Step("_news");
-		this.Method(delegate
+		});
+		Step("_identifySP");
+		Method(delegate
 		{
-			Zone zone = EClass.world.region.CreateRandomSite(EClass._zone, 5, null, true, 0);
+			manager.Hide();
+			c.trait.OnBarter();
+			layer = LayerDragGrid.CreateIdentify(EClass.pc, superior: true, BlessedState.Normal, CalcMoney.Identify(EClass.pc, superior: true), -1);
+			layer.SetOnKill(manager.Show);
+		}, () => !layer, StepDefault);
+		Step("_bout");
+		Method(delegate
+		{
+			TempTalkTopic("bout1", StepDefault);
+			Choice("yes", delegate
+			{
+				Zone z2 = SpatialGen.CreateInstance("field", new ZoneInstanceBout
+				{
+					uidTarget = c.uid,
+					targetX = c.pos.x,
+					targetZ = c.pos.z
+				});
+				c.SetGlobal();
+				z2.events.AddPreEnter(new ZonePreEnterBout
+				{
+					target = c
+				});
+				c.SetInt(59, EClass.world.date.GetRaw());
+				LayerDrama.Instance.SetOnKill(delegate
+				{
+					EClass.pc.MoveZone(z2, ZoneTransition.EnterState.Center);
+				});
+				TempTalkTopic("bout2", StepEnd);
+			});
+			Choice("no", StepDefault, cancel: true).SetOnClick(RumorChill);
+		}, null, StepDefault);
+		Step("_news");
+		Method(delegate
+		{
+			Zone zone = EClass.world.region.CreateRandomSite(EClass._zone, 5);
 			if (zone == null)
 			{
-				base.<Build>g__TempTalkTopic|4("news2", null);
+				TempTalkTopic("news2", null);
 			}
 			else
 			{
 				zone.isKnown = true;
-				Msg.Say("discoverZone", zone.Name, null, null, null);
+				Msg.Say("discoverZone", zone.Name);
 				GameLang.refDrama1 = zone.Name;
-				base.<Build>g__TempTalkTopic|4("news1", null);
+				TempTalkTopic("news1", null);
 			}
-			CS$<>8__locals1.c.SetInt(33, EClass.world.date.GetRaw(0));
-		}, null, null);
-		this.Method(delegate
+			c.SetInt(33, EClass.world.date.GetRaw());
+		});
+		Method(delegate
 		{
-			CS$<>8__locals1.<>4__this.manager.Load();
-		}, null, this.StepDefault);
-		this.Step("_heal");
-		this.Method(delegate
+			manager.Load();
+		}, null, StepDefault);
+		Step("_heal");
+		Method(delegate
 		{
 			int costHeal = CalcMoney.Heal(EClass.pc);
-			GameLang.refDrama1 = (costHeal.ToString() ?? "");
-			base.<Build>g__TempTalkTopic|4("healer1", null);
-			CS$<>8__locals1.<>4__this.Choice("yes", delegate()
+			GameLang.refDrama1 = costHeal.ToString() ?? "";
+			TempTalkTopic("healer1", null);
+			Choice("yes", delegate
 			{
-				if (EClass.pc.GetCurrency("money") < costHeal)
+				if (EClass.pc.GetCurrency() < costHeal)
 				{
-					CS$<>8__locals1.<Build>g__TempTalkTopic|4("nomoney", CS$<>8__locals1.<>4__this.StepDefault);
-					return;
+					TempTalkTopic("nomoney", StepDefault);
 				}
-				SE.Pay();
-				foreach (Chara cc in EClass.pc.party.members)
+				else
 				{
-					ActEffect.Proc(EffectId.HealComplete, cc, null, 100, default(ActRef));
+					SE.Pay();
+					foreach (Chara member2 in EClass.pc.party.members)
+					{
+						ActEffect.Proc(EffectId.HealComplete, member2);
+					}
+					EClass.pc.ModCurrency(-costHeal);
+					TempTalkTopic("healer2", StepEnd);
 				}
-				EClass.pc.ModCurrency(-costHeal, "money");
-				CS$<>8__locals1.<Build>g__TempTalkTopic|4("healer2", CS$<>8__locals1.<>4__this.StepEnd);
 			});
-			CS$<>8__locals1.<>4__this.Choice("no", CS$<>8__locals1.<>4__this.StepDefault, true).SetOnClick(new Action(base.<Build>g__RumorChill|5));
-		}, null, null);
-		this.Step("_food");
-		this.Method(delegate
+			Choice("no", StepDefault, cancel: true).SetOnClick(RumorChill);
+		});
+		Step("_food");
+		Method(delegate
 		{
-			int cost = CalcMoney.Meal(EClass.pc);
-			GameLang.refDrama1 = (cost.ToString() ?? "");
-			base.<Build>g__TempTalkTopic|4("food1", null);
-			CS$<>8__locals1.<>4__this.Choice("yes", delegate()
+			int cost8 = CalcMoney.Meal(EClass.pc);
+			GameLang.refDrama1 = cost8.ToString() ?? "";
+			TempTalkTopic("food1", null);
+			Choice("yes", delegate
 			{
 				if (EClass.pc.hunger.GetPhase() <= 0)
 				{
-					CS$<>8__locals1.<Build>g__TempTalkTopic|4("alreadyFull", CS$<>8__locals1.<>4__this.StepDefault);
-					return;
+					TempTalkTopic("alreadyFull", StepDefault);
 				}
-				if (EClass.pc.GetCurrency("money") < cost)
+				else if (EClass.pc.GetCurrency() < cost8)
 				{
-					CS$<>8__locals1.<Build>g__TempTalkTopic|4("nomoney", CS$<>8__locals1.<>4__this.StepDefault);
-					return;
+					TempTalkTopic("nomoney", StepDefault);
 				}
-				SE.Pay();
-				EClass.pc.ModCurrency(-cost, "money");
-				CS$<>8__locals1.<Build>g__TempTalkTopic|4("food2", CS$<>8__locals1.<>4__this.StepDefault);
-				FoodEffect.Proc(EClass.pc, ThingGen.Create("dish_lunch", -1, -1));
-				EClass.pc.hunger.value = 0;
+				else
+				{
+					SE.Pay();
+					EClass.pc.ModCurrency(-cost8);
+					TempTalkTopic("food2", StepDefault);
+					FoodEffect.Proc(EClass.pc, ThingGen.Create("dish_lunch"));
+					EClass.pc.hunger.value = 0;
+				}
 			});
-			CS$<>8__locals1.<>4__this.Choice("no", CS$<>8__locals1.<>4__this.StepDefault, true).SetOnClick(new Action(base.<Build>g__RumorChill|5));
-		}, null, null);
-		CS$<>8__locals1.bankTier = new int[]
+			Choice("no", StepDefault, cancel: true).SetOnClick(RumorChill);
+		});
+		int[] bankTier = new int[5] { 100, 1000, 10000, 100000, 1000000 };
+		Step("_deposit");
+		Method(delegate
 		{
-			100,
-			1000,
-			10000,
-			100000,
-			1000000
-		};
-		this.Step("_deposit");
-		this.Method(delegate
-		{
-			CS$<>8__locals1.<>4__this.sequence.Exit();
-			CS$<>8__locals1.<>4__this.manager.layer.Close();
-			if (WidgetFeed.Instance)
+			sequence.Exit();
+			manager.layer.Close();
+			if ((bool)WidgetFeed.Instance)
 			{
-				WidgetFeed.Instance.Talk(CS$<>8__locals1.c, "barter");
+				WidgetFeed.Instance.Talk(c, "barter");
 			}
 			SE.Play("shop_open");
-			CS$<>8__locals1.layer = LayerInventory.CreateContainer(EClass.game.cards.container_deposit);
-		}, () => !CS$<>8__locals1.layer, this.StepDefault);
-		this.End();
-		this.Step("_copyItem");
-		this.Method(delegate
+			layer = LayerInventory.CreateContainer(EClass.game.cards.container_deposit);
+		}, () => !layer, StepDefault);
+		End();
+		Step("_copyItem");
+		Method(delegate
 		{
-			CS$<>8__locals1.<>4__this.sequence.Exit();
-			CS$<>8__locals1.<>4__this.manager.layer.Close();
-			if (WidgetFeed.Instance)
+			sequence.Exit();
+			manager.layer.Close();
+			if ((bool)WidgetFeed.Instance)
 			{
-				WidgetFeed.Instance.Talk(CS$<>8__locals1.c, "barter");
+				WidgetFeed.Instance.Talk(c, "barter");
 			}
 			SE.Play("shop_open");
-			CS$<>8__locals1.c.trait.OnBarter();
-			if (CS$<>8__locals1.c.c_copyContainer == null)
+			c.trait.OnBarter();
+			if (c.c_copyContainer == null)
 			{
-				CS$<>8__locals1.c.c_copyContainer = ThingGen.Create("container_deposit", -1, -1);
+				c.c_copyContainer = ThingGen.Create("container_deposit");
 			}
-			int numCopyItem = CS$<>8__locals1.c.trait.NumCopyItem;
-			CS$<>8__locals1.c.c_copyContainer.things.SetSize(numCopyItem, 1);
-			CS$<>8__locals1.layer = LayerInventory.CreateContainer<InvOwnerCopyShop>(CS$<>8__locals1.c, CS$<>8__locals1.c.c_copyContainer, CurrencyType.None);
-		}, () => !CS$<>8__locals1.layer, this.StepDefault);
-		this.End();
-		CS$<>8__locals1.taxTier = new int[]
-		{
-			0,
-			1000,
-			2000,
-			5000,
-			10000,
-			20000
-		};
-		this.Step("_extraTax");
-		this.Method(delegate
+			int numCopyItem = c.trait.NumCopyItem;
+			c.c_copyContainer.things.SetSize(numCopyItem, 1);
+			layer = LayerInventory.CreateContainer<InvOwnerCopyShop>(c, c.c_copyContainer);
+		}, () => !layer, StepDefault);
+		End();
+		int[] taxTier = new int[6] { 0, 1000, 2000, 5000, 10000, 20000 };
+		Step("_extraTax");
+		Method(delegate
 		{
 			GameLang.refDrama1 = Lang._currency(EClass.player.extraTax, "money");
-			base.<Build>g__TempTalkTopic|4("extraTax", null);
-			int[] taxTier = CS$<>8__locals1.taxTier;
-			for (int i = 0; i < taxTier.Length; i++)
+			TempTalkTopic("extraTax", null);
+			int[] array = taxTier;
+			foreach (int num3 in array)
 			{
-				int i2 = taxTier[i];
-				int _i = i2;
-				CS$<>8__locals1.<>4__this.Choice(Lang._currency(_i, true, 14), delegate()
+				int _i = num3;
+				Choice(Lang._currency(_i, showUnit: true), delegate
 				{
 					EClass.player.extraTax = _i;
 					GameLang.refDrama1 = Lang._currency(_i, "money");
-					CS$<>8__locals1.<Build>g__TempTalkTopic|4("extraTax2", CS$<>8__locals1.<>4__this.StepDefault);
+					TempTalkTopic("extraTax2", StepDefault);
 				});
 			}
-			CS$<>8__locals1.<>4__this.Choice("no2", CS$<>8__locals1.<>4__this.StepDefault, true).SetOnClick(new Action(base.<Build>g__RumorChill|5));
-		}, null, null);
-		this.Step("_withdraw");
-		this.Method(delegate
+			Choice("no2", StepDefault, cancel: true).SetOnClick(RumorChill);
+		});
+		Step("_withdraw");
+		Method(delegate
 		{
 			int bankMoney = EClass.player.bankMoney;
-			GameLang.refDrama1 = (bankMoney.ToString() ?? "");
-			base.<Build>g__TempTalkTopic|4("banker2", null);
-			int[] bankTier = CS$<>8__locals1.bankTier;
-			for (int i = 0; i < bankTier.Length; i++)
+			GameLang.refDrama1 = bankMoney.ToString() ?? "";
+			TempTalkTopic("banker2", null);
+			int[] array2 = bankTier;
+			foreach (int num4 in array2)
 			{
-				int i2 = bankTier[i];
-				int _i = i2;
-				if (EClass.player.bankMoney >= _i)
+				int _i2 = num4;
+				if (EClass.player.bankMoney >= _i2)
 				{
-					CS$<>8__locals1.<>4__this.Choice(Lang._currency(_i, true, 14), delegate()
+					Choice(Lang._currency(_i2, showUnit: true), delegate
 					{
 						SE.Pay();
-						EClass.pc.ModCurrency(_i, "money");
-						EClass.player.bankMoney -= _i;
-						CS$<>8__locals1.<Build>g__TempTalkTopic|4("banker4", CS$<>8__locals1.<>4__this.StepDefault);
+						EClass.pc.ModCurrency(_i2);
+						EClass.player.bankMoney -= _i2;
+						TempTalkTopic("banker4", StepDefault);
 					});
 				}
 			}
-			CS$<>8__locals1.<>4__this.Choice("no2", CS$<>8__locals1.<>4__this.StepDefault, true).SetOnClick(new Action(base.<Build>g__RumorChill|5));
-		}, null, null);
-		this.Step("_disableMove");
-		this.Method(delegate
+			Choice("no2", StepDefault, cancel: true).SetOnClick(RumorChill);
+		});
+		Step("_disableMove");
+		Method(delegate
 		{
-			CS$<>8__locals1.c.noMove = true;
-			CS$<>8__locals1.c.orgPos = new Point(CS$<>8__locals1.c.pos);
-			CS$<>8__locals1.c.Talk("ok", null, null, false);
-		}, null, null);
-		this.End();
-		this.Step("_enableMove");
-		this.Method(delegate
+			c.noMove = true;
+			c.orgPos = new Point(c.pos);
+			c.Talk("ok");
+		});
+		End();
+		Step("_enableMove");
+		Method(delegate
 		{
-			CS$<>8__locals1.c.noMove = false;
-			CS$<>8__locals1.c.orgPos = null;
-			CS$<>8__locals1.c.Talk("thanks", null, null, false);
-		}, null, null);
-		this.End();
-		this.Step("_bye");
-		this.Method(delegate
+			c.noMove = false;
+			c.orgPos = null;
+			c.Talk("thanks");
+		});
+		End();
+		Step("_bye");
+		Method(delegate
 		{
-			CS$<>8__locals1.c.Talk("bye", null, null, false);
-		}, null, null);
-		this.End();
+			c.Talk("bye");
+		});
+		End();
+		void BackChill()
+		{
+			Method(RumorChill, null, StepDefault);
+		}
+		string GetTalk(string id)
+		{
+			return c.GetTalkText(id);
+		}
+		void RumorChill()
+		{
+			rumor = GetTalk("chill");
+		}
+		bool taken()
+		{
+			if (c.quest != null)
+			{
+				return EClass.game.quests.list.Contains(c.quest);
+			}
+			return false;
+		}
+		void Talk(string idTalk, string idJump)
+		{
+			_Talk("tg", GetTalk(idTalk), idJump);
+		}
+		void TempCancel()
+		{
+			EnableCancel("back");
+		}
+		void TempTalk(string idTalk, string idJump)
+		{
+			_TempTalk("tg", GetTalk(idTalk), idJump);
+		}
+		void TempTalkTopic(string idTopc, string idJump)
+		{
+			_TempTalk("tg", GetTopic(c, idTopc), idJump);
+		}
 	}
 
 	public string GetRumor(Chara c)
 	{
 		if (c.interest <= 0)
 		{
-			return this.GetText(c, "rumor", "bored");
+			return GetText(c, "rumor", "bored");
 		}
-		if (this.HasTopic("unique", c.id))
+		if (HasTopic("unique", c.id))
 		{
-			this.manager.enableTone = false;
-			return this.GetText(c, "unique", c.id);
+			manager.enableTone = false;
+			return GetText(c, "unique", c.id);
 		}
 		if (EClass.rnd(2) == 0 && !c.trait.IDRumor.IsEmpty())
 		{
-			return this.GetText(c, "rumor", c.trait.IDRumor);
+			return GetText(c, "rumor", c.trait.IDRumor);
 		}
-		if (EClass.rnd(2) == 0 && this.HasTopic("zone", EClass._zone.id))
+		if (EClass.rnd(2) == 0 && HasTopic("zone", EClass._zone.id))
 		{
-			return this.GetText(c, "zone", EClass._zone.id);
-		}
-		if (EClass.rnd(2) == 0)
-		{
-			return this.GetText(c, "rumor", "interest_" + c.bio.idInterest.ToEnum<Interest>().ToString());
+			return GetText(c, "zone", EClass._zone.id);
 		}
 		if (EClass.rnd(2) == 0)
 		{
-			return c.GetTalkText("rumor", false, true);
+			return GetText(c, "rumor", "interest_" + c.bio.idInterest.ToEnum<Interest>());
+		}
+		if (EClass.rnd(2) == 0)
+		{
+			return c.GetTalkText("rumor");
 		}
 		if (EClass.rnd(4) == 0)
 		{
-			return this.GetText(c, "rumor", "hint");
+			return GetText(c, "rumor", "hint");
 		}
-		return this.GetText(c, "rumor", "default");
+		return GetText(c, "rumor", "default");
 	}
 
 	public bool HasTopic(string idSheet, string idTopic)
@@ -1464,49 +1499,47 @@ public class DramaCustomSequence : EClass
 
 	public string GetText(Chara c, string idSheet, string idTopic)
 	{
-		if (!idTopic.IsEmpty() && this.manager.customTalkTopics.ContainsKey(idTopic))
+		if (!idTopic.IsEmpty() && manager.customTalkTopics.ContainsKey(idTopic))
 		{
-			return this.manager.customTalkTopics[idTopic];
+			return manager.customTalkTopics[idTopic];
 		}
 		string[] dialog = Lang.GetDialog(idSheet, idTopic);
-		if (!this.manager.enableTone && !(idSheet == "general"))
+		if (!manager.enableTone && !(idSheet == "general"))
 		{
-			return dialog.RandomItem<string>();
+			return dialog.RandomItem();
 		}
-		return c.ApplyTone(dialog.RandomItem<string>(), false);
+		return c.ApplyTone(dialog.RandomItem());
 	}
 
 	public string GetTopic(Chara c, string idTopic = null)
 	{
-		return this.GetText(c, "general", idTopic);
+		return GetText(c, "general", idTopic);
 	}
 
 	public void BuildTextData()
 	{
-		this.Step("import");
-		foreach (string text in this.setup.textData.Split(new string[]
-		{
-			Environment.NewLine + Environment.NewLine
-		}, StringSplitOptions.RemoveEmptyEntries))
+		Step("import");
+		string[] array = setup.textData.Split(new string[1] { Environment.NewLine + Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+		foreach (string text in array)
 		{
 			if (!(text == Environment.NewLine))
 			{
-				this._Talk("", text.TrimStart(Environment.NewLine.ToCharArray()).TrimEnd(Environment.NewLine.ToCharArray()), null);
+				_Talk("", text.TrimStart(Environment.NewLine.ToCharArray()).TrimEnd(Environment.NewLine.ToCharArray()));
 			}
 		}
-		this.End();
+		End();
 	}
 
 	public DramaEvent Event(DramaEvent e)
 	{
-		this.events.Add(e);
-		e.sequence = this.sequence;
+		events.Add(e);
+		e.sequence = sequence;
 		return e;
 	}
 
 	public void Step(string step)
 	{
-		this.Event(new DramaEvent
+		Event(new DramaEvent
 		{
 			step = step
 		});
@@ -1514,100 +1547,100 @@ public class DramaCustomSequence : EClass
 
 	public void Method(Action action, Func<bool> endFunc = null, string idJump = null)
 	{
-		this.Event(new DramaEventMethod(action, 0f, false)
+		Event(new DramaEventMethod(action)
 		{
 			endFunc = endFunc
 		});
 		if (!idJump.IsEmpty())
 		{
-			this.Event(new DramaEventGoto(idJump));
+			Event(new DramaEventGoto(idJump));
 		}
 	}
 
 	public void End()
 	{
-		this.Event(new DramaEventGoto("end"));
+		Event(new DramaEventGoto("end"));
 	}
 
 	public void Goto(string idJump)
 	{
-		this.Event(new DramaEventGoto(idJump));
+		Event(new DramaEventGoto(idJump));
 	}
 
 	public void GotoDefault()
 	{
-		this.Event(new DramaEventGoto(this.StepDefault));
+		Event(new DramaEventGoto(StepDefault));
 	}
 
 	public void _Talk(string idActor, string text, string idJump = null)
 	{
-		this.manager.lastTalk = (this.Event(new DramaEventTalk
+		manager.lastTalk = Event(new DramaEventTalk
 		{
 			idActor = idActor,
 			idJump = idJump,
 			text = text
-		}) as DramaEventTalk);
+		}) as DramaEventTalk;
 	}
 
 	public void _Talk(string idActor, Func<string> funcText, string idJump = null)
 	{
-		this.manager.lastTalk = (this.Event(new DramaEventTalk
+		manager.lastTalk = Event(new DramaEventTalk
 		{
 			idActor = idActor,
 			idJump = idJump,
 			funcText = funcText
-		}) as DramaEventTalk);
+		}) as DramaEventTalk;
 	}
 
 	public void _TempTalk(string idActor, string text, string idJump = null)
 	{
-		this.manager.lastTalk = (this.Event(new DramaEventTalk
+		manager.lastTalk = Event(new DramaEventTalk
 		{
 			idActor = idActor,
 			idJump = idJump,
 			text = text,
 			temp = true
-		}) as DramaEventTalk);
-		this.sequence.tempEvents.Add(this.manager.lastTalk);
+		}) as DramaEventTalk;
+		sequence.tempEvents.Add(manager.lastTalk);
 	}
 
 	public void TempGoto(string idJump = null)
 	{
-		this.sequence.tempEvents.Clear();
-		this.sequence.Play(idJump);
+		sequence.tempEvents.Clear();
+		sequence.Play(idJump);
 	}
 
 	public DramaChoice Choice(string lang, string idJump, bool cancel = false)
 	{
-		DramaChoice dramaChoice = new DramaChoice(lang.lang(), idJump, "", "", "");
-		this.manager.lastTalk.AddChoice(dramaChoice);
+		DramaChoice dramaChoice = new DramaChoice(lang.lang(), idJump);
+		manager.lastTalk.AddChoice(dramaChoice);
 		if (cancel)
 		{
-			this.EnableCancel(idJump);
+			EnableCancel(idJump);
 		}
 		return dramaChoice;
 	}
 
 	public DramaChoice Choice(string lang, Action onJump)
 	{
-		DramaChoice dramaChoice = new DramaChoice(lang.lang(), null, "", "", "");
+		DramaChoice dramaChoice = new DramaChoice(lang.lang(), null);
 		dramaChoice.onJump = onJump;
-		this.manager.lastTalk.AddChoice(dramaChoice);
+		manager.lastTalk.AddChoice(dramaChoice);
 		return dramaChoice;
 	}
 
 	public DramaChoice Choice2(string lang, string idJump)
 	{
-		DramaChoice dramaChoice = new DramaChoice(lang.lang(), idJump, "", "", "");
-		this.manager.lastTalk.AddChoice(dramaChoice);
-		this.sequence.manager._choices.Add(dramaChoice);
+		DramaChoice dramaChoice = new DramaChoice(lang.lang(), idJump);
+		manager.lastTalk.AddChoice(dramaChoice);
+		sequence.manager._choices.Add(dramaChoice);
 		return dramaChoice;
 	}
 
 	public void EnableCancel(string idCancelJump = null)
 	{
-		this.manager.lastTalk.canCancel = true;
-		this.manager.lastTalk.idCancelJump = idCancelJump;
+		manager.lastTalk.canCancel = true;
+		manager.lastTalk.idCancelJump = idCancelJump;
 	}
 
 	public List<Card> GetListGuide()
@@ -1630,24 +1663,4 @@ public class DramaCustomSequence : EClass
 		list.Sort((Card a, Card b) => b.trait.GuidePriotiy - a.trait.GuidePriotiy);
 		return list;
 	}
-
-	public Card destCard;
-
-	public Chara destChara;
-
-	public Quest destQuest;
-
-	public Thing destThing;
-
-	public string idDefault;
-
-	public string idCustom;
-
-	public DramaSetup setup;
-
-	public DramaSequence sequence;
-
-	public List<DramaEvent> events;
-
-	public DramaManager manager;
 }

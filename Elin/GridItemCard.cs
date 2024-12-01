@@ -1,26 +1,24 @@
-﻿using System;
-
 public class GridItemCard : GridItem
 {
+	public Card c;
+
 	public override void SetButton(ButtonGrid b)
 	{
-		b.mainText.text = (this.c.Num.ToString() ?? "");
-		this.c.SetImage(b.icon);
+		b.mainText.text = c.Num.ToString() ?? "";
+		c.SetImage(b.icon);
 		b.SetTooltip("note", delegate(UITooltip t)
 		{
-			this.c.WriteNote(t.note, null, IInspect.NoteMode.Default, null);
-		}, true);
+			c.WriteNote(t.note);
+		});
 	}
 
 	public override void OnClick(ButtonGrid b)
 	{
-		EClass.ui.AddLayer<LayerInfo>().Set(this.c, false);
+		EClass.ui.AddLayer<LayerInfo>().Set(c);
 	}
 
 	public override void AutoAdd()
 	{
-		EClass.player.AddInventory(this.c);
+		EClass.player.AddInventory(c);
 	}
-
-	public Card c;
 }

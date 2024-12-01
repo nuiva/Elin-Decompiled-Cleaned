@@ -1,16 +1,19 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class AI_Shopping : AIAct
 {
+	public Card container;
+
+	public Card dest;
+
 	public static bool TryShop(Chara c, bool realtime)
 	{
 		if (c.memberType != FactionMemberType.Guest || !EClass._zone.IsPCFaction || EClass._map.props.sales.Count == 0)
 		{
 			return false;
 		}
-		Card card = EClass._map.props.sales.RandomItem<Card>();
+		Card card = EClass._map.props.sales.RandomItem();
 		int c_allowance = c.c_allowance;
 		if (!EClass.debug.enable && c_allowance <= 0)
 		{
@@ -20,25 +23,22 @@ public class AI_Shopping : AIAct
 		List<Card> list = new List<Card>();
 		if (flag)
 		{
-			using (List<Thing>.Enumerator enumerator = card.things.GetEnumerator())
+			foreach (Thing thing in card.things)
 			{
-				while (enumerator.MoveNext())
+				if (TraitSalesTag.CanTagSale(thing, insideContainer: true))
 				{
-					Thing thing = enumerator.Current;
-					if (TraitSalesTag.CanTagSale(thing, true))
-					{
-						list.Add(thing);
-					}
+					list.Add(thing);
 				}
-				goto IL_C8;
 			}
 		}
-		list.Add(card);
-		IL_C8:
-		foreach (Card card2 in list)
+		else
+		{
+			list.Add(card);
+		}
+		foreach (Card item in list)
 		{
 			int num = 25;
-			int price = card2.GetPrice(CurrencyType.Money, true, PriceType.PlayerShop, null);
+			int price = item.GetPrice(CurrencyType.Money, sell: true, PriceType.PlayerShop);
 			if (price >= c_allowance)
 			{
 				num = num * 10 * price / c_allowance;
@@ -61,11 +61,11 @@ public class AI_Shopping : AIAct
 			}
 			if (EClass.Branch != null)
 			{
-				if (EClass.Branch.policies.IsActive(2817, -1))
+				if (EClass.Branch.policies.IsActive(2817))
 				{
 					num = num * (300 + EClass.Branch.Evalue(2817)) / 100;
 				}
-				if (EClass.Branch.policies.IsActive(2816, -1))
+				if (EClass.Branch.policies.IsActive(2816))
 				{
 					num = num * (1000 + EClass.Branch.Evalue(2816) * 2) / 100;
 				}
@@ -81,11 +81,11 @@ public class AI_Shopping : AIAct
 					c.SetAI(new AI_Shopping
 					{
 						container = (flag ? card : null),
-						dest = card2
+						dest = item
 					});
 					return true;
 				}
-				AI_Shopping.Buy(c, card2, false, flag ? card : null);
+				Buy(c, item, realtime: false, flag ? card : null);
 			}
 		}
 		return false;
@@ -96,27 +96,24 @@ public class AI_Shopping : AIAct
 		for (int i = 0; i < (realtime ? 1 : 10); i++)
 		{
 			bool flag = false;
-			foreach (Thing thing in EClass._map.things)
+			foreach (Thing thing2 in EClass._map.things)
 			{
-				if (EClass.rnd(2) != 0 && thing.IsInstalled)
+				if (EClass.rnd(2) == 0 || !thing2.IsInstalled || !(thing2.trait is TraitSalesTag { IsOn: not false }) || thing2.GetStr(11).IsEmpty())
 				{
-					TraitSalesTag traitSalesTag = thing.trait as TraitSalesTag;
-					if (traitSalesTag != null && traitSalesTag.IsOn && !thing.GetStr(11, null).IsEmpty())
+					continue;
+				}
+				Thing thing = EClass._zone.TryGetRestock<TraitSpotStock>(thing2.GetStr(11));
+				if (thing != null)
+				{
+					if (realtime)
 					{
-						Thing thing2 = EClass._zone.TryGetRestock<TraitSpotStock>(thing.GetStr(11, null));
-						if (thing2 != null)
-						{
-							if (realtime)
-							{
-								thing.PlaySound("restock", 1f, true);
-							}
-							thing.Destroy();
-							thing2.isSale = true;
-							EClass._zone.AddCard(thing2, thing.pos).Install();
-							flag = true;
-							break;
-						}
+						thing2.PlaySound("restock");
 					}
+					thing2.Destroy();
+					thing.isSale = true;
+					EClass._zone.AddCard(thing, thing2.pos).Install();
+					flag = true;
+					break;
 				}
 			}
 			if (!flag)
@@ -127,46 +124,37 @@ public class AI_Shopping : AIAct
 		return false;
 	}
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		Card _dest = this.container ?? this.dest;
+		Card _dest = container ?? dest;
 		if (_dest.ExistsOnMap)
 		{
-			yield return base.DoGoto(_dest.pos, 1, false, null);
+			yield return DoGoto(_dest.pos, 1);
 		}
 		if (!_dest.ExistsOnMap || !_dest.isSale)
 		{
-			yield return base.Success(null);
+			yield return Success();
 		}
-		AI_Shopping.Buy(this.owner, this.dest, true, this.container);
-		yield return base.Success(null);
-		yield break;
+		Buy(owner, dest, realtime: true, container);
+		yield return Success();
 	}
 
 	public static void SellChara(Chara c)
 	{
-		Msg.Say("sell_resident", c, null, null, null);
-		c.homeBranch.BanishMember(c, true);
+		Msg.Say("sell_resident", c);
+		c.homeBranch.BanishMember(c, sell: true);
 		EClass.player.ModKarma(-1);
 	}
 
 	public static void Buy(Chara c, Card dest, bool realtime, Card container)
 	{
 		Point point = dest.pos.Copy();
-		int price = dest.GetPrice(CurrencyType.Money, true, PriceType.PlayerShop, null);
-		if (dest.isThing && (dest.isDestroyed || dest.Thing.IsSharedContainer))
+		int price = dest.GetPrice(CurrencyType.Money, sell: true, PriceType.PlayerShop);
+		if ((dest.isThing && (dest.isDestroyed || dest.Thing.IsSharedContainer)) || (container == null && !dest.isSale) || (container != null && container.c_lockLv != 0))
 		{
 			return;
 		}
-		if (container == null && !dest.isSale)
-		{
-			return;
-		}
-		if (container != null && container.c_lockLv != 0)
-		{
-			return;
-		}
-		Card card = dest.isChara ? dest : dest.Split(1);
+		Card card = (dest.isChara ? dest : dest.Split(1));
 		EClass.Branch.incomeShop += price;
 		card.isSale = false;
 		if (card == dest)
@@ -175,35 +163,35 @@ public class AI_Shopping : AIAct
 		}
 		if (realtime)
 		{
-			c.Talk("shop_buy", null, null, false);
-			c.PlaySound("money", 1f, true);
+			c.Talk("shop_buy");
+			c.PlaySound("money");
 			Msg.alwaysVisible = true;
-			Msg.Say("shop_buy", c, card, Lang._currency(price, "money"), null);
+			Msg.Say("shop_buy", c, card, Lang._currency(price, "money"));
 			if (card.isThing)
 			{
 				c.AddCard(card);
 				c.c_allowance -= price;
 				if (!c.TryUse(card.Thing))
 				{
-					card.ModNum(-1, true);
+					card.ModNum(-1);
 				}
 			}
 			else
 			{
-				AI_Shopping.SellChara(card.Chara);
+				SellChara(card.Chara);
 			}
 		}
 		else if (card.isThing)
 		{
-			card.ModNum(-1, true);
+			card.ModNum(-1);
 		}
 		else
 		{
-			AI_Shopping.SellChara(card.Chara);
+			SellChara(card.Chara);
 		}
 		if (card.isStolen || card.isChara)
 		{
-			Guild.Thief.AddContribution((int)Mathf.Sqrt((float)price) / 2);
+			Guild.Thief.AddContribution((int)Mathf.Sqrt(price) / 2);
 		}
 		if (container != null)
 		{
@@ -215,15 +203,11 @@ public class AI_Shopping : AIAct
 		}
 		else if (!dest.ExistsOnMap && dest.isThing)
 		{
-			Thing thing = ThingGen.Create("tag_sell", -1, -1);
+			Thing thing = ThingGen.Create("tag_sell");
 			thing.isOn = true;
 			thing.SetStr(11, dest.category.id);
 			EClass._zone.AddCard(thing, point).Install();
 		}
-		EClass.Branch.Log("shop_buy", c, card, Lang._currency(price, "money"), null);
+		EClass.Branch.Log("shop_buy", c, card, Lang._currency(price, "money"));
 	}
-
-	public Card container;
-
-	public Card dest;
 }

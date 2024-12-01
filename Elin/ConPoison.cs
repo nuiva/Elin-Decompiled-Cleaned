@@ -1,28 +1,14 @@
-﻿using System;
-
 public class ConPoison : BadCondition
 {
-	public override Emo2 EmoIcon
-	{
-		get
-		{
-			return Emo2.poison;
-		}
-	}
+	public override Emo2 EmoIcon => Emo2.poison;
 
-	public override bool PreventRegen
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool PreventRegen => true;
 
 	public override void SetOwner(Chara _owner, bool onDeserialize = false)
 	{
-		base.SetOwner(_owner, false);
-		this.elements = new ElementContainer();
-		this.elements.SetParent(this.owner);
+		base.SetOwner(_owner);
+		elements = new ElementContainer();
+		elements.SetParent(owner);
 	}
 
 	public override void OnChangePhase(int lastPhase, int newPhase)
@@ -30,17 +16,17 @@ public class ConPoison : BadCondition
 		switch (newPhase)
 		{
 		case 1:
-			this.elements.SetBase(70, -10, 0);
-			return;
+			elements.SetBase(70, -10);
+			break;
 		case 2:
-			this.elements.SetBase(70, -10, 0);
-			return;
+			elements.SetBase(70, -10);
+			break;
 		case 3:
-			this.elements.SetBase(70, -15, 0);
-			return;
+			elements.SetBase(70, -15);
+			break;
 		default:
-			this.elements.SetBase(70, -5, 0);
-			return;
+			elements.SetBase(70, -5);
+			break;
 		}
 	}
 
@@ -48,8 +34,8 @@ public class ConPoison : BadCondition
 	{
 		if (EClass.rnd(5) == 0)
 		{
-			this.owner.DamageHP(EClass.rnd(this.owner.END / 10 + 2) + 1, AttackSource.Condition, null);
+			owner.DamageHP(EClass.rnd(owner.END / 10 + 2) + 1, AttackSource.Condition);
 		}
-		base.Mod(-1, false);
+		Mod(-1);
 	}
 }

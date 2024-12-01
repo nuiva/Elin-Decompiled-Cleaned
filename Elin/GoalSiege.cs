@@ -1,20 +1,20 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class GoalSiege : Goal
 {
-	public override IEnumerable<AIAct.Status> Run()
+	public Card target;
+
+	public override IEnumerable<Status> Run()
 	{
-		if (this.target == null || !this.target.IsAliveInCurrentZone)
+		if (target == null || !target.IsAliveInCurrentZone)
 		{
-			this.target = this.GetDestCard();
+			target = GetDestCard();
 		}
-		if (this.target != null)
+		if (target != null)
 		{
-			yield return base.DoGoto(this.target, null);
-			this.owner.DoHostileAction(this.target.Chara, false);
+			yield return DoGoto(target);
+			owner.DoHostileAction(target.Chara);
 		}
-		yield break;
 	}
 
 	public Card GetDestCard()
@@ -28,6 +28,4 @@ public class GoalSiege : Goal
 		}
 		return null;
 	}
-
-	public Card target;
 }

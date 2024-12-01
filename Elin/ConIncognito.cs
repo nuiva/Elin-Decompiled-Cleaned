@@ -1,5 +1,3 @@
-﻿using System;
-
 public class ConIncognito : BaseBuff
 {
 	public override void OnStart()

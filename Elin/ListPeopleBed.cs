@@ -1,39 +1,35 @@
-﻿using System;
-
 public class ListPeopleBed : ListPeople
 {
+	public TraitBed bed;
+
 	public override void OnInstantiate(Chara c, ItemGeneral i)
 	{
-		UIButton uibutton = i.AddSubButton(EClass.core.refs.icons.bed, delegate
+		UIButton uIButton = i.AddSubButton(EClass.core.refs.icons.bed, delegate
 		{
-		}, null, delegate(UITooltip t)
+		}, null, delegate
 		{
 		});
-		uibutton.icon.SetAlpha((c.FindBed() != null) ? 0.9f : 0.4f);
-		uibutton.tooltip.enable = false;
+		uIButton.icon.SetAlpha((c.FindBed() != null) ? 0.9f : 0.4f);
+		uIButton.tooltip.enable = false;
 	}
 
 	public override void OnClick(Chara c, ItemGeneral i)
 	{
-		if (this.main)
+		if (main)
 		{
-			if (!this.bed.CanAssign(c))
+			if (!bed.CanAssign(c))
 			{
 				SE.Beep();
 				return;
 			}
-			TraitBed traitBed = c.FindBed();
-			if (traitBed != null)
-			{
-				traitBed.RemoveHolder(c);
-			}
-			this.bed.AddHolder(c);
+			c.FindBed()?.RemoveHolder(c);
+			bed.AddHolder(c);
 		}
 		else
 		{
-			this.bed.RemoveHolder(c);
+			bed.RemoveHolder(c);
 		}
-		base.MoveToOther(c);
+		MoveToOther(c);
 		base.Main.OnRefreshMenu();
 	}
 
@@ -41,19 +37,20 @@ public class ListPeopleBed : ListPeople
 	{
 		foreach (Chara chara in EClass._map.charas)
 		{
-			if (chara.IsPCFaction && chara.memberType == FactionMemberType.Default)
+			if (!chara.IsPCFaction || chara.memberType != 0)
 			{
-				if (this.main)
+				continue;
+			}
+			if (main)
+			{
+				if (!bed.IsHolder(chara))
 				{
-					if (!this.bed.IsHolder(chara))
-					{
-						this.list.Add(chara);
-					}
+					list.Add(chara);
 				}
-				else if (this.bed.IsHolder(chara))
-				{
-					this.list.Add(chara);
-				}
+			}
+			else if (bed.IsHolder(chara))
+			{
+				list.Add(chara);
 			}
 		}
 	}
@@ -61,6 +58,4 @@ public class ListPeopleBed : ListPeople
 	public override void OnRefreshMenu()
 	{
 	}
-
-	public TraitBed bed;
 }

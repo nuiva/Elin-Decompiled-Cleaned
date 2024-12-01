@@ -1,44 +1,30 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class TraitSpotSpawn : Trait
 {
-	public override int radius
-	{
-		get
-		{
-			return 5;
-		}
-	}
+	public List<Chara> children = new List<Chara>();
 
-	public override bool HaveUpdate
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override int radius => 5;
+
+	public override bool HaveUpdate => true;
 
 	public override void Update()
 	{
-		for (int i = this.children.Count - 1; i >= 0; i--)
+		for (int num = children.Count - 1; num >= 0; num--)
 		{
-			if (this.children[i].isDead)
+			if (children[num].isDead)
 			{
-				this.children.RemoveAt(i);
+				children.RemoveAt(num);
 			}
 		}
-		if (this.children.Count > 5)
+		if (children.Count <= 5)
 		{
-			return;
-		}
-		Point randomPoint = EClass._map.GetRandomPoint(this.owner.pos, this.radius, 100, true, true);
-		Chara chara = EClass._zone.SpawnMob(randomPoint, null);
-		if (chara != null)
-		{
-			this.children.Add(chara);
+			Point randomPoint = EClass._map.GetRandomPoint(owner.pos, radius);
+			Chara chara = EClass._zone.SpawnMob(randomPoint);
+			if (chara != null)
+			{
+				children.Add(chara);
+			}
 		}
 	}
-
-	public List<Chara> children = new List<Chara>();
 }

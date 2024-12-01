@@ -1,31 +1,33 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class CharaList : EClass
 {
+	[JsonProperty]
+	public List<int> list = new List<int>();
+
 	public void Add(Chara c)
 	{
-		if (!this.list.Contains(c.uid))
+		if (!list.Contains(c.uid))
 		{
-			this.list.Add(c.uid);
+			list.Add(c.uid);
 		}
 	}
 
 	public void Remove(Chara c)
 	{
-		this.list.Remove(c.uid);
+		list.Remove(c.uid);
 	}
 
 	public List<Chara> Get()
 	{
 		List<Chara> list = new List<Chara>();
-		foreach (int uid in this.list)
+		foreach (int item in this.list)
 		{
-			Chara chara = RefChara.Get(uid);
+			Chara chara = RefChara.Get(item);
 			if (chara == null)
 			{
-				chara = EClass._map.FindChara(uid);
+				chara = EClass._map.FindChara(item);
 			}
 			if (chara != null)
 			{
@@ -34,7 +36,4 @@ public class CharaList : EClass
 		}
 		return list;
 	}
-
-	[JsonProperty]
-	public List<int> list = new List<int>();
 }

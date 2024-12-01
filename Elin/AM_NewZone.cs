@@ -1,30 +1,10 @@
-﻿using System;
-
 public class AM_NewZone : ActionMode
 {
-	public override bool ShowActionHint
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool ShowActionHint => false;
 
-	public override bool AllowHotbar
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool AllowHotbar => false;
 
-	public override BaseTileSelector.HitType hitType
-	{
-		get
-		{
-			return BaseTileSelector.HitType.None;
-		}
-	}
+	public override BaseTileSelector.HitType hitType => BaseTileSelector.HitType.None;
 
 	public override void OnActivate()
 	{

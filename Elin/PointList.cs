@@ -1,4 +1,3 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
@@ -6,15 +5,20 @@ using Newtonsoft.Json;
 [JsonObject(MemberSerialization.OptIn)]
 public class PointList : List<Point>
 {
+	[JsonProperty]
+	public int[] data;
+
 	[OnSerializing]
 	private void OnSerializing(StreamingContext context)
 	{
-		this.data = new int[base.Count * 2];
+		data = new int[base.Count * 2];
 		int num = 0;
-		foreach (Point point in this)
+		using Enumerator enumerator = GetEnumerator();
+		while (enumerator.MoveNext())
 		{
-			this.data[num] = point.x;
-			this.data[num + 1] = point.z;
+			Point current = enumerator.Current;
+			data[num] = current.x;
+			data[num + 1] = current.z;
 			num += 2;
 		}
 	}
@@ -22,18 +26,15 @@ public class PointList : List<Point>
 	[OnDeserialized]
 	private void OnDeserialized(StreamingContext context)
 	{
-		this.Deserialize();
+		Deserialize();
 	}
 
 	public void Deserialize()
 	{
-		base.Capacity = this.data.Length / 2 + 8;
-		for (int i = 0; i < this.data.Length / 2; i++)
+		base.Capacity = data.Length / 2 + 8;
+		for (int i = 0; i < data.Length / 2; i++)
 		{
-			base.Add(new Point(this.data[i * 2], this.data[i * 2 + 1]));
+			Add(new Point(data[i * 2], data[i * 2 + 1]));
 		}
 	}
-
-	[JsonProperty]
-	public int[] data;
 }

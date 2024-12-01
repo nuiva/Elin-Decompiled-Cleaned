@@ -1,30 +1,23 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class NoticeManager
 {
-	public void Refresh()
-	{
-		this.list.Clear();
-		this.list.Add(new NoticeManager.Notice());
-		this.list.Add(new NoticeManager.Notice());
-		this.list.Add(new NoticeManager.Notice());
-		if (this.list.Count == 0)
-		{
-			this.list.Add(new NoticeManager.Notice());
-		}
-	}
-
-	public List<NoticeManager.Notice> list = new List<NoticeManager.Notice>();
-
 	public class Notice
 	{
-		public string Text
+		public string Text => "tempNotice".lang();
+	}
+
+	public List<Notice> list = new List<Notice>();
+
+	public void Refresh()
+	{
+		list.Clear();
+		list.Add(new Notice());
+		list.Add(new Notice());
+		list.Add(new Notice());
+		if (list.Count == 0)
 		{
-			get
-			{
-				return "tempNotice".lang();
-			}
+			list.Add(new Notice());
 		}
 	}
 }

@@ -1,16 +1,25 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class SourceAsset : EScriptable
 {
-	public static string PrefPath
+	public class PrefData
 	{
-		get
-		{
-			return Application.dataPath + "/Resources/Data/Export/";
-		}
+		public Dictionary<string, SourcePref> dict = new Dictionary<string, SourcePref>();
 	}
+
+	public class Prefs
+	{
+		public int version;
+
+		public PrefData things = new PrefData();
+	}
+
+	public string idLoad = "prefs";
+
+	public UD_String_String renames;
+
+	public static string PrefPath => Application.dataPath + "/Resources/Data/Export/";
 
 	public void DoFix()
 	{
@@ -18,13 +27,13 @@ public class SourceAsset : EScriptable
 
 	public void SavePrefs(string id = "prefs")
 	{
-		SourceAsset._SavePrefs(id);
+		_SavePrefs(id);
 	}
 
 	public static void _SavePrefs(string id = "prefs")
 	{
-		IO.CopyAs(SourceAsset.PrefPath + id, SourceAsset.PrefPath + id + "_bk");
-		SourceAsset.Prefs prefs = new SourceAsset.Prefs();
+		IO.CopyAs(PrefPath + id, PrefPath + id + "_bk");
+		Prefs prefs = new Prefs();
 		prefs.version = 2;
 		Debug.Log(EClass.sources.things.rows.Count);
 		foreach (SourceThing.Row row in EClass.sources.things.rows)
@@ -38,24 +47,24 @@ public class SourceAsset : EScriptable
 				prefs.things.dict.Add(row.id, row.pref);
 			}
 		}
-		IO.SaveFile(SourceAsset.PrefPath + id, prefs, false, null);
+		IO.SaveFile(PrefPath + id, prefs);
 		Debug.Log("Exported Prefs:" + id);
 	}
 
 	public void LoadPrefs()
 	{
-		SourceAsset._LoadPrefs(this.idLoad);
+		_LoadPrefs(idLoad);
 	}
 
 	public void LoadPrefs_bk()
 	{
-		SourceAsset._LoadPrefs(this.idLoad);
+		_LoadPrefs(idLoad);
 	}
 
 	public static void _LoadPrefs(string id = "prefs")
 	{
-		IO.CopyAs(SourceAsset.PrefPath + id, SourceAsset.PrefPath + id + "_loadbk");
-		SourceAsset.Prefs prefs = IO.LoadFile<SourceAsset.Prefs>(SourceAsset.PrefPath + id, false, null);
+		IO.CopyAs(PrefPath + id, PrefPath + id + "_loadbk");
+		Prefs prefs = IO.LoadFile<Prefs>(PrefPath + id);
 		foreach (SourceThing.Row row in EClass.sources.things.rows)
 		{
 			if (prefs.things.dict.ContainsKey(row.id))
@@ -68,21 +77,5 @@ public class SourceAsset : EScriptable
 			}
 		}
 		Debug.Log("Imported Prefs:" + id);
-	}
-
-	public string idLoad = "prefs";
-
-	public UD_String_String renames;
-
-	public class PrefData
-	{
-		public Dictionary<string, SourcePref> dict = new Dictionary<string, SourcePref>();
-	}
-
-	public class Prefs
-	{
-		public int version;
-
-		public SourceAsset.PrefData things = new SourceAsset.PrefData();
 	}
 }

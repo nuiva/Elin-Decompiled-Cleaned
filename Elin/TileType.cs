@@ -1,718 +1,14 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
 public class TileType : EClass
 {
-	public static void Init()
-	{
-		TileType.dict.Clear();
-		foreach (FieldInfo fieldInfo in typeof(TileType).GetFields(BindingFlags.Static | BindingFlags.Public))
-		{
-			if (typeof(TileType).IsAssignableFrom(fieldInfo.FieldType))
-			{
-				TileType.dict[fieldInfo.Name] = (TileType)fieldInfo.GetValue(null);
-			}
-		}
-	}
-
-	public virtual string LangPlaceType
-	{
-		get
-		{
-			return "place_Obj";
-		}
-	}
-
-	public virtual bool CanStack
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool CanRotate(bool buildMode)
-	{
-		return true;
-	}
-
-	public virtual bool ChangeBlockDir
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsSkipLowBlock
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsSkipFloor
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsUseBlockDir
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsFloorOrBridge
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsWall
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsFloor
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsBridge
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsWallOrFence
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsWallOrFullBlock
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public bool IsRamp
-	{
-		get
-		{
-			return this.Ramp > TileType.RampType.None;
-		}
-	}
-
-	public virtual TileType.RampType Ramp
-	{
-		get
-		{
-			return TileType.RampType.None;
-		}
-	}
-
-	public virtual bool IsLadder
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsBlockPass
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsOccupyCell
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public virtual bool IsBlockSight
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsOpenSight
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsBlockLiquid
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsWater
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsDeepWater
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsBlockMount
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsFullBlock
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsFence
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsFloodBlock
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsPlayFootSound
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool CanSpawnOnWater
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsWaterTop
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool CastShadowSelf
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool CastShadowBack
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool CastAmbientShadow
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool CastAmbientShadowBack
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool CanBuiltOnArea
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public virtual bool CanBuiltOnWater
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public virtual bool CanBuiltOnThing
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool CanBuiltOnBlock
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsDoor
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool CanBuiltOnFloor
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public virtual bool CanBuiltOnBridge
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public virtual bool CanInstaComplete
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual int MinAltitude
-	{
-		get
-		{
-			return 1;
-		}
-	}
-
-	public virtual int MaxAltitude
-	{
-		get
-		{
-			return 10;
-		}
-	}
-
-	public virtual bool AltitudeAsDir
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool UseLowWallTiles
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool UseMountHeight
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool UseHangZFix
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool UseLowBlock
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool RemoveOnFloorChange
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public virtual bool AllowObj
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool AllowMultiInstall
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public virtual bool FreeStyle
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual byte slopeHeight
-	{
-		get
-		{
-			return 0;
-		}
-	}
-
-	public virtual float MountHeight
-	{
-		get
-		{
-			return 0f;
-		}
-	}
-
-	public virtual float FloorHeight
-	{
-		get
-		{
-			return 0f;
-		}
-	}
-
-	public virtual float RepeatSize
-	{
-		get
-		{
-			return 1f;
-		}
-	}
-
-	public virtual int FloorAltitude
-	{
-		get
-		{
-			return 0;
-		}
-	}
-
-	public virtual int LiquidLV
-	{
-		get
-		{
-			return 0;
-		}
-	}
-
-	public virtual bool AllowLitter
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public virtual bool AllowBlood
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public virtual bool ShowPillar
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public virtual bool AlwaysShowShadow
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool RepeatBlock
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool ForceRpeatBlock
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool CanBeHeld
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public virtual bool EditorTile
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsFloodDoor
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool Invisible
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IgnoreBuildRule
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool RenderWaterBlock
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public virtual BaseTileSelector.SelectType SelectType
-	{
-		get
-		{
-			return BaseTileSelector.SelectType.Single;
-		}
-	}
-
-	public virtual BaseTileSelector.BoxType BoxType
-	{
-		get
-		{
-			return BaseTileSelector.BoxType.Box;
-		}
-	}
-
-	public virtual BaseTileSelector.HitType HitType
-	{
-		get
-		{
-			return BaseTileSelector.HitType.Block;
-		}
-	}
-
-	public virtual BlockRenderMode blockRenderMode
-	{
-		get
-		{
-			return BlockRenderMode.Default;
-		}
-	}
-
-	public bool IsMountBlock
-	{
-		get
-		{
-			return this.MountHeight > 0f;
-		}
-	}
-
-	public HitResult _HitTest(Point pos, Card target, bool canIgnore = true)
-	{
-		if ((EClass.debug.ignoreBuildRule || this.IgnoreBuildRule) && canIgnore)
-		{
-			return HitResult.Valid;
-		}
-		if (!this.CanBuiltOnArea && pos.HasArea)
-		{
-			return HitResult.Invalid;
-		}
-		if (pos.cell.IsTopWater)
-		{
-			if (!this.CanBuiltOnWater)
-			{
-				return HitResult.Invalid;
-			}
-		}
-		else if (!this.CanBuiltOnFloor)
-		{
-			return HitResult.Invalid;
-		}
-		if (!this.CanBuiltOnBridge && pos.cell._bridge != 0)
-		{
-			return HitResult.Invalid;
-		}
-		if (target != null)
-		{
-			if (target.sourceCard.multisize && (pos.Installed != null || pos.cell.blocked || (pos.HasChara && pos.FirstChara.IsHostile(EClass.pc))))
-			{
-				return HitResult.Invalid;
-			}
-			if (pos.Installed != null && pos.Installed != target)
-			{
-				TileType tileType = pos.Installed.TileType;
-				TileType tileType2 = target.TileType;
-				if (!tileType.AllowMultiInstall || !tileType2.AllowMultiInstall)
-				{
-					return HitResult.Invalid;
-				}
-			}
-			if (!target.trait.CanBuiltAt(pos))
-			{
-				return HitResult.Invalid;
-			}
-		}
-		else if (pos.Installed != null && !this.CanBuiltOnThing && !pos.cell.hasDoor)
-		{
-			return HitResult.Invalid;
-		}
-		if (pos.HasBlock)
-		{
-			if (!this.CanBuiltOnBlock && pos.sourceBlock.tileType.IsOccupyCell)
-			{
-				return HitResult.Invalid;
-			}
-			if (this.IsDoor && pos.HasWallOrFence && pos.cell.blockDir == 2)
-			{
-				return HitResult.Invalid;
-			}
-		}
-		else if (this.IsDoor)
-		{
-			return HitResult.Invalid;
-		}
-		return this.HitTest(pos);
-	}
-
-	protected virtual HitResult HitTest(Point pos)
-	{
-		if (pos.HasObj)
-		{
-			return HitResult.Warning;
-		}
-		return HitResult.Valid;
-	}
-
-	public virtual int GetDesiredDir(Point p, int d)
-	{
-		return -1;
-	}
-
-	public virtual void GetMountHeight(ref Vector3 v, Point p, int d, Card target = null)
-	{
-		v += EClass.screen.tileMap.altitudeFix * (float)target.altitude;
-	}
-
-	public Vector3 GetRampFix(int dir)
-	{
-		int num = this.Ramp * TileType.RampType.Half - TileType.RampType.Half + ((dir <= 1) ? 0 : 1);
-		Vector3 vector = EClass.setting.render.rampFix[num];
-		return new Vector3(vector.x * (float)((dir % 2 == 0) ? 1 : -1), vector.y, vector.z);
+	public enum RampType
+	{
+		None,
+		Full,
+		Half
 	}
 
 	public static TileTypeNone None = new TileTypeNone();
@@ -815,10 +111,264 @@ public class TileType : EClass
 
 	public static Dictionary<string, TileType> dict = new Dictionary<string, TileType>();
 
-	public enum RampType
+	public virtual string LangPlaceType => "place_Obj";
+
+	public virtual bool CanStack => false;
+
+	public virtual bool ChangeBlockDir => false;
+
+	public virtual bool IsSkipLowBlock => false;
+
+	public virtual bool IsSkipFloor => false;
+
+	public virtual bool IsUseBlockDir => false;
+
+	public virtual bool IsFloorOrBridge => false;
+
+	public virtual bool IsWall => false;
+
+	public virtual bool IsFloor => false;
+
+	public virtual bool IsBridge => false;
+
+	public virtual bool IsWallOrFence => false;
+
+	public virtual bool IsWallOrFullBlock => false;
+
+	public bool IsRamp => Ramp != RampType.None;
+
+	public virtual RampType Ramp => RampType.None;
+
+	public virtual bool IsLadder => false;
+
+	public virtual bool IsBlockPass => false;
+
+	public virtual bool IsOccupyCell => true;
+
+	public virtual bool IsBlockSight => false;
+
+	public virtual bool IsOpenSight => false;
+
+	public virtual bool IsBlockLiquid => false;
+
+	public virtual bool IsWater => false;
+
+	public virtual bool IsDeepWater => false;
+
+	public virtual bool IsBlockMount => false;
+
+	public virtual bool IsFullBlock => false;
+
+	public virtual bool IsFence => false;
+
+	public virtual bool IsFloodBlock => false;
+
+	public virtual bool IsPlayFootSound => false;
+
+	public virtual bool CanSpawnOnWater => false;
+
+	public virtual bool IsWaterTop => false;
+
+	public virtual bool CastShadowSelf => false;
+
+	public virtual bool CastShadowBack => false;
+
+	public virtual bool CastAmbientShadow => false;
+
+	public virtual bool CastAmbientShadowBack => false;
+
+	public virtual bool CanBuiltOnArea => true;
+
+	public virtual bool CanBuiltOnWater => true;
+
+	public virtual bool CanBuiltOnThing => false;
+
+	public virtual bool CanBuiltOnBlock => false;
+
+	public virtual bool IsDoor => false;
+
+	public virtual bool CanBuiltOnFloor => true;
+
+	public virtual bool CanBuiltOnBridge => true;
+
+	public virtual bool CanInstaComplete => false;
+
+	public virtual int MinAltitude => 1;
+
+	public virtual int MaxAltitude => 10;
+
+	public virtual bool AltitudeAsDir => false;
+
+	public virtual bool UseLowWallTiles => false;
+
+	public virtual bool UseMountHeight => false;
+
+	public virtual bool UseHangZFix => false;
+
+	public virtual bool UseLowBlock => false;
+
+	public virtual bool RemoveOnFloorChange => true;
+
+	public virtual bool AllowObj => false;
+
+	public virtual bool AllowMultiInstall => true;
+
+	public virtual bool FreeStyle => false;
+
+	public virtual byte slopeHeight => 0;
+
+	public virtual float MountHeight => 0f;
+
+	public virtual float FloorHeight => 0f;
+
+	public virtual float RepeatSize => 1f;
+
+	public virtual int FloorAltitude => 0;
+
+	public virtual int LiquidLV => 0;
+
+	public virtual bool AllowLitter => true;
+
+	public virtual bool AllowBlood => true;
+
+	public virtual bool ShowPillar => true;
+
+	public virtual bool AlwaysShowShadow => false;
+
+	public virtual bool RepeatBlock => false;
+
+	public virtual bool ForceRpeatBlock => false;
+
+	public virtual bool CanBeHeld => true;
+
+	public virtual bool EditorTile => false;
+
+	public virtual bool IsFloodDoor => false;
+
+	public virtual bool Invisible => false;
+
+	public virtual bool IgnoreBuildRule => false;
+
+	public virtual bool RenderWaterBlock => true;
+
+	public virtual BaseTileSelector.SelectType SelectType => BaseTileSelector.SelectType.Single;
+
+	public virtual BaseTileSelector.BoxType BoxType => BaseTileSelector.BoxType.Box;
+
+	public virtual BaseTileSelector.HitType HitType => BaseTileSelector.HitType.Block;
+
+	public virtual BlockRenderMode blockRenderMode => BlockRenderMode.Default;
+
+	public bool IsMountBlock => MountHeight > 0f;
+
+	public static void Init()
 	{
-		None,
-		Full,
-		Half
+		dict.Clear();
+		FieldInfo[] fields = typeof(TileType).GetFields(BindingFlags.Static | BindingFlags.Public);
+		foreach (FieldInfo fieldInfo in fields)
+		{
+			if (typeof(TileType).IsAssignableFrom(fieldInfo.FieldType))
+			{
+				dict[fieldInfo.Name] = (TileType)fieldInfo.GetValue(null);
+			}
+		}
+	}
+
+	public virtual bool CanRotate(bool buildMode)
+	{
+		return true;
+	}
+
+	public HitResult _HitTest(Point pos, Card target, bool canIgnore = true)
+	{
+		if ((EClass.debug.ignoreBuildRule || IgnoreBuildRule) && canIgnore)
+		{
+			return HitResult.Valid;
+		}
+		if (!CanBuiltOnArea && pos.HasArea)
+		{
+			return HitResult.Invalid;
+		}
+		if (pos.cell.IsTopWater)
+		{
+			if (!CanBuiltOnWater)
+			{
+				return HitResult.Invalid;
+			}
+		}
+		else if (!CanBuiltOnFloor)
+		{
+			return HitResult.Invalid;
+		}
+		if (!CanBuiltOnBridge && pos.cell._bridge != 0)
+		{
+			return HitResult.Invalid;
+		}
+		if (target != null)
+		{
+			if (target.sourceCard.multisize && (pos.Installed != null || pos.cell.blocked || (pos.HasChara && pos.FirstChara.IsHostile(EClass.pc))))
+			{
+				return HitResult.Invalid;
+			}
+			if (pos.Installed != null && pos.Installed != target)
+			{
+				TileType tileType = pos.Installed.TileType;
+				TileType tileType2 = target.TileType;
+				if (!tileType.AllowMultiInstall || !tileType2.AllowMultiInstall)
+				{
+					return HitResult.Invalid;
+				}
+			}
+			if (!target.trait.CanBuiltAt(pos))
+			{
+				return HitResult.Invalid;
+			}
+		}
+		else if (pos.Installed != null && !CanBuiltOnThing && !pos.cell.hasDoor)
+		{
+			return HitResult.Invalid;
+		}
+		if (pos.HasBlock)
+		{
+			if (!CanBuiltOnBlock && pos.sourceBlock.tileType.IsOccupyCell)
+			{
+				return HitResult.Invalid;
+			}
+			if (IsDoor && pos.HasWallOrFence && pos.cell.blockDir == 2)
+			{
+				return HitResult.Invalid;
+			}
+		}
+		else if (IsDoor)
+		{
+			return HitResult.Invalid;
+		}
+		return HitTest(pos);
+	}
+
+	protected virtual HitResult HitTest(Point pos)
+	{
+		if (pos.HasObj)
+		{
+			return HitResult.Warning;
+		}
+		return HitResult.Valid;
+	}
+
+	public virtual int GetDesiredDir(Point p, int d)
+	{
+		return -1;
+	}
+
+	public virtual void GetMountHeight(ref Vector3 v, Point p, int d, Card target = null)
+	{
+		v += EClass.screen.tileMap.altitudeFix * target.altitude;
+	}
+
+	public Vector3 GetRampFix(int dir)
+	{
+		int num = (int)Ramp * 2 - 2 + ((dir > 1) ? 1 : 0);
+		Vector3 vector = EClass.setting.render.rampFix[num];
+		return new Vector3(vector.x * (float)((dir % 2 == 0) ? 1 : (-1)), vector.y, vector.z);
 	}
 }

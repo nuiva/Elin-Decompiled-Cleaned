@@ -1,760 +1,17 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public class BaseGameScreen : EMono
 {
-	public bool fixFocus
+	public class FocusOption
 	{
-		get
-		{
-			ActionMode actionMode = EMono.scene.actionMode;
-			return actionMode != null && actionMode.FixFocus;
-		}
-	}
+		public Point pos;
 
-	public virtual float TargetZoom
-	{
-		get
-		{
-			return EMono.scene.actionMode.TargetZoom;
-		}
-	}
+		public float speed = 2f;
 
-	protected CameraSupport camSupport
-	{
-		get
-		{
-			return EMono.scene.camSupport;
-		}
-	}
+		public bool linear = true;
 
-	protected Transform transFocus
-	{
-		get
-		{
-			return EMono.scene.transFocus;
-		}
-	}
-
-	public virtual float SkyRate
-	{
-		get
-		{
-			return Mathf.Clamp((1.2f - this.Zoom) * 2f - (EMono._zone.IsSnowCovered ? 0.38f : 0f), 0f, 2f);
-		}
-	}
-
-	public virtual float ViewHeight
-	{
-		get
-		{
-			return this.SkyRate * 10f + 5f;
-		}
-	}
-
-	public virtual bool IsGameScreen
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public virtual bool IsLocalMap
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public void Activate()
-	{
-		if (EMono.core.screen == this)
-		{
-			return;
-		}
-		if (EMono.core.screen != null)
-		{
-			EMono.core.screen.Deactivate();
-		}
-		this.SetUnitSize();
-		EMono.core.screen = this;
-		Point._screen = this;
-		base.gameObject.SetActive(true);
-		EMono.scene.flock.SetActive(this.IsLocalMap);
-		EMono.scene.fireflyNight.SetActive(this.IsLocalMap);
-		EMono.scene.firefly.SetActive(this.IsLocalMap);
-		EMono.scene.star.SetActive(this.IsLocalMap);
-		EMono.scene.sfxRain.SetActive(this.IsGameScreen);
-		EMono.scene.sfxSea.SetActive(this.IsGameScreen);
-		EMono.scene.sfxWind.SetActive(this.IsGameScreen);
-		EMono.scene.sfxFire.SetActive(this.IsGameScreen);
-		this.OnActivate();
-		EMono.scene.rain.main.prewarm = (EMono.scene.snow.main.prewarm = (EMono.scene.ether.main.prewarm = true));
-		ParticleSystem[] blossoms = EMono.scene.blossoms;
-		for (int i = 0; i < blossoms.Length; i++)
-		{
-			blossoms[i].main.prewarm = true;
-		}
-		if (this.overlayShadow)
-		{
-			this.overlayShadow.SetActive(EMono.scene.profile.matOverlay);
-			this.overlayShadow.sharedMaterial = EMono.scene.profile.matOverlay;
-		}
-		EMono.scene.camSupport.grading.material = EMono.scene.profile.matGrading;
-		if (this.IsGameScreen)
-		{
-			EMono.scene.OnChangeHour();
-			EMono.scene.ApplyZoneConfig();
-			this.RefreshAll();
-			this.tileMap.OnActivate(this);
-			WidgetHotbar.RefreshHighlights();
-			return;
-		}
-		if (EMono.core.config != null)
-		{
-			EMono.core.config.RefreshUIBrightness();
-		}
-	}
-
-	public virtual void OnActivate()
-	{
-	}
-
-	public void Deactivate()
-	{
-		this.OnDeactivate();
-		base.gameObject.SetActive(false);
-		EMono.core.screen = null;
-	}
-
-	public virtual void OnDeactivate()
-	{
-	}
-
-	public virtual void SetUnitSize()
-	{
-	}
-
-	public virtual void OnEndPlayerTurn()
-	{
-	}
-
-	public unsafe void Draw()
-	{
-		if (!this.IsGameScreen)
-		{
-			return;
-		}
-		if (this.Zoom != this.targetZoom)
-		{
-			bool flag = EMono.scene.actionMode == ActionMode.Bird;
-			CoreConfig.CameraConfig camera = EMono.core.config.camera;
-			float num = camera.zoomSpeed * (flag ? 0.05f : (camera.linearZoom ? 2f : 1f)) * Core.delta;
-			this.zoomTimer += num * 0.3f;
-			float t = (flag || !camera.linearZoom) ? num : this.zoomTimer;
-			float num2 = Mathf.Lerp(EMono.screen.Zoom, this.targetZoom, t);
-			if (Mathf.Abs(num2 - this.targetZoom) < (flag ? 0.0005f : 0.003f))
-			{
-				num2 = this.targetZoom;
-			}
-			if (camera.zoomToMouse && this.zoomPos != Vector3.zero)
-			{
-				this.position = Vector3.Lerp(this.position, this.zoomPos, t);
-			}
-			EMono.core.config.ApplyZoom(num2);
-		}
-		RenderObject.gameSpeed = EMono.scene.actionMode.gameSpeed;
-		RenderObject.gameDelta = Core.gameDeltaNoPause;
-		if (EMono.pc.currentZone == EMono._zone && !EMono._zone.IsRegion && this.focusOption == null && this.focusPos == null && !this.transFocus && this.fixFocus && (this.instantFocus || !EMono.core.config.camera.smoothFollow))
-		{
-			if (this.Zoom != this.targetZoom)
-			{
-				EMono.core.config.ApplyZoom(this.TargetZoom);
-			}
-			Vector3 vector = (EMono.pc.isSynced ? EMono.player.position : (*EMono.pc.pos.Position())) + this.focusFix;
-			this.position = vector;
-			this.scrollX = Mathf.FloorToInt(this.position.x / this.tileWorldSize.x) - this.width / 2 + (int)this.paddingOffset.x;
-			this.scrollY = Mathf.FloorToInt(this.position.y / this.tileWorldSize.y) - this.height / 4 + (int)this.paddingOffset.y;
-		}
-		this.tileMap.Draw();
-		if (this.instantFocus)
-		{
-			this.instantFocus = false;
-		}
-		this.RefreshPosition();
-		if (EMono.game.activeZone != null)
-		{
-			for (int i = EMono._map.pointAnimes.Count - 1; i >= 0; i--)
-			{
-				if (EMono._map.pointAnimes[i].Update())
-				{
-					EMono._map.pointAnimes.RemoveAt(i);
-				}
-			}
-		}
-		this.UpdateShaders(EMono.scene.timeRatio);
-		if (Scene.skipAnime)
-		{
-			EffectManager.Instance.KillAll();
-			Scene.skipAnime = false;
-		}
-		EffectManager.Instance.UpdateEffects();
-		FlockController flock = EMono.scene.flock;
-		bool visible;
-		if (this.targetZoom <= 1.25f)
-		{
-			Room room = EMono.pc.pos.cell.room;
-			visible = (room == null || !room.HasRoof);
-		}
-		else
-		{
-			visible = false;
-		}
-		flock.UpdateVisible(visible);
-		if (EMono.pc.isSynced && EMono.pc.renderer.orbit)
-		{
-			EMono.pc.renderer.orbit.Refresh();
-		}
-	}
-
-	public void UpdateShaders(float time = 0f)
-	{
-		SceneProfile profile = EMono.scene.profile;
-		SceneColorProfile color = profile.color;
-		SceneLightProfile light = profile.light;
-		Color color2 = color.fog.Evaluate(time);
-		float value = light.nightRatioCurve.Evaluate(time);
-		Shader.SetGlobalFloat(this._Snow, EMono._zone.IsSnowCovered ? 1f : 0f);
-		Shader.SetGlobalFloat(this._BackDrawPower, (float)(ActionMode.Cinema.IsActive ? 0 : EMono.game.config.backDrawAlpha));
-		Shader.SetGlobalFloat(this._SkyLevel, this.SkyRate);
-		Shader.SetGlobalFloat(this._NightRate, value);
-		Shader.SetGlobalFloat(this._ViewHeight, this.ViewHeight);
-		Shader.SetGlobalFloat(this._FogStrength, color2.a * 0.1f);
-		Shader.SetGlobalColor(this._FogColor, color2);
-		FowProfile fowProfile = EMono._zone.biome.fowProfile;
-		if (EMono._map.fowProfile)
-		{
-			fowProfile = EMono._map.fowProfile;
-		}
-		if (fowProfile)
-		{
-			FOWType type = fowProfile.type;
-			if (type != FOWType.Color)
-			{
-				if (type != FOWType.ColorAdd)
-				{
-					Shader.SetGlobalColor(this._FowColor, color.fow.Evaluate(time));
-				}
-				else
-				{
-					Shader.SetGlobalColor(this._FowColor, fowProfile.color * color.fow.Evaluate(time));
-				}
-			}
-			else
-			{
-				Shader.SetGlobalColor(this._FowColor, fowProfile.color);
-			}
-		}
-		else
-		{
-			Shader.SetGlobalColor(this._FowColor, color.fow.Evaluate(time));
-		}
-		Shader.SetGlobalColor(this._SunColor, EMono._zone.IsSnowCovered ? color.sunSnow.Evaluate(time) : color.sun.Evaluate(time));
-		Shader.SetGlobalColor(this._SeaColor, color.sea.Evaluate(time));
-		Shader.SetGlobalColor(this._SkyColor, color.sky.Evaluate(time));
-		Shader.SetGlobalColor(this._SkyBGColor, color.skyBG.Evaluate(time));
-		Shader.SetGlobalVector(this._Offset, EMono.core.config.camera.extendZoomMin ? (this.position * 0.3f) : (this.position * 0.5f));
-		Shader.SetGlobalFloat(this._Zoom, this.Zoom);
-		Shader.SetGlobalFloat(this._LightPower, light.lightPower.Evaluate(time) * light.lightPowerMod);
-		Shader.SetGlobalFloat(this._AnimeSpeedGlobal, (float)EMono.game.config.animeSpeed);
-		Shader.SetGlobalColor(this._ScreenFlash, ScreenFlash.currentColor);
-		EMono.scene.godray.main.startColor = (EMono._zone.IsSnowCovered ? color.godraySnow.Evaluate(time) : color.godray.Evaluate(time));
-		this.camSupport.grading.vignettePower = light.vignetteCurve.Evaluate(time);
-		this.camSupport.grading.UpdateVignette(0f);
-		this.camSupport.bloom.threshold = light.bloomCurve.Evaluate(time);
-		this.camSupport.beautify.bloomIntensity = light.bloomCurve2.Evaluate(time);
-	}
-
-	public virtual void OnChangeHour()
-	{
-	}
-
-	public unsafe virtual void RefreshPosition()
-	{
-		if (EMono.pc.currentZone != EMono._zone)
-		{
-			return;
-		}
-		if (this.focusOption != null)
-		{
-			Vector3 vector = this.focusOption.player ? (*EMono.pc.pos.Position() + this.focusFix) : (*this.focusOption.pos.PositionCenter());
-			vector.z = this.position.z;
-			if (this.focusOption.linear)
-			{
-				this.position = Vector3.MoveTowards(this.position, vector, this.focusOption.speed * Core.delta);
-			}
-			else
-			{
-				this.position = Vector3.Lerp(this.position, vector, this.focusOption.speed * Core.delta);
-			}
-		}
-		else if (this.focusPos != null)
-		{
-			this.focusPos = new Vector3?(new Vector3((this.focusPos ?? this.position).x, (this.focusPos ?? this.position).y, this.position.z));
-			this.position = Vector3.Lerp(this.position, this.focusPos ?? this.position, this.focusSpeedSlow * Core.delta);
-			if (Vector3.Distance(this.position, this.focusPos ?? this.position) < 0.1f)
-			{
-				this.focusPos = null;
-			}
-		}
-		else if (this.transFocus)
-		{
-			this.pushBack = Vector3.zero;
-			this.position.x = this.transFocus.position.x;
-			this.position.y = this.transFocus.position.y;
-		}
-		else if (this.fixFocus)
-		{
-			float z = this.position.z;
-			this.targetZoom = this.TargetZoom;
-			for (int i = 0; i < EMono.core.config.camera.zooms.Length; i++)
-			{
-				if (this.targetZoom == EMono.core.config.camera.zooms[i])
-				{
-					this.targetZoomIndex = i;
-				}
-			}
-			Vector3 b = (EMono.pc.isSynced ? EMono.player.position : (*EMono.pc.pos.Position())) + this.focusFix;
-			if (this.instantFocus)
-			{
-				this.position = b;
-			}
-			else if (EMono.core.config.camera.smoothFollow)
-			{
-				this.position = Vector3.Lerp(this.position, b, this.focusSpeed * Core.delta * Mathf.Lerp(0.2f, 1f, 1f - Mathf.Clamp(ActionMode.Adv.rightMouseTimer, 0f, 1f)));
-			}
-			else
-			{
-				this.position = b;
-			}
-			this.position.z = z;
-			this.pcOrbit.transform.position = EMono.pc.renderer.position;
-		}
-		else
-		{
-			if (ActionMode.Adv.IsActive)
-			{
-				this.targetZoom = ActionMode.Adv.TargetZoom;
-			}
-			this.pushBack = Vector3.zero;
-			int num = this.scrollX - this.scrollY;
-			int num2 = this.scrollY + this.scrollX;
-			if ((float)num <= this.mapLimit.x)
-			{
-				this.pushBack.x = this.mapLimit.x - (float)num;
-			}
-			if ((float)num2 <= this.mapLimit.y)
-			{
-				this.pushBack.y = this.mapLimit.y - (float)num2;
-			}
-			if ((float)num >= (float)EMono._map.Size + this.mapLimit.width - (float)(this.width / 2))
-			{
-				this.pushBack.x = (float)EMono._map.Size + this.mapLimit.width - (float)(this.width / 2) - (float)num;
-			}
-			if ((float)num2 >= (float)EMono._map.Size + this.mapLimit.height - (float)(this.height / 2))
-			{
-				this.pushBack.y = (float)EMono._map.Size + this.mapLimit.height - (float)(this.height / 2) - (float)num2;
-			}
-			this.position += Quaternion.Euler(this.planeAngle) * this.pushBack * Core.delta * this.pushbackSpeed;
-		}
-		this.scrollX = Mathf.FloorToInt(this.position.x / this.tileWorldSize.x) - this.width / 2 + (int)this.paddingOffset.x;
-		this.scrollY = Mathf.FloorToInt(this.position.y / this.tileWorldSize.y) - this.height / 4 + (int)this.paddingOffset.y;
-		if (this.lastPos.x != (float)this.scrollX || this.lastPos.y != (float)this.scrollY)
-		{
-			this.lastPos.x = (float)this.scrollX;
-			this.lastPos.y = (float)this.scrollY;
-		}
-		this.camPos.x = this.position.x;
-		this.camPos.y = this.position.y;
-		this.SnapScreen(ref this.camPos, this.Zoom);
-		this.camPos.z = -500f;
-		this._camPos.x = this.camPos.x + this.screenFixX2 + this.screenFixX4;
-		this._camPos.y = this.camPos.y + this.screenFixY2 + this.screenFixY4;
-		this._camPos.z = this.camPos.z;
-		EMono.scene.cam.transform.localPosition = this._camPos;
-		this.camPos.z = 0f;
-		EMono.scene.transAudio.position = this.camPos + EMono.scene.posAudioListener;
-		if (WidgetMinimap.Instance)
-		{
-			WidgetMinimap.Instance.OnUpdate();
-		}
-	}
-
-	public void RefreshAll()
-	{
-		this.RefreshScreenSize();
-		bool indoor = EMono._map.config.indoor;
-		ScreenGrading grading = this.camSupport.grading;
-		EMono.scene.flock.SetActive(!indoor);
-		if (indoor)
-		{
-			grading.material.DisableKeyword("CLOUD_ON");
-		}
-		else
-		{
-			grading.material.EnableKeyword("CLOUD_ON");
-		}
-		grading.profile.vignette.enable = EMono.scene.profile.light.vignette;
-		grading.profile.vignette.vignetteColor = EMono.scene.profile.light.vignetteColor;
-		this.RefreshSky();
-		this.RefreshTilt();
-	}
-
-	public void RefreshScreenSize()
-	{
-		this.Zoom = EMono.scene.camSupport.Zoom;
-		this.width = (int)((float)Screen.width / this.tileSize.x / this.Zoom) + (int)this.paddings.x + 2;
-		this.height = (int)((float)Screen.height / (this.tileSize.y / 2f) / this.Zoom) + (int)this.paddings.y + 4;
-		this.camSupport.divier = EMono.core.config.fix.divider;
-		this.camSupport.ResizeCameraToPixelPerfect();
-		Vector3 localScale = new Vector3(EMono.scene.cam.orthographicSize * ((float)Screen.width / (float)Screen.height) * 2.5f, EMono.scene.cam.orthographicSize * 2.5f, 1f);
-		if (EMono.core.IsGameStarted)
-		{
-			EMono.scene.skyBG.transform.localScale = localScale;
-			float num = (ActionMode.IsAdv || this.Zoom >= 1f || EMono._map.IsIndoor) ? 0f : (0.4f / this.Zoom);
-			if (EMono.world.weather.CurrentCondition == Weather.Condition.SnowHeavy)
-			{
-				num += 0.8f;
-			}
-			if (!EMono.player.simulatingZone)
-			{
-				EMono.scene.sfxWind.SetVolume(Mathf.Min(num, 1f));
-			}
-		}
-		Vector3 vector = EMono.scene.cam.transform.position;
-		EMono.scene.cam.transform.position = Vector3.zero;
-		Vector3 vector2 = EMono.scene.cam.WorldToScreenPoint(Vector3.zero);
-		this.screenFixX2 = vector2.x % this.screenFixX * this.screenFixX3;
-		this.screenFixY2 = vector2.y % this.screenFixY * this.screenFixY3;
-		EMono.scene.cam.transform.position = vector;
-	}
-
-	public Point GetRandomPoint()
-	{
-		int num = EMono.screen.scrollX - EMono.screen.scrollY + this.width / 2 - (this.height / 2 + 1) / 2;
-		int num2 = EMono.screen.scrollY + EMono.screen.scrollX + this.width / 2 + this.height / 2 / 2;
-		num = num - 20 + EMono.rnd(40);
-		num2 = num2 - 20 + EMono.rnd(40);
-		return this._randomPoint.Set(num, num2);
-	}
-
-	public void RefreshSky()
-	{
-		CoreConfig.GraphicSetting graphic = EMono.core.config.graphic;
-		bool indoor = EMono._map.config.indoor;
-		EMono.scene.firefly.baseParticleCount = graphic.fireflyCount;
-		EMono.scene.fireflyNight.baseParticleCount = graphic.fireflyCount * 10;
-		EMono.scene.star.baseParticleCount = graphic.starCount;
-		EMono.scene.star.gameObject.GetComponent<ParticleSystemRenderer>().enabled = EMono.world.date.IsNight;
-		EMono.scene.star.SetActive(this.IsLocalMap && !indoor);
-		EMono.scene.firefly.SetActive(this.IsLocalMap && graphic.firefly && !indoor);
-		EMono.scene.fireflyNight.SetActive(this.IsLocalMap && graphic.firefly && !indoor);
-		if (this.overlayShadow && EMono.scene.profile.matOverlay && this is GameScreen)
-		{
-			this.overlayShadow.sharedMaterial.SetFloat("_ShadowStrength", EMono._map.config.shadowStrength * (EMono._zone.IsSnowCovered ? 0.5f : 1f) * EMono.setting.render.shadowStrength);
-		}
-		this.RefreshWeather();
-		this.RefreshGrading();
-	}
-
-	public virtual void RefreshWeather()
-	{
-		bool flag;
-		if (!EMono._map.config.indoor)
-		{
-			if (EMono.pc.IsInActiveZone)
-			{
-				Room room = EMono.pc.pos.cell.room;
-				flag = (room != null && room.HasRoof);
-			}
-			else
-			{
-				flag = false;
-			}
-		}
-		else
-		{
-			flag = true;
-		}
-		bool flag2 = flag;
-		Room room2 = EMono.pc.pos.cell.room;
-		bool flag3 = room2 != null && room2.data.atrium;
-		Weather weather = EMono.world.weather;
-		Weather.Condition currentCondition = weather.CurrentCondition;
-		EMono.scene.filterRain.enabled = (!flag2 && weather.IsRaining && EMono.core.config.graphic.enhanceRain);
-		EMono.scene.filterRain.Fade = ((currentCondition == Weather.Condition.RainHeavy) ? 0.4f : 0.3f);
-		EMono.scene.rain.enableEmission = (!flag2 && weather.IsRaining);
-		EMono.scene.rain.emission.rateOverTime = (float)((currentCondition == Weather.Condition.RainHeavy) ? 750 : 200);
-		EMono.scene.snow.enableEmission = (!flag2 && currentCondition == Weather.Condition.Snow);
-		EMono.scene.ether.enableEmission = (!flag2 && weather.IsEther);
-		bool enableEmission = !flag2 && weather.IsBlossom;
-		ParticleSystem[] array = EMono.scene.blossoms;
-		for (int i = 0; i < array.Length; i++)
-		{
-			array[i].enableEmission = enableEmission;
-		}
-		enableEmission = (!flag2 && currentCondition == Weather.Condition.SnowHeavy && EMono.core.config.graphic.blizzard);
-		array = EMono.scene.blizzards;
-		for (int i = 0; i < array.Length; i++)
-		{
-			array[i].enableEmission = enableEmission;
-		}
-		EMono.scene.transBlizzard.localScale = new Vector3(1f, 1f, 1f);
-		bool flag4 = (EMono._map.config.forceGodRay || (EMono.core.config.graphic.godray && !flag2 && (currentCondition == Weather.Condition.Fine || currentCondition == Weather.Condition.Snow))) && !BuildMenu.Instance;
-		EMono.scene.godray.SetActive(flag4, delegate(bool enabled)
-		{
-			if (!enabled)
-			{
-				EMono.scene.godray.Clear();
-			}
-		});
-		EMono.scene.godrayDust.SetActive(flag4 && EMono.world.date.IsNight);
-		EMono.scene.snow.SetActive(true);
-		EMono.scene.rain.SetActive(true);
-		EMono.scene.ether.SetActive(true);
-		EMono.scene.blossom.SetActive(true);
-		float num = (EMono._zone.lv <= -2) ? 0f : ((EMono._zone.lv <= -1) ? 0.3f : ((flag2 && !flag3) ? 0.6f : 1f));
-		EMono.scene.sfxRain.SetVolume(weather.IsRaining ? num : 0f);
-		EMono.scene.sfxSea.SetVolume(EMono._zone.VolumeSea * num);
-		EMono.scene.camSupport.grading.profile.fog = EMono.setting.render.fogs[EMono._map.config.fog];
-		EMono.scene.camSupport.grading.userFog = ((!EMono._map.config.indoor && flag2) ? 0f : 1f);
-		float num2 = (!EMono._map.IsIndoor && EMono.world.weather.IsRaining) ? ((currentCondition == Weather.Condition.RainHeavy) ? -0.08f : -0.04f) : 0f;
-		if (EMono._zone.IsSnowCovered)
-		{
-			num2 += EMono.scene.profile.global.snowBrightness;
-		}
-		this.camSupport.grading.sceneBrightness = num2;
-		EMono.scene.rain.main.prewarm = (EMono.scene.snow.main.prewarm = (EMono.scene.ether.main.prewarm = false));
-		array = EMono.scene.blossoms;
-		for (int i = 0; i < array.Length; i++)
-		{
-			array[i].main.prewarm = false;
-		}
-		this.camSupport.grading.SetGrading();
-	}
-
-	public void RefreshGrading()
-	{
-		float timeRatio = EMono.core.IsGameStarted ? EMono.scene.timeRatio : 0f;
-		if (this.camSupport.grading.profile.overlay)
-		{
-			this.camSupport.grading.profile.overlay.Refresh(timeRatio, EMono._zone.IsSnowCovered);
-		}
-		ScreenGrading.blind = EMono.pc.isBlind;
-		this.camSupport.grading.profile.sharpen.enable = (EMono.core.config.graphic.sharpen > 0);
-		this.camSupport.grading.profile.sharpen.Strength = Mathf.Clamp(0.1f * (float)EMono.core.config.graphic.sharpen, 0f, (this is GameScreen) ? 10f : 1f);
-		this.camSupport.beautify.sharpen = Mathf.Clamp(0.01f * (float)EMono.core.config.graphic.sharpen2, 0f, (this is GameScreen) ? 10f : 0.5f);
-		this.camSupport.grading.SetGrading();
-		SceneTemplate sceneTemplate = SceneTemplate.Load(EMono._map.config.idSceneTemplate.IsEmpty(EMono._zone.IDSceneTemplate));
-		Color color = EMono._map.config.colorScreen.Get();
-		if (color.a == 0f)
-		{
-			color = sceneTemplate.colorScreen;
-		}
-		this.camSupport.beautify.tintColor = color;
-		color = EMono._map.config.colorSea.Get();
-		MATERIAL.sourceWaterSea.matColor = ((color.a == 0f) ? MATERIAL.sourceWaterSea.GetColor() : color);
-		EMono.core.config.RefreshUIBrightness();
-		float num = 0f;
-		if (!EMono._map.IsIndoor)
-		{
-			num += 0.01f * EMono.core.config.test.brightnessNight * EMono.scene.profile.light.nightRatioCurve.Evaluate(EMono.scene.timeRatio);
-		}
-		this.camSupport.grading.nightBrightness = num;
-	}
-
-	public void RefreshTilt()
-	{
-		this.camSupport.tiltShift.enabled = ((ActionMode.Bird.IsActive || EMono._zone.IsRegion) ? EMono.game.config.tiltRegion : EMono.game.config.tilt);
-		this.camSupport.tiltShift.blurArea = (ActionMode.Bird.IsActive ? 12f : (0.1f * (float)(EMono._zone.IsRegion ? EMono.game.config.tiltPowerRegion : EMono.game.config.tiltPower)));
-	}
-
-	public void ScrollMouse(float x, float y)
-	{
-		this.position.x = this.position.x + x / this.Zoom;
-		this.position.y = this.position.y + y / this.Zoom;
-		if (x > 0.1f || x < -0.1f || y > 0.1f || y < 0.1f)
-		{
-			this.RefreshPosition();
-		}
-	}
-
-	public void ScrollAxis(Vector3 axis, bool direct = false)
-	{
-		if (direct)
-		{
-			this.position += axis;
-			return;
-		}
-		this.position += axis * Core.delta * this.camSpeed2 * EMono.core.config.camera.senseKeyboard / this.Zoom;
-	}
-
-	public void Focus(Int3 ints)
-	{
-		this.position = new Vector3((float)ints.x, (float)ints.y, (float)ints.z);
-	}
-
-	public void Focus(int x, int y)
-	{
-		if (EMono.AdvMode)
-		{
-			SE.Beep();
-			return;
-		}
-		this.scrollX = x;
-		this.position.x = (float)x;
-		this.scrollY = y;
-		this.position.y = (float)y;
-	}
-
-	public void Focus(Card c)
-	{
-		if (c == null)
-		{
-			return;
-		}
-		this.Focus(c.GetRootCard().pos);
-	}
-
-	public void FocusCenter()
-	{
-		Point pos = new Point(EMono._map.Size / 2, EMono._map.Size / 2);
-		this.Focus(pos);
-	}
-
-	public unsafe void Focus(Point pos)
-	{
-		this.position = *pos.PositionCenter();
-	}
-
-	public void FocusPC()
-	{
-		this.focusPos = null;
-		this.Focus((EMono.pc.currentZone == EMono.game.activeZone) ? EMono.pc.pos : EMono._map.bounds.GetCenterPos());
-		this.instantFocus = true;
-		this.RefreshPosition();
-	}
-
-	public void FocusImmediate(Point pos)
-	{
-		this.focusPos = null;
-		this.Focus(pos);
-		this.instantFocus = true;
-		this.RefreshPosition();
-		this.RefreshPosition();
-	}
-
-	public void SnapScreen(ref Vector3 v, float zoom)
-	{
-		float num = this.snapSize.x / zoom;
-		float num2 = this.snapSize.y / zoom;
-		switch (EMono.core.config.fix.snapType)
-		{
-		case CoreConfig.ScreenSnapType.Default:
-			v.x = num * (float)Mathf.RoundToInt(v.x / num);
-			v.y = num2 * (float)Mathf.RoundToInt(v.y / num2);
-			return;
-		case CoreConfig.ScreenSnapType.Floor:
-			v.x = num * (float)Mathf.FloorToInt(v.x / num);
-			v.y = num2 * (float)Mathf.FloorToInt(v.y / num2);
-			return;
-		case CoreConfig.ScreenSnapType.Ceil:
-			v.x = num * (float)Mathf.CeilToInt(v.x / num);
-			v.y = num2 * (float)Mathf.CeilToInt(v.y / num2);
-			return;
-		case CoreConfig.ScreenSnapType.Hack3:
-			num = this.snapSize.x;
-			num2 = this.snapSize.y;
-			v.x = num * (float)Mathf.RoundToInt(v.x / num);
-			v.y = num2 * (float)Mathf.RoundToInt(v.y / num2);
-			return;
-		case CoreConfig.ScreenSnapType.Hack4:
-			num = this.snapSize.x;
-			num2 = this.snapSize.y;
-			v.x = num * (float)Mathf.FloorToInt(v.x / num);
-			v.y = num2 * (float)Mathf.FloorToInt(v.y / num2);
-			return;
-		case CoreConfig.ScreenSnapType.Hack5:
-			num = this.snapSize.x;
-			num2 = this.snapSize.y;
-			v.x = num * (float)Mathf.CeilToInt(v.x / num);
-			v.y = num2 * (float)Mathf.CeilToInt(v.y / num2);
-			return;
-		case CoreConfig.ScreenSnapType.Hack6:
-			v.x = 0.01f * (float)Mathf.FloorToInt(v.x * 100f) + 0.001f;
-			v.y = 0.01f * (float)Mathf.FloorToInt(v.y * 100f) + 0.001f;
-			return;
-		case CoreConfig.ScreenSnapType.Hack7:
-			v.x = 0.01f * (float)Mathf.FloorToInt(v.x * 100f) - 0.001f;
-			v.y = 0.01f * (float)Mathf.FloorToInt(v.y * 100f) - 0.001f;
-			return;
-		case CoreConfig.ScreenSnapType.Hack8:
-			v.x = 0.01f * (float)Mathf.RoundToInt(v.x * 100f) + 0.005f;
-			v.y = 0.01f * (float)Mathf.RoundToInt(v.y * 100f) + 0.005f;
-			return;
-		case CoreConfig.ScreenSnapType.Hack9:
-			v.x = 0.01f * (float)Mathf.RoundToInt(v.x * 100f) + 0.025f;
-			v.y = 0.01f * (float)Mathf.RoundToInt(v.y * 100f) + 0.025f;
-			return;
-		default:
-			return;
-		}
-	}
-
-	public void SetZoom(float z)
-	{
-		this.Zoom = z;
-		this.targetZoom = z;
-		EMono.core.config.ApplyZoom(this.targetZoom);
-		this.zoomTimer = 0f;
-	}
-
-	public void SetTargetZoomIndex(int index)
-	{
-		this.targetZoomIndex = index;
-		float num = this.targetZoom;
-		this.targetZoom = EMono.core.config.camera.zooms[this.targetZoomIndex];
-		if (num != this.targetZoom)
-		{
-			this.zoomTimer = 0f;
-		}
-	}
-
-	public void ModTargetZoomIndex(int a)
-	{
-		if (EMono.scene.elomapActor.IsActive)
-		{
-			return;
-		}
-		int num = this.targetZoomIndex;
-		this.targetZoomIndex -= a;
-		int num2 = EMono.core.config.camera.extendZoomMin ? 0 : 1;
-		int num3 = EMono.core.config.camera.extendZoomMax ? 4 : 3;
-		if (this.targetZoomIndex < num2)
-		{
-			this.targetZoomIndex = num2;
-		}
-		else if (this.targetZoomIndex >= num3)
-		{
-			this.targetZoomIndex = num3;
-		}
-		if (this.targetZoomIndex > num && EInput.buttonScroll != null && !EInput.buttonScroll.pressing)
-		{
-			this.zoomPos = EInput.mposWorld;
-		}
-		this.SetTargetZoomIndex(this.targetZoomIndex);
+		public bool player;
 	}
 
 	private readonly int _BackDrawPower = Shader.PropertyToID("_BackDrawPower");
@@ -873,7 +130,7 @@ public class BaseGameScreen : EMono
 	public bool isCameraMoving;
 
 	[NonSerialized]
-	public BaseGameScreen.FocusOption focusOption;
+	public FocusOption focusOption;
 
 	[NonSerialized]
 	public Vector3? focusPos;
@@ -916,14 +173,696 @@ public class BaseGameScreen : EMono
 
 	public Vector3 zoomPos;
 
-	public class FocusOption
+	public bool fixFocus => EMono.scene.actionMode?.FixFocus ?? false;
+
+	public virtual float TargetZoom => EMono.scene.actionMode.TargetZoom;
+
+	protected CameraSupport camSupport => EMono.scene.camSupport;
+
+	protected Transform transFocus => EMono.scene.transFocus;
+
+	public virtual float SkyRate => Mathf.Clamp((1.2f - Zoom) * 2f - (EMono._zone.IsSnowCovered ? 0.38f : 0f), 0f, 2f);
+
+	public virtual float ViewHeight => SkyRate * 10f + 5f;
+
+	public virtual bool IsGameScreen => true;
+
+	public virtual bool IsLocalMap => false;
+
+	public void Activate()
 	{
-		public Point pos;
+		if (!(EMono.core.screen == this))
+		{
+			if (EMono.core.screen != null)
+			{
+				EMono.core.screen.Deactivate();
+			}
+			SetUnitSize();
+			EMono.core.screen = this;
+			Point._screen = this;
+			base.gameObject.SetActive(value: true);
+			EMono.scene.flock.SetActive(IsLocalMap);
+			EMono.scene.fireflyNight.SetActive(IsLocalMap);
+			EMono.scene.firefly.SetActive(IsLocalMap);
+			EMono.scene.star.SetActive(IsLocalMap);
+			EMono.scene.sfxRain.SetActive(IsGameScreen);
+			EMono.scene.sfxSea.SetActive(IsGameScreen);
+			EMono.scene.sfxWind.SetActive(IsGameScreen);
+			EMono.scene.sfxFire.SetActive(IsGameScreen);
+			OnActivate();
+			ParticleSystem.MainModule main = EMono.scene.rain.main;
+			ParticleSystem.MainModule main2 = EMono.scene.snow.main;
+			ParticleSystem.MainModule main3 = EMono.scene.ether.main;
+			bool flag2 = (main3.prewarm = true);
+			bool prewarm = (main2.prewarm = flag2);
+			main.prewarm = prewarm;
+			ParticleSystem[] blossoms = EMono.scene.blossoms;
+			for (int i = 0; i < blossoms.Length; i++)
+			{
+				ParticleSystem.MainModule main4 = blossoms[i].main;
+				main4.prewarm = true;
+			}
+			if ((bool)overlayShadow)
+			{
+				overlayShadow.SetActive(EMono.scene.profile.matOverlay);
+				overlayShadow.sharedMaterial = EMono.scene.profile.matOverlay;
+			}
+			EMono.scene.camSupport.grading.material = EMono.scene.profile.matGrading;
+			if (IsGameScreen)
+			{
+				EMono.scene.OnChangeHour();
+				EMono.scene.ApplyZoneConfig();
+				RefreshAll();
+				tileMap.OnActivate(this);
+				WidgetHotbar.RefreshHighlights();
+			}
+			else if (EMono.core.config != null)
+			{
+				EMono.core.config.RefreshUIBrightness();
+			}
+		}
+	}
 
-		public float speed = 2f;
+	public virtual void OnActivate()
+	{
+	}
 
-		public bool linear = true;
+	public void Deactivate()
+	{
+		OnDeactivate();
+		base.gameObject.SetActive(value: false);
+		EMono.core.screen = null;
+	}
 
-		public bool player;
+	public virtual void OnDeactivate()
+	{
+	}
+
+	public virtual void SetUnitSize()
+	{
+	}
+
+	public virtual void OnEndPlayerTurn()
+	{
+	}
+
+	public void Draw()
+	{
+		if (!IsGameScreen)
+		{
+			return;
+		}
+		if (Zoom != targetZoom)
+		{
+			bool flag = EMono.scene.actionMode == ActionMode.Bird;
+			CoreConfig.CameraConfig camera = EMono.core.config.camera;
+			float num = camera.zoomSpeed * (flag ? 0.05f : (camera.linearZoom ? 2f : 1f)) * Core.delta;
+			zoomTimer += num * 0.3f;
+			float t = ((flag || !camera.linearZoom) ? num : zoomTimer);
+			float num2 = Mathf.Lerp(EMono.screen.Zoom, targetZoom, t);
+			if (Mathf.Abs(num2 - targetZoom) < (flag ? 0.0005f : 0.003f))
+			{
+				num2 = targetZoom;
+			}
+			if (camera.zoomToMouse && zoomPos != Vector3.zero)
+			{
+				position = Vector3.Lerp(position, zoomPos, t);
+			}
+			EMono.core.config.ApplyZoom(num2);
+		}
+		RenderObject.gameSpeed = EMono.scene.actionMode.gameSpeed;
+		RenderObject.gameDelta = Core.gameDeltaNoPause;
+		if (EMono.pc.currentZone == EMono._zone && !EMono._zone.IsRegion && focusOption == null && !focusPos.HasValue && !transFocus && fixFocus && (instantFocus || !EMono.core.config.camera.smoothFollow))
+		{
+			if (Zoom != targetZoom)
+			{
+				EMono.core.config.ApplyZoom(TargetZoom);
+			}
+			Vector3 vector = (EMono.pc.isSynced ? EMono.player.position : EMono.pc.pos.Position()) + focusFix;
+			position = vector;
+			scrollX = Mathf.FloorToInt(position.x / tileWorldSize.x) - width / 2 + (int)paddingOffset.x;
+			scrollY = Mathf.FloorToInt(position.y / tileWorldSize.y) - height / 4 + (int)paddingOffset.y;
+		}
+		tileMap.Draw();
+		if (instantFocus)
+		{
+			instantFocus = false;
+		}
+		RefreshPosition();
+		if (EMono.game.activeZone != null)
+		{
+			for (int num3 = EMono._map.pointAnimes.Count - 1; num3 >= 0; num3--)
+			{
+				if (EMono._map.pointAnimes[num3].Update())
+				{
+					EMono._map.pointAnimes.RemoveAt(num3);
+				}
+			}
+		}
+		UpdateShaders(EMono.scene.timeRatio);
+		if (Scene.skipAnime)
+		{
+			EffectManager.Instance.KillAll();
+			Scene.skipAnime = false;
+		}
+		EffectManager.Instance.UpdateEffects();
+		FlockController flock = EMono.scene.flock;
+		int visible;
+		if (targetZoom <= 1.25f)
+		{
+			Room room = EMono.pc.pos.cell.room;
+			visible = ((room == null || !room.HasRoof) ? 1 : 0);
+		}
+		else
+		{
+			visible = 0;
+		}
+		flock.UpdateVisible((byte)visible != 0);
+		if (EMono.pc.isSynced && (bool)EMono.pc.renderer.orbit)
+		{
+			EMono.pc.renderer.orbit.Refresh();
+		}
+	}
+
+	public void UpdateShaders(float time = 0f)
+	{
+		SceneProfile profile = EMono.scene.profile;
+		SceneColorProfile color = profile.color;
+		SceneLightProfile light = profile.light;
+		Color value = color.fog.Evaluate(time);
+		float value2 = light.nightRatioCurve.Evaluate(time);
+		Shader.SetGlobalFloat(_Snow, EMono._zone.IsSnowCovered ? 1f : 0f);
+		Shader.SetGlobalFloat(_BackDrawPower, (!ActionMode.Cinema.IsActive) ? EMono.game.config.backDrawAlpha : 0);
+		Shader.SetGlobalFloat(_SkyLevel, SkyRate);
+		Shader.SetGlobalFloat(_NightRate, value2);
+		Shader.SetGlobalFloat(_ViewHeight, ViewHeight);
+		Shader.SetGlobalFloat(_FogStrength, value.a * 0.1f);
+		Shader.SetGlobalColor(_FogColor, value);
+		FowProfile fowProfile = EMono._zone.biome.fowProfile;
+		if ((bool)EMono._map.fowProfile)
+		{
+			fowProfile = EMono._map.fowProfile;
+		}
+		if ((bool)fowProfile)
+		{
+			switch (fowProfile.type)
+			{
+			case FOWType.Color:
+				Shader.SetGlobalColor(_FowColor, fowProfile.color);
+				break;
+			case FOWType.ColorAdd:
+				Shader.SetGlobalColor(_FowColor, fowProfile.color * color.fow.Evaluate(time));
+				break;
+			default:
+				Shader.SetGlobalColor(_FowColor, color.fow.Evaluate(time));
+				break;
+			}
+		}
+		else
+		{
+			Shader.SetGlobalColor(_FowColor, color.fow.Evaluate(time));
+		}
+		Shader.SetGlobalColor(_SunColor, EMono._zone.IsSnowCovered ? color.sunSnow.Evaluate(time) : color.sun.Evaluate(time));
+		Shader.SetGlobalColor(_SeaColor, color.sea.Evaluate(time));
+		Shader.SetGlobalColor(_SkyColor, color.sky.Evaluate(time));
+		Shader.SetGlobalColor(_SkyBGColor, color.skyBG.Evaluate(time));
+		Shader.SetGlobalVector(_Offset, EMono.core.config.camera.extendZoomMin ? (position * 0.3f) : (position * 0.5f));
+		Shader.SetGlobalFloat(_Zoom, Zoom);
+		Shader.SetGlobalFloat(_LightPower, light.lightPower.Evaluate(time) * light.lightPowerMod);
+		Shader.SetGlobalFloat(_AnimeSpeedGlobal, EMono.game.config.animeSpeed);
+		Shader.SetGlobalColor(_ScreenFlash, ScreenFlash.currentColor);
+		ParticleSystem.MainModule main = EMono.scene.godray.main;
+		main.startColor = (EMono._zone.IsSnowCovered ? color.godraySnow.Evaluate(time) : color.godray.Evaluate(time));
+		camSupport.grading.vignettePower = light.vignetteCurve.Evaluate(time);
+		camSupport.grading.UpdateVignette();
+		camSupport.bloom.threshold = light.bloomCurve.Evaluate(time);
+		camSupport.beautify.bloomIntensity = light.bloomCurve2.Evaluate(time);
+	}
+
+	public virtual void OnChangeHour()
+	{
+	}
+
+	public virtual void RefreshPosition()
+	{
+		if (EMono.pc.currentZone != EMono._zone)
+		{
+			return;
+		}
+		if (focusOption != null)
+		{
+			Vector3 vector = (focusOption.player ? (EMono.pc.pos.Position() + focusFix) : focusOption.pos.PositionCenter());
+			vector.z = position.z;
+			if (focusOption.linear)
+			{
+				position = Vector3.MoveTowards(position, vector, focusOption.speed * Core.delta);
+			}
+			else
+			{
+				position = Vector3.Lerp(position, vector, focusOption.speed * Core.delta);
+			}
+		}
+		else if (focusPos.HasValue)
+		{
+			Vector3 obj = focusPos ?? position;
+			float x = obj.x;
+			Vector3 obj2 = focusPos ?? position;
+			focusPos = new Vector3(x, obj2.y, position.z);
+			position = Vector3.Lerp(position, focusPos ?? position, focusSpeedSlow * Core.delta);
+			if (Vector3.Distance(position, focusPos ?? position) < 0.1f)
+			{
+				focusPos = null;
+			}
+		}
+		else if ((bool)transFocus)
+		{
+			pushBack = Vector3.zero;
+			position.x = transFocus.position.x;
+			position.y = transFocus.position.y;
+		}
+		else if (fixFocus)
+		{
+			float z = position.z;
+			targetZoom = TargetZoom;
+			for (int i = 0; i < EMono.core.config.camera.zooms.Length; i++)
+			{
+				if (targetZoom == EMono.core.config.camera.zooms[i])
+				{
+					targetZoomIndex = i;
+				}
+			}
+			Vector3 b = (EMono.pc.isSynced ? EMono.player.position : EMono.pc.pos.Position()) + focusFix;
+			if (instantFocus)
+			{
+				position = b;
+			}
+			else if (EMono.core.config.camera.smoothFollow)
+			{
+				position = Vector3.Lerp(position, b, focusSpeed * Core.delta * Mathf.Lerp(0.2f, 1f, 1f - Mathf.Clamp(ActionMode.Adv.rightMouseTimer, 0f, 1f)));
+			}
+			else
+			{
+				position = b;
+			}
+			position.z = z;
+			pcOrbit.transform.position = EMono.pc.renderer.position;
+		}
+		else
+		{
+			if (ActionMode.Adv.IsActive)
+			{
+				targetZoom = ActionMode.Adv.TargetZoom;
+			}
+			pushBack = Vector3.zero;
+			int num = scrollX - scrollY;
+			int num2 = scrollY + scrollX;
+			if ((float)num <= mapLimit.x)
+			{
+				pushBack.x = mapLimit.x - (float)num;
+			}
+			if ((float)num2 <= mapLimit.y)
+			{
+				pushBack.y = mapLimit.y - (float)num2;
+			}
+			if ((float)num >= (float)EMono._map.Size + mapLimit.width - (float)(width / 2))
+			{
+				pushBack.x = (float)EMono._map.Size + mapLimit.width - (float)(width / 2) - (float)num;
+			}
+			if ((float)num2 >= (float)EMono._map.Size + mapLimit.height - (float)(height / 2))
+			{
+				pushBack.y = (float)EMono._map.Size + mapLimit.height - (float)(height / 2) - (float)num2;
+			}
+			position += Quaternion.Euler(planeAngle) * pushBack * Core.delta * pushbackSpeed;
+		}
+		scrollX = Mathf.FloorToInt(position.x / tileWorldSize.x) - width / 2 + (int)paddingOffset.x;
+		scrollY = Mathf.FloorToInt(position.y / tileWorldSize.y) - height / 4 + (int)paddingOffset.y;
+		if (lastPos.x != (float)scrollX || lastPos.y != (float)scrollY)
+		{
+			lastPos.x = scrollX;
+			lastPos.y = scrollY;
+		}
+		camPos.x = position.x;
+		camPos.y = position.y;
+		SnapScreen(ref camPos, Zoom);
+		camPos.z = -500f;
+		_camPos.x = camPos.x + screenFixX2 + screenFixX4;
+		_camPos.y = camPos.y + screenFixY2 + screenFixY4;
+		_camPos.z = camPos.z;
+		EMono.scene.cam.transform.localPosition = _camPos;
+		camPos.z = 0f;
+		EMono.scene.transAudio.position = camPos + EMono.scene.posAudioListener;
+		if ((bool)WidgetMinimap.Instance)
+		{
+			WidgetMinimap.Instance.OnUpdate();
+		}
+	}
+
+	public void RefreshAll()
+	{
+		RefreshScreenSize();
+		bool indoor = EMono._map.config.indoor;
+		ScreenGrading grading = camSupport.grading;
+		EMono.scene.flock.SetActive(!indoor);
+		if (indoor)
+		{
+			grading.material.DisableKeyword("CLOUD_ON");
+		}
+		else
+		{
+			grading.material.EnableKeyword("CLOUD_ON");
+		}
+		grading.profile.vignette.enable = EMono.scene.profile.light.vignette;
+		grading.profile.vignette.vignetteColor = EMono.scene.profile.light.vignetteColor;
+		RefreshSky();
+		RefreshTilt();
+	}
+
+	public void RefreshScreenSize()
+	{
+		Zoom = EMono.scene.camSupport.Zoom;
+		width = (int)((float)Screen.width / tileSize.x / Zoom) + (int)paddings.x + 2;
+		height = (int)((float)Screen.height / (tileSize.y / 2f) / Zoom) + (int)paddings.y + 4;
+		camSupport.divier = EMono.core.config.fix.divider;
+		camSupport.ResizeCameraToPixelPerfect();
+		Vector3 localScale = new Vector3(EMono.scene.cam.orthographicSize * ((float)Screen.width / (float)Screen.height) * 2.5f, EMono.scene.cam.orthographicSize * 2.5f, 1f);
+		if (EMono.core.IsGameStarted)
+		{
+			EMono.scene.skyBG.transform.localScale = localScale;
+			float num = ((ActionMode.IsAdv || Zoom >= 1f || EMono._map.IsIndoor) ? 0f : (0.4f / Zoom));
+			if (EMono.world.weather.CurrentCondition == Weather.Condition.SnowHeavy)
+			{
+				num += 0.8f;
+			}
+			if (!EMono.player.simulatingZone)
+			{
+				EMono.scene.sfxWind.SetVolume(Mathf.Min(num, 1f));
+			}
+		}
+		Vector3 vector = EMono.scene.cam.transform.position;
+		EMono.scene.cam.transform.position = Vector3.zero;
+		Vector3 vector2 = EMono.scene.cam.WorldToScreenPoint(Vector3.zero);
+		screenFixX2 = vector2.x % screenFixX * screenFixX3;
+		screenFixY2 = vector2.y % screenFixY * screenFixY3;
+		EMono.scene.cam.transform.position = vector;
+	}
+
+	public Point GetRandomPoint()
+	{
+		int num = EMono.screen.scrollX - EMono.screen.scrollY + width / 2 - (height / 2 + 1) / 2;
+		int num2 = EMono.screen.scrollY + EMono.screen.scrollX + width / 2 + height / 2 / 2;
+		num = num - 20 + EMono.rnd(40);
+		num2 = num2 - 20 + EMono.rnd(40);
+		return _randomPoint.Set(num, num2);
+	}
+
+	public void RefreshSky()
+	{
+		CoreConfig.GraphicSetting graphic = EMono.core.config.graphic;
+		bool indoor = EMono._map.config.indoor;
+		EMono.scene.firefly.baseParticleCount = graphic.fireflyCount;
+		EMono.scene.fireflyNight.baseParticleCount = graphic.fireflyCount * 10;
+		EMono.scene.star.baseParticleCount = graphic.starCount;
+		EMono.scene.star.gameObject.GetComponent<ParticleSystemRenderer>().enabled = EMono.world.date.IsNight;
+		EMono.scene.star.SetActive(IsLocalMap && !indoor);
+		EMono.scene.firefly.SetActive(IsLocalMap && graphic.firefly && !indoor);
+		EMono.scene.fireflyNight.SetActive(IsLocalMap && graphic.firefly && !indoor);
+		if ((bool)overlayShadow && (bool)EMono.scene.profile.matOverlay && this is GameScreen)
+		{
+			overlayShadow.sharedMaterial.SetFloat("_ShadowStrength", EMono._map.config.shadowStrength * (EMono._zone.IsSnowCovered ? 0.5f : 1f) * EMono.setting.render.shadowStrength);
+		}
+		RefreshWeather();
+		RefreshGrading();
+	}
+
+	public virtual void RefreshWeather()
+	{
+		bool flag = EMono._map.config.indoor || (EMono.pc.IsInActiveZone && (EMono.pc.pos.cell.room?.HasRoof ?? false));
+		bool flag2 = EMono.pc.pos.cell.room?.data.atrium ?? false;
+		Weather weather = EMono.world.weather;
+		Weather.Condition currentCondition = weather.CurrentCondition;
+		EMono.scene.filterRain.enabled = !flag && weather.IsRaining && EMono.core.config.graphic.enhanceRain;
+		EMono.scene.filterRain.Fade = ((currentCondition == Weather.Condition.RainHeavy) ? 0.4f : 0.3f);
+		EMono.scene.rain.enableEmission = !flag && weather.IsRaining;
+		ParticleSystem.EmissionModule emission = EMono.scene.rain.emission;
+		emission.rateOverTime = ((currentCondition == Weather.Condition.RainHeavy) ? 750 : 200);
+		EMono.scene.snow.enableEmission = !flag && currentCondition == Weather.Condition.Snow;
+		EMono.scene.ether.enableEmission = !flag && weather.IsEther;
+		bool enableEmission = !flag && weather.IsBlossom;
+		ParticleSystem[] blossoms = EMono.scene.blossoms;
+		for (int i = 0; i < blossoms.Length; i++)
+		{
+			blossoms[i].enableEmission = enableEmission;
+		}
+		enableEmission = !flag && currentCondition == Weather.Condition.SnowHeavy && EMono.core.config.graphic.blizzard;
+		blossoms = EMono.scene.blizzards;
+		for (int i = 0; i < blossoms.Length; i++)
+		{
+			blossoms[i].enableEmission = enableEmission;
+		}
+		EMono.scene.transBlizzard.localScale = new Vector3(1f, 1f, 1f);
+		bool flag3 = (EMono._map.config.forceGodRay || (EMono.core.config.graphic.godray && !flag && (currentCondition == Weather.Condition.Fine || currentCondition == Weather.Condition.Snow))) && !BuildMenu.Instance;
+		EMono.scene.godray.SetActive(flag3, delegate(bool enabled)
+		{
+			if (!enabled)
+			{
+				EMono.scene.godray.Clear();
+			}
+		});
+		EMono.scene.godrayDust.SetActive(flag3 && EMono.world.date.IsNight);
+		EMono.scene.snow.SetActive(enable: true);
+		EMono.scene.rain.SetActive(enable: true);
+		EMono.scene.ether.SetActive(enable: true);
+		EMono.scene.blossom.SetActive(enable: true);
+		float num = ((EMono._zone.lv <= -2) ? 0f : ((EMono._zone.lv <= -1) ? 0.3f : ((flag && !flag2) ? 0.6f : 1f)));
+		EMono.scene.sfxRain.SetVolume(weather.IsRaining ? num : 0f);
+		EMono.scene.sfxSea.SetVolume(EMono._zone.VolumeSea * num);
+		EMono.scene.camSupport.grading.profile.fog = EMono.setting.render.fogs[EMono._map.config.fog];
+		EMono.scene.camSupport.grading.userFog = ((!EMono._map.config.indoor && flag) ? 0f : 1f);
+		float num2 = ((EMono._map.IsIndoor || !EMono.world.weather.IsRaining) ? 0f : ((currentCondition == Weather.Condition.RainHeavy) ? (-0.08f) : (-0.04f)));
+		if (EMono._zone.IsSnowCovered)
+		{
+			num2 += EMono.scene.profile.global.snowBrightness;
+		}
+		camSupport.grading.sceneBrightness = num2;
+		ParticleSystem.MainModule main = EMono.scene.rain.main;
+		ParticleSystem.MainModule main2 = EMono.scene.snow.main;
+		ParticleSystem.MainModule main3 = EMono.scene.ether.main;
+		bool flag5 = (main3.prewarm = false);
+		bool prewarm = (main2.prewarm = flag5);
+		main.prewarm = prewarm;
+		blossoms = EMono.scene.blossoms;
+		for (int i = 0; i < blossoms.Length; i++)
+		{
+			ParticleSystem.MainModule main4 = blossoms[i].main;
+			main4.prewarm = false;
+		}
+		camSupport.grading.SetGrading();
+	}
+
+	public void RefreshGrading()
+	{
+		float timeRatio = (EMono.core.IsGameStarted ? EMono.scene.timeRatio : 0f);
+		if ((bool)camSupport.grading.profile.overlay)
+		{
+			camSupport.grading.profile.overlay.Refresh(timeRatio, EMono._zone.IsSnowCovered);
+		}
+		ScreenGrading.blind = EMono.pc.isBlind;
+		camSupport.grading.profile.sharpen.enable = EMono.core.config.graphic.sharpen > 0;
+		camSupport.grading.profile.sharpen.Strength = Mathf.Clamp(0.1f * (float)EMono.core.config.graphic.sharpen, 0f, (this is GameScreen) ? 10f : 1f);
+		camSupport.beautify.sharpen = Mathf.Clamp(0.01f * (float)EMono.core.config.graphic.sharpen2, 0f, (this is GameScreen) ? 10f : 0.5f);
+		camSupport.grading.SetGrading();
+		SceneTemplate sceneTemplate = SceneTemplate.Load(EMono._map.config.idSceneTemplate.IsEmpty(EMono._zone.IDSceneTemplate));
+		Color tintColor = EMono._map.config.colorScreen.Get();
+		if (tintColor.a == 0f)
+		{
+			tintColor = sceneTemplate.colorScreen;
+		}
+		camSupport.beautify.tintColor = tintColor;
+		tintColor = EMono._map.config.colorSea.Get();
+		MATERIAL.sourceWaterSea.matColor = ((tintColor.a == 0f) ? MATERIAL.sourceWaterSea.GetColor() : tintColor);
+		EMono.core.config.RefreshUIBrightness();
+		float num = 0f;
+		if (!EMono._map.IsIndoor)
+		{
+			num += 0.01f * EMono.core.config.test.brightnessNight * EMono.scene.profile.light.nightRatioCurve.Evaluate(EMono.scene.timeRatio);
+		}
+		camSupport.grading.nightBrightness = num;
+	}
+
+	public void RefreshTilt()
+	{
+		camSupport.tiltShift.enabled = ((ActionMode.Bird.IsActive || EMono._zone.IsRegion) ? EMono.game.config.tiltRegion : EMono.game.config.tilt);
+		camSupport.tiltShift.blurArea = (ActionMode.Bird.IsActive ? 12f : (0.1f * (float)(EMono._zone.IsRegion ? EMono.game.config.tiltPowerRegion : EMono.game.config.tiltPower)));
+	}
+
+	public void ScrollMouse(float x, float y)
+	{
+		position.x += x / Zoom;
+		position.y += y / Zoom;
+		if (x > 0.1f || x < -0.1f || y > 0.1f || y < 0.1f)
+		{
+			RefreshPosition();
+		}
+	}
+
+	public void ScrollAxis(Vector3 axis, bool direct = false)
+	{
+		if (direct)
+		{
+			position += axis;
+		}
+		else
+		{
+			position += axis * Core.delta * camSpeed2 * EMono.core.config.camera.senseKeyboard / Zoom;
+		}
+	}
+
+	public void Focus(Int3 ints)
+	{
+		position = new Vector3(ints.x, ints.y, ints.z);
+	}
+
+	public void Focus(int x, int y)
+	{
+		if (EMono.AdvMode)
+		{
+			SE.Beep();
+			return;
+		}
+		position.x = (scrollX = x);
+		position.y = (scrollY = y);
+	}
+
+	public void Focus(Card c)
+	{
+		if (c != null)
+		{
+			Focus(c.GetRootCard().pos);
+		}
+	}
+
+	public void FocusCenter()
+	{
+		Point pos = new Point(EMono._map.Size / 2, EMono._map.Size / 2);
+		Focus(pos);
+	}
+
+	public void Focus(Point pos)
+	{
+		position = pos.PositionCenter();
+	}
+
+	public void FocusPC()
+	{
+		focusPos = null;
+		Focus((EMono.pc.currentZone == EMono.game.activeZone) ? EMono.pc.pos : EMono._map.bounds.GetCenterPos());
+		instantFocus = true;
+		RefreshPosition();
+	}
+
+	public void FocusImmediate(Point pos)
+	{
+		focusPos = null;
+		Focus(pos);
+		instantFocus = true;
+		RefreshPosition();
+		RefreshPosition();
+	}
+
+	public void SnapScreen(ref Vector3 v, float zoom)
+	{
+		float num = snapSize.x / zoom;
+		float num2 = snapSize.y / zoom;
+		switch (EMono.core.config.fix.snapType)
+		{
+		case CoreConfig.ScreenSnapType.Default:
+			v.x = num * (float)Mathf.RoundToInt(v.x / num);
+			v.y = num2 * (float)Mathf.RoundToInt(v.y / num2);
+			break;
+		case CoreConfig.ScreenSnapType.Floor:
+			v.x = num * (float)Mathf.FloorToInt(v.x / num);
+			v.y = num2 * (float)Mathf.FloorToInt(v.y / num2);
+			break;
+		case CoreConfig.ScreenSnapType.Ceil:
+			v.x = num * (float)Mathf.CeilToInt(v.x / num);
+			v.y = num2 * (float)Mathf.CeilToInt(v.y / num2);
+			break;
+		case CoreConfig.ScreenSnapType.Hack3:
+			num = snapSize.x;
+			num2 = snapSize.y;
+			v.x = num * (float)Mathf.RoundToInt(v.x / num);
+			v.y = num2 * (float)Mathf.RoundToInt(v.y / num2);
+			break;
+		case CoreConfig.ScreenSnapType.Hack4:
+			num = snapSize.x;
+			num2 = snapSize.y;
+			v.x = num * (float)Mathf.FloorToInt(v.x / num);
+			v.y = num2 * (float)Mathf.FloorToInt(v.y / num2);
+			break;
+		case CoreConfig.ScreenSnapType.Hack5:
+			num = snapSize.x;
+			num2 = snapSize.y;
+			v.x = num * (float)Mathf.CeilToInt(v.x / num);
+			v.y = num2 * (float)Mathf.CeilToInt(v.y / num2);
+			break;
+		case CoreConfig.ScreenSnapType.Hack6:
+			v.x = 0.01f * (float)Mathf.FloorToInt(v.x * 100f) + 0.001f;
+			v.y = 0.01f * (float)Mathf.FloorToInt(v.y * 100f) + 0.001f;
+			break;
+		case CoreConfig.ScreenSnapType.Hack7:
+			v.x = 0.01f * (float)Mathf.FloorToInt(v.x * 100f) - 0.001f;
+			v.y = 0.01f * (float)Mathf.FloorToInt(v.y * 100f) - 0.001f;
+			break;
+		case CoreConfig.ScreenSnapType.Hack8:
+			v.x = 0.01f * (float)Mathf.RoundToInt(v.x * 100f) + 0.005f;
+			v.y = 0.01f * (float)Mathf.RoundToInt(v.y * 100f) + 0.005f;
+			break;
+		case CoreConfig.ScreenSnapType.Hack9:
+			v.x = 0.01f * (float)Mathf.RoundToInt(v.x * 100f) + 0.025f;
+			v.y = 0.01f * (float)Mathf.RoundToInt(v.y * 100f) + 0.025f;
+			break;
+		}
+	}
+
+	public void SetZoom(float z)
+	{
+		targetZoom = (Zoom = z);
+		EMono.core.config.ApplyZoom(targetZoom);
+		zoomTimer = 0f;
+	}
+
+	public void SetTargetZoomIndex(int index)
+	{
+		targetZoomIndex = index;
+		float num = targetZoom;
+		targetZoom = EMono.core.config.camera.zooms[targetZoomIndex];
+		if (num != targetZoom)
+		{
+			zoomTimer = 0f;
+		}
+	}
+
+	public void ModTargetZoomIndex(int a)
+	{
+		if (!EMono.scene.elomapActor.IsActive)
+		{
+			int num = targetZoomIndex;
+			targetZoomIndex -= a;
+			int num2 = ((!EMono.core.config.camera.extendZoomMin) ? 1 : 0);
+			int num3 = (EMono.core.config.camera.extendZoomMax ? 4 : 3);
+			if (targetZoomIndex < num2)
+			{
+				targetZoomIndex = num2;
+			}
+			else if (targetZoomIndex >= num3)
+			{
+				targetZoomIndex = num3;
+			}
+			if (targetZoomIndex > num && EInput.buttonScroll != null && !EInput.buttonScroll.pressing)
+			{
+				zoomPos = EInput.mposWorld;
+			}
+			SetTargetZoomIndex(targetZoomIndex);
+		}
 	}
 }

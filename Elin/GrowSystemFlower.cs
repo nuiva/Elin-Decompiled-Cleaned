@@ -1,14 +1,6 @@
-﻿using System;
-
 public class GrowSystemFlower : GrowSystemPlant
 {
-	public override int HarvestStage
-	{
-		get
-		{
-			return 3;
-		}
-	}
+	public override int HarvestStage => 3;
 
 	public override bool CanReapSeed()
 	{
@@ -19,11 +11,11 @@ public class GrowSystemFlower : GrowSystemPlant
 	{
 		if (EClass.rnd(2) == 0)
 		{
-			base.TryPick(GrowSystem.cell, ThingGen.Create("grass", EClass.sources.materials.alias["grass"].id, -1), c, false);
+			TryPick(GrowSystem.cell, ThingGen.Create("grass", EClass.sources.materials.alias["grass"].id), c);
 		}
 		if (base.Grown || base.Mature)
 		{
-			base.PopHarvest(c ?? EClass.pc, ThingGen.Create(this.idHarvestThing.IsEmpty("flower"), -1, -1), -1);
+			PopHarvest(c ?? EClass.pc, ThingGen.Create(idHarvestThing.IsEmpty("flower")));
 		}
 	}
 }

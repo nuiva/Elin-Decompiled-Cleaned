@@ -1,23 +1,38 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 public class InspectGroup : EClass
 {
-	public IInspect FirstTarget
+	public class Item
 	{
-		get
-		{
-			return this.targets[0];
-		}
+		public string text;
+
+		public string idSprite;
+
+		public Action<IInspect> action;
+
+		public int priority;
+
+		public bool auto;
+
+		public bool sound;
+
+		public bool multi;
+
+		public Func<string> textFunc;
 	}
 
-	public bool Solo
-	{
-		get
-		{
-			return this.targets.Count == 1;
-		}
-	}
+	public Type type;
+
+	public List<Item> actions = new List<Item>();
+
+	public List<IInspect> targets = new List<IInspect>();
+
+	public IInspect FirstTarget => targets[0];
+
+	public bool Solo => targets.Count == 1;
+
+	public virtual string MultiName => type.ToString();
 
 	public static InspectGroup Create(IInspect t)
 	{
@@ -57,64 +72,86 @@ public class InspectGroup : EClass
 
 	public bool CanInspect()
 	{
-		for (int i = this.targets.Count - 1; i >= 0; i--)
+		for (int num = targets.Count - 1; num >= 0; num--)
 		{
-			if (!this.targets[i].CanInspect)
+			if (!targets[num].CanInspect)
 			{
-				this.targets.RemoveAt(i);
+				targets.RemoveAt(num);
 			}
 		}
-		return this.targets.Count > 0 && this.FirstTarget.CanInspect;
+		if (targets.Count > 0)
+		{
+			return FirstTarget.CanInspect;
+		}
+		return false;
 	}
 
 	public virtual bool Contains(IInspect t)
 	{
-		return this.targets.Contains(t);
+		return targets.Contains(t);
 	}
 
 	public string GetName()
 	{
-		if (!this.Solo)
+		if (!Solo)
 		{
-			return this.MultiName + " x " + this.targets.Count.ToString();
+			return MultiName + " x " + targets.Count;
 		}
-		return this.FirstTarget.InspectName;
-	}
-
-	public virtual string MultiName
-	{
-		get
-		{
-			return this.type.ToString();
-		}
+		return FirstTarget.InspectName;
 	}
 
 	public virtual void SetActions()
 	{
 	}
+}
+public class InspectGroup<T> : InspectGroup where T : IInspect
+{
+	public new T FirstTarget => (T)base.FirstTarget;
 
-	public Type type;
-
-	public List<InspectGroup.Item> actions = new List<InspectGroup.Item>();
-
-	public List<IInspect> targets = new List<IInspect>();
-
-	public class Item
+	public sealed override void SetActions()
 	{
-		public string text;
+		actions.Clear();
+		OnSetActions();
+	}
 
-		public string idSprite;
+	public virtual void OnSetActions()
+	{
+	}
 
-		public Action<IInspect> action;
+	public Item Add(string text, string idSprite, Action action, bool sound = false, int priority = 0, bool auto = false)
+	{
+		Item item = new Item
+		{
+			text = text,
+			idSprite = idSprite,
+			action = delegate
+			{
+				action();
+			},
+			sound = sound,
+			priority = priority,
+			auto = auto
+		};
+		actions.Add(item);
+		return item;
+	}
 
-		public int priority;
-
-		public bool auto;
-
-		public bool sound;
-
-		public bool multi;
-
-		public Func<string> textFunc;
+	public Item Add(string text, string idSprite, Action<T> action, bool sound = false, int priority = 0, bool auto = false)
+	{
+		Item item = new Item
+		{
+			text = text,
+			idSprite = idSprite,
+			action = delegate(IInspect a)
+			{
+				action((T)a);
+			},
+			sound = sound,
+			priority = priority,
+			auto = auto,
+			multi = true
+		};
+		actions.Add(item);
+		return item;
 	}
 }

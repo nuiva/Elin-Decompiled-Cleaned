@@ -1,31 +1,17 @@
-﻿using System;
-
 public class AM_Cut : AM_Designation<TaskCut>
 {
-	public override int CostMoney
-	{
-		get
-		{
-			return 10;
-		}
-	}
+	public override int CostMoney => 10;
 
-	public override bool AllowAutoClick
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool AllowAutoClick => true;
 
 	public override void OnUpdateCursor()
 	{
-		base.SetCursorOnMap(CursorSystem.Cut);
+		SetCursorOnMap(CursorSystem.Cut);
 	}
 
 	public override void OnActivate()
 	{
-		this.list = base.Designations.cut;
+		list = base.Designations.cut;
 		base.OnActivate();
 	}
 }

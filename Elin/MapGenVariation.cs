@@ -1,14 +1,8 @@
-﻿using System;
 using NoiseSystem;
 using UnityEngine;
 
 public class MapGenVariation : ScriptableObject
 {
-	public string GetText()
-	{
-		return base.name;
-	}
-
 	public NoiseLayer layerHeight;
 
 	public NoiseLayer layerRiver;
@@ -26,4 +20,9 @@ public class MapGenVariation : ScriptableObject
 	public float maxWaterRatio;
 
 	public bool embark = true;
+
+	public string GetText()
+	{
+		return base.name;
+	}
 }

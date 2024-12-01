@@ -1,8 +1,11 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class AI_Clean : AIAct
 {
+	public Point pos;
+
+	public int maxRadius = -1;
+
 	public static Point GetCleanPoint(Chara c, int r = -1, int tries = 10)
 	{
 		Point point = new Point();
@@ -18,63 +21,60 @@ public class AI_Clean : AIAct
 				{
 					point.Set(c._x - r + EClass.rnd(r * 2 + 1), c.pos.z - r + EClass.rnd(r * 2 + 1));
 				}
-				if (point.IsValid)
+				if (!point.IsValid)
 				{
-					if (point.HasDirt || point.cell.HasLiquid)
-					{
-						return point;
-					}
-					foreach (Card card in point.ListCards(false))
-					{
-					}
+					continue;
+				}
+				if (point.HasDirt || point.cell.HasLiquid)
+				{
+					return point;
+				}
+				foreach (Card item in point.ListCards())
+				{
+					_ = item;
 				}
 			}
 		}
 		return null;
 	}
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		for (;;)
+		while (true)
 		{
-			if (this.pos == null)
+			if (pos == null)
 			{
-				this.pos = AI_Clean.GetCleanPoint(this.owner, 4, 10);
+				pos = GetCleanPoint(owner, 4);
 			}
-			if (this.pos != null)
+			if (pos != null)
 			{
 				break;
 			}
-			yield return base.DoIdle(10);
+			yield return DoIdle(10);
 		}
-		yield return base.DoGoto(this.pos, 0, false, null);
-		if (this.owner.pos.HasDirt || this.owner.pos.cell.HasLiquid)
+		yield return DoGoto(pos);
+		if (owner.pos.HasDirt || owner.pos.cell.HasLiquid)
 		{
-			EClass._map.SetDecal(this.pos.x, this.pos.z, 0, 1, true);
-			EClass._map.SetLiquid(this.pos.x, this.pos.z, 0, 0);
-			this.pos.PlayEffect("vanish");
-			this.owner.Say("clean", this.owner, null, null);
-			this.owner.PlaySound("clean_floor", 1f, true);
-			yield return base.KeepRunning();
+			EClass._map.SetDecal(pos.x, pos.z);
+			EClass._map.SetLiquid(pos.x, pos.z, 0, 0);
+			pos.PlayEffect("vanish");
+			owner.Say("clean", owner);
+			owner.PlaySound("clean_floor");
+			yield return KeepRunning();
 		}
-		List<Card> list = this.owner.pos.ListCards(false);
+		List<Card> list = owner.pos.ListCards();
 		bool flag = false;
-		foreach (Card card in list)
+		foreach (Card item in list)
 		{
-			if (card.isThing)
+			if (item.isThing)
 			{
-				bool isInstalled = card.IsInstalled;
+				_ = item.IsInstalled;
 			}
 		}
 		if (flag)
 		{
-			this.owner.Talk("clean", null, null, false);
+			owner.Talk("clean");
 		}
-		yield return base.Success(null);
-		yield break;
+		yield return Success();
 	}
-
-	public Point pos;
-
-	public int maxRadius = -1;
 }

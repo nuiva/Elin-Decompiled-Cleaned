@@ -1,16 +1,21 @@
-﻿using System;
+using System;
 using Newtonsoft.Json;
 using UnityEngine;
 
 [Serializable]
 public class SourcePref : EClass, ISerializationCallbackReceiver
 {
+	[JsonProperty]
+	public int[] ints = new int[25];
+
+	public BitArray32 _bits1;
+
 	public int test
 	{
 		get
 		{
-			this.Validate();
-			return this.ints[0];
+			Validate();
+			return ints[0];
 		}
 	}
 
@@ -18,11 +23,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this.ints[1].ToEnum<PrefFlag>();
+			return ints[1].ToEnum<PrefFlag>();
 		}
 		set
 		{
-			this.ints[1] = (int)value;
+			ints[1] = (int)value;
 		}
 	}
 
@@ -30,11 +35,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this.ints[0];
+			return ints[0];
 		}
 		set
 		{
-			this.ints[0] = value;
+			ints[0] = value;
 		}
 	}
 
@@ -42,11 +47,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return (float)this.ints[3] * 0.01f;
+			return (float)ints[3] * 0.01f;
 		}
 		set
 		{
-			this.ints[3] = (int)(value * 100f);
+			ints[3] = (int)(value * 100f);
 		}
 	}
 
@@ -54,11 +59,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this.ints[16];
+			return ints[16];
 		}
 		set
 		{
-			this.ints[16] = value;
+			ints[16] = value;
 		}
 	}
 
@@ -66,11 +71,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this.ints[21];
+			return ints[21];
 		}
 		set
 		{
-			this.ints[21] = value;
+			ints[21] = value;
 		}
 	}
 
@@ -78,11 +83,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return (float)this.ints[23] * 0.01f;
+			return (float)ints[23] * 0.01f;
 		}
 		set
 		{
-			this.ints[23] = (int)(value * 100f);
+			ints[23] = (int)(value * 100f);
 		}
 	}
 
@@ -90,11 +95,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return (float)this.ints[17] * 0.01f;
+			return (float)ints[17] * 0.01f;
 		}
 		set
 		{
-			this.ints[17] = (int)(value * 100f);
+			ints[17] = (int)(value * 100f);
 		}
 	}
 
@@ -102,11 +107,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return (float)this.ints[4] * 0.01f;
+			return (float)ints[4] * 0.01f;
 		}
 		set
 		{
-			this.ints[4] = (int)(value * 100f);
+			ints[4] = (int)(value * 100f);
 		}
 	}
 
@@ -114,11 +119,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return (float)this.ints[5] * 0.01f;
+			return (float)ints[5] * 0.01f;
 		}
 		set
 		{
-			this.ints[5] = (int)(value * 100f);
+			ints[5] = (int)(value * 100f);
 		}
 	}
 
@@ -126,11 +131,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return (float)this.ints[2] * 0.01f;
+			return (float)ints[2] * 0.01f;
 		}
 		set
 		{
-			this.ints[2] = (int)(value * 100f);
+			ints[2] = (int)(value * 100f);
 		}
 	}
 
@@ -138,11 +143,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this.ints[6];
+			return ints[6];
 		}
 		set
 		{
-			this.ints[6] = value;
+			ints[6] = value;
 		}
 	}
 
@@ -150,11 +155,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this.ints[7];
+			return ints[7];
 		}
 		set
 		{
-			this.ints[7] = value;
+			ints[7] = value;
 		}
 	}
 
@@ -162,11 +167,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this.ints[8];
+			return ints[8];
 		}
 		set
 		{
-			this.ints[8] = value;
+			ints[8] = value;
 		}
 	}
 
@@ -174,11 +179,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this.ints[9];
+			return ints[9];
 		}
 		set
 		{
-			this.ints[9] = value;
+			ints[9] = value;
 		}
 	}
 
@@ -186,11 +191,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this.ints[10];
+			return ints[10];
 		}
 		set
 		{
-			this.ints[10] = value;
+			ints[10] = value;
 		}
 	}
 
@@ -198,11 +203,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this.ints[11];
+			return ints[11];
 		}
 		set
 		{
-			this.ints[11] = value;
+			ints[11] = value;
 		}
 	}
 
@@ -210,11 +215,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this.ints[12];
+			return ints[12];
 		}
 		set
 		{
-			this.ints[12] = value;
+			ints[12] = value;
 		}
 	}
 
@@ -222,11 +227,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this.ints[13];
+			return ints[13];
 		}
 		set
 		{
-			this.ints[13] = value;
+			ints[13] = value;
 		}
 	}
 
@@ -234,11 +239,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this.ints[14];
+			return ints[14];
 		}
 		set
 		{
-			this.ints[14] = value;
+			ints[14] = value;
 		}
 	}
 
@@ -246,11 +251,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this.ints[15];
+			return ints[15];
 		}
 		set
 		{
-			this.ints[15] = value;
+			ints[15] = value;
 		}
 	}
 
@@ -258,11 +263,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this.ints[18];
+			return ints[18];
 		}
 		set
 		{
-			this.ints[18] = value;
+			ints[18] = value;
 		}
 	}
 
@@ -270,11 +275,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this.ints[19];
+			return ints[19];
 		}
 		set
 		{
-			this.ints[19] = value;
+			ints[19] = value;
 		}
 	}
 
@@ -282,11 +287,11 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this.ints[20];
+			return ints[20];
 		}
 		set
 		{
-			this.ints[20] = value;
+			ints[20] = value;
 		}
 	}
 
@@ -294,63 +299,42 @@ public class SourcePref : EClass, ISerializationCallbackReceiver
 	{
 		get
 		{
-			return this._bits1[0];
+			return _bits1[0];
 		}
 		set
 		{
-			this._bits1[0] = value;
+			_bits1[0] = value;
 		}
 	}
 
-	public bool UsePref
-	{
-		get
-		{
-			return (this.ints[1] & 1) != 0;
-		}
-	}
+	public bool UsePref => (ints[1] & 1) != 0;
 
-	public bool Float
-	{
-		get
-		{
-			return (this.ints[1] & 4) != 0;
-		}
-	}
+	public bool Float => (ints[1] & 4) != 0;
 
-	public bool Surface
-	{
-		get
-		{
-			return (this.ints[1] & 8) != 0;
-		}
-	}
+	public bool Surface => (ints[1] & 8) != 0;
 
 	public void OnAfterDeserialize()
 	{
-		if (this.ints.Length >= 25)
+		if (ints.Length >= 25)
 		{
-			this._bits1.SetInt(this.ints[22]);
-			return;
+			_bits1.SetInt(ints[22]);
 		}
-		this.Validate();
+		else
+		{
+			Validate();
+		}
 	}
 
 	public void OnBeforeSerialize()
 	{
-		this.ints[22] = this._bits1.ToInt();
+		ints[22] = _bits1.ToInt();
 	}
 
 	public void Validate()
 	{
-		if (this.ints.Length < 25)
+		if (ints.Length < 25)
 		{
-			Array.Resize<int>(ref this.ints, 25);
+			Array.Resize(ref ints, 25);
 		}
 	}
-
-	[JsonProperty]
-	public int[] ints = new int[25];
-
-	public BitArray32 _bits1;
 }

@@ -1,55 +1,33 @@
-﻿using System;
-
 public class AM_ViewZone : AM_BaseSim
 {
-	public PointTarget mouseTarget
-	{
-		get
-		{
-			return EClass.scene.mouseTarget;
-		}
-	}
+	public bool _FixFocus;
 
-	public override AreaHighlightMode AreaHihlight
-	{
-		get
-		{
-			return AreaHighlightMode.None;
-		}
-	}
+	public bool _SyncScroll;
 
-	public override bool ShowMouseoverTarget
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public PointTarget mouseTarget => EClass.scene.mouseTarget;
 
-	public override bool FixFocus
-	{
-		get
-		{
-			return this._FixFocus;
-		}
-	}
+	public override AreaHighlightMode AreaHihlight => AreaHighlightMode.None;
+
+	public override bool ShowMouseoverTarget => false;
+
+	public override bool FixFocus => _FixFocus;
 
 	public override void OnActivate()
 	{
 		ActionMode.DefaultMode = this;
-		this._FixFocus = false;
-		this._SyncScroll = false;
-		if (WidgetMouseover.Instance)
+		_FixFocus = false;
+		_SyncScroll = false;
+		if ((bool)WidgetMouseover.Instance)
 		{
-			WidgetMouseover.Instance.Hide(false);
+			WidgetMouseover.Instance.Hide();
 		}
 	}
 
 	public override void OnRenderTile(Point point, HitResult result, int dir)
 	{
-		if (this.mouseTarget.drawHighlight)
+		if (mouseTarget.drawHighlight)
 		{
-			base.OnRenderTile(this.mouseTarget.pos, HitResult.Default, dir);
+			base.OnRenderTile(mouseTarget.pos, HitResult.Default, dir);
 		}
 	}
 
@@ -57,7 +35,7 @@ public class AM_ViewZone : AM_BaseSim
 	{
 		if (EInput.rightMouse.pressedTimer > 0.15f)
 		{
-			this._SyncScroll = false;
+			_SyncScroll = false;
 		}
 	}
 
@@ -68,8 +46,4 @@ public class AM_ViewZone : AM_BaseSim
 			EClass.player.MoveZone(EClass.pc.currentZone);
 		}
 	}
-
-	public bool _FixFocus;
-
-	public bool _SyncScroll;
 }

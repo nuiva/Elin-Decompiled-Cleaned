@@ -1,67 +1,43 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class AreaType : EClass
 {
-	public virtual bool CanAssign
-	{
-		get
-		{
-			return false;
-		}
-	}
+	[JsonProperty]
+	public HashSet<int> uidCharas = new HashSet<int>();
 
-	public virtual bool IsWork
-	{
-		get
-		{
-			return false;
-		}
-	}
+	[JsonProperty]
+	public string id = "Public";
 
-	public virtual bool IsPublicArea
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public BaseArea owner;
 
-	public virtual bool IsPrison
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public SourceArea.Row _source;
 
-	public virtual string RandomNameGroup
-	{
-		get
-		{
-			return "";
-		}
-	}
+	public virtual bool CanAssign => false;
 
-	public string langHeader
-	{
-		get
-		{
-			return "listAssign".lang(this.owner.Name, null, null, null, null);
-		}
-	}
+	public virtual bool IsWork => false;
+
+	public virtual bool IsPublicArea => true;
+
+	public virtual bool IsPrison => false;
+
+	public virtual string RandomNameGroup => "";
+
+	public string langHeader => "listAssign".lang(owner.Name);
 
 	public SourceArea.Row source
 	{
 		get
 		{
-			SourceArea.Row result;
-			if ((result = this._source) == null)
+			SourceArea.Row row = _source;
+			if (row == null)
 			{
-				result = (this._source = (EClass.sources.areas.map.TryGetValue(this.id, null) ?? EClass.sources.areas.map["Room"]));
+				SourceArea.Row obj = EClass.sources.areas.map.TryGetValue(id) ?? EClass.sources.areas.map["Room"];
+				SourceArea.Row row2 = obj;
+				_source = obj;
+				row = row2;
 			}
-			return result;
+			return row;
 		}
 	}
 
@@ -74,14 +50,4 @@ public class AreaType : EClass
 	{
 		return 80;
 	}
-
-	[JsonProperty]
-	public HashSet<int> uidCharas = new HashSet<int>();
-
-	[JsonProperty]
-	public string id = "Public";
-
-	public BaseArea owner;
-
-	public SourceArea.Row _source;
 }

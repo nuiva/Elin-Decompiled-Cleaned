@@ -1,9 +1,11 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class FactionGroup : EClass
 {
+	[JsonProperty]
+	public List<Faction> list = new List<Faction>();
+
 	public int CountMemebers()
 	{
 		return 0;
@@ -17,24 +19,20 @@ public class FactionGroup : EClass
 	public float GetHappiness()
 	{
 		float num = 0f;
-		foreach (Faction faction in this.list)
+		foreach (Faction item in list)
 		{
-			num += faction.GetHappiness();
+			num += item.GetHappiness();
 		}
-		num /= (float)this.list.Count;
-		return num;
+		return num / (float)list.Count;
 	}
 
 	public void Add(Faction f)
 	{
-		this.list.Add(f);
+		list.Add(f);
 	}
 
 	public void Remove(Faction f)
 	{
-		this.list.Remove(f);
+		list.Remove(f);
 	}
-
-	[JsonProperty]
-	public List<Faction> list = new List<Faction>();
 }

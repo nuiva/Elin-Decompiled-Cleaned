@@ -1,1072 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class GoalCombat : Goal
 {
-	public override CursorInfo CursorIcon
-	{
-		get
-		{
-			return CursorSystem.IconMelee;
-		}
-	}
-
-	public override bool CancelWhenDamaged
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public override bool CanManualCancel()
-	{
-		return true;
-	}
-
-	public Tactics tactics
-	{
-		get
-		{
-			return this.owner.tactics;
-		}
-	}
-
-	public override IEnumerable<AIAct.Status> Run()
-	{
-		if (this.destEnemy != null)
-		{
-			this.owner.enemy = this.destEnemy;
-			this.destEnemy = null;
-		}
-		int count = 0;
-		int lostCount = 0;
-		bool dontWander = this.owner.IsPCParty && !this.owner.IsPC && EClass.game.config.tactics.dontWander;
-		for (;;)
-		{
-			if (EClass.debug.logCombat)
-			{
-				Debug.Log(string.Concat(new string[]
-				{
-					"■",
-					this.owner.Name,
-					"/",
-					count.ToString(),
-					"/",
-					lostCount.ToString()
-				}));
-			}
-			if (EClass._zone.isPeace && this.owner.IsPCFactionOrMinion && !this.owner.IsPC)
-			{
-				this.owner.enemy = null;
-				this.owner.ShowEmo(Emo.happy, 0f, true);
-				yield return base.Success(null);
-			}
-			int num = count;
-			count = num + 1;
-			if (dontWander && this.owner.enemy != null && !EClass.pc.isBlind && !EClass.pc.CanSeeLos(this.owner.enemy, -1, false) && (this.owner.Dist(EClass.pc) > 4 || this.owner.Dist(this.owner.enemy) > 1))
-			{
-				Point firstStep = this.owner.GetFirstStep(EClass.pc.pos, PathManager.MoveType.Combat);
-				if (firstStep.IsValid && !firstStep.HasChara)
-				{
-					this.owner.enemy = null;
-				}
-			}
-			this.tc = this.owner.enemy;
-			if (this.tc != null && this.owner.IsPCFaction)
-			{
-				AI_Shear ai_Shear = EClass.pc.ai as AI_Shear;
-				if (ai_Shear != null && ai_Shear.target == this.tc)
-				{
-					this.tc = (this.owner.enemy = null);
-				}
-			}
-			if (this.tc == null || this.tc.isDead || !this.tc.ExistsOnMap || !this.tc.pos.IsInBounds || lostCount >= 5)
-			{
-				this.tc = (this.owner.enemy = null);
-				if (this.owner.IsPC && EClass.game.config.autoCombat.abortOnKill)
-				{
-					yield return base.Success(null);
-				}
-				this.owner.FindNewEnemy();
-				lostCount = 0;
-				if (this.owner.enemy == null)
-				{
-					yield return base.Success(null);
-				}
-				this.tc = this.owner.enemy;
-			}
-			else if (!this.owner.CanSeeLos(this.tc, -1, false))
-			{
-				num = lostCount;
-				lostCount = num + 1;
-			}
-			else
-			{
-				lostCount = 0;
-			}
-			if (this.owner.IsPC && this.tc.HasEditorTag(EditorTag.Invulnerable))
-			{
-				Msg.Say("abort_idle");
-				yield return base.Success(null);
-			}
-			if (this.tc.IsPCFaction && this.owner.id == "melilith_boss" && EClass._map.plDay.list.Count > 1 && EClass._map.plDay.list[0].data.id != 107)
-			{
-				EClass._zone.SetBGM(107, true);
-			}
-			if (this.abilities == null)
-			{
-				this.abilities = new List<GoalCombat.ItemAbility>();
-				this.BuildAbilityList();
-			}
-			if (this.owner.IsPCFaction && this.tc.IsPCFaction && EClass.rnd(5) == 0 && count > 2)
-			{
-				this.<Run>g__CalmDown|14_0();
-				yield return base.Success(null);
-			}
-			if (this.owner.OriginalHostility >= Hostility.Neutral && this.tc.OriginalHostility >= Hostility.Neutral && !this.owner.IsPCParty && this.owner.c_bossType == BossType.none && (!(this.owner.trait is TraitGuard) || this.owner.IsPCFaction || !this.tc.IsPCParty || !EClass.player.IsCriminal))
-			{
-				if (this.owner.calmCheckTurn < 0 || (!this.owner.enemy.IsPCParty && EClass.rnd(10) == 0))
-				{
-					this.<Run>g__CalmDown|14_0();
-					yield return base.Success(null);
-				}
-				this.owner.calmCheckTurn--;
-			}
-			if (this.owner.IsPC)
-			{
-				CursorSystem.ignoreCount = 1;
-			}
-			if (this.tc.host != null && (this.tc.hp == 0 || EClass.rnd(5) == 0))
-			{
-				this.tc = this.owner.SetEnemy(this.tc.host);
-			}
-			if (this.tc.parasite != null && !this.tc.isRestrained && this.tc.parasite.hp > 0 && EClass.rnd(5) == 0)
-			{
-				this.tc = this.owner.SetEnemy(this.tc.parasite);
-			}
-			if (this.tc.ride != null && !this.tc.isRestrained && this.tc.ride.hp > 0 && EClass.rnd(5) == 0)
-			{
-				this.tc = this.owner.SetEnemy(this.tc.ride);
-			}
-			if (this.tc.enemy != null)
-			{
-				this.tc.TrySetEnemy(this.owner);
-			}
-			if (!this.tc.IsMinion && EClass.rnd(10) == 0 && EClass.rnd(this.tc.DEX + 10) > this.owner.LV && this.tc.HasElement(1315, 1) && !this.owner.HasElement(1315, 1) && this.owner.race.IsMachine && this.owner.CanBeTempAlly(this.tc))
-			{
-				this.owner.Say("dominate_machine", this.tc, this.owner, null, null);
-				this.owner.PlayEffect("boost", true, 0f, default(Vector3));
-				this.owner.PlaySound("boost", 1f, true);
-				this.owner.ShowEmo(Emo.love, 0f, true);
-				this.owner.lastEmo = Emo.angry;
-				this.owner.MakeMinion(this.tc.IsPCParty ? EClass.pc : this.tc, MinionType.Default);
-				yield return base.Success(null);
-			}
-			if (EClass.rnd(5) == 0 && this.tc.HasElement(1325, 1) && this.owner.race.IsPlant && this.owner.CanBeTempAlly(this.tc))
-			{
-				this.owner.Say("dominate_plant", this.tc, this.owner, null, null);
-				this.owner.ShowEmo(Emo.love, 0f, true);
-				this.owner.lastEmo = Emo.angry;
-				this.owner.MakeMinion((this.tc.IsPCParty || this.tc.IsPCFactionMinion) ? EClass.pc : this.tc, MinionType.Friend);
-				yield return base.Success(null);
-			}
-			if (EClass.rnd(20) == 0 && this.owner.isRestrained)
-			{
-				this.owner.Talk("restrained", null, null, false);
-			}
-			if (this is GoalAutoCombat)
-			{
-				ActionMode.Adv.SetTurbo(EClass.game.config.autoCombat.turbo ? -1 : 0);
-				EClass.pc.ModExp(135, 20);
-			}
-			int dist = this.owner.Dist(this.tc);
-			bool move = this.owner.host == null && (this.tactics.ChanceMove > EClass.rnd(100) || (this.owner.IsPC && this.tc.HasCondition<ConFear>() && dist >= EClass.pc.GetSightRadius() - 1));
-			bool haltSecondMove = false;
-			if (!this.owner.IsPC && !this.owner.isBlind && this.tc.source.HasTag(CTAG.suicide) && this.owner.IsNeutralOrAbove() && !this.owner.isSummon && !this.owner.IsMinion && !this.tc.HasCondition<ConWet>())
-			{
-				if (dist <= 3)
-				{
-					if (EClass.rnd(15) == 0)
-					{
-						this.owner.Talk("run_suicide", null, null, false);
-					}
-					if (this.owner.host == null && this.owner.TryMoveFrom(this.tc.pos) != Card.MoveResult.Fail)
-					{
-						yield return AIAct.Status.Running;
-						this.idleCount = 0;
-						continue;
-					}
-				}
-				else if (dist <= 5)
-				{
-					haltSecondMove = true;
-					move = false;
-				}
-			}
-			if (dontWander)
-			{
-				int num2 = this.owner.Dist(EClass.pc);
-				if (num2 > 3)
-				{
-					int x = this.tc.pos.x;
-					int z = this.tc.pos.z;
-					if (EClass.pc.pos.Distance(this.owner.pos.x + ((x > this.owner.pos.x) ? 1 : ((x < this.owner.pos.x) ? -1 : 0)), this.owner.pos.z + ((z > this.owner.pos.z) ? 1 : ((z < this.owner.pos.z) ? -1 : 0))) >= num2)
-					{
-						move = false;
-						haltSecondMove = true;
-					}
-				}
-			}
-			if (this.owner.IsPC && EClass.game.config.autoCombat.bDontChase)
-			{
-				move = false;
-				haltSecondMove = true;
-			}
-			if (EClass.debug.logCombat)
-			{
-				Debug.Log(string.Concat(new string[]
-				{
-					this.owner.Name,
-					"/",
-					move.ToString(),
-					"/",
-					haltSecondMove.ToString(),
-					"/",
-					dist.ToString()
-				}));
-			}
-			if (move)
-			{
-				if (this.owner.IsPC && dist <= this.owner.GetSightRadius() && this.TryUseAbility(dist, true))
-				{
-					yield return AIAct.Status.Running;
-					this.idleCount = 0;
-					continue;
-				}
-				if (this.TryMove(dist))
-				{
-					if (EClass.debug.logCombat)
-					{
-						Debug.Log("moved:" + this.owner.Name);
-					}
-					yield return AIAct.Status.Running;
-					this.idleCount = 0;
-					continue;
-				}
-			}
-			if (this.owner == null)
-			{
-				yield return this.Cancel();
-			}
-			if (dist <= this.owner.GetSightRadius() && this.TryUseAbility(dist, false))
-			{
-				yield return AIAct.Status.Running;
-				this.idleCount = 0;
-			}
-			else
-			{
-				if (EClass.debug.logCombat)
-				{
-					Debug.Log(string.Concat(new string[]
-					{
-						this.owner.Name,
-						"/",
-						move.ToString(),
-						"/",
-						haltSecondMove.ToString(),
-						"/",
-						this.tactics.ChanceSecondMove.ToString()
-					}));
-				}
-				if (!move && !haltSecondMove && this.tactics.ChanceSecondMove > EClass.rnd(100) && this.TryMove(dist))
-				{
-					yield return AIAct.Status.Running;
-					this.idleCount = 0;
-				}
-				else
-				{
-					if (this.owner == null)
-					{
-						yield return this.Cancel();
-					}
-					this.idleCount++;
-					if (this.TryAbortCombat())
-					{
-						yield return base.Success(null);
-					}
-					if (this.idleCount > 2)
-					{
-						if (dontWander)
-						{
-							yield return base.Success(null);
-						}
-						this.idleCount = 0;
-						string aiIdle = this.owner.source.aiIdle;
-						if (aiIdle == "stand" || aiIdle == "root")
-						{
-							yield return base.Success(null);
-						}
-						yield return base.DoGoto(this.tc.pos, 0, false, null);
-					}
-					else if (this.owner.FindNearestNewEnemy())
-					{
-						continue;
-					}
-					yield return AIAct.Status.Running;
-				}
-			}
-		}
-		yield break;
-	}
-
-	public bool TryMove(int dist)
-	{
-		if (this.owner.host != null)
-		{
-			return false;
-		}
-		if (this.owner.isBlind)
-		{
-			return this.owner.MoveRandom();
-		}
-		int num = this.tc.HasCondition<ConFear>() ? 1 : this.tactics.DestDist;
-		if (!this.owner.IsPC && (this.tactics.source.id == "archer" || this.tactics.source.id == "gunner") && !this.owner.TryEquipRanged())
-		{
-			num = 1;
-		}
-		if (!this.owner.IsPC && num > 1)
-		{
-			if (this.tactics.DestDist == 2)
-			{
-				if (EClass.rnd(5) == 0)
-				{
-					num = 1;
-				}
-			}
-			else if (this.owner.turn / 3 % 5 > 2)
-			{
-				num--;
-			}
-		}
-		bool flag = false;
-		if (dist > num)
-		{
-			flag = (this.owner.TryMoveTowards(this.tc.pos) > Card.MoveResult.Fail);
-			if (!flag)
-			{
-				this.moveFail++;
-			}
-		}
-		else if (dist < num)
-		{
-			flag = (this.owner.TryMoveFrom(this.tc.pos) > Card.MoveResult.Fail);
-		}
-		if (flag)
-		{
-			this.moveFail = 0;
-		}
-		if (EClass.debug.logCombat)
-		{
-			Debug.Log(string.Concat(new string[]
-			{
-				"TryMove:",
-				this.owner.Name,
-				"/",
-				flag.ToString(),
-				"/",
-				dist.ToString(),
-				"/",
-				num.ToString()
-			}));
-		}
-		return flag;
-	}
-
-	public void AddAbility(Act a, int mod = 0, int chance = 100, bool aiPt = false)
-	{
-		this.abilities.Add(new GoalCombat.ItemAbility
-		{
-			act = a,
-			priorityMod = mod,
-			chance = chance,
-			aiPt = aiPt
-		});
-	}
-
-	public virtual bool TryUseRanged(int dist)
-	{
-		return this.owner.TryEquipRanged() && ACT.Ranged.Perform(this.owner, this.tc, null);
-	}
-
-	public virtual bool TryThrow(int dist)
-	{
-		if (dist > this.owner.GetSightRadius())
-		{
-			return false;
-		}
-		Thing thing = this.owner.TryGetThrowable();
-		if (thing == null)
-		{
-			return false;
-		}
-		if (!ACT.Throw.CanPerform(this.owner, this.tc, this.tc.pos))
-		{
-			return false;
-		}
-		ActThrow.Throw(this.owner, this.tc.pos, this.tc, thing.HasElement(410, 1) ? thing : thing.Split(1), ThrowMethod.Default);
-		return true;
-	}
-
-	public virtual bool TryUseAbility(int dist, bool beforeMove = false)
-	{
-		GoalCombat.<>c__DisplayClass19_0 CS$<>8__locals1 = new GoalCombat.<>c__DisplayClass19_0();
-		CS$<>8__locals1.<>4__this = this;
-		if (this.abilities.Count == 0)
-		{
-			string str = "no ability:";
-			Chara owner = this.owner;
-			Debug.Log(str + ((owner != null) ? owner.ToString() : null));
-			return false;
-		}
-		CS$<>8__locals1.numEnemy = -1;
-		CS$<>8__locals1.numFriend = -1;
-		CS$<>8__locals1.numNeutral = -1;
-		CS$<>8__locals1.charaBuilt = false;
-		bool flag = this.owner.CanSeeLos(this.tc, dist, false);
-		bool isPCFaction = this.owner.IsPCFaction;
-		bool flag2 = this.owner.HasCondition<ConSilence>();
-		bool isBlind = this.owner.isBlind;
-		bool flag3 = this.owner.HasCondition<ConFear>();
-		bool isConfused = this.owner.isConfused;
-		bool flag4 = this.owner.HasCondition<ConDim>();
-		foreach (GoalCombat.ItemAbility itemAbility in this.abilities)
-		{
-			if (EClass.rnd(100) >= itemAbility.chance)
-			{
-				itemAbility.priority = 0;
-			}
-			else
-			{
-				Act act = itemAbility.act;
-				SourceElement.Row s = act.source;
-				itemAbility.priority = 0;
-				itemAbility.tg = null;
-				itemAbility.pt = false;
-				if (s.abilityType.Length != 0 && (!this.owner.IsPC || !flag2 || !(act is Spell)) && (!beforeMove || act.HasTag("before_move")))
-				{
-					string text = s.abilityType[0];
-					if (this.id != 6602 || (dist > 1 && !this.tc.HasCondition<ConEntangle>()))
-					{
-						uint num = <PrivateImplementationDetails>.ComputeStringHash(text);
-						int num2;
-						if (num <= 2140930120U)
-						{
-							if (num <= 979982427U)
-							{
-								if (num <= 115652151U)
-								{
-									if (num != 13211034U)
-									{
-										if (num != 115652151U)
-										{
-											goto IL_BCA;
-										}
-										if (!(text == "debuff"))
-										{
-											goto IL_BCA;
-										}
-										if (flag)
-										{
-											num2 = this.tactics.P_Debuff;
-											goto IL_BCD;
-										}
-										continue;
-									}
-									else
-									{
-										if (!(text == "summon"))
-										{
-											goto IL_BCA;
-										}
-										if (this.owner.isRestrained || (this.tc != null && this.tc.IsRestrainedResident))
-										{
-											continue;
-										}
-										int num3 = EClass._zone.CountMinions(this.owner);
-										if (num3 < this.owner.MaxSummon)
-										{
-											num2 = this.tactics.P_Summon - 20 * num3 / this.owner.MaxSummon;
-											goto IL_BCD;
-										}
-										continue;
-									}
-								}
-								else if (num != 601369519U)
-								{
-									if (num != 740945997U)
-									{
-										if (num != 979982427U)
-										{
-											goto IL_BCA;
-										}
-										if (!(text == "heal"))
-										{
-											goto IL_BCA;
-										}
-										goto IL_72E;
-									}
-									else
-									{
-										if (!(text == "any"))
-										{
-											goto IL_BCA;
-										}
-										num2 = 50;
-										goto IL_BCD;
-									}
-								}
-								else
-								{
-									if (!(text == "suicide"))
-									{
-										goto IL_BCA;
-									}
-									if (this.owner.IsPC || this.owner.HasCondition<ConWet>())
-									{
-										continue;
-									}
-									if (this.owner.HasTag(CTAG.kamikaze))
-									{
-										num2 = ((dist <= 1) ? 1000 : 0);
-										goto IL_BCD;
-									}
-									num2 = 100 - 125 * this.owner.hp / this.owner.MaxHP;
-									if (EClass.rnd(200) > num2)
-									{
-										continue;
-									}
-									goto IL_BCD;
-								}
-							}
-							else if (num <= 1167440125U)
-							{
-								if (num != 1000963043U)
-								{
-									if (num != 1167440125U)
-									{
-										goto IL_BCA;
-									}
-									if (!(text == "attack"))
-									{
-										goto IL_BCA;
-									}
-								}
-								else if (!(text == "attackMelee"))
-								{
-									goto IL_BCA;
-								}
-							}
-							else if (num != 1244307660U)
-							{
-								if (num != 2043306875U)
-								{
-									if (num != 2140930120U)
-									{
-										goto IL_BCA;
-									}
-									if (!(text == "summonAlly"))
-									{
-										goto IL_BCA;
-									}
-									if (!this.owner.isRestrained && (this.tc == null || !this.tc.IsRestrainedResident))
-									{
-										if (this.owner.IsPC)
-										{
-											if (EClass.player.lastEmptyAlly <= 0)
-											{
-												continue;
-											}
-										}
-										else if (EClass._zone.CountMinions(this.owner) > 0)
-										{
-											continue;
-										}
-										num2 = this.tactics.P_Summon;
-										goto IL_BCD;
-									}
-									continue;
-								}
-								else
-								{
-									if (!(text == "melee"))
-									{
-										goto IL_BCA;
-									}
-									if (dist > this.owner.body.GetMeleeDistance())
-									{
-										continue;
-									}
-									num2 = (flag3 ? (this.owner.IsPC ? 0 : (this.tactics.P_Melee / 2)) : this.tactics.P_Melee);
-									if (isConfused)
-									{
-										num2 -= (this.owner.IsPC ? 30 : 10);
-									}
-									if (isBlind)
-									{
-										num2 -= (this.owner.IsPC ? 50 : 10);
-									}
-									if (this.tc.HasElement(1221, 1))
-									{
-										num2 -= 40;
-									}
-									if (this.tc.HasElement(1223, 1))
-									{
-										num2 -= 40;
-										goto IL_BCD;
-									}
-									goto IL_BCD;
-								}
-							}
-							else
-							{
-								if (!(text == "buff"))
-								{
-									goto IL_BCA;
-								}
-								num2 = CS$<>8__locals1.<TryUseAbility>g__ForeachChara|4(itemAbility, delegate(Chara c)
-								{
-									if (!c.HasCondition(s.proc[1]))
-									{
-										return CS$<>8__locals1.<>4__this.tactics.P_Buff;
-									}
-									return 0;
-								}, true);
-								if (itemAbility.aiPt || (this.owner.IsPC && this.tactics.CastPartyBuff))
-								{
-									itemAbility.pt = true;
-									goto IL_BCD;
-								}
-								goto IL_BCD;
-							}
-						}
-						else if (num <= 2762313447U)
-						{
-							if (num <= 2360683452U)
-							{
-								if (num != 2301512864U)
-								{
-									if (num != 2360683452U)
-									{
-										goto IL_BCA;
-									}
-									if (!(text == "attackArea"))
-									{
-										goto IL_BCA;
-									}
-									if (this.owner.isRestrained || (this.tc != null && this.tc.IsRestrainedResident))
-									{
-										continue;
-									}
-									bool flag5 = itemAbility.act is ActBolt;
-									if (!flag || (this.owner.IsPCParty && (EClass._zone.IsTown || EClass._zone.IsPCFaction)))
-									{
-										continue;
-									}
-									CS$<>8__locals1.<TryUseAbility>g__GetNumEnemy|0(flag5 ? 6 : 5);
-									if (CS$<>8__locals1.numEnemy != 0 && (!this.owner.IsPCFactionOrMinion || CS$<>8__locals1.<TryUseAbility>g__GetNumNeutral|1(flag5 ? 6 : 5) <= 0))
-									{
-										num2 = this.tactics.P_Spell - 20 + CS$<>8__locals1.numEnemy * 10 + CS$<>8__locals1.<TryUseAbility>g__GetAttackMod|5(act);
-										goto IL_BCD;
-									}
-									continue;
-								}
-								else
-								{
-									if (!(text == "wait"))
-									{
-										goto IL_BCA;
-									}
-									if (!this.owner.IsPCParty)
-									{
-										num2 = 50;
-										goto IL_BCD;
-									}
-									continue;
-								}
-							}
-							else if (num != 2627848062U)
-							{
-								if (num != 2671260646U)
-								{
-									if (num != 2762313447U)
-									{
-										goto IL_BCA;
-									}
-									if (!(text == "buffStats"))
-									{
-										goto IL_BCA;
-									}
-									num2 = CS$<>8__locals1.<TryUseAbility>g__ForeachChara|4(itemAbility, delegate(Chara c)
-									{
-										Element buffStats = c.GetBuffStats(s.proc[1]);
-										if (buffStats != null && buffStats.Value >= 0)
-										{
-											return 0;
-										}
-										return CS$<>8__locals1.<>4__this.tactics.P_Buff;
-									}, true);
-									if (itemAbility.aiPt || (this.owner.IsPC && this.tactics.CastPartyBuff))
-									{
-										itemAbility.pt = true;
-										goto IL_BCD;
-									}
-									goto IL_BCD;
-								}
-								else
-								{
-									if (!(text == "item"))
-									{
-										goto IL_BCA;
-									}
-									num2 = (itemAbility.act as ActItem).BuildAct(this.owner);
-									goto IL_BCD;
-								}
-							}
-							else
-							{
-								if (!(text == "ground"))
-								{
-									goto IL_BCA;
-								}
-								if (!flag || this.owner.isRestrained || (this.tc != null && this.tc.IsRestrainedResident))
-								{
-									continue;
-								}
-								num2 = 50;
-								if (isPCFaction)
-								{
-									num2 -= 10;
-									goto IL_BCD;
-								}
-								goto IL_BCD;
-							}
-						}
-						else if (num <= 3546849056U)
-						{
-							if (num != 3164374115U)
-							{
-								if (num != 3289626814U)
-								{
-									if (num != 3546849056U)
-									{
-										goto IL_BCA;
-									}
-									if (!(text == "dot"))
-									{
-										goto IL_BCA;
-									}
-								}
-								else
-								{
-									if (!(text == "teleport"))
-									{
-										goto IL_BCA;
-									}
-									num2 = 40;
-									goto IL_BCD;
-								}
-							}
-							else
-							{
-								if (!(text == "taunt"))
-								{
-									goto IL_BCA;
-								}
-								bool flag6 = this.owner.HasCondition<StanceTaunt>();
-								bool flag7 = this.tactics.source.taunt != -1 && 100 * this.owner.hp / this.owner.MaxHP >= this.tactics.source.taunt;
-								num2 = ((flag6 && !flag7) ? 100 : ((!flag6 && flag7) ? 100 : 0));
-								goto IL_BCD;
-							}
-						}
-						else if (num != 4208725202U)
-						{
-							if (num != 4274235348U)
-							{
-								if (num != 4289936826U)
-								{
-									goto IL_BCA;
-								}
-								if (!(text == "debuffStats"))
-								{
-									goto IL_BCA;
-								}
-								if (flag)
-								{
-									num2 = CS$<>8__locals1.<TryUseAbility>g__ForeachChara|4(itemAbility, delegate(Chara c)
-									{
-										Element buffStats = c.GetBuffStats(s.proc[1]);
-										if (buffStats != null && buffStats.Value <= 0)
-										{
-											return 0;
-										}
-										return CS$<>8__locals1.<>4__this.tactics.P_Debuff;
-									}, false);
-									goto IL_BCD;
-								}
-								continue;
-							}
-							else
-							{
-								if (!(text == "hot"))
-								{
-									goto IL_BCA;
-								}
-								goto IL_72E;
-							}
-						}
-						else
-						{
-							if (!(text == "range"))
-							{
-								goto IL_BCA;
-							}
-							if (!flag || EClass.rnd(100) > this.tactics.RangedChance)
-							{
-								continue;
-							}
-							num2 = (flag3 ? (this.owner.IsPC ? 0 : (this.tactics.P_Range / 2)) : this.tactics.P_Range);
-							if (isConfused)
-							{
-								num2 -= (this.owner.IsPC ? 30 : 10);
-							}
-							if (isBlind)
-							{
-								num2 -= (this.owner.IsPC ? 50 : 10);
-							}
-							if (this.owner.ranged != null && this.owner.ranged.trait is TraitToolRangeCane && this.owner.mana.value <= 0)
-							{
-								continue;
-							}
-							goto IL_BCD;
-						}
-						if (!flag)
-						{
-							continue;
-						}
-						bool flag8 = text == "dot";
-						if (flag8 && (this.owner.isRestrained || (this.tc != null && this.tc.IsRestrainedResident)))
-						{
-							continue;
-						}
-						num2 = ((text == "attackMelee") ? this.tactics.P_Melee : this.tactics.P_Spell) + CS$<>8__locals1.<TryUseAbility>g__GetAttackMod|5(act);
-						if (num2 > 0 && flag8)
-						{
-							num2 += 10;
-						}
-						IL_BCD:
-						if (s.target == "Neighbor")
-						{
-							if (dist > 1)
-							{
-								continue;
-							}
-							num2 += 10;
-						}
-						if (s.proc.Length == 0 || !(s.proc[0] == "Debuff") || !this.tc.HasCondition(s.proc[1]))
-						{
-							if (s.abilityType.Length > 1)
-							{
-								num2 += (this.owner.IsPC ? s.abilityType[2] : s.abilityType[1]).ToInt();
-							}
-							if (act is Spell)
-							{
-								if (this.owner.IsPC)
-								{
-									if (act.vPotential <= 0)
-									{
-										continue;
-									}
-									if (flag2 || isConfused || flag4)
-									{
-										num2 -= 50;
-									}
-								}
-								else
-								{
-									if (flag2)
-									{
-										num2 -= 30;
-									}
-									if (isConfused || flag4)
-									{
-										num2 -= 10;
-									}
-								}
-							}
-							if (num2 > 0)
-							{
-								num2 += itemAbility.priorityMod + EClass.rnd(this.tactics.RandomFacotr + itemAbility.priorityMod);
-							}
-							itemAbility.priority = num2;
-							continue;
-						}
-						continue;
-						IL_72E:
-						bool isHOT = text == "hot";
-						num2 = CS$<>8__locals1.<TryUseAbility>g__ForeachChara|4(itemAbility, (Chara c) => base.<TryUseAbility>g__HealFactor|7(c), true);
-						if (itemAbility.aiPt || (this.owner.IsPC && this.tactics.CastPartyBuff))
-						{
-							itemAbility.pt = true;
-							goto IL_BCD;
-						}
-						goto IL_BCD;
-						IL_BCA:
-						num2 = 0;
-						goto IL_BCD;
-					}
-				}
-			}
-		}
-		this.abilities.Sort((GoalCombat.ItemAbility a, GoalCombat.ItemAbility b) => b.priority - a.priority);
-		foreach (GoalCombat.ItemAbility itemAbility2 in this.abilities)
-		{
-			if (itemAbility2.priority > 0)
-			{
-				if (EClass.debug.logCombat && this.owner.IsPC)
-				{
-					Debug.Log(itemAbility2.act.Name + "/" + itemAbility2.priority.ToString());
-				}
-				if (itemAbility2.act.source.alias == "ActRanged")
-				{
-					if (this.TryThrow(dist))
-					{
-						return true;
-					}
-					if (this.TryUseRanged(dist))
-					{
-						return true;
-					}
-				}
-				else
-				{
-					Act.Cost cost = itemAbility2.act.GetCost(this.owner);
-					if (!this.owner.IsPCParty || !itemAbility2.pt || itemAbility2.act.TargetType.ForceParty || cost.cost * EClass.pc.party.members.Count <= this.owner.mana.value)
-					{
-						if (isPCFaction && cost.cost > 0)
-						{
-							Act.CostType type = cost.type;
-							if (type != Act.CostType.MP)
-							{
-								if (type == Act.CostType.SP)
-								{
-									if (cost.cost > this.owner.stamina.value)
-									{
-										continue;
-									}
-								}
-							}
-							else if (cost.cost > this.owner.mana.value)
-							{
-								continue;
-							}
-						}
-						if ((cost.cost <= 0 || EClass.rnd(100) <= this.tactics.AbilityChance) && itemAbility2.act.CanPerform(this.owner, itemAbility2.tg ?? this.tc, null) && this.owner.UseAbility(itemAbility2.act, itemAbility2.tg ?? this.tc, null, (itemAbility2.act.HaveLongPressAction && itemAbility2.pt) || itemAbility2.aiPt))
-						{
-							if (EClass.debug.logCombat)
-							{
-								string[] array = new string[9];
-								array[0] = this.owner.Name;
-								array[1] = "/";
-								array[2] = itemAbility2.act.id.ToString();
-								array[3] = "/";
-								array[4] = itemAbility2.act.CanPerform(this.owner, itemAbility2.tg ?? this.tc, null).ToString();
-								array[5] = "/";
-								int num4 = 6;
-								Chara tg = itemAbility2.tg;
-								array[num4] = ((tg != null) ? tg.ToString() : null);
-								array[7] = "/";
-								int num5 = 8;
-								Chara chara = this.tc;
-								array[num5] = ((chara != null) ? chara.ToString() : null);
-								Debug.Log(string.Concat(array));
-							}
-							return true;
-						}
-					}
-				}
-			}
-		}
-		if (EClass.debug.logCombat)
-		{
-			Debug.Log(this.owner.Name + "/" + this.abilities.Count.ToString());
-			foreach (GoalCombat.ItemAbility itemAbility3 in this.abilities)
-			{
-				Debug.Log(itemAbility3.act.Name);
-			}
-		}
-		return false;
-	}
-
-	public virtual void BuildAbilityList()
-	{
-		foreach (ActList.Item item in this.owner.ability.list.items)
-		{
-			this.AddAbility(item.act, 0, item.chance, item.pt);
-		}
-		this.AddAbility(ACT.Ranged, 0, 100, false);
-		this.AddAbility(ACT.Melee, 0, 100, false);
-		this.AddAbility(ACT.Item, 0, 100, false);
-	}
-
-	public virtual bool TryAbortCombat()
-	{
-		return false;
-	}
-
-	[CompilerGenerated]
-	private void <Run>g__CalmDown|14_0()
-	{
-		this.owner.enemy = null;
-		if (this.owner.ride != null)
-		{
-			this.owner.ride.enemy = null;
-		}
-		if (this.owner.parasite != null)
-		{
-			this.owner.parasite.enemy = null;
-		}
-		this.owner.hostility = this.owner.OriginalHostility;
-		if (this.tc.enemy == this.owner)
-		{
-			this.tc.enemy = null;
-			if (this.tc.ride != null)
-			{
-				this.tc.ride.enemy = null;
-			}
-			if (this.tc.parasite != null)
-			{
-				this.tc.parasite.enemy = null;
-			}
-			this.tc.hostility = this.tc.OriginalHostility;
-		}
-		this.owner.Say("calmDown", this.owner, null, null);
-	}
-
-	public Chara destEnemy;
-
-	public Chara tc;
-
-	public int idleCount;
-
-	public int moveFail;
-
-	public List<GoalCombat.ItemAbility> abilities;
-
-	public List<Chara> charas = new List<Chara>();
-
 	public class ItemAbility
 	{
 		public Act act;
@@ -1082,5 +19,946 @@ public class GoalCombat : Goal
 		public bool pt;
 
 		public bool aiPt;
+	}
+
+	public Chara destEnemy;
+
+	public Chara tc;
+
+	public int idleCount;
+
+	public int moveFail;
+
+	public List<ItemAbility> abilities;
+
+	public List<Chara> charas = new List<Chara>();
+
+	public override CursorInfo CursorIcon => CursorSystem.IconMelee;
+
+	public override bool CancelWhenDamaged => false;
+
+	public Tactics tactics => owner.tactics;
+
+	public override bool CanManualCancel()
+	{
+		return true;
+	}
+
+	public override IEnumerable<Status> Run()
+	{
+		if (destEnemy != null)
+		{
+			owner.enemy = destEnemy;
+			destEnemy = null;
+		}
+		int count = 0;
+		int lostCount = 0;
+		bool dontWander = owner.IsPCParty && !owner.IsPC && EClass.game.config.tactics.dontWander;
+		while (true)
+		{
+			if (EClass.debug.logCombat)
+			{
+				Debug.Log("■" + owner.Name + "/" + count + "/" + lostCount);
+			}
+			if (EClass._zone.isPeace && owner.IsPCFactionOrMinion && !owner.IsPC)
+			{
+				owner.enemy = null;
+				owner.ShowEmo(Emo.happy);
+				yield return Success();
+			}
+			count++;
+			if (dontWander && owner.enemy != null && !EClass.pc.isBlind && !EClass.pc.CanSeeLos(owner.enemy) && (owner.Dist(EClass.pc) > 4 || owner.Dist(owner.enemy) > 1))
+			{
+				Point firstStep = owner.GetFirstStep(EClass.pc.pos, PathManager.MoveType.Combat);
+				if (firstStep.IsValid && !firstStep.HasChara)
+				{
+					owner.enemy = null;
+				}
+			}
+			tc = owner.enemy;
+			if (tc != null && owner.IsPCFaction && EClass.pc.ai is AI_Shear aI_Shear && aI_Shear.target == tc)
+			{
+				tc = (owner.enemy = null);
+			}
+			if (tc != null && !tc.isDead && tc.ExistsOnMap && tc.pos.IsInBounds && lostCount < 5)
+			{
+				lostCount = ((!owner.CanSeeLos(tc)) ? (lostCount + 1) : 0);
+			}
+			else
+			{
+				tc = (owner.enemy = null);
+				if (owner.IsPC && EClass.game.config.autoCombat.abortOnKill)
+				{
+					yield return Success();
+				}
+				owner.FindNewEnemy();
+				lostCount = 0;
+				if (owner.enemy == null)
+				{
+					yield return Success();
+				}
+				tc = owner.enemy;
+			}
+			if (owner.IsPC && tc.HasEditorTag(EditorTag.Invulnerable))
+			{
+				Msg.Say("abort_idle");
+				yield return Success();
+			}
+			if (tc.IsPCFaction && owner.id == "melilith_boss" && EClass._map.plDay.list.Count > 1 && EClass._map.plDay.list[0].data.id != 107)
+			{
+				EClass._zone.SetBGM(107);
+			}
+			if (abilities == null)
+			{
+				abilities = new List<ItemAbility>();
+				BuildAbilityList();
+			}
+			if (owner.IsPCFaction && tc.IsPCFaction && EClass.rnd(5) == 0 && count > 2)
+			{
+				CalmDown();
+				yield return Success();
+			}
+			if (owner.OriginalHostility >= Hostility.Neutral && tc.OriginalHostility >= Hostility.Neutral && !owner.IsPCParty && owner.c_bossType == BossType.none && (!(owner.trait is TraitGuard) || owner.IsPCFaction || !tc.IsPCParty || !EClass.player.IsCriminal))
+			{
+				if (owner.calmCheckTurn < 0 || (!owner.enemy.IsPCParty && EClass.rnd(10) == 0))
+				{
+					CalmDown();
+					yield return Success();
+				}
+				owner.calmCheckTurn--;
+			}
+			if (owner.IsPC)
+			{
+				CursorSystem.ignoreCount = 1;
+			}
+			if (tc.host != null && (tc.hp == 0 || EClass.rnd(5) == 0))
+			{
+				tc = owner.SetEnemy(tc.host);
+			}
+			if (tc.parasite != null && !tc.isRestrained && tc.parasite.hp > 0 && EClass.rnd(5) == 0)
+			{
+				tc = owner.SetEnemy(tc.parasite);
+			}
+			if (tc.ride != null && !tc.isRestrained && tc.ride.hp > 0 && EClass.rnd(5) == 0)
+			{
+				tc = owner.SetEnemy(tc.ride);
+			}
+			if (tc.enemy != null)
+			{
+				tc.TrySetEnemy(owner);
+			}
+			if (!tc.IsMinion && EClass.rnd(10) == 0 && EClass.rnd(tc.DEX + 10) > owner.LV && tc.HasElement(1315) && !owner.HasElement(1315) && owner.race.IsMachine && owner.CanBeTempAlly(tc))
+			{
+				owner.Say("dominate_machine", tc, owner);
+				owner.PlayEffect("boost");
+				owner.PlaySound("boost");
+				owner.ShowEmo(Emo.love);
+				owner.lastEmo = Emo.angry;
+				owner.MakeMinion(tc.IsPCParty ? EClass.pc : tc);
+				yield return Success();
+			}
+			if (EClass.rnd(5) == 0 && tc.HasElement(1325) && owner.race.IsPlant && owner.CanBeTempAlly(tc))
+			{
+				owner.Say("dominate_plant", tc, owner);
+				owner.ShowEmo(Emo.love);
+				owner.lastEmo = Emo.angry;
+				owner.MakeMinion((tc.IsPCParty || tc.IsPCFactionMinion) ? EClass.pc : tc, MinionType.Friend);
+				yield return Success();
+			}
+			if (EClass.rnd(20) == 0 && owner.isRestrained)
+			{
+				owner.Talk("restrained");
+			}
+			if (this is GoalAutoCombat)
+			{
+				ActionMode.Adv.SetTurbo(EClass.game.config.autoCombat.turbo ? (-1) : 0);
+				EClass.pc.ModExp(135, 20);
+			}
+			int dist = owner.Dist(tc);
+			bool move = owner.host == null && (tactics.ChanceMove > EClass.rnd(100) || (owner.IsPC && tc.HasCondition<ConFear>() && dist >= EClass.pc.GetSightRadius() - 1));
+			bool haltSecondMove = false;
+			if (!owner.IsPC && !owner.isBlind && tc.source.HasTag(CTAG.suicide) && owner.IsNeutralOrAbove() && !owner.isSummon && !owner.IsMinion && !tc.HasCondition<ConWet>())
+			{
+				if (dist <= 3)
+				{
+					if (EClass.rnd(15) == 0)
+					{
+						owner.Talk("run_suicide");
+					}
+					if (owner.host == null && owner.TryMoveFrom(tc.pos) != 0)
+					{
+						yield return Status.Running;
+						idleCount = 0;
+						continue;
+					}
+				}
+				else if (dist <= 5)
+				{
+					haltSecondMove = true;
+					move = false;
+				}
+			}
+			if (dontWander)
+			{
+				int num = owner.Dist(EClass.pc);
+				if (num > 3)
+				{
+					int x = tc.pos.x;
+					int z = tc.pos.z;
+					if (EClass.pc.pos.Distance(owner.pos.x + ((x > owner.pos.x) ? 1 : ((x < owner.pos.x) ? (-1) : 0)), owner.pos.z + ((z > owner.pos.z) ? 1 : ((z < owner.pos.z) ? (-1) : 0))) >= num)
+					{
+						move = false;
+						haltSecondMove = true;
+					}
+				}
+			}
+			if (owner.IsPC && EClass.game.config.autoCombat.bDontChase)
+			{
+				move = false;
+				haltSecondMove = true;
+			}
+			if (EClass.debug.logCombat)
+			{
+				Debug.Log(owner.Name + "/" + move + "/" + haltSecondMove + "/" + dist);
+			}
+			if (move)
+			{
+				if (owner.IsPC && dist <= owner.GetSightRadius() && TryUseAbility(dist, beforeMove: true))
+				{
+					yield return Status.Running;
+					idleCount = 0;
+					continue;
+				}
+				if (TryMove(dist))
+				{
+					if (EClass.debug.logCombat)
+					{
+						Debug.Log("moved:" + owner.Name);
+					}
+					yield return Status.Running;
+					idleCount = 0;
+					continue;
+				}
+			}
+			if (owner == null)
+			{
+				yield return Cancel();
+			}
+			if (dist <= owner.GetSightRadius() && TryUseAbility(dist))
+			{
+				yield return Status.Running;
+				idleCount = 0;
+				continue;
+			}
+			if (EClass.debug.logCombat)
+			{
+				Debug.Log(owner.Name + "/" + move + "/" + haltSecondMove + "/" + tactics.ChanceSecondMove);
+			}
+			if (!move && !haltSecondMove && tactics.ChanceSecondMove > EClass.rnd(100) && TryMove(dist))
+			{
+				yield return Status.Running;
+				idleCount = 0;
+				continue;
+			}
+			if (owner == null)
+			{
+				yield return Cancel();
+			}
+			idleCount++;
+			if (TryAbortCombat())
+			{
+				yield return Success();
+			}
+			if (idleCount > 2)
+			{
+				if (dontWander)
+				{
+					yield return Success();
+				}
+				idleCount = 0;
+				string aiIdle = owner.source.aiIdle;
+				if (aiIdle == "stand" || aiIdle == "root")
+				{
+					yield return Success();
+				}
+				yield return DoGoto(tc.pos);
+			}
+			else if (owner.FindNearestNewEnemy())
+			{
+				continue;
+			}
+			yield return Status.Running;
+		}
+		void CalmDown()
+		{
+			owner.enemy = null;
+			if (owner.ride != null)
+			{
+				owner.ride.enemy = null;
+			}
+			if (owner.parasite != null)
+			{
+				owner.parasite.enemy = null;
+			}
+			owner.hostility = owner.OriginalHostility;
+			if (tc.enemy == owner)
+			{
+				tc.enemy = null;
+				if (tc.ride != null)
+				{
+					tc.ride.enemy = null;
+				}
+				if (tc.parasite != null)
+				{
+					tc.parasite.enemy = null;
+				}
+				tc.hostility = tc.OriginalHostility;
+			}
+			owner.Say("calmDown", owner);
+		}
+	}
+
+	public bool TryMove(int dist)
+	{
+		if (owner.host != null)
+		{
+			return false;
+		}
+		if (owner.isBlind)
+		{
+			return owner.MoveRandom();
+		}
+		int num = (tc.HasCondition<ConFear>() ? 1 : tactics.DestDist);
+		if (!owner.IsPC && (tactics.source.id == "archer" || tactics.source.id == "gunner") && !owner.TryEquipRanged())
+		{
+			num = 1;
+		}
+		if (!owner.IsPC && num > 1)
+		{
+			if (tactics.DestDist == 2)
+			{
+				if (EClass.rnd(5) == 0)
+				{
+					num = 1;
+				}
+			}
+			else if (owner.turn / 3 % 5 > 2)
+			{
+				num--;
+			}
+		}
+		bool flag = false;
+		if (dist > num)
+		{
+			flag = owner.TryMoveTowards(tc.pos) != Card.MoveResult.Fail;
+			if (!flag)
+			{
+				moveFail++;
+			}
+		}
+		else if (dist < num)
+		{
+			flag = owner.TryMoveFrom(tc.pos) != Card.MoveResult.Fail;
+		}
+		if (flag)
+		{
+			moveFail = 0;
+		}
+		if (EClass.debug.logCombat)
+		{
+			Debug.Log("TryMove:" + owner.Name + "/" + flag + "/" + dist + "/" + num);
+		}
+		return flag;
+	}
+
+	public void AddAbility(Act a, int mod = 0, int chance = 100, bool aiPt = false)
+	{
+		abilities.Add(new ItemAbility
+		{
+			act = a,
+			priorityMod = mod,
+			chance = chance,
+			aiPt = aiPt
+		});
+	}
+
+	public virtual bool TryUseRanged(int dist)
+	{
+		if (owner.TryEquipRanged())
+		{
+			return ACT.Ranged.Perform(owner, tc);
+		}
+		return false;
+	}
+
+	public virtual bool TryThrow(int dist)
+	{
+		if (dist > owner.GetSightRadius())
+		{
+			return false;
+		}
+		Thing thing = owner.TryGetThrowable();
+		if (thing == null)
+		{
+			return false;
+		}
+		if (!ACT.Throw.CanPerform(owner, tc, tc.pos))
+		{
+			return false;
+		}
+		ActThrow.Throw(owner, tc.pos, tc, thing.HasElement(410) ? thing : thing.Split(1));
+		return true;
+	}
+
+	public virtual bool TryUseAbility(int dist, bool beforeMove = false)
+	{
+		if (abilities.Count == 0)
+		{
+			Debug.Log("no ability:" + owner);
+			return false;
+		}
+		int numEnemy = -1;
+		int numFriend = -1;
+		int numNeutral = -1;
+		bool charaBuilt = false;
+		bool flag = owner.CanSeeLos(tc, dist);
+		bool isPCFaction = owner.IsPCFaction;
+		bool flag2 = owner.HasCondition<ConSilence>();
+		bool isBlind = owner.isBlind;
+		bool flag3 = owner.HasCondition<ConFear>();
+		bool isConfused = owner.isConfused;
+		bool flag4 = owner.HasCondition<ConDim>();
+		foreach (ItemAbility ability in abilities)
+		{
+			if (EClass.rnd(100) >= ability.chance)
+			{
+				ability.priority = 0;
+				continue;
+			}
+			Act act = ability.act;
+			int num = 0;
+			SourceElement.Row s = act.source;
+			ability.priority = 0;
+			ability.tg = null;
+			ability.pt = false;
+			if (s.abilityType.Length == 0 || (owner.IsPC && flag2 && act is Spell) || (beforeMove && !act.HasTag("before_move")))
+			{
+				continue;
+			}
+			string text = s.abilityType[0];
+			if (id == 6602 && (dist <= 1 || tc.HasCondition<ConEntangle>()))
+			{
+				continue;
+			}
+			bool isHOT;
+			switch (text)
+			{
+			case "item":
+				num = (ability.act as ActItem).BuildAct(owner);
+				break;
+			case "wait":
+				if (owner.IsPCParty)
+				{
+					continue;
+				}
+				num = 50;
+				break;
+			case "taunt":
+			{
+				bool flag7 = owner.HasCondition<StanceTaunt>();
+				bool flag8 = tactics.source.taunt != -1 && 100 * owner.hp / owner.MaxHP >= tactics.source.taunt;
+				num = ((flag7 && !flag8) ? 100 : ((!flag7 && flag8) ? 100 : 0));
+				break;
+			}
+			case "melee":
+				if (dist > owner.body.GetMeleeDistance())
+				{
+					continue;
+				}
+				num = ((!flag3) ? tactics.P_Melee : ((!owner.IsPC) ? (tactics.P_Melee / 2) : 0));
+				if (isConfused)
+				{
+					num -= (owner.IsPC ? 30 : 10);
+				}
+				if (isBlind)
+				{
+					num -= (owner.IsPC ? 50 : 10);
+				}
+				if (tc.HasElement(1221))
+				{
+					num -= 40;
+				}
+				if (tc.HasElement(1223))
+				{
+					num -= 40;
+				}
+				break;
+			case "range":
+				if (!flag || EClass.rnd(100) > tactics.RangedChance)
+				{
+					continue;
+				}
+				num = ((!flag3) ? tactics.P_Range : ((!owner.IsPC) ? (tactics.P_Range / 2) : 0));
+				if (isConfused)
+				{
+					num -= (owner.IsPC ? 30 : 10);
+				}
+				if (isBlind)
+				{
+					num -= (owner.IsPC ? 50 : 10);
+				}
+				if (owner.ranged != null && owner.ranged.trait is TraitToolRangeCane && owner.mana.value <= 0)
+				{
+					continue;
+				}
+				break;
+			case "teleport":
+				num = 40;
+				break;
+			case "any":
+				num = 50;
+				break;
+			case "hot":
+			case "heal":
+				isHOT = text == "hot";
+				num = ForeachChara(ability, (Chara c) => HealFactor(c), isFriendlyAbility: true);
+				if (ability.aiPt || (owner.IsPC && tactics.CastPartyBuff))
+				{
+					ability.pt = true;
+				}
+				break;
+			case "dot":
+			case "attack":
+			case "attackMelee":
+			{
+				if (!flag)
+				{
+					continue;
+				}
+				bool flag6 = text == "dot";
+				if (flag6 && (owner.isRestrained || (tc != null && tc.IsRestrainedResident)))
+				{
+					continue;
+				}
+				num = ((text == "attackMelee") ? tactics.P_Melee : tactics.P_Spell) + GetAttackMod(act);
+				if (num > 0 && flag6)
+				{
+					num += 10;
+				}
+				break;
+			}
+			case "attackArea":
+			{
+				if (owner.isRestrained || (tc != null && tc.IsRestrainedResident))
+				{
+					continue;
+				}
+				bool flag5 = ability.act is ActBolt;
+				if (!flag || (owner.IsPCParty && (EClass._zone.IsTown || EClass._zone.IsPCFaction)))
+				{
+					continue;
+				}
+				GetNumEnemy(flag5 ? 6 : 5);
+				if (numEnemy == 0 || (owner.IsPCFactionOrMinion && GetNumNeutral(flag5 ? 6 : 5) > 0))
+				{
+					continue;
+				}
+				num = tactics.P_Spell - 20 + numEnemy * 10 + GetAttackMod(act);
+				break;
+			}
+			case "buff":
+				num = ForeachChara(ability, (Chara c) => (!c.HasCondition(s.proc[1])) ? tactics.P_Buff : 0, isFriendlyAbility: true);
+				if (ability.aiPt || (owner.IsPC && tactics.CastPartyBuff))
+				{
+					ability.pt = true;
+				}
+				break;
+			case "buffStats":
+				num = ForeachChara(ability, delegate(Chara c)
+				{
+					Element buffStats2 = c.GetBuffStats(s.proc[1]);
+					return (buffStats2 == null || buffStats2.Value < 0) ? tactics.P_Buff : 0;
+				}, isFriendlyAbility: true);
+				if (ability.aiPt || (owner.IsPC && tactics.CastPartyBuff))
+				{
+					ability.pt = true;
+				}
+				break;
+			case "debuff":
+				if (!flag)
+				{
+					continue;
+				}
+				num = tactics.P_Debuff;
+				break;
+			case "debuffStats":
+				if (!flag)
+				{
+					continue;
+				}
+				num = ForeachChara(ability, delegate(Chara c)
+				{
+					Element buffStats = c.GetBuffStats(s.proc[1]);
+					return (buffStats == null || buffStats.Value > 0) ? tactics.P_Debuff : 0;
+				}, isFriendlyAbility: false);
+				break;
+			case "ground":
+				if (!flag || owner.isRestrained || (tc != null && tc.IsRestrainedResident))
+				{
+					continue;
+				}
+				num = 50;
+				if (isPCFaction)
+				{
+					num -= 10;
+				}
+				break;
+			case "summon":
+			{
+				if (owner.isRestrained || (tc != null && tc.IsRestrainedResident))
+				{
+					continue;
+				}
+				int num2 = EClass._zone.CountMinions(owner);
+				if (num2 >= owner.MaxSummon)
+				{
+					continue;
+				}
+				num = tactics.P_Summon - 20 * num2 / owner.MaxSummon;
+				break;
+			}
+			case "summonAlly":
+				if (owner.isRestrained || (tc != null && tc.IsRestrainedResident))
+				{
+					continue;
+				}
+				if (owner.IsPC)
+				{
+					if (EClass.player.lastEmptyAlly <= 0)
+					{
+						continue;
+					}
+				}
+				else if (EClass._zone.CountMinions(owner) > 0)
+				{
+					continue;
+				}
+				num = tactics.P_Summon;
+				break;
+			case "suicide":
+				if (owner.IsPC || owner.HasCondition<ConWet>())
+				{
+					continue;
+				}
+				if (owner.HasTag(CTAG.kamikaze))
+				{
+					num = ((dist <= 1) ? 1000 : 0);
+					break;
+				}
+				num = 100 - 125 * owner.hp / owner.MaxHP;
+				if (EClass.rnd(200) <= num)
+				{
+					break;
+				}
+				continue;
+			default:
+				num = 0;
+				break;
+			}
+			if (s.target == "Neighbor")
+			{
+				if (dist > 1)
+				{
+					continue;
+				}
+				num += 10;
+			}
+			if (s.proc.Length != 0 && s.proc[0] == "Debuff" && tc.HasCondition(s.proc[1]))
+			{
+				continue;
+			}
+			if (s.abilityType.Length > 1)
+			{
+				num += (owner.IsPC ? s.abilityType[2] : s.abilityType[1]).ToInt();
+			}
+			if (act is Spell)
+			{
+				if (owner.IsPC)
+				{
+					if (act.vPotential <= 0)
+					{
+						continue;
+					}
+					if (flag2 || isConfused || flag4)
+					{
+						num -= 50;
+					}
+				}
+				else
+				{
+					if (flag2)
+					{
+						num -= 30;
+					}
+					if (isConfused || flag4)
+					{
+						num -= 10;
+					}
+				}
+			}
+			if (num > 0)
+			{
+				num += ability.priorityMod + EClass.rnd(tactics.RandomFacotr + ability.priorityMod);
+			}
+			ability.priority = num;
+			int HealFactor(Chara c)
+			{
+				if (isHOT && c.HasCondition(s.proc[1]))
+				{
+					return 0;
+				}
+				float num8 = (float)c.hp / (float)c.MaxHP;
+				if (num8 > (isHOT ? 0.85f : 0.75f))
+				{
+					return 0;
+				}
+				int num9 = tactics.P_Heal - (int)((float)tactics.P_Heal * num8) + (isHOT ? 50 : 25);
+				foreach (Condition condition in c.conditions)
+				{
+					if (condition is ConFear)
+					{
+						num9 += 10;
+					}
+					else if (condition is ConPoison)
+					{
+						num9 += 2;
+					}
+					else if (condition is ConConfuse)
+					{
+						num9 += 4;
+					}
+					else if (condition is ConDim)
+					{
+						num9 += 6;
+					}
+					else if (condition is ConBleed)
+					{
+						num9 += 8;
+					}
+				}
+				return num9;
+			}
+		}
+		abilities.Sort((ItemAbility a, ItemAbility b) => b.priority - a.priority);
+		foreach (ItemAbility ability2 in abilities)
+		{
+			if (ability2.priority <= 0)
+			{
+				continue;
+			}
+			if (EClass.debug.logCombat && owner.IsPC)
+			{
+				Debug.Log(ability2.act.Name + "/" + ability2.priority);
+			}
+			if (ability2.act.source.alias == "ActRanged")
+			{
+				if (TryThrow(dist))
+				{
+					return true;
+				}
+				if (TryUseRanged(dist))
+				{
+					return true;
+				}
+				continue;
+			}
+			Cost cost = ability2.act.GetCost(owner);
+			if (owner.IsPCParty && ability2.pt && !ability2.act.TargetType.ForceParty && cost.cost * EClass.pc.party.members.Count > owner.mana.value)
+			{
+				continue;
+			}
+			if (isPCFaction && cost.cost > 0)
+			{
+				switch (cost.type)
+				{
+				case CostType.MP:
+					if (cost.cost > owner.mana.value)
+					{
+						continue;
+					}
+					break;
+				case CostType.SP:
+					if (cost.cost > owner.stamina.value)
+					{
+						continue;
+					}
+					break;
+				}
+			}
+			if ((cost.cost <= 0 || EClass.rnd(100) <= tactics.AbilityChance) && ability2.act.CanPerform(owner, ability2.tg ?? tc) && owner.UseAbility(ability2.act, ability2.tg ?? tc, null, (ability2.act.HaveLongPressAction && ability2.pt) || ability2.aiPt))
+			{
+				if (EClass.debug.logCombat)
+				{
+					Debug.Log(owner.Name + "/" + ability2.act.id + "/" + ability2.act.CanPerform(owner, ability2.tg ?? tc) + "/" + ability2.tg?.ToString() + "/" + tc);
+				}
+				return true;
+			}
+		}
+		if (EClass.debug.logCombat)
+		{
+			Debug.Log(owner.Name + "/" + abilities.Count);
+			foreach (ItemAbility ability3 in abilities)
+			{
+				Debug.Log(ability3.act.Name);
+			}
+		}
+		return false;
+		void BuildCharaList()
+		{
+			if (charaBuilt)
+			{
+				return;
+			}
+			charas.Clear();
+			charaBuilt = true;
+			int sightRadius = owner.GetSightRadius();
+			foreach (Chara chara in EClass._map.charas)
+			{
+				if (chara != owner)
+				{
+					int num5 = owner.Dist(chara);
+					if (num5 > sightRadius || !owner.CanSeeLos(chara, num5))
+					{
+						continue;
+					}
+				}
+				charas.Add(chara);
+			}
+		}
+		int ForeachChara(ItemAbility a, Func<Chara, int> func, bool isFriendlyAbility)
+		{
+			if (a.act.TargetType.Range == TargetRange.Self)
+			{
+				a.tg = owner;
+				return func(owner);
+			}
+			BuildCharaList();
+			int num3 = 0;
+			foreach (Chara chara2 in charas)
+			{
+				int num4 = func(chara2);
+				if (num4 > 0)
+				{
+					if (isFriendlyAbility)
+					{
+						if (owner.IsPCParty)
+						{
+							if (!chara2.IsPCParty)
+							{
+								continue;
+							}
+						}
+						else if (!owner.IsFriendOrAbove(chara2))
+						{
+							continue;
+						}
+						if (chara2 != owner)
+						{
+							num4 += tactics.P_Party;
+						}
+					}
+					else if (!owner.IsHostile(chara2))
+					{
+						continue;
+					}
+					if (num4 >= num3)
+					{
+						a.tg = chara2;
+						num3 = num4;
+					}
+				}
+			}
+			return num3;
+		}
+		int GetAttackMod(Act a)
+		{
+			if (!owner.IsPCParty || a.source.aliasRef.IsEmpty())
+			{
+				return 0;
+			}
+			int num6 = ((a.source.aliasRef == "mold") ? owner.MainElement.id : EClass.sources.elements.alias[a.source.aliasRef].id);
+			int num7 = -15 * tc.ResistLvFrom(num6);
+			switch (num6)
+			{
+			case 910:
+				if (tc.isWet)
+				{
+					num7 -= 30;
+				}
+				break;
+			case 911:
+				if (tc.HasCondition<ConBurning>())
+				{
+					num7 -= 30;
+				}
+				break;
+			case 912:
+				if (tc.isWet)
+				{
+					num7 += 30;
+				}
+				break;
+			}
+			return num7;
+		}
+		void GetNumEnemy(int radius)
+		{
+			if (numEnemy != -1)
+			{
+				return;
+			}
+			BuildCharaList();
+			numEnemy = 0;
+			foreach (Chara chara3 in charas)
+			{
+				if (chara3.host == null && owner.IsHostile(chara3) && owner.Dist(chara3) < radius && owner.CanSeeLos(chara3))
+				{
+					numEnemy++;
+				}
+			}
+		}
+		int GetNumNeutral(int radius)
+		{
+			if (numNeutral != -1)
+			{
+				return numNeutral;
+			}
+			BuildCharaList();
+			numNeutral = 0;
+			foreach (Chara chara4 in charas)
+			{
+				if (!chara4.IsPCFactionOrMinion && chara4.IsNeutralOrAbove() && owner.Dist(chara4) <= radius && owner.CanSeeLos(chara4))
+				{
+					numNeutral++;
+				}
+			}
+			return numNeutral;
+		}
+	}
+
+	public virtual void BuildAbilityList()
+	{
+		foreach (ActList.Item item in owner.ability.list.items)
+		{
+			AddAbility(item.act, 0, item.chance, item.pt);
+		}
+		AddAbility(ACT.Ranged);
+		AddAbility(ACT.Melee);
+		AddAbility(ACT.Item);
+	}
+
+	public virtual bool TryAbortCombat()
+	{
+		return false;
 	}
 }

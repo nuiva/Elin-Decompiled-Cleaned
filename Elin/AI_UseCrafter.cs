@@ -1,327 +1,7 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using UnityEngine;
 
 public class AI_UseCrafter : AIAct
 {
-	public override int LeftHand
-	{
-		get
-		{
-			return 1001;
-		}
-	}
-
-	public override int RightHand
-	{
-		get
-		{
-			return 1002;
-		}
-	}
-
-	public override bool CanManualCancel()
-	{
-		return this.layer && this.layer.CanCancelAI;
-	}
-
-	public override void OnStart()
-	{
-		if (this.crafter.Icon != Emo.none)
-		{
-			this.owner.ShowEmo(this.crafter.Icon, 0f, true);
-		}
-	}
-
-	public override void OnSuccess()
-	{
-		this.OnEnd();
-	}
-
-	public override void OnCancel()
-	{
-		this.OnEnd();
-		if (this.layer)
-		{
-			this.layer.Close();
-		}
-	}
-
-	public void OnEnd()
-	{
-		foreach (Thing thing in this.ings)
-		{
-			if (thing != null && thing.ExistsOnMap)
-			{
-				thing.isHidden = false;
-				EClass.pc.Pick(thing, true, true);
-			}
-		}
-		if (this.crafter.AutoTurnOff && this.crafter.owner.isOn)
-		{
-			this.crafter.Toggle(false, false);
-		}
-		if (!this.crafter.idSoundBG.IsEmpty())
-		{
-			EClass.Sound.Stop(this.crafter.idSoundBG, 0f);
-		}
-		if (this.layer)
-		{
-			this.layer.OnEndCraft();
-		}
-	}
-
-	public override IEnumerable<AIAct.Status> Run()
-	{
-		for (;;)
-		{
-			AI_UseCrafter.<>c__DisplayClass14_0 CS$<>8__locals1 = new AI_UseCrafter.<>c__DisplayClass14_0();
-			CS$<>8__locals1.<>4__this = this;
-			if (this.crafter.owner.isDestroyed || !this.layer)
-			{
-				yield return base.Success(null);
-			}
-			if (!this.crafter.idSoundBG.IsEmpty())
-			{
-				SE.Play(this.crafter.idSoundBG);
-			}
-			List<Thing> targets = this.layer.GetTargets();
-			CS$<>8__locals1.blessed = BlessedState.Normal;
-			int num;
-			for (int i = 0; i < targets.Count; i = num + 1)
-			{
-				Thing t = targets[i];
-				if (!this.<Run>g__IsIngValid|14_0(t, i))
-				{
-					if (i == 0)
-					{
-						this.layer.ClearButtons();
-					}
-					else
-					{
-						this.layer.RefreshCurrentGrid();
-					}
-					yield return base.Success(null);
-				}
-				num = i;
-			}
-			if (!this.crafter.IsFuelEnough(this.num, targets, true))
-			{
-				Msg.Say("notEnoughFuel");
-				this.layer.RefreshCurrentGrid();
-				yield return base.Success(null);
-			}
-			this.ings = new List<Thing>();
-			for (int j = 0; j < targets.Count; j++)
-			{
-				Thing thing = targets[j].Split(this.layer.GetReqIngredient(j));
-				this.ings.Add(thing);
-				if (thing.blessedState <= BlessedState.Cursed && CS$<>8__locals1.blessed > thing.blessedState)
-				{
-					CS$<>8__locals1.blessed = thing.blessedState;
-				}
-				if (thing.blessedState > BlessedState.Normal && CS$<>8__locals1.blessed == BlessedState.Normal)
-				{
-					CS$<>8__locals1.blessed = thing.blessedState;
-				}
-				if (this.crafter.IsConsumeIng)
-				{
-					Card card = EClass._zone.AddCard(thing, this.crafter.owner.ExistsOnMap ? this.crafter.owner.pos : this.owner.pos);
-					card.altitude = (this.crafter.owner.ExistsOnMap ? 0 : 1);
-					if (this.crafter.animeType == TraitCrafter.AnimeType.Microwave)
-					{
-						card.isHidden = true;
-					}
-				}
-			}
-			if (LayerDragGrid.Instance)
-			{
-				LayerDragGrid.Instance.Redraw();
-			}
-			CS$<>8__locals1.requireOn = (this.crafter.IsRequireFuel || this.crafter.ToggleType > ToggleType.None);
-			if (CS$<>8__locals1.requireOn && !this.crafter.owner.isOn)
-			{
-				this.crafter.Toggle(true, false);
-			}
-			CS$<>8__locals1.costSP = this.crafter.GetCostSp(this);
-			CS$<>8__locals1.duration = this.crafter.GetDuration(this, CS$<>8__locals1.costSP);
-			Progress_Custom progress = new Progress_Custom
-			{
-				canProgress = delegate()
-				{
-					if (CS$<>8__locals1.requireOn && !CS$<>8__locals1.<>4__this.crafter.owner.isOn)
-					{
-						return false;
-					}
-					foreach (Thing thing2 in CS$<>8__locals1.<>4__this.ings)
-					{
-						if (thing2.isDestroyed || (CS$<>8__locals1.<>4__this.crafter.IsConsumeIng && !thing2.ExistsOnMap))
-						{
-							return false;
-						}
-					}
-					if (LayerDragGrid.Instance)
-					{
-						InvOwnerDraglet owner = LayerDragGrid.Instance.owner;
-						for (int k = 0; k < owner.numDragGrid; k++)
-						{
-							if (owner.buttons[k].Card == null)
-							{
-								return false;
-							}
-						}
-						if (owner.numDragGrid == 2 && CS$<>8__locals1.<>4__this.ings[0] == CS$<>8__locals1.<>4__this.ings[1] && CS$<>8__locals1.<>4__this.ings[0].Num == 1)
-						{
-							return false;
-						}
-					}
-					return !CS$<>8__locals1.<>4__this.crafter.owner.isDestroyed;
-				},
-				onProgress = delegate(Progress_Custom p)
-				{
-					if (this.crafter.owner.ExistsOnMap && !this.owner.pos.Equals(this.crafter.owner.pos))
-					{
-						this.owner.LookAt(this.crafter.owner);
-					}
-					this.owner.PlaySound(this.crafter.idSoundProgress, 1f, true);
-					if (this.crafter.owner.ExistsOnMap)
-					{
-						TraitCrafter.AnimeType animeType = this.crafter.animeType;
-						if (animeType - TraitCrafter.AnimeType.Microwave <= 1)
-						{
-							this.crafter.owner.renderer.PlayAnime(this.crafter.IdAnimeProgress, default(Vector3), false);
-						}
-					}
-					foreach (Thing thing2 in this.ings)
-					{
-						thing2.renderer.PlayAnime(this.crafter.IdAnimeProgress, default(Vector3), false);
-					}
-				},
-				onProgressComplete = delegate()
-				{
-					if (CS$<>8__locals1.<>4__this.crafter.StopSoundProgress)
-					{
-						EClass.Sound.Stop(CS$<>8__locals1.<>4__this.crafter.idSoundProgress, 0f);
-					}
-					CS$<>8__locals1.<>4__this.owner.PlaySound(CS$<>8__locals1.<>4__this.crafter.idSoundComplete, 1f, true);
-					ElementContainer elements = CS$<>8__locals1.<>4__this.owner.elements;
-					TraitCrafter traitCrafter = CS$<>8__locals1.<>4__this.crafter;
-					Recipe recipe = CS$<>8__locals1.<>4__this.recipe;
-					Element orCreateElement = elements.GetOrCreateElement(traitCrafter.IDReqEle(((recipe != null) ? recipe.source : null) ?? null));
-					if (CS$<>8__locals1.<>4__this.recipe != null)
-					{
-						for (int k = 0; k < CS$<>8__locals1.<>4__this.num; k++)
-						{
-							CS$<>8__locals1.<>4__this.recipe.Craft(CS$<>8__locals1.blessed, k == 0, CS$<>8__locals1.<>4__this.ings, CS$<>8__locals1.<>4__this.crafter, false);
-						}
-						EClass.Sound.Play("craft");
-						Point from = CS$<>8__locals1.<>4__this.crafter.owner.ExistsOnMap ? CS$<>8__locals1.<>4__this.crafter.owner.pos : CS$<>8__locals1.<>4__this.owner.pos;
-						Effect.Get("smoke").Play(from, 0f, null, null);
-						Effect.Get("mine").Play(from, 0f, null, null).SetParticleColor(CS$<>8__locals1.<>4__this.recipe.GetColorMaterial().GetColor()).Emit(10 + EClass.rnd(10));
-						CS$<>8__locals1.<>4__this.owner.renderer.PlayAnime(AnimeID.JumpSmall, default(Vector3), false);
-					}
-					else
-					{
-						Thing thing2 = CS$<>8__locals1.<>4__this.crafter.Craft(CS$<>8__locals1.<>4__this);
-						if (thing2 != null)
-						{
-							if (thing2.category.ignoreBless == 0)
-							{
-								thing2.SetBlessedState(CS$<>8__locals1.blessed);
-							}
-							thing2.PlaySoundDrop(false);
-							EClass._zone.AddCard(thing2, EClass.pc.pos);
-							thing2.Identify(false, IDTSource.Identify);
-							CS$<>8__locals1.<>4__this.owner.Pick(thing2, true, true);
-						}
-					}
-					for (int l = 0; l < CS$<>8__locals1.<>4__this.ings.Count; l++)
-					{
-						if (CS$<>8__locals1.<>4__this.crafter.ShouldConsumeIng(CS$<>8__locals1.<>4__this.crafter.GetSource(CS$<>8__locals1.<>4__this), l))
-						{
-							CS$<>8__locals1.<>4__this.ings[l].Destroy();
-						}
-					}
-					foreach (Thing thing3 in CS$<>8__locals1.<>4__this.ings)
-					{
-						if (thing3.ExistsOnMap)
-						{
-							CS$<>8__locals1.<>4__this.owner.Pick(thing3, true, true);
-						}
-					}
-					if (CS$<>8__locals1.<>4__this.crafter.IsRequireFuel)
-					{
-						CS$<>8__locals1.<>4__this.crafter.owner.ModCharge(-CS$<>8__locals1.<>4__this.crafter.FuelCost * CS$<>8__locals1.<>4__this.num, false);
-						if (CS$<>8__locals1.<>4__this.crafter.owner.c_charges <= 0)
-						{
-							CS$<>8__locals1.<>4__this.crafter.owner.c_charges = 0;
-							CS$<>8__locals1.<>4__this.crafter.Toggle(false, false);
-						}
-					}
-					for (int m = 0; m < CS$<>8__locals1.<>4__this.num; m++)
-					{
-						CS$<>8__locals1.<>4__this.owner.RemoveCondition<ConInvulnerable>();
-						CS$<>8__locals1.<>4__this.owner.elements.ModExp(orCreateElement.id, CS$<>8__locals1.costSP * 12 * (100 + CS$<>8__locals1.duration * 2) / 100, false);
-						CS$<>8__locals1.<>4__this.owner.stamina.Mod(-CS$<>8__locals1.costSP);
-						if (CS$<>8__locals1.<>4__this.owner == null || CS$<>8__locals1.<>4__this.owner.isDead)
-						{
-							break;
-						}
-					}
-					Rand.SetSeed(-1);
-					if (CS$<>8__locals1.<>4__this.crafter is TraitCookerMicrowave && CS$<>8__locals1.<>4__this.recipe.id == "onsentamago" && EClass.rnd(3) != 0)
-					{
-						int power = EClass.curve((200 + CS$<>8__locals1.<>4__this.ings[0].Quality * 5) * (100 + EClass.pc.Evalue(287) * 10) / 100, 400, 100, 75);
-						ActEffect.ProcAt(EffectId.Explosive, power, BlessedState.Normal, CS$<>8__locals1.<>4__this.crafter.owner.ExistsOnMap ? CS$<>8__locals1.<>4__this.crafter.owner : EClass.pc, EClass.pc, EClass.pc.pos, true, new ActRef
-						{
-							aliasEle = "eleImpact"
-						});
-					}
-				}
-			}.SetDuration(CS$<>8__locals1.duration, 5);
-			this.owner.SetTempHand(-1, -1);
-			if (EClass.debug.godCraft)
-			{
-				progress.SetDuration(1, 1);
-			}
-			yield return base.Do(progress, null);
-			if (progress.status == AIAct.Status.Fail)
-			{
-				yield return this.Cancel();
-			}
-			if (this.crafter.CloseOnComplete)
-			{
-				yield return this.Cancel();
-			}
-			if (!this.crafter.IsConsumeIng)
-			{
-				break;
-			}
-			if (!this.layer || !this.layer.RepeatAI)
-			{
-				goto IL_4BF;
-			}
-			CS$<>8__locals1 = null;
-			targets = null;
-			progress = null;
-		}
-		this.layer.ClearButtons();
-		IL_4BF:
-		yield break;
-	}
-
-	[CompilerGenerated]
-	private bool <Run>g__IsIngValid|14_0(Thing t, int i)
-	{
-		if (t == null || t.isDestroyed)
-		{
-			return false;
-		}
-		Card rootCard = t.GetRootCard();
-		return (rootCard == null || !rootCard.isChara || rootCard.IsPC) && (this.crafter.IsFactory || this.crafter.IsCraftIngredient(t, i));
-	}
-
 	public LayerBaseCraft layer;
 
 	public TraitCrafter crafter;
@@ -331,4 +11,305 @@ public class AI_UseCrafter : AIAct
 	public int num = 1;
 
 	public List<Thing> ings = new List<Thing>();
+
+	public override int LeftHand => 1001;
+
+	public override int RightHand => 1002;
+
+	public override bool CanManualCancel()
+	{
+		if ((bool)layer)
+		{
+			return layer.CanCancelAI;
+		}
+		return false;
+	}
+
+	public override void OnStart()
+	{
+		if (crafter.Icon != 0)
+		{
+			owner.ShowEmo(crafter.Icon);
+		}
+	}
+
+	public override void OnSuccess()
+	{
+		OnEnd();
+	}
+
+	public override void OnCancel()
+	{
+		OnEnd();
+		if ((bool)layer)
+		{
+			layer.Close();
+		}
+	}
+
+	public void OnEnd()
+	{
+		foreach (Thing ing in ings)
+		{
+			if (ing != null && ing.ExistsOnMap)
+			{
+				ing.isHidden = false;
+				EClass.pc.Pick(ing);
+			}
+		}
+		if (crafter.AutoTurnOff && crafter.owner.isOn)
+		{
+			crafter.Toggle(on: false);
+		}
+		if (!crafter.idSoundBG.IsEmpty())
+		{
+			EClass.Sound.Stop(crafter.idSoundBG);
+		}
+		if ((bool)layer)
+		{
+			layer.OnEndCraft();
+		}
+	}
+
+	public override IEnumerable<Status> Run()
+	{
+		do
+		{
+			if (crafter.owner.isDestroyed || !layer)
+			{
+				yield return Success();
+			}
+			if (!crafter.idSoundBG.IsEmpty())
+			{
+				SE.Play(crafter.idSoundBG);
+			}
+			List<Thing> targets = layer.GetTargets();
+			BlessedState blessed = BlessedState.Normal;
+			for (int j = 0; j < targets.Count; j++)
+			{
+				Thing t2 = targets[j];
+				if (!IsIngValid(t2, j))
+				{
+					if (j == 0)
+					{
+						layer.ClearButtons();
+					}
+					else
+					{
+						layer.RefreshCurrentGrid();
+					}
+					yield return Success();
+				}
+			}
+			if (!crafter.IsFuelEnough(num, targets))
+			{
+				Msg.Say("notEnoughFuel");
+				layer.RefreshCurrentGrid();
+				yield return Success();
+			}
+			ings = new List<Thing>();
+			for (int k = 0; k < targets.Count; k++)
+			{
+				Thing thing = targets[k].Split(layer.GetReqIngredient(k));
+				ings.Add(thing);
+				if (thing.blessedState <= BlessedState.Cursed && blessed > thing.blessedState)
+				{
+					blessed = thing.blessedState;
+				}
+				if (thing.blessedState > BlessedState.Normal && blessed == BlessedState.Normal)
+				{
+					blessed = thing.blessedState;
+				}
+				if (crafter.IsConsumeIng)
+				{
+					Card card = EClass._zone.AddCard(thing, crafter.owner.ExistsOnMap ? crafter.owner.pos : owner.pos);
+					card.altitude = ((!crafter.owner.ExistsOnMap) ? 1 : 0);
+					if (crafter.animeType == TraitCrafter.AnimeType.Microwave)
+					{
+						card.isHidden = true;
+					}
+				}
+			}
+			if ((bool)LayerDragGrid.Instance)
+			{
+				LayerDragGrid.Instance.Redraw();
+			}
+			bool requireOn = crafter.IsRequireFuel || crafter.ToggleType != ToggleType.None;
+			if (requireOn && !crafter.owner.isOn)
+			{
+				crafter.Toggle(on: true);
+			}
+			int costSP = crafter.GetCostSp(this);
+			int duration = crafter.GetDuration(this, costSP);
+			Progress_Custom progress = new Progress_Custom
+			{
+				canProgress = delegate
+				{
+					if (requireOn && !crafter.owner.isOn)
+					{
+						return false;
+					}
+					foreach (Thing ing in ings)
+					{
+						if (ing.isDestroyed || (crafter.IsConsumeIng && !ing.ExistsOnMap))
+						{
+							return false;
+						}
+					}
+					if ((bool)LayerDragGrid.Instance)
+					{
+						InvOwnerDraglet invOwnerDraglet = LayerDragGrid.Instance.owner;
+						for (int l = 0; l < invOwnerDraglet.numDragGrid; l++)
+						{
+							if (invOwnerDraglet.buttons[l].Card == null)
+							{
+								return false;
+							}
+						}
+						if (invOwnerDraglet.numDragGrid == 2 && ings[0] == ings[1] && ings[0].Num == 1)
+						{
+							return false;
+						}
+					}
+					return !crafter.owner.isDestroyed;
+				},
+				onProgress = delegate
+				{
+					if (crafter.owner.ExistsOnMap && !owner.pos.Equals(crafter.owner.pos))
+					{
+						owner.LookAt(crafter.owner);
+					}
+					owner.PlaySound(crafter.idSoundProgress);
+					if (crafter.owner.ExistsOnMap)
+					{
+						TraitCrafter.AnimeType animeType = crafter.animeType;
+						if ((uint)(animeType - 1) <= 1u)
+						{
+							crafter.owner.renderer.PlayAnime(crafter.IdAnimeProgress);
+						}
+					}
+					foreach (Thing ing2 in ings)
+					{
+						ing2.renderer.PlayAnime(crafter.IdAnimeProgress);
+					}
+				},
+				onProgressComplete = delegate
+				{
+					if (crafter.StopSoundProgress)
+					{
+						EClass.Sound.Stop(crafter.idSoundProgress);
+					}
+					owner.PlaySound(crafter.idSoundComplete);
+					Element orCreateElement = owner.elements.GetOrCreateElement(crafter.IDReqEle(recipe?.source ?? null));
+					if (recipe != null)
+					{
+						for (int m = 0; m < this.num; m++)
+						{
+							recipe.Craft(blessed, m == 0, ings, crafter);
+						}
+						EClass.Sound.Play("craft");
+						Point from = (crafter.owner.ExistsOnMap ? crafter.owner.pos : owner.pos);
+						Effect.Get("smoke").Play(from);
+						Effect.Get("mine").Play(from).SetParticleColor(recipe.GetColorMaterial().GetColor())
+							.Emit(10 + EClass.rnd(10));
+						owner.renderer.PlayAnime(AnimeID.JumpSmall);
+					}
+					else
+					{
+						Thing thing2 = crafter.Craft(this);
+						if (thing2 != null)
+						{
+							if (thing2.category.ignoreBless == 0)
+							{
+								thing2.SetBlessedState(blessed);
+							}
+							thing2.PlaySoundDrop(spatial: false);
+							EClass._zone.AddCard(thing2, EClass.pc.pos);
+							thing2.Identify(show: false);
+							owner.Pick(thing2);
+						}
+					}
+					for (int n = 0; n < ings.Count; n++)
+					{
+						if (crafter.ShouldConsumeIng(crafter.GetSource(this), n))
+						{
+							ings[n].Destroy();
+						}
+					}
+					foreach (Thing ing3 in ings)
+					{
+						if (ing3.ExistsOnMap)
+						{
+							owner.Pick(ing3);
+						}
+					}
+					if (crafter.IsRequireFuel)
+					{
+						crafter.owner.ModCharge(-crafter.FuelCost * this.num);
+						if (crafter.owner.c_charges <= 0)
+						{
+							crafter.owner.c_charges = 0;
+							crafter.Toggle(on: false);
+						}
+					}
+					for (int num = 0; num < this.num; num++)
+					{
+						owner.RemoveCondition<ConInvulnerable>();
+						owner.elements.ModExp(orCreateElement.id, costSP * 12 * (100 + duration * 2) / 100);
+						owner.stamina.Mod(-costSP);
+						if (owner == null || owner.isDead)
+						{
+							break;
+						}
+					}
+					Rand.SetSeed();
+					if (crafter is TraitCookerMicrowave && recipe.id == "onsentamago" && EClass.rnd(3) != 0)
+					{
+						int power = EClass.curve((200 + ings[0].Quality * 5) * (100 + EClass.pc.Evalue(287) * 10) / 100, 400, 100);
+						ActEffect.ProcAt(EffectId.Explosive, power, BlessedState.Normal, crafter.owner.ExistsOnMap ? crafter.owner : EClass.pc, EClass.pc, EClass.pc.pos, isNeg: true, new ActRef
+						{
+							aliasEle = "eleImpact"
+						});
+					}
+				}
+			}.SetDuration(duration, 5);
+			owner.SetTempHand(-1, -1);
+			if (EClass.debug.godCraft)
+			{
+				progress.SetDuration(1, 1);
+			}
+			yield return Do(progress);
+			if (progress.status == Status.Fail)
+			{
+				yield return Cancel();
+			}
+			if (crafter.CloseOnComplete)
+			{
+				yield return Cancel();
+			}
+			if (!crafter.IsConsumeIng)
+			{
+				layer.ClearButtons();
+				break;
+			}
+		}
+		while ((bool)layer && layer.RepeatAI);
+		bool IsIngValid(Thing t, int i)
+		{
+			if (t == null || t.isDestroyed)
+			{
+				return false;
+			}
+			Card rootCard = t.GetRootCard();
+			if (rootCard != null && rootCard.isChara && !rootCard.IsPC)
+			{
+				return false;
+			}
+			if (!crafter.IsFactory && !crafter.IsCraftIngredient(t, i))
+			{
+				return false;
+			}
+			return true;
+		}
+	}
 }

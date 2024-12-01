@@ -1,18 +1,28 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class FoodEffect : EClass
 {
 	public static bool IsHumanFlesh(Thing food)
 	{
-		return !food.HasTag(CTAG.notHumanMeat) && (FoodEffect.IsHumanFlesh(food.refCard) || FoodEffect.IsHumanFlesh(food.refCard2));
+		if (food.HasTag(CTAG.notHumanMeat))
+		{
+			return false;
+		}
+		if (!IsHumanFlesh(food.refCard))
+		{
+			return IsHumanFlesh(food.refCard2);
+		}
+		return true;
 	}
 
 	public static bool IsUndeadFlesh(Thing food)
 	{
-		return FoodEffect.IsUndeadFlesh(food.refCard) || FoodEffect.IsUndeadFlesh(food.refCard2);
+		if (!IsUndeadFlesh(food.refCard))
+		{
+			return IsUndeadFlesh(food.refCard2);
+		}
+		return true;
 	}
 
 	public static bool IsHumanFlesh(CardRow r)
@@ -25,7 +35,11 @@ public class FoodEffect : EClass
 		{
 			return EClass.pc.race.tag.Contains("human");
 		}
-		return r.isChara && EClass.sources.races.map[EClass.sources.charas.map[r.id].race].tag.Contains("human");
+		if (r.isChara)
+		{
+			return EClass.sources.races.map[EClass.sources.charas.map[r.id].race].tag.Contains("human");
+		}
+		return false;
 	}
 
 	public static bool IsUndeadFlesh(CardRow r)
@@ -38,15 +52,17 @@ public class FoodEffect : EClass
 		{
 			return EClass.pc.race.tag.Contains("undead");
 		}
-		return r.isChara && EClass.sources.races.map[EClass.sources.charas.map[r.id].race].tag.Contains("undead");
+		if (r.isChara)
+		{
+			return EClass.sources.races.map[EClass.sources.charas.map[r.id].race].tag.Contains("undead");
+		}
+		return false;
 	}
 
 	public static void Proc(Chara c, Thing food)
 	{
-		FoodEffect.<>c__DisplayClass4_0 CS$<>8__locals1;
-		CS$<>8__locals1.c = c;
-		bool flag = EClass._zone.IsPCFaction && CS$<>8__locals1.c.IsInSpot<TraitSpotDining>();
-		int num = food.isCrafted ? ((EClass.pc.Evalue(1650) >= 3) ? 5 : 0) : 0;
+		bool flag = EClass._zone.IsPCFaction && c.IsInSpot<TraitSpotDining>();
+		int num = (food.isCrafted ? ((EClass.pc.Evalue(1650) >= 3) ? 5 : 0) : 0);
 		float num2 = (float)(100 + (flag ? 10 : 0) + num + Mathf.Min(food.QualityLv * 10, 100)) / 200f;
 		if (num2 < 0.1f)
 		{
@@ -55,12 +71,12 @@ public class FoodEffect : EClass
 		int num3 = food.Evalue(10);
 		float num4 = 40f;
 		float num5 = 1f;
-		CS$<>8__locals1.idTaste = "";
-		bool flag2 = FoodEffect.IsHumanFlesh(food);
-		bool flag3 = FoodEffect.IsUndeadFlesh(food);
+		string idTaste = "";
+		bool flag2 = IsHumanFlesh(food);
+		bool flag3 = IsUndeadFlesh(food);
 		if (food.source._origin != "meat" && food.source._origin != "dish")
 		{
-			flag3 = (flag2 = false);
+			flag2 = (flag3 = false);
 		}
 		if (food.id == "deadbody")
 		{
@@ -74,7 +90,7 @@ public class FoodEffect : EClass
 				flag2 = false;
 			}
 		}
-		bool flag4 = CS$<>8__locals1.c.HasElement(1205, 1);
+		bool flag4 = c.HasElement(1205);
 		bool flag5 = food.IsDecayed || flag3;
 		if (food.IsBlessed)
 		{
@@ -103,209 +119,173 @@ public class FoodEffect : EClass
 			num5 = 0f;
 			num2 *= 0.5f;
 		}
-		if (CS$<>8__locals1.c.HasElement(1200, 1))
+		if (c.HasElement(1200))
 		{
 			num2 *= 1.25f;
 		}
-		if (!CS$<>8__locals1.c.IsPC)
+		if (!c.IsPC)
 		{
 			num2 *= 3f;
 		}
-		if (flag5 && !CS$<>8__locals1.c.HasElement(480, 1))
+		if (flag5 && !c.HasElement(480))
 		{
-			if (CS$<>8__locals1.c.IsPC)
+			if (c.IsPC)
 			{
 				if (flag3)
 				{
-					CS$<>8__locals1.c.Say("food_undead", null, null);
+					c.Say("food_undead");
 				}
-				CS$<>8__locals1.c.Say("food_rot", null, null);
+				c.Say("food_rot");
 			}
 			num5 = 0f;
 			num3 /= 2;
 		}
 		else
 		{
-			string text = food.source._origin;
-			if (!(text == "meat"))
+			switch (food.source._origin)
 			{
-				if (!(text == "fish"))
+			case "meat":
+				if (c.IsPC)
 				{
-					if (text == "dough")
-					{
-						if (CS$<>8__locals1.c.IsPC)
-						{
-							CS$<>8__locals1.c.Say("food_raw_powder", null, null);
-						}
-						num2 *= 0.9f;
-						num5 = 0.5f;
-					}
+					c.Say("food_raw_meat");
 				}
-				else if (CS$<>8__locals1.c.IsHuman)
+				num2 *= 0.7f;
+				num5 = 0.5f;
+				break;
+			case "fish":
+				if (c.IsHuman)
 				{
-					if (CS$<>8__locals1.c.IsPC)
+					if (c.IsPC)
 					{
-						CS$<>8__locals1.c.Say("food_raw_fish", null, null);
+						c.Say("food_raw_fish");
 					}
 					num2 *= 0.9f;
 					num5 = 0.5f;
 				}
-			}
-			else
-			{
-				if (CS$<>8__locals1.c.IsPC)
+				break;
+			case "dough":
+				if (c.IsPC)
 				{
-					CS$<>8__locals1.c.Say("food_raw_meat", null, null);
+					c.Say("food_raw_powder");
 				}
-				num2 *= 0.7f;
+				num2 *= 0.9f;
 				num5 = 0.5f;
+				break;
 			}
 		}
-		float num6 = (float)Mathf.Min(CS$<>8__locals1.c.hunger.value, num3);
-		if (CS$<>8__locals1.c.hunger.GetPhase() >= 3)
+		float num6 = Mathf.Min(c.hunger.value, num3);
+		if (c.hunger.GetPhase() >= 3)
 		{
 			num6 *= 1.1f;
 		}
-		if (flag5 && !CS$<>8__locals1.c.HasElement(480, 1))
+		if (flag5 && !c.HasElement(480))
 		{
-			CS$<>8__locals1.c.ModExp(70, -300);
-			CS$<>8__locals1.c.ModExp(71, -300);
-			CS$<>8__locals1.c.ModExp(72, -200);
-			CS$<>8__locals1.c.ModExp(73, -200);
-			CS$<>8__locals1.c.ModExp(74, -200);
-			CS$<>8__locals1.c.ModExp(75, 500);
-			CS$<>8__locals1.c.ModExp(76, -200);
-			CS$<>8__locals1.c.ModExp(77, -300);
+			c.ModExp(70, -300);
+			c.ModExp(71, -300);
+			c.ModExp(72, -200);
+			c.ModExp(73, -200);
+			c.ModExp(74, -200);
+			c.ModExp(75, 500);
+			c.ModExp(76, -200);
+			c.ModExp(77, -300);
 		}
 		else
 		{
 			num2 = num2 * num6 / 10f;
-			if (CS$<>8__locals1.c.HasCondition<ConAnorexia>())
+			if (c.HasCondition<ConAnorexia>())
 			{
 				num2 = 0.01f;
 			}
-			List<Element> list = food.ListValidTraits(true, false);
-			foreach (Element element in food.elements.dict.Values)
+			List<Element> list = food.ListValidTraits(isCraft: true, limit: false);
+			foreach (Element value in food.elements.dict.Values)
 			{
-				if (!element.source.foodEffect.IsEmpty() && list.Contains(element))
+				if (value.source.foodEffect.IsEmpty() || !list.Contains(value))
 				{
-					string[] foodEffect = element.source.foodEffect;
-					int num7 = element.id;
-					float num8 = num2 * (float)element.Value;
-					if (element.source.category == "food" && CS$<>8__locals1.c.IsPC)
+					continue;
+				}
+				string[] foodEffect = value.source.foodEffect;
+				int id = value.id;
+				float num7 = num2 * (float)value.Value;
+				if (value.source.category == "food" && c.IsPC)
+				{
+					bool flag6 = num7 >= 0f;
+					string text = value.source.GetText(flag6 ? "textInc" : "textDec", returnNull: true);
+					if (text != null)
 					{
-						bool flag6 = num8 >= 0f;
-						string text2 = element.source.GetText(flag6 ? "textInc" : "textDec", true);
-						if (text2 != null)
+						Msg.SetColor(flag6 ? "positive" : "negative");
+						c.Say(text);
+					}
+				}
+				switch (foodEffect[0])
+				{
+				case "exp":
+				{
+					id = ((foodEffect.Length > 1) ? EClass.sources.elements.alias[foodEffect[1]].id : value.id);
+					int a = (int)(num7 * (float)((foodEffect.Length > 2) ? foodEffect[2].ToInt() : 4)) * 2 / 3;
+					c.ModExp(id, a);
+					break;
+				}
+				case "pot":
+				{
+					id = ((foodEffect.Length > 1) ? EClass.sources.elements.alias[foodEffect[1]].id : value.id);
+					int vTempPotential = c.elements.GetElement(id).vTempPotential;
+					int num8 = EClass.rndHalf((int)(num7 / 5f) + 1);
+					num8 = num8 * 100 / Mathf.Max(100, vTempPotential * 2 / 3);
+					c.elements.ModTempPotential(id, num8, 8);
+					break;
+				}
+				case "karma":
+					if (c.IsPCParty)
+					{
+						EClass.player.ModKarma(-5);
+					}
+					break;
+				case "poison":
+					ActEffect.Poison(c, EClass.pc, value.Value * 10);
+					if (c.isDead)
+					{
+						return;
+					}
+					break;
+				case "love":
+					ActEffect.LoveMiracle(c, EClass.pc, value.Value * 10);
+					break;
+				case "loseWeight":
+					c.ModWeight(-EClass.rndHalf(value.Value), ignoreLimit: true);
+					break;
+				case "gainWeight":
+					c.ModWeight(EClass.rndHalf(value.Value), ignoreLimit: true);
+					break;
+				case "little":
+				{
+					int @int = c.GetInt(112);
+					if (@int >= 30)
+					{
+						break;
+					}
+					c.Say("little_eat", c);
+					c.PlaySound("ding_potential");
+					int v = Mathf.Max(5 - @int / 2, 1);
+					Debug.Log("sister eaten:" + @int + "/" + v);
+					foreach (Element value2 in c.elements.dict.Values)
+					{
+						if (value2.IsMainAttribute)
 						{
-							Msg.SetColor(flag6 ? "positive" : "negative");
-							CS$<>8__locals1.c.Say(text2, null, null);
+							c.elements.ModPotential(value2.id, v);
 						}
 					}
-					string text = foodEffect[0];
-					uint num9 = <PrivateImplementationDetails>.ComputeStringHash(text);
-					if (num9 <= 1923516200U)
+					if (c.race.id == "mutant" && c.elements.Base(1230) < 10)
 					{
-						if (num9 <= 893270296U)
-						{
-							if (num9 != 207713729U)
-							{
-								if (num9 == 893270296U)
-								{
-									if (text == "loseWeight")
-									{
-										CS$<>8__locals1.c.ModWeight(-EClass.rndHalf(element.Value), true);
-									}
-								}
-							}
-							else if (text == "little")
-							{
-								int @int = CS$<>8__locals1.c.GetInt(112, null);
-								if (@int < 30)
-								{
-									CS$<>8__locals1.c.Say("little_eat", CS$<>8__locals1.c, null, null);
-									CS$<>8__locals1.c.PlaySound("ding_potential", 1f, true);
-									int v = Mathf.Max(5 - @int / 2, 1);
-									Debug.Log("sister eaten:" + @int.ToString() + "/" + v.ToString());
-									foreach (Element element2 in CS$<>8__locals1.c.elements.dict.Values)
-									{
-										if (element2.IsMainAttribute)
-										{
-											CS$<>8__locals1.c.elements.ModPotential(element2.id, v);
-										}
-									}
-									if (CS$<>8__locals1.c.race.id == "mutant" && CS$<>8__locals1.c.elements.Base(1230) < 10)
-									{
-										CS$<>8__locals1.c.Say("little_adam", CS$<>8__locals1.c, null, null);
-										CS$<>8__locals1.c.SetFeat(1230, CS$<>8__locals1.c.elements.Base(1230) + 1, false);
-									}
-									CS$<>8__locals1.c.SetInt(112, @int + 1);
-								}
-							}
-						}
-						else if (num9 != 1429431836U)
-						{
-							if (num9 == 1923516200U)
-							{
-								if (text == "exp")
-								{
-									num7 = ((foodEffect.Length > 1) ? EClass.sources.elements.alias[foodEffect[1]].id : element.id);
-									int a = (int)(num8 * (float)((foodEffect.Length > 2) ? foodEffect[2].ToInt() : 4)) * 2 / 3;
-									CS$<>8__locals1.c.ModExp(num7, a);
-								}
-							}
-						}
-						else if (text == "pot")
-						{
-							num7 = ((foodEffect.Length > 1) ? EClass.sources.elements.alias[foodEffect[1]].id : element.id);
-							int vTempPotential = CS$<>8__locals1.c.elements.GetElement(num7).vTempPotential;
-							int num10 = EClass.rndHalf((int)(num8 / 5f) + 1);
-							num10 = num10 * 100 / Mathf.Max(100, vTempPotential * 2 / 3);
-							CS$<>8__locals1.c.elements.ModTempPotential(num7, num10, 8);
-						}
+						c.Say("little_adam", c);
+						c.SetFeat(1230, c.elements.Base(1230) + 1);
 					}
-					else if (num9 <= 2676017222U)
-					{
-						if (num9 != 2399918791U)
-						{
-							if (num9 == 2676017222U)
-							{
-								if (text == "gainWeight")
-								{
-									CS$<>8__locals1.c.ModWeight(EClass.rndHalf(element.Value), true);
-								}
-							}
-						}
-						else if (text == "karma")
-						{
-							if (CS$<>8__locals1.c.IsPCParty)
-							{
-								EClass.player.ModKarma(-5);
-							}
-						}
-					}
-					else if (num9 != 3470992305U)
-					{
-						if (num9 == 3576140497U)
-						{
-							if (text == "love")
-							{
-								ActEffect.LoveMiracle(CS$<>8__locals1.c, EClass.pc, element.Value * 10);
-							}
-						}
-					}
-					else if (text == "poison")
-					{
-						ActEffect.Poison(CS$<>8__locals1.c, EClass.pc, element.Value * 10);
-						if (CS$<>8__locals1.c.isDead)
-						{
-							return;
-						}
-					}
+					c.SetInt(112, @int + 1);
+					break;
+				}
 				}
 			}
 		}
-		FoodEffect.ProcTrait(CS$<>8__locals1.c, food);
+		ProcTrait(c, food);
 		num4 += (float)food.Evalue(70);
 		num4 += (float)(food.Evalue(72) / 2);
 		num4 += (float)(food.Evalue(73) / 2);
@@ -316,174 +296,152 @@ public class FoodEffect : EClass
 		num4 -= (float)food.Evalue(71);
 		num4 -= (float)(num3 / 2);
 		num4 *= num5;
-		if (CS$<>8__locals1.idTaste.IsEmpty())
+		if (idTaste.IsEmpty())
 		{
 			if (num4 > 100f)
 			{
-				CS$<>8__locals1.idTaste = "food_great";
+				idTaste = "food_great";
 			}
 			else if (num4 > 70f)
 			{
-				CS$<>8__locals1.idTaste = "food_good";
+				idTaste = "food_good";
 			}
 			else if (num4 > 50f)
 			{
-				CS$<>8__locals1.idTaste = "food_soso";
+				idTaste = "food_soso";
 			}
 			else if (num4 > 30f)
 			{
-				CS$<>8__locals1.idTaste = "food_average";
+				idTaste = "food_average";
 			}
 			else
 			{
-				CS$<>8__locals1.idTaste = "food_bad";
+				idTaste = "food_bad";
 			}
-			if (CS$<>8__locals1.c.IsPC)
+			if (c.IsPC)
 			{
-				CS$<>8__locals1.c.Say(CS$<>8__locals1.idTaste, null, null);
+				c.Say(idTaste);
 				if (flag2)
 				{
-					CS$<>8__locals1.c.Say(flag4 ? "food_human_pos" : "food_human_neg", null, null);
+					c.Say(flag4 ? "food_human_pos" : "food_human_neg");
 				}
 				else if (flag4)
 				{
-					CS$<>8__locals1.c.Say("food_human_whine", null, null);
+					c.Say("food_human_whine");
 				}
 			}
 		}
-		if (LangGame.Has(CS$<>8__locals1.idTaste + "2"))
+		if (LangGame.Has(idTaste + "2"))
 		{
-			CS$<>8__locals1.c.Say(CS$<>8__locals1.idTaste + "2", CS$<>8__locals1.c, food, null, null);
+			c.Say(idTaste + "2", c, food);
 		}
-		if (!CS$<>8__locals1.c.IsPCParty)
+		if (!c.IsPCParty)
 		{
 			num3 *= 2;
 		}
-		num3 = num3 * (100 + CS$<>8__locals1.c.Evalue(1235) * 10) / (100 + CS$<>8__locals1.c.Evalue(1234) * 10);
-		CS$<>8__locals1.c.hunger.Mod(-num3);
+		num3 = num3 * (100 + c.Evalue(1235) * 10) / (100 + c.Evalue(1234) * 10);
+		c.hunger.Mod(-num3);
 		if (flag2)
 		{
 			if (!flag4)
 			{
-				if (CS$<>8__locals1.c.IsHuman)
+				if (c.IsHuman)
 				{
-					CS$<>8__locals1.c.AddCondition<ConInsane>(200, false);
-					CS$<>8__locals1.c.SAN.Mod(15);
+					c.AddCondition<ConInsane>(200);
+					c.SAN.Mod(15);
 				}
-				if (EClass.rnd(CS$<>8__locals1.c.IsHuman ? 5 : 20) == 0)
+				if (EClass.rnd(c.IsHuman ? 5 : 20) == 0)
 				{
-					CS$<>8__locals1.c.SetFeat(1205, 1, true);
+					c.SetFeat(1205, 1, msg: true);
 					flag4 = true;
 				}
 			}
 			if (flag4)
 			{
-				CS$<>8__locals1.c.SetInt(31, EClass.world.date.GetRaw(0) + 10080);
+				c.SetInt(31, EClass.world.date.GetRaw() + 10080);
 			}
 		}
-		else if (flag4 && CS$<>8__locals1.c.GetInt(31, null) < EClass.world.date.GetRaw(0))
+		else if (flag4 && c.GetInt(31) < EClass.world.date.GetRaw())
 		{
-			CS$<>8__locals1.c.SetFeat(1205, 0, true);
+			c.SetFeat(1205, 0, msg: true);
 		}
-		if (flag5 && !CS$<>8__locals1.c.HasElement(480, 1))
+		if (flag5 && !c.HasElement(480))
 		{
-			CS$<>8__locals1.c.AddCondition<ConParalyze>(100, false);
-			CS$<>8__locals1.c.AddCondition<ConConfuse>(200, false);
+			c.AddCondition<ConParalyze>();
+			c.AddCondition<ConConfuse>(200);
 		}
-		if (CS$<>8__locals1.c.HasCondition<ConAnorexia>())
+		if (c.HasCondition<ConAnorexia>())
 		{
-			CS$<>8__locals1.c.Vomit();
+			c.Vomit();
 		}
-		if (num3 > 20 && CS$<>8__locals1.c.HasElement(1413, 1))
+		if (num3 > 20 && c.HasElement(1413))
 		{
-			Thing thing = ThingGen.Create("seed", -1, -1);
+			Thing thing = ThingGen.Create("seed");
 			if (EClass.rnd(EClass.debug.enable ? 1 : 10) == 0)
 			{
 				TraitSeed.ApplySeed(thing, 90);
 			}
 			thing.SetNum(2 + EClass.rnd(3));
-			CS$<>8__locals1.c.Talk("vomit", null, null, false);
-			CS$<>8__locals1.c.Say("fairy_vomit", CS$<>8__locals1.c, thing, null, null);
-			CS$<>8__locals1.c.PickOrDrop(CS$<>8__locals1.c.pos, thing, true);
+			c.Talk("vomit");
+			c.Say("fairy_vomit", c, thing);
+			c.PickOrDrop(c.pos, thing);
 		}
-		food.trait.OnEat(CS$<>8__locals1.c);
+		food.trait.OnEat(c);
 		if (food.trait is TraitDrink)
 		{
-			food.trait.OnDrink(CS$<>8__locals1.c);
+			food.trait.OnDrink(c);
 		}
 	}
 
 	public static void ProcTrait(Chara c, Card t)
 	{
-		FoodEffect.<>c__DisplayClass5_0 CS$<>8__locals1;
-		CS$<>8__locals1.c = c;
-		foreach (Element element in t.elements.dict.Values)
+		foreach (Element value in t.elements.dict.Values)
 		{
-			if (element.IsTrait)
+			if (!value.IsTrait)
 			{
-				if (element.Value >= 0)
+				continue;
+			}
+			if (value.Value >= 0)
+			{
+				switch (value.id)
 				{
-					switch (element.id)
-					{
-					case 753:
-						CS$<>8__locals1.c.CureCondition<ConPoison>(element.Value * 2);
-						break;
-					case 754:
-						CS$<>8__locals1.c.AddCondition<ConPeace>(element.Value * 5, false);
-						break;
-					case 755:
-						CS$<>8__locals1.c.CureCondition<ConBleed>(element.Value);
-						break;
-					case 756:
-					{
-						Condition condition = CS$<>8__locals1.c.AddCondition<ConHotspring>(element.Value * 2, false);
-						if (condition != null)
-						{
-							condition.SetPerfume(3);
-						}
-						break;
-					}
-					}
+				case 753:
+					c.CureCondition<ConPoison>(value.Value * 2);
+					break;
+				case 754:
+					c.AddCondition<ConPeace>(value.Value * 5);
+					break;
+				case 755:
+					c.CureCondition<ConBleed>(value.Value);
+					break;
+				case 756:
+					c.AddCondition<ConHotspring>(value.Value * 2)?.SetPerfume();
+					break;
 				}
-				else
+			}
+			else
+			{
+				switch (value.id)
 				{
-					int id = element.id;
-					if (id != 753)
-					{
-						if (id == 754)
-						{
-							FoodEffect.<ProcTrait>g__SayTaste|5_0("food_mind", ref CS$<>8__locals1);
-							CS$<>8__locals1.c.AddCondition<ConConfuse>(-element.Value * 10, false);
-							CS$<>8__locals1.c.AddCondition<ConInsane>(-element.Value * 10, false);
-							CS$<>8__locals1.c.AddCondition<ConHallucination>(-element.Value * 20, false);
-						}
-					}
-					else
-					{
-						FoodEffect.<ProcTrait>g__SayTaste|5_0("food_poison", ref CS$<>8__locals1);
-						CS$<>8__locals1.c.AddCondition<ConPoison>(-element.Value * 10, false);
-					}
+				case 753:
+					SayTaste("food_poison");
+					c.AddCondition<ConPoison>(-value.Value * 10);
+					break;
+				case 754:
+					SayTaste("food_mind");
+					c.AddCondition<ConConfuse>(-value.Value * 10);
+					c.AddCondition<ConInsane>(-value.Value * 10);
+					c.AddCondition<ConHallucination>(-value.Value * 20);
+					break;
 				}
 			}
 		}
-	}
-
-	[CompilerGenerated]
-	internal static void <Proc>g__SayTaste|4_0(string _id, ref FoodEffect.<>c__DisplayClass4_0 A_1)
-	{
-		A_1.idTaste = _id;
-		if (A_1.c.IsPC)
+		void SayTaste(string _id)
 		{
-			A_1.c.Say(A_1.idTaste, null, null);
-		}
-	}
-
-	[CompilerGenerated]
-	internal static void <ProcTrait>g__SayTaste|5_0(string _id, ref FoodEffect.<>c__DisplayClass5_0 A_1)
-	{
-		if (A_1.c.IsPC)
-		{
-			A_1.c.Say(_id, null, null);
+			if (c.IsPC)
+			{
+				c.Say(_id);
+			}
 		}
 	}
 }

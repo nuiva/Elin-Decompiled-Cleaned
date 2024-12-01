@@ -1,5 +1,3 @@
-﻿using System;
-
 public class ConAnorexia : BadCondition
 {
 	public override int GetPhase()

@@ -1,14 +1,6 @@
-﻿using System;
-
 public class TraitHitchingPost : TraitFloorSwitch
 {
-	public override bool IsHomeItem
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsHomeItem => true;
 
 	public override void OnActivateTrap(Chara c)
 	{
@@ -18,22 +10,24 @@ public class TraitHitchingPost : TraitFloorSwitch
 		}
 		if (EClass.pc.ride == null)
 		{
-			foreach (Chara chara in this.owner.pos.Charas)
+			foreach (Chara chara in owner.pos.Charas)
 			{
 				if (chara.IsPCFaction && !chara.IsPC && !chara.IsPCParty)
 				{
-					ActRide.Ride(EClass.pc, chara, false);
+					ActRide.Ride(EClass.pc, chara);
 					return;
 				}
 			}
 			Msg.Say("noRide");
 			TraitSwitch.haltMove = false;
-			return;
 		}
-		Chara ride = EClass.pc.ride;
-		ActRide.Unride(EClass.pc, false);
-		EClass.pc.party.RemoveMember(ride);
-		ride.noMove = true;
-		ride.orgPos = new Point(this.owner.pos);
+		else
+		{
+			Chara ride = EClass.pc.ride;
+			ActRide.Unride(EClass.pc);
+			EClass.pc.party.RemoveMember(ride);
+			ride.noMove = true;
+			ride.orgPos = new Point(owner.pos);
+		}
 	}
 }

@@ -1,14 +1,6 @@
-﻿using System;
-
 public class BaseBuff : BaseDebuff
 {
-	public override bool CanManualRemove
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanManualRemove => true;
 
 	public override int GetPhase()
 	{

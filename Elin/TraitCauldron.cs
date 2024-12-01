@@ -1,27 +1,29 @@
-﻿using System;
-
 public class TraitCauldron : TraitCookingPot
 {
 	public override string IDReqEle(RecipeSource r)
 	{
-		CardRow cardRow = r.row as CardRow;
-		string result;
-		if (!(((cardRow != null) ? cardRow._origin : null) == "dish"))
+		object obj;
+		if (!((r.row as CardRow)?._origin == "dish"))
 		{
-			if ((result = base.GetParam(1, null)) == null)
+			obj = GetParam(1);
+			if (obj == null)
 			{
 				return "handicraft";
 			}
 		}
 		else
 		{
-			result = "cooking";
+			obj = "cooking";
 		}
-		return result;
+		return (string)obj;
 	}
 
 	public override bool Contains(RecipeSource r)
 	{
-		return r.idFactory == "cauldron" || r.idFactory == "camppot";
+		if (!(r.idFactory == "cauldron"))
+		{
+			return r.idFactory == "camppot";
+		}
+		return true;
 	}
 }

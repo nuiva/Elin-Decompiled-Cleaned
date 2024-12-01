@@ -1,5 +1,3 @@
-﻿using System;
-
 public class IngredientAndRecipe
 {
 	public int req;

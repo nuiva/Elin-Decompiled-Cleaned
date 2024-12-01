@@ -1,43 +1,29 @@
-﻿using System;
-
 public class QuestSequence : Quest
 {
-	public SourceQuest.Row originalSource
-	{
-		get
-		{
-			return EClass.sources.quests.map[this.id];
-		}
-	}
+	public SourceQuest.Row originalSource => EClass.sources.quests.map[id];
 
-	public override string idSource
-	{
-		get
-		{
-			return this.id + ((this.phase == 0) ? "" : (this.phase.ToString() ?? ""));
-		}
-	}
+	public override string idSource => id + ((phase == 0) ? "" : (phase.ToString() ?? ""));
 
 	public override string GetTitle()
 	{
-		string text = base.source.GetText("name", true);
+		string text = base.source.GetText("name", returnNull: true);
 		if (!text.IsEmpty())
 		{
 			return text;
 		}
-		for (int i = this.phase; i > 0; i--)
+		for (int num = phase; num > 0; num--)
 		{
-			text = EClass.sources.quests.map[this.id].GetText("name", true);
+			text = EClass.sources.quests.map[id].GetText("name", returnNull: true);
 			if (!text.IsEmpty())
 			{
 				return text;
 			}
 		}
-		return this.originalSource.GetText("name", false);
+		return originalSource.GetText();
 	}
 
 	public override void OnCompleteTask()
 	{
-		base.NextPhase();
+		NextPhase();
 	}
 }

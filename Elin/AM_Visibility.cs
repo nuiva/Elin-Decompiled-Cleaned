@@ -1,34 +1,14 @@
-﻿using System;
-
 public class AM_Visibility : AM_BaseTileSelect
 {
-	public override BaseTileMap.CardIconMode cardIconMode
-	{
-		get
-		{
-			return BaseTileMap.CardIconMode.Visibility;
-		}
-	}
+	public override BaseTileMap.CardIconMode cardIconMode => BaseTileMap.CardIconMode.Visibility;
 
-	public override BaseTileSelector.SelectType selectType
-	{
-		get
-		{
-			return BaseTileSelector.SelectType.Single;
-		}
-	}
+	public override BaseTileSelector.SelectType selectType => BaseTileSelector.SelectType.Single;
 
-	public override bool IsBuildMode
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsBuildMode => true;
 
 	public override HitResult HitTest(Point point, Point start)
 	{
-		if (this.GetTarget(point) != null)
+		if (GetTarget(point) != null)
 		{
 			return HitResult.Valid;
 		}
@@ -37,7 +17,7 @@ public class AM_Visibility : AM_BaseTileSelect
 
 	public override void OnProcessTiles(Point point, int dir)
 	{
-		Card target = this.GetTarget(point);
+		Card target = GetTarget(point);
 		if (target != null)
 		{
 			SE.Click();

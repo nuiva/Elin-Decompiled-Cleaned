@@ -1,20 +1,29 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class AI_Eat : AIAct
 {
-	public bool IsValidTarget(Card c)
-	{
-		return c != null && c.trait.CanEat(this.owner);
-	}
+	public Card target;
 
-	public override bool LocalAct
+	public bool cook = true;
+
+	public override bool LocalAct => false;
+
+	public override bool IsHostileAct
 	{
 		get
 		{
+			if (target != null)
+			{
+				return target.isNPCProperty;
+			}
 			return false;
 		}
+	}
+
+	public bool IsValidTarget(Card c)
+	{
+		return c?.trait.CanEat(owner) ?? false;
 	}
 
 	public override bool CanManualCancel()
@@ -22,119 +31,106 @@ public class AI_Eat : AIAct
 		return true;
 	}
 
-	public override bool IsHostileAct
-	{
-		get
-		{
-			return this.target != null && this.target.isNPCProperty;
-		}
-	}
-
 	public override void OnStart()
 	{
 	}
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		if (this.target != null && (this.target.GetRootCard() == this.owner || this.target.parent == null))
+		if (target != null && (target.GetRootCard() == owner || target.parent == null))
 		{
-			this.owner.HoldCard(this.target, 1);
+			owner.HoldCard(target, 1);
 		}
-		else if (this.target != null)
+		else if (target != null)
 		{
-			yield return base.DoGrab(this.target, 1, false, null);
+			yield return DoGrab(target, 1);
 		}
 		else
 		{
-			if (!this.IsValidTarget(this.owner.held))
+			if (!IsValidTarget(owner.held))
 			{
-				yield return base.DoGrab<TraitFood>();
-				if (!this.IsValidTarget(this.owner.held))
+				yield return DoGrab<TraitFood>();
+				if (!IsValidTarget(owner.held))
 				{
-					yield return this.Cancel();
+					yield return Cancel();
 				}
 			}
-			if (this.cook)
+			if (cook)
 			{
-				yield return base.Do(new AI_Cook(), new Func<AIAct.Status>(base.KeepRunning));
-				if (!this.IsValidTarget(this.owner.held))
+				yield return Do(new AI_Cook(), base.KeepRunning);
+				if (!IsValidTarget(owner.held))
 				{
-					yield return this.Cancel();
+					yield return Cancel();
 				}
-				yield return base.DoGotoSpot<TraitHearth>(new Func<AIAct.Status>(base.KeepRunning), false);
+				yield return DoGotoSpot<TraitHearth>(base.KeepRunning);
 			}
 		}
-		this.target = this.owner.held;
-		if (this.target == null)
+		target = owner.held;
+		if (target == null)
 		{
-			yield return this.Cancel();
+			yield return Cancel();
 		}
-		if (EClass._zone.IsPCFaction && !this.owner.IsPCParty && this.owner.memberType != FactionMemberType.Livestock && !this.owner.noMove)
+		if (EClass._zone.IsPCFaction && !owner.IsPCParty && owner.memberType != FactionMemberType.Livestock && !owner.noMove)
 		{
-			yield return base.DoGotoSpot<TraitSpotDining>(new Func<AIAct.Status>(base.KeepRunning), false);
+			yield return DoGotoSpot<TraitSpotDining>(base.KeepRunning);
 		}
-		int max = (this.target.SelfWeight < 100) ? 1 : (2 + (int)Mathf.Sqrt((float)(this.target.SelfWeight * 2 / 3)));
+		int max = ((target.SelfWeight < 100) ? 1 : (2 + (int)Mathf.Sqrt(target.SelfWeight * 2 / 3)));
 		int turn = 0;
 		Progress_Custom seq = new Progress_Custom
 		{
 			cancelWhenMoved = false,
-			canProgress = (() => this.IsValidTarget(this.target) && this.owner.held == this.target),
-			onProgressBegin = delegate()
+			canProgress = () => IsValidTarget(target) && owner.held == target,
+			onProgressBegin = delegate
 			{
-				this.owner.Say("eat_start", this.owner, this.target.GetName(NameStyle.Full, 1), null);
-				this.owner.PlaySound("eat", 1f, true);
+				owner.Say("eat_start", owner, target.GetName(NameStyle.Full, 1));
+				owner.PlaySound("eat");
 			},
 			onProgress = delegate(Progress_Custom p)
 			{
-				this.target.PlayAnime(AnimeID.Eat, false);
-				int turn;
-				if (turn == 1 && this.owner.IsPC && this.owner.hunger.GetPhase() == 0 && !EClass.debug.godFood)
+				target.PlayAnime(AnimeID.Eat);
+				if (turn == 1 && owner.IsPC && owner.hunger.GetPhase() == 0 && !EClass.debug.godFood)
 				{
-					this.owner.Say("eat_full", null, null);
+					owner.Say("eat_full");
 					p.Cancel();
 				}
 				if (turn == 1)
 				{
-					foreach (Element element in this.target.elements.dict.Values)
+					foreach (Element value in target.elements.dict.Values)
 					{
-						if (!element.source.foodEffect.IsEmpty())
+						if (!value.source.foodEffect.IsEmpty())
 						{
-							string[] foodEffect = element.source.foodEffect;
+							string[] foodEffect = value.source.foodEffect;
 							if (foodEffect[0] == "poison" || foodEffect[0] == "love")
 							{
-								this.owner.Talk("eatWeird", null, null, false);
+								owner.Talk("eatWeird");
 								break;
 							}
 						}
 					}
-					CardRow refCard = this.target.refCard;
+					CardRow refCard = target.refCard;
 					if (refCard != null && refCard.id == "mammoth")
 					{
 						EClass.player.forceTalk = true;
-						this.owner.Talk("eatammoth", null, null, false);
+						owner.Talk("eatammoth");
 					}
 				}
-				turn = turn;
 				turn++;
 			},
-			onProgressComplete = delegate()
+			onProgressComplete = delegate
 			{
-				if (this.owner.IsPC && this.owner.hunger.GetPhase() == 0 && !EClass.debug.godFood)
+				if (owner.IsPC && owner.hunger.GetPhase() == 0 && !EClass.debug.godFood)
 				{
-					this.owner.Say("eat_full", null, null);
-					return;
+					owner.Say("eat_full");
 				}
-				this.owner.Say("eat_end", this.owner, this.target.GetName(NameStyle.Full, 1), null);
-				this.owner.ShowEmo(Emo.happy, 0f, true);
-				FoodEffect.Proc(this.owner, this.target.Thing);
-				this.target.ModNum(-1, true);
+				else
+				{
+					owner.Say("eat_end", owner, target.GetName(NameStyle.Full, 1));
+					owner.ShowEmo(Emo.happy);
+					FoodEffect.Proc(owner, target.Thing);
+					target.ModNum(-1);
+				}
 			}
 		}.SetDuration(max, 5);
-		yield return base.Do(seq, null);
-		yield break;
+		yield return Do(seq);
 	}
-
-	public Card target;
-
-	public bool cook = true;
 }

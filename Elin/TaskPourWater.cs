@@ -1,19 +1,20 @@
-﻿using System;
-using System.Runtime.CompilerServices;
-
 public class TaskPourWater : TaskDesignation
 {
+	public TraitToolWaterPot pot;
+
+	public override int destDist => 1;
+
+	public override bool CanPressRepeat => true;
+
+	public override bool Loop => CanProgress();
+
 	public override bool CanProgress()
 	{
-		return base.CanProgress() && !this.pos.HasBridge && this.pos.cell.sourceSurface.alias != "floor_water_deep" && this.pot.owner.c_charges > 0 && this.owner.Tool == this.pot.owner;
-	}
-
-	public override int destDist
-	{
-		get
+		if (base.CanProgress() && !pos.HasBridge && pos.cell.sourceSurface.alias != "floor_water_deep" && pot.owner.c_charges > 0)
 		{
-			return 1;
+			return owner.Tool == pot.owner;
 		}
+		return false;
 	}
 
 	public override bool CanManualCancel()
@@ -21,109 +22,82 @@ public class TaskPourWater : TaskDesignation
 		return true;
 	}
 
-	public override bool CanPressRepeat
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public override bool Loop
-	{
-		get
-		{
-			return this.CanProgress();
-		}
-	}
-
 	public override void OnCreateProgress(Progress_Custom p)
 	{
-		p.textHint = this.Name;
+		p.textHint = Name;
 		p.maxProgress = 6;
-		p.onProgressBegin = delegate()
+		p.onProgressBegin = delegate
 		{
-			if (this.owner.Tool != null)
+			if (owner.Tool != null)
 			{
-				this.owner.Say("pourWater_start", this.owner, this.owner.Tool, null, null);
+				owner.Say("pourWater_start", owner, owner.Tool);
 			}
 		};
-		p.onProgress = delegate(Progress_Custom _p)
+		p.onProgress = delegate
 		{
-			(this.pos.cell.HasBridge ? this.pos.cell.matBridge : this.pos.cell.matFloor).PlayHitEffect(this.pos);
-			this.owner.PlaySound(MATERIAL.sourceWaterSea.GetSoundImpact(null), 1f, true);
+			(pos.cell.HasBridge ? pos.cell.matBridge : pos.cell.matFloor).PlayHitEffect(pos);
+			owner.PlaySound(MATERIAL.sourceWaterSea.GetSoundImpact());
 		};
-		p.onProgressComplete = delegate()
+		p.onProgressComplete = delegate
 		{
-			if (this.pot.owner.DyeMat == null)
+			if (pot.owner.DyeMat == null)
 			{
-				this.pot.owner.Dye(MATERIAL.sourceWaterSea);
+				pot.owner.Dye(MATERIAL.sourceWaterSea);
 			}
-			string alias = (this.pos.HasBridge ? this.pos.sourceBridge : this.pos.sourceFloor).alias;
-			if (!(alias == "floor_water_shallow2"))
+			switch ((pos.HasBridge ? pos.sourceBridge : pos.sourceFloor).alias)
 			{
-				if (!(alias == "floor_water_shallow"))
-				{
-					if (!(alias == "floor_water"))
-					{
-						this.<OnCreateProgress>g__ChangeFloor|9_3("floor_water_shallow2");
-					}
-					else
-					{
-						this.<OnCreateProgress>g__ChangeFloor|9_3("floor_water_deep");
-					}
-				}
-				else
-				{
-					this.<OnCreateProgress>g__ChangeFloor|9_3("floor_water");
-				}
+			case "floor_water_shallow2":
+				ChangeFloor("floor_water_shallow");
+				break;
+			case "floor_water_shallow":
+				ChangeFloor("floor_water");
+				break;
+			case "floor_water":
+				ChangeFloor("floor_water_deep");
+				break;
+			default:
+				ChangeFloor("floor_water_shallow2");
+				break;
+			}
+			Effect.Get("mine").Play(pos).SetParticleColor(pos.cell.HasBridge ? pos.matBridge.GetColor() : pos.matFloor.GetColor())
+				.Emit(10 + EClass.rnd(10));
+			pos.Animate(AnimeID.Dig, animeBlock: true);
+			owner.PlaySound("water_farm");
+			pot.owner.ModCharge(-1);
+			if (pot.owner.c_charges <= 0)
+			{
+				pot.owner.Dye(EClass.sources.materials.alias["void"]);
+			}
+			owner.elements.ModExp(286, 5);
+			if (EClass.rnd(3) == 0)
+			{
+				owner.stamina.Mod(-1);
+			}
+		};
+		void ChangeFloor(string id)
+		{
+			SourceFloor.Row row = EClass.sources.floors.alias[id];
+			if (pos.HasBridge)
+			{
+				pos.cell._bridge = (byte)row.id;
+				pos.cell._bridgeMat = (byte)pot.owner.DyeMat.id;
 			}
 			else
 			{
-				this.<OnCreateProgress>g__ChangeFloor|9_3("floor_water_shallow");
+				pos.cell._floor = (byte)row.id;
+				pos.cell._floorMat = (byte)pot.owner.DyeMat.id;
 			}
-			Effect.Get("mine").Play(this.pos, 0f, null, null).SetParticleColor(this.pos.cell.HasBridge ? this.pos.matBridge.GetColor() : this.pos.matFloor.GetColor()).Emit(10 + EClass.rnd(10));
-			this.pos.Animate(AnimeID.Dig, true);
-			this.owner.PlaySound("water_farm", 1f, true);
-			this.pot.owner.ModCharge(-1, false);
-			if (this.pot.owner.c_charges <= 0)
-			{
-				this.pot.owner.Dye(EClass.sources.materials.alias["void"]);
-			}
-			this.owner.elements.ModExp(286, 5, false);
-			if (EClass.rnd(3) == 0)
-			{
-				this.owner.stamina.Mod(-1);
-			}
-		};
+			EClass._map.SetLiquid(pos.x, pos.z);
+			pos.RefreshNeighborTiles();
+		}
 	}
 
 	public override HitResult GetHitResult()
 	{
-		if (this.pos.HasBridge || this.pos.HasObj || this.pos.cell.HasFullBlock)
+		if (pos.HasBridge || pos.HasObj || pos.cell.HasFullBlock)
 		{
 			return HitResult.Invalid;
 		}
 		return HitResult.Valid;
 	}
-
-	[CompilerGenerated]
-	private void <OnCreateProgress>g__ChangeFloor|9_3(string id)
-	{
-		SourceFloor.Row row = EClass.sources.floors.alias[id];
-		if (this.pos.HasBridge)
-		{
-			this.pos.cell._bridge = (byte)row.id;
-			this.pos.cell._bridgeMat = (byte)this.pot.owner.DyeMat.id;
-		}
-		else
-		{
-			this.pos.cell._floor = (byte)row.id;
-			this.pos.cell._floorMat = (byte)this.pot.owner.DyeMat.id;
-		}
-		EClass._map.SetLiquid(this.pos.x, this.pos.z, null);
-		this.pos.RefreshNeighborTiles();
-	}
-
-	public TraitToolWaterPot pot;
 }

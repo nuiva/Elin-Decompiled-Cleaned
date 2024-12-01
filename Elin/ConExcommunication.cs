@@ -1,22 +1,14 @@
-﻿using System;
-
 public class ConExcommunication : BaseDebuff
 {
-	public override bool ShouldRefresh
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool ShouldRefresh => true;
 
 	public override void OnRefresh()
 	{
-		this.owner.RefreshFaithElement();
+		owner.RefreshFaithElement();
 	}
 
 	public override void OnRemoved()
 	{
-		this.owner.RefreshFaithElement();
+		owner.RefreshFaithElement();
 	}
 }

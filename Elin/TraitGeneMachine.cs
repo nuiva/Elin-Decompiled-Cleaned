@@ -1,30 +1,17 @@
-﻿using System;
 using UnityEngine;
 
 public class TraitGeneMachine : TraitStasisChamber
 {
-	public override bool CanBeOnlyBuiltInHome
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanBeOnlyBuiltInHome => true;
 
-	public override bool IsHomeItem
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsHomeItem => true;
 
 	public Chara GetTarget()
 	{
-		foreach (Chara chara in this.owner.pos.Charas)
+		foreach (Chara chara in owner.pos.Charas)
 		{
 			ConSuspend condition = chara.GetCondition<ConSuspend>();
-			if (condition != null && condition.uidMachine == this.owner.uid)
+			if (condition != null && condition.uidMachine == owner.uid)
 			{
 				return chara;
 			}
@@ -34,13 +21,12 @@ public class TraitGeneMachine : TraitStasisChamber
 
 	public bool IsTargetUsingGene()
 	{
-		Chara target = this.GetTarget();
-		return target != null && target.GetCondition<ConSuspend>().HasGene;
+		return GetTarget()?.GetCondition<ConSuspend>().HasGene ?? false;
 	}
 
 	public float GetProgress()
 	{
-		ConSuspend condition = this.GetTarget().GetCondition<ConSuspend>();
+		ConSuspend condition = GetTarget().GetCondition<ConSuspend>();
 		if (condition == null || !condition.HasGene)
 		{
 			return 0f;
@@ -55,18 +41,26 @@ public class TraitGeneMachine : TraitStasisChamber
 
 	public string GetProgressText()
 	{
-		ConSuspend condition = this.GetTarget().GetCondition<ConSuspend>();
+		ConSuspend condition = GetTarget().GetCondition<ConSuspend>();
 		int remainingHours = EClass.world.date.GetRemainingHours(condition.dateFinish);
 		if (remainingHours > 0)
 		{
-			return remainingHours.ToString() + " h";
+			return remainingHours + " h";
 		}
 		return "progress_finish".lang();
 	}
 
 	public override bool CanUse(Chara c)
 	{
-		return this.owner.IsInstalled && this.owner.isOn && (!this.IsTargetUsingGene() || this.GetProgress() >= 1f);
+		if (owner.IsInstalled && owner.isOn)
+		{
+			if (IsTargetUsingGene())
+			{
+				return GetProgress() >= 1f;
+			}
+			return true;
+		}
+		return false;
 	}
 
 	public override bool OnUse(Chara c)
@@ -76,16 +70,16 @@ public class TraitGeneMachine : TraitStasisChamber
 			Msg.SayNothingHappen();
 			return false;
 		}
-		Chara target = this.GetTarget();
+		Chara target = GetTarget();
 		if (target == null)
 		{
 			LayerPeople.CreateSelect("", "", delegate(UIList l)
 			{
-				foreach (Chara chara in EClass.Branch.members)
+				foreach (Chara member in EClass.Branch.members)
 				{
-					if (chara.GetCondition<ConSuspend>() == null && chara.host == null && !chara.IsPC && chara.IsAliveInCurrentZone && chara.memberType == FactionMemberType.Default)
+					if (member.GetCondition<ConSuspend>() == null && member.host == null && !member.IsPC && member.IsAliveInCurrentZone && member.memberType == FactionMemberType.Default)
 					{
-						l.Add(chara);
+						l.Add(member);
 					}
 				}
 			}, delegate(Chara c)
@@ -94,10 +88,10 @@ public class TraitGeneMachine : TraitStasisChamber
 				{
 					EClass.pc.party.RemoveMember(c);
 				}
-				if (!c.pos.Equals(this.owner.pos))
+				if (!c.pos.Equals(owner.pos))
 				{
-					EClass.pc.Kick(this.owner.pos, false);
-					c.Teleport(this.owner.pos, false, true);
+					EClass.pc.Kick(owner.pos);
+					c.Teleport(owner.pos, silent: false, force: true);
 					c.isRestrained = false;
 				}
 				if (EClass.debug.enable)
@@ -110,11 +104,11 @@ public class TraitGeneMachine : TraitStasisChamber
 					c.feat += 500;
 				}
 				c.RemoveCondition<ConSleep>();
-				c.PlaySound("ride", 1f, true);
-				(c.AddCondition<ConSuspend>(100, true) as ConSuspend).uidMachine = this.owner.uid;
-			}, (Chara a) => "gene_note".lang(((a.c_genes != null) ? a.c_genes.items.Count : 0).ToString() ?? "", a.MaxGene.ToString() ?? "", a.feat.ToString() ?? "", a.GetTotalFeat().ToString() + " ", null));
+				c.PlaySound("ride");
+				(c.AddCondition<ConSuspend>(100, force: true) as ConSuspend).uidMachine = owner.uid;
+			}, (Chara a) => "gene_note".lang(((a.c_genes != null) ? a.c_genes.items.Count : 0).ToString() ?? "", a.MaxGene.ToString() ?? "", a.feat.ToString() ?? "", a.GetTotalFeat() + " "));
 		}
-		else if (this.GetProgress() >= 1f)
+		else if (GetProgress() >= 1f)
 		{
 			ConSuspend condition = target.GetCondition<ConSuspend>();
 			if (condition.gene.GetRootCard() != target)
@@ -123,19 +117,19 @@ public class TraitGeneMachine : TraitStasisChamber
 			}
 			else
 			{
-				target.Say("gene_finish", target, condition.gene, null, null);
+				target.Say("gene_finish", target, condition.gene);
 				condition.gene.c_DNA.Apply(target);
 				condition.gene.Destroy();
 				condition.gene = null;
 			}
 			target.RemoveCondition<ConSuspend>();
 			target.MoveNeighborDefinitely();
-			target.PlaySound("ding_potential", 1f, true);
+			target.PlaySound("ding_potential");
 			target.pos.PlayEffect("mutation");
 		}
 		else
 		{
-			LayerDragGrid.Create(new InvOwnerGene(this.owner, target), false);
+			LayerDragGrid.Create(new InvOwnerGene(owner, target));
 		}
 		return true;
 	}

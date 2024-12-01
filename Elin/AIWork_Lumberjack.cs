@@ -1,19 +1,10 @@
-﻿using System;
-
 public class AIWork_Lumberjack : AIWork
 {
-	public override int destDist
-	{
-		get
-		{
-			return 1;
-		}
-	}
+	public override int destDist => 1;
 
 	public override bool FuncWorkPoint(Point p)
 	{
-		GrowSystem growth = p.growth;
-		return growth != null && growth.IsTree;
+		return p.growth?.IsTree ?? false;
 	}
 
 	public override AIAct GetWork(Point p)
@@ -23,14 +14,14 @@ public class AIWork_Lumberjack : AIWork
 		{
 			return null;
 		}
-		return this.CreateProgress();
+		return CreateProgress();
 	}
 
 	public override void OnCreateProgress(Progress_Custom p)
 	{
-		p.onProgress = delegate(Progress_Custom _p)
+		p.onProgress = delegate
 		{
-			this.owner.PlaySound(EClass.sources.things.map["log"].DefaultMaterial.GetSoundImpact(null), 1f, true);
+			owner.PlaySound(EClass.sources.things.map["log"].DefaultMaterial.GetSoundImpact());
 		};
 	}
 

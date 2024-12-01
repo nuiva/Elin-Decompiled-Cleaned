@@ -1,14 +1,41 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class AIAct : Act
 {
+	public enum Status
+	{
+		Running,
+		Fail,
+		Success
+	}
+
+	public new Chara owner;
+
+	public Status status;
+
+	public IEnumerator<Status> Enumerator;
+
+	public AIAct child;
+
+	public AIAct parent;
+
+	public byte restartCount;
+
+	public Func<Status> onChildFail;
+
+	public Func<bool> isFail;
+
 	public virtual bool IsRunning
 	{
 		get
 		{
-			return this.status == AIAct.Status.Running && this.owner != null;
+			if (status == Status.Running)
+			{
+				return owner != null;
+			}
+			return false;
 		}
 	}
 
@@ -16,7 +43,11 @@ public class AIAct : Act
 	{
 		get
 		{
-			return this.child != null && this.child.status == AIAct.Status.Running && this.child.owner != null;
+			if (child != null && child.status == Status.Running)
+			{
+				return child.owner != null;
+			}
+			return false;
 		}
 	}
 
@@ -24,234 +55,114 @@ public class AIAct : Act
 	{
 		get
 		{
-			if (!this.IsChildRunning)
+			if (!IsChildRunning)
 			{
 				return this is AI_Goto;
 			}
-			return this.child.IsMoveAI;
+			return child.IsMoveAI;
 		}
 	}
 
-	public virtual int MaxRestart
-	{
-		get
-		{
-			return 5;
-		}
-	}
+	public virtual int MaxRestart => 5;
 
-	public new virtual string Name
-	{
-		get
-		{
-			return base.source.GetName();
-		}
-	}
+	public new virtual string Name => base.source.GetName();
 
-	public override string ToString()
-	{
-		return base.GetType().Name;
-	}
+	protected virtual MultiSprite stateIcon => null;
 
-	protected virtual MultiSprite stateIcon
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public virtual Sprite actionIcon => EClass.core.refs.orbitIcons.Default;
 
-	public virtual Sprite actionIcon
-	{
-		get
-		{
-			return EClass.core.refs.orbitIcons.Default;
-		}
-	}
+	public virtual bool IsNoGoal => false;
 
-	public virtual bool IsNoGoal
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool IsAutoTurn => false;
 
-	public virtual bool IsAutoTurn
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool IsIdle => false;
 
-	public virtual bool IsIdle
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool PushChara => true;
 
-	public virtual bool PushChara
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public virtual int MaxProgress => 20;
 
-	public virtual int MaxProgress
-	{
-		get
-		{
-			return 20;
-		}
-	}
+	public virtual bool ShowProgress => true;
 
-	public virtual bool ShowProgress
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public virtual bool UseTurbo => true;
 
-	public virtual bool UseTurbo
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public virtual int CurrentProgress => 0;
 
-	public virtual int CurrentProgress
-	{
-		get
-		{
-			return 0;
-		}
-	}
+	public virtual bool ShowCursor => true;
 
-	public virtual bool ShowCursor
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public virtual bool CancelWhenDamaged => true;
 
-	public virtual bool CancelWhenDamaged
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public virtual bool CancelWhenMoved => false;
 
-	public virtual bool CancelWhenMoved
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool InformCancel => true;
 
-	public virtual bool InformCancel
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public virtual Thing RenderThing
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public virtual Thing RenderThing => null;
 
 	public AIAct Current
 	{
 		get
 		{
-			if (!this.IsChildRunning)
+			if (!IsChildRunning)
 			{
 				return this;
 			}
-			return this.child.Current;
+			return child.Current;
 		}
+	}
+
+	public override bool IsAct => false;
+
+	public override bool ShowPotential => false;
+
+	public override bool UsePotential => false;
+
+	public override bool ShowRelativeAttribute => true;
+
+	public virtual bool HasProgress => true;
+
+	public override string ToString()
+	{
+		return GetType().Name;
 	}
 
 	public override MultiSprite GetStateIcon()
 	{
-		return (this.child ?? this).stateIcon;
-	}
-
-	public override bool IsAct
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public override bool ShowPotential
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public override bool UsePotential
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public override bool ShowRelativeAttribute
-	{
-		get
-		{
-			return true;
-		}
+		return (child ?? this).stateIcon;
 	}
 
 	public virtual Point GetDestination()
 	{
-		if (!this.IsChildRunning)
+		if (!IsChildRunning)
 		{
-			return this.owner.pos;
+			return owner.pos;
 		}
-		return this.child.GetDestination();
+		return child.GetDestination();
 	}
 
 	public AIProgress GetProgress()
 	{
-		if (this.IsChildRunning)
+		if (IsChildRunning)
 		{
-			return this.child.GetProgress();
+			return child.GetProgress();
 		}
 		return this as AIProgress;
 	}
 
 	public string GetCurrentActionText()
 	{
-		if (this.IsChildRunning && this.child.source.id != 0 && !this.child.source.name_JP.IsEmpty())
+		if (IsChildRunning && child.source.id != 0 && !child.source.name_JP.IsEmpty())
 		{
-			return this.child.GetCurrentActionText();
+			return child.GetCurrentActionText();
 		}
 		return base.source.GetName().IsEmpty("idle".lang());
 	}
 
 	public override bool IsToolValid()
 	{
-		return this.owner == EClass.pc && Act.TOOL != null && Act.TOOL.parent == EClass.pc;
+		if (owner == EClass.pc && Act.TOOL != null)
+		{
+			return Act.TOOL.parent == EClass.pc;
+		}
+		return false;
 	}
 
 	public virtual void OnStart()
@@ -260,53 +171,53 @@ public class AIAct : Act
 
 	public void SetOwner(Chara c)
 	{
-		this.owner = c;
-		this.status = AIAct.Status.Running;
-		this.OnSetOwner();
+		owner = c;
+		status = Status.Running;
+		OnSetOwner();
 	}
 
 	public virtual void OnSetOwner()
 	{
 	}
 
-	public void SetChild(AIAct seq, Func<AIAct.Status> _onChildFail = null)
+	public void SetChild(AIAct seq, Func<Status> _onChildFail = null)
 	{
-		if (this.child != null)
+		if (child != null)
 		{
-			this.child.Reset();
+			child.Reset();
 		}
-		this.child = seq;
-		this.child.parent = this;
-		this.child.SetOwner(this.owner);
-		this.onChildFail = (_onChildFail ?? new Func<AIAct.Status>(this.Cancel));
+		child = seq;
+		child.parent = this;
+		child.SetOwner(owner);
+		onChildFail = _onChildFail ?? new Func<Status>(Cancel);
 	}
 
 	public void Start()
 	{
-		this.Enumerator = this.Run().GetEnumerator();
-		this.OnStart();
-		if (this.owner == null)
+		Enumerator = Run().GetEnumerator();
+		OnStart();
+		if (owner == null)
 		{
 			return;
 		}
-		if (this.owner.held != null)
+		if (owner.held != null)
 		{
-			if (this.DropHeldOnStart)
+			if (DropHeldOnStart)
 			{
-				this.owner.DropHeld(null);
+				owner.DropHeld();
 			}
-			else if (this.PickHeldOnStart)
+			else if (PickHeldOnStart)
 			{
-				this.owner.PickHeld(false);
+				owner.PickHeld();
 			}
 		}
-		if (this.RightHand != 0)
+		if (RightHand != 0)
 		{
-			this.owner.SetTempHand(this.RightHand, this.LeftHand);
+			owner.SetTempHand(RightHand, LeftHand);
 		}
-		if (this.owner.IsPC && this.UseTurbo)
+		if (owner.IsPC && UseTurbo)
 		{
-			ActionMode.Adv.SetTurbo(-1);
+			ActionMode.Adv.SetTurbo();
 		}
 	}
 
@@ -316,32 +227,29 @@ public class AIAct : Act
 		return false;
 	}
 
-	public AIAct.Status Restart()
+	public Status Restart()
 	{
-		this.restartCount += 1;
-		if ((int)this.restartCount >= this.MaxRestart)
+		restartCount++;
+		if (restartCount >= MaxRestart)
 		{
-			return this.Success(null);
+			return Success();
 		}
-		byte b = this.restartCount;
-		Chara chara = this.owner;
-		this.Reset();
-		this.SetOwner(chara);
-		this.restartCount = b;
-		return this.status = AIAct.Status.Running;
+		byte b = restartCount;
+		Chara chara = owner;
+		Reset();
+		SetOwner(chara);
+		restartCount = b;
+		return status = Status.Running;
 	}
 
-	public AIAct.Status Success(Action action = null)
+	public Status Success(Action action = null)
 	{
-		this.status = AIAct.Status.Success;
-		this.OnSuccess();
-		if (action != null)
-		{
-			action();
-		}
-		this.OnCancelOrSuccess();
-		this.Reset();
-		return this.status;
+		status = Status.Success;
+		OnSuccess();
+		action?.Invoke();
+		OnCancelOrSuccess();
+		Reset();
+		return status;
 	}
 
 	public virtual void OnSuccess()
@@ -350,40 +258,40 @@ public class AIAct : Act
 
 	public bool TryCancel(Card c)
 	{
-		if (!this.IsRunning || this.Enumerator == null)
+		if (!IsRunning || Enumerator == null)
 		{
 			return false;
 		}
-		if (this.InformCancel)
+		if (InformCancel)
 		{
-			if (this.owner.IsPC)
+			if (owner.IsPC)
 			{
-				this.owner.Say("cancel_act_pc", this.owner, null, null);
+				owner.Say("cancel_act_pc", owner);
 			}
 			else if (c != null)
 			{
-				this.owner.Say("cancel_act", this.owner, c, null, null);
+				owner.Say("cancel_act", owner, c);
 			}
 			else
 			{
-				this.owner.Say("cancel_act2", this.owner, null, null);
+				owner.Say("cancel_act2", owner);
 			}
 		}
-		this.Cancel();
+		Cancel();
 		return true;
 	}
 
-	public virtual AIAct.Status Cancel()
+	public virtual Status Cancel()
 	{
-		this.status = AIAct.Status.Fail;
-		if (this.owner != null && this.owner.held != null && !this.owner.IsPC)
+		status = Status.Fail;
+		if (owner != null && owner.held != null && !owner.IsPC)
 		{
-			this.owner.PickHeld(false);
+			owner.PickHeld();
 		}
-		this.OnCancel();
-		this.OnCancelOrSuccess();
-		this.Reset();
-		return this.status;
+		OnCancel();
+		OnCancelOrSuccess();
+		Reset();
+		return status;
 	}
 
 	public virtual void OnCancel()
@@ -396,277 +304,246 @@ public class AIAct : Act
 
 	public virtual bool CanManualCancel()
 	{
-		return this.IsChildRunning && this.child is AI_Goto;
+		if (IsChildRunning)
+		{
+			return child is AI_Goto;
+		}
+		return false;
 	}
 
-	public AIAct.Status KeepRunning()
+	public Status KeepRunning()
 	{
-		return AIAct.Status.Running;
+		return Status.Running;
 	}
 
 	public void Reset()
 	{
-		if (this.owner == null)
+		if (owner != null)
 		{
-			return;
+			if (child != null)
+			{
+				child.Reset();
+			}
+			OnReset();
+			if (Enumerator != null)
+			{
+				Enumerator.Dispose();
+				Enumerator = null;
+			}
+			owner = null;
+			child = null;
+			restartCount = 0;
+			onChildFail = null;
+			isFail = null;
 		}
-		if (this.child != null)
-		{
-			this.child.Reset();
-		}
-		this.OnReset();
-		if (this.Enumerator != null)
-		{
-			this.Enumerator.Dispose();
-			this.Enumerator = null;
-		}
-		this.owner = null;
-		this.child = null;
-		this.restartCount = 0;
-		this.onChildFail = null;
-		this.isFail = null;
 	}
 
 	public virtual void OnReset()
 	{
 	}
 
-	public AIAct.Status Tick()
+	public Status Tick()
 	{
-		if (this.owner == null || (this.isFail != null && this.isFail()))
+		if (owner == null || (isFail != null && isFail()))
 		{
-			return this.Cancel();
+			return Cancel();
 		}
-		if (this.IsChildRunning)
+		if (IsChildRunning)
 		{
-			switch (this.child.Tick())
+			switch (child.Tick())
 			{
-			case AIAct.Status.Running:
-				return AIAct.Status.Running;
-			case AIAct.Status.Fail:
-				if (this.onChildFail != null)
+			case Status.Fail:
+				if (onChildFail != null)
 				{
-					return this.onChildFail();
+					return onChildFail();
 				}
-				return AIAct.Status.Fail;
-			case AIAct.Status.Success:
-				if (this.owner == null || (this.isFail != null && this.isFail()))
+				return Status.Fail;
+			case Status.Running:
+				return Status.Running;
+			case Status.Success:
+				if (owner == null || (isFail != null && isFail()))
 				{
-					return this.Cancel();
+					return Cancel();
 				}
 				break;
 			}
 		}
-		if (this.Enumerator == null)
+		if (Enumerator == null)
 		{
-			this.Start();
-			if (this.status != AIAct.Status.Running)
+			Start();
+			if (status != 0)
 			{
-				return this.status;
+				return status;
 			}
 		}
-		if (!this.Enumerator.MoveNext())
+		if (!Enumerator.MoveNext())
 		{
-			return this.Success(null);
+			return Success();
 		}
-		return this.status;
+		return status;
 	}
 
-	public virtual IEnumerable<AIAct.Status> Run()
+	public virtual IEnumerable<Status> Run()
 	{
-		yield return this.Success(null);
-		yield break;
+		yield return Success();
 	}
 
-	public AIAct.Status TickChild()
+	public Status TickChild()
 	{
-		if (this.child == null || this.onChildFail == null)
+		if (child == null || onChildFail == null)
 		{
-			AIAct aiact = this.child;
-			string str = (aiact != null) ? aiact.ToString() : null;
-			string str2 = "/";
-			Func<AIAct.Status> func = this.onChildFail;
-			Debug.Log(str + str2 + ((func != null) ? func.ToString() : null));
-			return AIAct.Status.Fail;
+			Debug.Log(child?.ToString() + "/" + onChildFail);
+			return Status.Fail;
 		}
-		if (this.child.Tick() != AIAct.Status.Fail)
+		if (child.Tick() == Status.Fail)
 		{
-			return AIAct.Status.Running;
+			if (onChildFail != null)
+			{
+				return onChildFail();
+			}
+			return Status.Fail;
 		}
-		if (this.onChildFail != null)
-		{
-			return this.onChildFail();
-		}
-		return AIAct.Status.Fail;
+		return Status.Running;
 	}
 
-	public AIAct.Status Do(AIAct _seq, Func<AIAct.Status> _onChildFail = null)
+	public Status Do(AIAct _seq, Func<Status> _onChildFail = null)
 	{
-		this.SetChild(_seq, _onChildFail);
-		return this.TickChild();
+		SetChild(_seq, _onChildFail);
+		return TickChild();
 	}
 
-	public AIAct.Status DoGotoInteraction(Point pos, Func<AIAct.Status> _onChildFail = null)
+	public Status DoGotoInteraction(Point pos, Func<Status> _onChildFail = null)
 	{
-		if (pos != null && pos.IsValid)
+		if (pos == null || !pos.IsValid)
 		{
-			this.SetChild(new AI_Goto(pos, 0, false, true), _onChildFail);
-			return this.TickChild();
+			return _onChildFail?.Invoke() ?? Cancel();
 		}
-		if (_onChildFail == null)
-		{
-			return this.Cancel();
-		}
-		return _onChildFail();
+		SetChild(new AI_Goto(pos, 0, _ignoreConnection: false, _interaction: true), _onChildFail);
+		return TickChild();
 	}
 
-	public AIAct.Status DoGoto(Point pos, int dist = 0, bool ignoreConnection = false, Func<AIAct.Status> _onChildFail = null)
+	public Status DoGoto(Point pos, int dist = 0, bool ignoreConnection = false, Func<Status> _onChildFail = null)
 	{
-		if (pos != null && pos.IsValid)
+		if (pos == null || !pos.IsValid)
 		{
-			this.SetChild(new AI_Goto(pos, dist, ignoreConnection, false), _onChildFail);
-			return this.TickChild();
+			return _onChildFail?.Invoke() ?? Cancel();
 		}
-		if (_onChildFail == null)
-		{
-			return this.Cancel();
-		}
-		return _onChildFail();
+		SetChild(new AI_Goto(pos, dist, ignoreConnection), _onChildFail);
+		return TickChild();
 	}
 
-	public AIAct.Status DoGoto(Card card, Func<AIAct.Status> _onChildFail = null)
+	public Status DoGoto(Card card, Func<Status> _onChildFail = null)
 	{
-		return this.DoGoto(card, (card.isChara || card.pos.cell.blocked) ? 1 : 0, _onChildFail);
+		return DoGoto(card, (card.isChara || card.pos.cell.blocked) ? 1 : 0, _onChildFail);
 	}
 
-	public AIAct.Status DoGoto(Card card, int dist, Func<AIAct.Status> _onChildFail = null)
+	public Status DoGoto(Card card, int dist, Func<Status> _onChildFail = null)
 	{
-		if (card != null && card == this.owner.held)
+		if (card != null && card == owner.held)
 		{
-			return AIAct.Status.Running;
+			return Status.Running;
 		}
-		if (card != null && card.ExistsOnMap)
+		if (card == null || !card.ExistsOnMap)
 		{
-			this.SetChild(new AI_Goto(card, dist, false, false), _onChildFail);
-			return this.TickChild();
+			return _onChildFail?.Invoke() ?? Cancel();
 		}
-		if (_onChildFail == null)
-		{
-			return this.Cancel();
-		}
-		return _onChildFail();
+		SetChild(new AI_Goto(card, dist), _onChildFail);
+		return TickChild();
 	}
 
-	public AIAct.Status DoGotoSpot(Card card, Func<AIAct.Status> _onChildFail = null)
+	public Status DoGotoSpot(Card card, Func<Status> _onChildFail = null)
 	{
-		if (card != null && card == this.owner.held)
+		if (card != null && card == owner.held)
 		{
-			return AIAct.Status.Running;
+			return Status.Running;
 		}
-		if (card != null && card.ExistsOnMap)
+		if (card == null || !card.ExistsOnMap)
 		{
-			Point randomPoint = card.trait.GetRandomPoint(null, null);
-			int dist = randomPoint.cell.blocked ? 1 : 0;
-			this.SetChild(new AI_Goto(randomPoint, dist, false, false), _onChildFail);
-			return this.TickChild();
+			return _onChildFail?.Invoke() ?? Cancel();
 		}
-		if (_onChildFail == null)
-		{
-			return this.Cancel();
-		}
-		return _onChildFail();
+		Point randomPoint = card.trait.GetRandomPoint();
+		int dist = (randomPoint.cell.blocked ? 1 : 0);
+		SetChild(new AI_Goto(randomPoint, dist), _onChildFail);
+		return TickChild();
 	}
 
-	public AIAct.Status DoGoto<T>(Func<AIAct.Status> _onChildFail = null) where T : Trait
+	public Status DoGoto<T>(Func<Status> _onChildFail = null) where T : Trait
 	{
-		Trait random = EClass._map.Installed.traits.GetTraitSet<T>().GetRandom();
-		return this.DoGoto((random != null) ? random.owner : null, _onChildFail);
+		return DoGoto(EClass._map.Installed.traits.GetTraitSet<T>().GetRandom()?.owner, _onChildFail);
 	}
 
-	public AIAct.Status DoGotoSpot<T>(Func<AIAct.Status> _onChildFail = null, bool ignoreAccessType = false) where T : Trait
+	public Status DoGotoSpot<T>(Func<Status> _onChildFail = null, bool ignoreAccessType = false) where T : Trait
 	{
-		Trait random = EClass._map.Installed.traits.GetTraitSet<T>().GetRandom(ignoreAccessType ? null : this.owner);
+		Trait random = EClass._map.Installed.traits.GetTraitSet<T>().GetRandom(ignoreAccessType ? null : owner);
 		if (random != null)
 		{
-			this.DoGoto(random.GetRandomPoint(null, ignoreAccessType ? null : this.owner), 0, false, _onChildFail);
+			DoGoto(random.GetRandomPoint(null, ignoreAccessType ? null : owner), 0, ignoreConnection: false, _onChildFail);
 		}
-		if (_onChildFail == null)
-		{
-			return AIAct.Status.Fail;
-		}
-		return _onChildFail();
+		return _onChildFail?.Invoke() ?? Status.Fail;
 	}
 
-	public AIAct.Status DoGrab(Card card, int num = -1, bool pickHeld = false, Func<AIAct.Status> _onChildFail = null)
+	public Status DoGrab(Card card, int num = -1, bool pickHeld = false, Func<Status> _onChildFail = null)
 	{
-		if (card != null && card == this.owner.held)
+		if (card != null && card == owner.held)
 		{
-			return AIAct.Status.Running;
+			return Status.Running;
 		}
 		if (card == null || !card.GetRootCard().ExistsOnMap)
 		{
-			return this.Cancel();
+			return Cancel();
 		}
-		this.SetChild(new AI_Grab
+		SetChild(new AI_Grab
 		{
 			target = card,
 			num = num,
 			pickHeld = pickHeld
 		}, _onChildFail);
-		return this.TickChild();
+		return TickChild();
 	}
 
-	public AIAct.Status DoGrab<T>() where T : Trait
+	public Status DoGrab<T>() where T : Trait
 	{
-		this.SetChild(new AI_Grab<T>(), null);
-		return this.TickChild();
+		SetChild(new AI_Grab<T>());
+		return TickChild();
 	}
 
-	public AIAct.Status DoProgress()
+	public Status DoProgress()
 	{
-		this.SetChild(this.CreateProgress(), null);
-		return this.TickChild();
+		SetChild(CreateProgress());
+		return TickChild();
 	}
 
-	public AIAct.Status DoIdle(int repeat = 3)
+	public Status DoIdle(int repeat = 3)
 	{
-		this.SetChild(new AI_Idle
+		SetChild(new AI_Idle
 		{
 			maxRepeat = repeat
-		}, new Func<AIAct.Status>(this.KeepRunning));
-		return this.TickChild();
+		}, KeepRunning);
+		return TickChild();
 	}
 
-	public AIAct.Status DoWait(int count = 1)
+	public Status DoWait(int count = 1)
 	{
-		this.SetChild(new AI_Wait
+		SetChild(new AI_Wait
 		{
 			count = count
-		}, new Func<AIAct.Status>(this.KeepRunning));
-		return this.TickChild();
-	}
-
-	public virtual bool HasProgress
-	{
-		get
-		{
-			return true;
-		}
+		}, KeepRunning);
+		return TickChild();
 	}
 
 	public virtual AIProgress CreateProgress()
 	{
 		Progress_Custom progress_Custom = new Progress_Custom
 		{
-			onProgress = delegate(Progress_Custom p)
+			onProgress = delegate
 			{
-				this.OnProgress();
+				OnProgress();
 			},
-			onProgressComplete = new Action(this.OnProgressComplete),
-			canProgress = new Func<bool>(this.CanProgress),
-			onBeforeProgress = new Action(this.OnBeforeProgress)
+			onProgressComplete = OnProgressComplete,
+			canProgress = CanProgress,
+			onBeforeProgress = OnBeforeProgress
 		};
-		this.OnCreateProgress(progress_Custom);
+		OnCreateProgress(progress_Custom);
 		return progress_Custom;
 	}
 
@@ -693,11 +570,10 @@ public class AIAct : Act
 
 	public void SimulateZone(int days)
 	{
-		if (this.owner.conSuspend != null)
+		if (owner.conSuspend == null)
 		{
-			return;
+			OnSimulateZone(days);
 		}
-		this.OnSimulateZone(days);
 	}
 
 	public virtual void OnSimulateZone(int days)
@@ -706,28 +582,5 @@ public class AIAct : Act
 
 	public virtual void OnSimulatePosition()
 	{
-	}
-
-	public new Chara owner;
-
-	public AIAct.Status status;
-
-	public IEnumerator<AIAct.Status> Enumerator;
-
-	public AIAct child;
-
-	public AIAct parent;
-
-	public byte restartCount;
-
-	public Func<AIAct.Status> onChildFail;
-
-	public Func<bool> isFail;
-
-	public enum Status
-	{
-		Running,
-		Fail,
-		Success
 	}
 }

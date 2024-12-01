@@ -1,57 +1,50 @@
-﻿using System;
 using UnityEngine;
 
 public class MiniGame_Basket : ModMinigame<Shooter>
 {
-	public override string id
-	{
-		get
-		{
-			return "Basket";
-		}
-	}
+	public Shooter prefab;
+
+	public override string id => "Basket";
 
 	public override void OnActivate()
 	{
-		if (!this.game)
+		if (!game)
 		{
-			if (!this.prefab)
+			if (!prefab)
 			{
-				this.prefab = Resources.Load<Shooter>("Basket");
+				prefab = Resources.Load<Shooter>("Basket");
 			}
-			Debug.Log(this.prefab);
-			this.go = UnityEngine.Object.Instantiate<GameObject>(this.prefab.gameObject);
-			Debug.Log(this.go);
-			this.game = this.go.GetComponentInChildren<Shooter>();
+			Debug.Log(prefab);
+			go = Object.Instantiate(prefab.gameObject);
+			Debug.Log(go);
+			game = go.GetComponentInChildren<Shooter>();
 		}
-		base.SetAudioMixer(this.go);
+		SetAudioMixer(go);
 		Shooter.game = new Game_Basket
 		{
-			Deactivate = new Action(base.Deactivate),
-			OnPlay = new Func<int, bool>(base.OnPlay),
+			Deactivate = base.Deactivate,
+			OnPlay = base.OnPlay,
 			ModChangeCoin = delegate(int a)
 			{
-				this.balance.changeCoin += a;
+				balance.changeCoin += a;
 			},
 			ModLastCoin = delegate(int a)
 			{
-				this.balance.lastCoin += a;
+				balance.lastCoin += a;
 			},
-			LastCoin = (() => this.balance.lastCoin)
+			LastCoin = () => balance.lastCoin
 		};
 		EClass.scene.audioListener.enabled = false;
 	}
 
 	public override void SlidePosition(float w)
 	{
-		this.game.transCanvas.Rect().anchoredPosition = new Vector2(w / 2f, 0f);
+		game.transCanvas.Rect().anchoredPosition = new Vector2(w / 2f, 0f);
 	}
 
 	public override void OnDeactivate()
 	{
-		base.Kill();
+		Kill();
 		EClass.scene.audioListener.enabled = true;
 	}
-
-	public Shooter prefab;
 }

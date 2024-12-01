@@ -1,64 +1,10 @@
-﻿using System;
+using System;
 
 public class SourceCharaText : SourceDataString<SourceCharaText.Row>
 {
-	public override SourceCharaText.Row CreateRow()
-	{
-		return new SourceCharaText.Row
-		{
-			id = SourceData.GetString(0),
-			calm_JP = SourceData.GetString(2),
-			fov_JP = SourceData.GetString(3),
-			aggro_JP = SourceData.GetString(4),
-			dead_JP = SourceData.GetString(5),
-			kill_JP = SourceData.GetString(6),
-			calm = SourceData.GetString(7),
-			fov = SourceData.GetString(8),
-			aggro = SourceData.GetString(9),
-			dead = SourceData.GetString(10),
-			kill = SourceData.GetString(11)
-		};
-	}
-
-	public override void SetRow(SourceCharaText.Row r)
-	{
-		this.map[r.id] = r;
-	}
-
-	public override string[] ImportFields
-	{
-		get
-		{
-			return new string[]
-			{
-				"calm",
-				"fov",
-				"aggro",
-				"dead",
-				"kill"
-			};
-		}
-	}
-
 	[Serializable]
-	public class Row : SourceData.BaseRow
+	public class Row : BaseRow
 	{
-		public override bool UseAlias
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		public override string GetAlias
-		{
-			get
-			{
-				return "n";
-			}
-		}
-
 		public string id;
 
 		public string calm_JP;
@@ -90,5 +36,34 @@ public class SourceCharaText : SourceDataString<SourceCharaText.Row>
 		public string dead_L;
 
 		public string kill_L;
+
+		public override bool UseAlias => false;
+
+		public override string GetAlias => "n";
+	}
+
+	public override string[] ImportFields => new string[5] { "calm", "fov", "aggro", "dead", "kill" };
+
+	public override Row CreateRow()
+	{
+		return new Row
+		{
+			id = SourceData.GetString(0),
+			calm_JP = SourceData.GetString(2),
+			fov_JP = SourceData.GetString(3),
+			aggro_JP = SourceData.GetString(4),
+			dead_JP = SourceData.GetString(5),
+			kill_JP = SourceData.GetString(6),
+			calm = SourceData.GetString(7),
+			fov = SourceData.GetString(8),
+			aggro = SourceData.GetString(9),
+			dead = SourceData.GetString(10),
+			kill = SourceData.GetString(11)
+		};
+	}
+
+	public override void SetRow(Row r)
+	{
+		map[r.id] = r;
 	}
 }

@@ -1,37 +1,35 @@
-﻿using System;
-
 public class GridItemRecipe : GridItem
 {
+	public Recipe r;
+
 	public override void SetButton(ButtonGrid b)
 	{
 		b.mainText.text = "1";
-		b.mainText.SetActive(false);
-		this.r.renderRow.SetImage(b.icon, null, this.r.GetDefaultColor(), true, 0, 0);
+		b.mainText.SetActive(enable: false);
+		r.renderRow.SetImage(b.icon, null, r.GetDefaultColor());
 		b.SetTooltip("note", delegate(UITooltip t)
 		{
 			UINote note = t.note;
 			note.Clear();
-			note.AddHeaderCard(this.r.Name, null);
-			if (!this.r.GetDetail().IsEmpty())
+			note.AddHeaderCard(r.Name);
+			if (!r.GetDetail().IsEmpty())
 			{
-				note.AddText(this.r.GetDetail(), FontColor.DontChange);
-				note.Space(0, 1);
+				note.AddText(r.GetDetail());
+				note.Space();
 			}
-			if (this.r.source.NeedFactory)
+			if (r.source.NeedFactory)
 			{
-				note.AddText("reqFactory".lang(this.r.source.NameFactory, null, null, null, null), FontColor.DontChange);
+				note.AddText("reqFactory".lang(r.source.NameFactory));
 			}
 			else
 			{
-				note.AddText("reqNoFactory".lang(), FontColor.DontChange);
+				note.AddText("reqNoFactory".lang());
 			}
 			note.Build();
-		}, true);
+		});
 	}
 
 	public override void OnClick(ButtonGrid b)
 	{
 	}
-
-	public Recipe r;
 }

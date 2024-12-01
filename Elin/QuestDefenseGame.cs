@@ -1,24 +1,22 @@
-﻿using System;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class QuestDefenseGame : QuestInstance
 {
-	public override string IdZone
-	{
-		get
-		{
-			return "instance_arena";
-		}
-	}
+	public static int lastWave;
 
-	public override string RefDrama1
-	{
-		get
-		{
-			return this.thing.NameSimple;
-		}
-	}
+	public static int bonus;
+
+	[JsonProperty]
+	public Thing thing;
+
+	public override string IdZone => "instance_arena";
+
+	public override string RefDrama1 => thing.NameSimple;
+
+	public override string RewardSuffix => "Defense";
+
+	public override int FameOnComplete => (lastWave * 8 + difficulty * 10) * (100 + bonus * 5) / 100;
 
 	public override ZoneEventQuest CreateEvent()
 	{
@@ -30,42 +28,19 @@ public class QuestDefenseGame : QuestInstance
 		return new ZoneInstanceDefense();
 	}
 
-	public override string RewardSuffix
-	{
-		get
-		{
-			return "Defense";
-		}
-	}
-
-	public override int FameOnComplete
-	{
-		get
-		{
-			return (QuestDefenseGame.lastWave * 8 + this.difficulty * 10) * (100 + QuestDefenseGame.bonus * 5) / 100;
-		}
-	}
-
 	public override void OnInit()
 	{
-		this.thing = ThingGen.CreateFromFilter("thing", 30);
+		thing = ThingGen.CreateFromFilter("thing", 30);
 	}
 
 	public override void OnBeforeComplete()
 	{
-		Debug.Log("QuestDefenseGame: " + QuestDefenseGame.lastWave.ToString() + "/" + QuestDefenseGame.bonus.ToString());
-		this.bonusMoney += EClass.rndHalf(QuestDefenseGame.lastWave * 400 * (100 + QuestDefenseGame.bonus * 5) / 100);
+		Debug.Log("QuestDefenseGame: " + lastWave + "/" + bonus);
+		bonusMoney += EClass.rndHalf(lastWave * 400 * (100 + bonus * 5) / 100);
 	}
 
 	public override string GetTextProgress()
 	{
-		return "progressDefenseGame".lang(QuestDefenseGame.lastWave.ToString() ?? "", null, null, null, null);
+		return "progressDefenseGame".lang(lastWave.ToString() ?? "");
 	}
-
-	public static int lastWave;
-
-	public static int bonus;
-
-	[JsonProperty]
-	public Thing thing;
 }

@@ -1,40 +1,7 @@
-﻿using System;
+using System;
 
 public class DramaChoice
 {
-	public DramaChoice(string text, string idJump, string idAction = "", string CHECK = "", string IF = "")
-	{
-		this.text = text;
-		this.idJump = idJump;
-		this.idAction = idAction;
-		this.CHECK = CHECK;
-		this.IF = IF;
-	}
-
-	public DramaChoice DisableSound()
-	{
-		this.sound = false;
-		return this;
-	}
-
-	public DramaChoice SetOnTooltip(Action<UITooltip> action)
-	{
-		this.onTooltip = action;
-		return this;
-	}
-
-	public DramaChoice SetOnClick(Action action)
-	{
-		this.onClick = action;
-		return this;
-	}
-
-	public DramaChoice SetCondition(Func<bool> condition)
-	{
-		this.activeCondition = condition;
-		return this;
-	}
-
 	public static DramaChoice lastChoice;
 
 	public int index;
@@ -64,4 +31,37 @@ public class DramaChoice
 	public Check check;
 
 	public UIButton button;
+
+	public DramaChoice(string text, string idJump, string idAction = "", string CHECK = "", string IF = "")
+	{
+		this.text = text;
+		this.idJump = idJump;
+		this.idAction = idAction;
+		this.CHECK = CHECK;
+		this.IF = IF;
+	}
+
+	public DramaChoice DisableSound()
+	{
+		sound = false;
+		return this;
+	}
+
+	public DramaChoice SetOnTooltip(Action<UITooltip> action)
+	{
+		onTooltip = action;
+		return this;
+	}
+
+	public DramaChoice SetOnClick(Action action)
+	{
+		onClick = action;
+		return this;
+	}
+
+	public DramaChoice SetCondition(Func<bool> condition)
+	{
+		activeCondition = condition;
+		return this;
+	}
 }

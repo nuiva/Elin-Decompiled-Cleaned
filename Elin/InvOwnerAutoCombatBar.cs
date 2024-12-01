@@ -1,71 +1,28 @@
-﻿using System;
-
 public class InvOwnerAutoCombatBar : InvOwner
 {
-	public virtual bool ShowFuel
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public int index;
 
-	public virtual string langWhat
-	{
-		get
-		{
-			return "";
-		}
-	}
+	public virtual bool ShowFuel => false;
 
-	public override bool AllowTransfer
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public virtual string langWhat => "";
 
-	public override bool AllowAutouse
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool AllowTransfer => true;
 
-	public override bool AllowContext
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool AllowAutouse => false;
+
+	public override bool AllowContext => false;
+
+	public override bool UseGuide => true;
+
+	public override bool CopyOnTransfer => true;
 
 	public override bool AllowHold(Thing t)
 	{
 		return false;
 	}
 
-	public override bool UseGuide
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public override bool CopyOnTransfer
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public InvOwnerAutoCombatBar(Card owner, Card container = null, CurrencyType _currency = CurrencyType.None) : base(owner, container, _currency, PriceType.Default)
+	public InvOwnerAutoCombatBar(Card owner, Card container = null, CurrencyType _currency = CurrencyType.None)
+		: base(owner, container, _currency)
 	{
 	}
-
-	public int index;
 }

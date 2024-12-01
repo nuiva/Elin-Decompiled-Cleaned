@@ -1,12 +1,4 @@
-﻿using System;
-
 public class TraitFoodNut : TraitFood
 {
-	public override int DecaySpeed
-	{
-		get
-		{
-			return 10;
-		}
-	}
+	public override int DecaySpeed => 10;
 }

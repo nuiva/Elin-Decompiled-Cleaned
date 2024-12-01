@@ -1,72 +1,8 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class MsgLog : EClass
 {
-	public int maxLog
-	{
-		get
-		{
-			if (this.id == "chronicle")
-			{
-				return 9999;
-			}
-			return 50;
-		}
-	}
-
-	public void Add(MsgLog.Data data)
-	{
-		this.dict.Add(this.currentLogIndex, data);
-		this.currentLogIndex++;
-		if (this.currentLogIndex >= this.maxLog)
-		{
-			this.dict.Remove(this.currentLogIndex - this.maxLog);
-		}
-	}
-
-	public MsgLog.Data Add(string text, FontColor c)
-	{
-		return this.Add(text, c.ToString());
-	}
-
-	public MsgLog.Data Add(string text, string col = null)
-	{
-		MsgLog.Data data = new MsgLog.Data
-		{
-			text = text,
-			col = col
-		};
-		data.date = (VirtualDate.current ?? EClass.world.date).Copy();
-		this.Add(data);
-		return data;
-	}
-
-	public List<MsgLog.Data> GetList(bool reverse = false)
-	{
-		List<MsgLog.Data> list = new List<MsgLog.Data>();
-		foreach (MsgLog.Data item in this.dict.Values)
-		{
-			list.Add(item);
-		}
-		list.Sort((MsgLog.Data a, MsgLog.Data b) => a.date.GetRaw(0) - b.date.GetRaw(0));
-		if (reverse)
-		{
-			list.Reverse();
-		}
-		return list;
-	}
-
-	[JsonProperty]
-	public Dictionary<int, MsgLog.Data> dict = new Dictionary<int, MsgLog.Data>();
-
-	[JsonProperty]
-	public int currentLogIndex;
-
-	[JsonProperty]
-	public string id;
-
 	public class Data : EClass
 	{
 		[JsonProperty]
@@ -77,5 +13,68 @@ public class MsgLog : EClass
 
 		[JsonProperty]
 		public Date date;
+	}
+
+	[JsonProperty]
+	public Dictionary<int, Data> dict = new Dictionary<int, Data>();
+
+	[JsonProperty]
+	public int currentLogIndex;
+
+	[JsonProperty]
+	public string id;
+
+	public int maxLog
+	{
+		get
+		{
+			if (id == "chronicle")
+			{
+				return 9999;
+			}
+			return 50;
+		}
+	}
+
+	public void Add(Data data)
+	{
+		dict.Add(currentLogIndex, data);
+		currentLogIndex++;
+		if (currentLogIndex >= maxLog)
+		{
+			dict.Remove(currentLogIndex - maxLog);
+		}
+	}
+
+	public Data Add(string text, FontColor c)
+	{
+		return Add(text, c.ToString());
+	}
+
+	public Data Add(string text, string col = null)
+	{
+		Data data = new Data
+		{
+			text = text,
+			col = col
+		};
+		data.date = (VirtualDate.current ?? EClass.world.date).Copy();
+		Add(data);
+		return data;
+	}
+
+	public List<Data> GetList(bool reverse = false)
+	{
+		List<Data> list = new List<Data>();
+		foreach (Data value in dict.Values)
+		{
+			list.Add(value);
+		}
+		list.Sort((Data a, Data b) => a.date.GetRaw() - b.date.GetRaw());
+		if (reverse)
+		{
+			list.Reverse();
+		}
+		return list;
 	}
 }

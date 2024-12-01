@@ -1,30 +1,14 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class TaskWater : Task
 {
-	public TraitToolWaterCan waterCan
-	{
-		get
-		{
-			Chara chara = this.owner ?? Act.CC;
-			object obj;
-			if (chara == null)
-			{
-				obj = null;
-			}
-			else
-			{
-				Card held = chara.held;
-				obj = ((held != null) ? held.trait : null);
-			}
-			return obj as TraitToolWaterCan;
-		}
-	}
+	public Point dest;
+
+	public TraitToolWaterCan waterCan => (owner ?? Act.CC)?.held?.trait as TraitToolWaterCan;
 
 	public override string GetText(string str = "")
 	{
-		if (this.dest == null || !this.dest.cell.HasFire)
+		if (dest == null || !dest.cell.HasFire)
 		{
 			return base.GetText(str);
 		}
@@ -33,7 +17,11 @@ public class TaskWater : Task
 
 	public override bool CanPerform()
 	{
-		return TaskWater.ShouldWater(Act.TP) && this.IsWaterCanValid(false);
+		if (ShouldWater(Act.TP))
+		{
+			return IsWaterCanValid(msg: false);
+		}
+		return false;
 	}
 
 	public override bool CanManualCancel()
@@ -41,70 +29,64 @@ public class TaskWater : Task
 		return true;
 	}
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		this.dest = new Point(this.dest);
-		List<Point> list = this.ListPoints();
-		for (;;)
+		dest = new Point(dest);
+		List<Point> list = ListPoints();
+		while (list.Count != 0)
 		{
-			TaskWater.<>c__DisplayClass6_0 CS$<>8__locals1 = new TaskWater.<>c__DisplayClass6_0();
-			if (list.Count == 0)
-			{
-				break;
-			}
-			list.Sort((Point a, Point b) => a.Distance(this.dest) - b.Distance(this.dest));
+			list.Sort((Point a, Point b) => a.Distance(dest) - b.Distance(dest));
 			Point p = list[0];
-			this.dest.Set(p);
+			dest.Set(p);
 			list.RemoveAt(0);
-			if (TaskWater.ShouldWater(p))
+			if (!ShouldWater(p))
 			{
-				if (!this.IsWaterCanValid(true))
+				continue;
+			}
+			if (!IsWaterCanValid())
+			{
+				yield return Cancel();
+			}
+			bool fail = false;
+			yield return DoGoto(p, 1, ignoreConnection: false, delegate
+			{
+				fail = true;
+				return Status.Running;
+			});
+			if (fail)
+			{
+				continue;
+			}
+			if (!IsWaterCanValid())
+			{
+				yield return Cancel();
+			}
+			if (ShouldWater(p))
+			{
+				if (owner.Dist(dest) > 1)
 				{
-					yield return this.Cancel();
+					yield return Cancel();
 				}
-				CS$<>8__locals1.fail = false;
-				yield return base.DoGoto(p, 1, false, delegate()
+				p.cell.isWatered = true;
+				if (!p.cell.blocked && EClass.rnd(5) == 0)
 				{
-					CS$<>8__locals1.fail = true;
-					return AIAct.Status.Running;
-				});
-				if (!CS$<>8__locals1.fail)
-				{
-					if (!this.IsWaterCanValid(true))
-					{
-						yield return this.Cancel();
-					}
-					if (TaskWater.ShouldWater(p))
-					{
-						if (this.owner.Dist(this.dest) > 1)
-						{
-							yield return this.Cancel();
-						}
-						p.cell.isWatered = true;
-						if (!p.cell.blocked && EClass.rnd(5) == 0)
-						{
-							EClass._map.SetLiquid(p.x, p.z, 1, 1);
-						}
-						if (p.cell.HasFire)
-						{
-							EClass._map.ModFire(p.x, p.z, -50);
-						}
-						this.owner.PlaySound("water_farm", 1f, true);
-						this.owner.Say("water_farm", this.owner, p.cell.GetFloorName(), null);
-						this.waterCan.owner.ModCharge(-1, false);
-						this.owner.ModExp(286, 15);
-						if (!this.IsWaterCanValid(true))
-						{
-							yield return this.Cancel();
-						}
-						yield return base.KeepRunning();
-						CS$<>8__locals1 = null;
-						p = null;
-					}
+					EClass._map.SetLiquid(p.x, p.z, 1);
 				}
+				if (p.cell.HasFire)
+				{
+					EClass._map.ModFire(p.x, p.z, -50);
+				}
+				owner.PlaySound("water_farm");
+				owner.Say("water_farm", owner, p.cell.GetFloorName());
+				waterCan.owner.ModCharge(-1);
+				owner.ModExp(286, 15);
+				if (!IsWaterCanValid())
+				{
+					yield return Cancel();
+				}
+				yield return KeepRunning();
 			}
 		}
-		yield break;
 	}
 
 	public static bool ShouldWater(Point p)
@@ -120,14 +102,11 @@ public class TaskWater : Task
 		}
 		if (p.cell.detail != null)
 		{
-			using (List<Thing>.Enumerator enumerator = p.Things.GetEnumerator())
+			foreach (Thing thing in p.Things)
 			{
-				while (enumerator.MoveNext())
+				if (thing.trait is TraitSeed)
 				{
-					if (enumerator.Current.trait is TraitSeed)
-					{
-						return true;
-					}
+					return true;
 				}
 			}
 		}
@@ -136,12 +115,12 @@ public class TaskWater : Task
 
 	public bool IsWaterCanValid(bool msg = true)
 	{
-		bool flag = this.waterCan != null && this.waterCan.owner.c_charges > 0;
-		if (!flag && msg)
+		bool num = waterCan != null && waterCan.owner.c_charges > 0;
+		if (!num && msg)
 		{
 			Msg.Say("water_deplete");
 		}
-		return flag;
+		return num;
 	}
 
 	public List<Point> ListPoints()
@@ -149,13 +128,11 @@ public class TaskWater : Task
 		List<Point> list = new List<Point>();
 		EClass._map.bounds.ForeachPoint(delegate(Point p)
 		{
-			if (TaskWater.ShouldWater(p))
+			if (ShouldWater(p))
 			{
 				list.Add(p.Copy());
 			}
 		});
 		return list;
 	}
-
-	public Point dest;
 }

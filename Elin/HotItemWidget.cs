@@ -1,27 +1,17 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class HotItemWidget : HotItem
 {
-	public override string Name
-	{
-		get
-		{
-			return ("Widget" + this.id).lang();
-		}
-	}
+	[JsonProperty]
+	public string id;
 
-	public override string pathSprite
-	{
-		get
-		{
-			return "icon_" + this.id + ((this.id == "QuestTracker" && !EClass.player.questTracker) ? "_inactive" : "");
-		}
-	}
+	public override string Name => ("Widget" + id).lang();
+
+	public override string pathSprite => "icon_" + id + ((id == "QuestTracker" && !EClass.player.questTracker) ? "_inactive" : "");
 
 	public override void OnClick(ButtonHotItem b, Hotbar h)
 	{
-		if (this.id == "QuestTracker")
+		if (id == "QuestTracker")
 		{
 			if (EClass.player.questTracker)
 			{
@@ -36,16 +26,10 @@ public class HotItemWidget : HotItem
 			}
 			SE.Tab();
 			b.RefreshItem();
-			return;
 		}
-		Widget widget = EClass.ui.widgets.Toggle(this.id);
-		if (widget == null)
+		else
 		{
-			return;
+			EClass.ui.widgets.Toggle(id)?.SoundActivate();
 		}
-		widget.SoundActivate();
 	}
-
-	[JsonProperty]
-	public string id;
 }

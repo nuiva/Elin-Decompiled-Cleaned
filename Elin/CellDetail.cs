@@ -1,74 +1,7 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class CellDetail
 {
-	public static CellDetail Empty
-	{
-		get
-		{
-			return new CellDetail();
-		}
-	}
-
-	public static CellDetail Spawn()
-	{
-		if (CellDetail.cache.Count > 0)
-		{
-			return CellDetail.cache.Pop();
-		}
-		CellDetail.count++;
-		return new CellDetail();
-	}
-
-	public bool TryDespawn()
-	{
-		if (this.things.Count > 0 || this.charas.Count > 0 || this.area != null || this.footmark != null || this.designation != null || this.anime != null)
-		{
-			return false;
-		}
-		CellDetail.cache.Push(this);
-		return true;
-	}
-
-	public void MoveThingToBottom(Thing t)
-	{
-		if (this.things.Count == 1)
-		{
-			return;
-		}
-		this.things.Remove(t);
-		this.things.Insert(0, t);
-		int num = 0;
-		while (num < this.things.Count - 1 && this.things[num].IsInstalled)
-		{
-			t.stackOrder = num;
-			num++;
-		}
-	}
-
-	public void MoveThingToTop(Thing t)
-	{
-		if (this.things.Count == 1)
-		{
-			return;
-		}
-		int num = 0;
-		int num2 = 0;
-		while (num2 < this.things.Count - 1 && this.things[num2].IsInstalled)
-		{
-			num = num2 + 1;
-			num2++;
-		}
-		if (num >= this.things.Count)
-		{
-			num--;
-		}
-		this.things.Remove(t);
-		this.things.Insert(num, t);
-		t.stackOrder = num;
-	}
-
 	public static int count;
 
 	public static Map map;
@@ -86,4 +19,58 @@ public class CellDetail
 	public TaskDesignation designation;
 
 	public TransAnime anime;
+
+	public static CellDetail Empty => new CellDetail();
+
+	public static CellDetail Spawn()
+	{
+		if (cache.Count > 0)
+		{
+			return cache.Pop();
+		}
+		count++;
+		return new CellDetail();
+	}
+
+	public bool TryDespawn()
+	{
+		if (things.Count > 0 || charas.Count > 0 || area != null || footmark != null || designation != null || anime != null)
+		{
+			return false;
+		}
+		cache.Push(this);
+		return true;
+	}
+
+	public void MoveThingToBottom(Thing t)
+	{
+		if (things.Count != 1)
+		{
+			things.Remove(t);
+			things.Insert(0, t);
+			for (int i = 0; i < things.Count - 1 && things[i].IsInstalled; i++)
+			{
+				t.stackOrder = i;
+			}
+		}
+	}
+
+	public void MoveThingToTop(Thing t)
+	{
+		if (things.Count != 1)
+		{
+			int num = 0;
+			for (int i = 0; i < things.Count - 1 && things[i].IsInstalled; i++)
+			{
+				num = i + 1;
+			}
+			if (num >= things.Count)
+			{
+				num--;
+			}
+			things.Remove(t);
+			things.Insert(num, t);
+			t.stackOrder = num;
+		}
+	}
 }

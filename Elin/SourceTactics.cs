@@ -1,56 +1,10 @@
-﻿using System;
+using System;
 
 public class SourceTactics : SourceDataString<SourceTactics.Row>
 {
-	public override SourceTactics.Row CreateRow()
-	{
-		return new SourceTactics.Row
-		{
-			id = SourceData.GetString(0),
-			name_JP = SourceData.GetString(1),
-			name = SourceData.GetString(2),
-			dist = SourceData.GetInt(4),
-			move = SourceData.GetInt(5),
-			movePC = SourceData.GetInt(6),
-			party = SourceData.GetInt(7),
-			taunt = SourceData.GetInt(8),
-			melee = SourceData.GetInt(9),
-			range = SourceData.GetInt(10),
-			spell = SourceData.GetInt(11),
-			heal = SourceData.GetInt(12),
-			summon = SourceData.GetInt(13),
-			buff = SourceData.GetInt(14),
-			debuff = SourceData.GetInt(15),
-			tag = SourceData.GetStringArray(16),
-			detail_JP = SourceData.GetString(17),
-			detail = SourceData.GetString(18)
-		};
-	}
-
-	public override void SetRow(SourceTactics.Row r)
-	{
-		this.map[r.id] = r;
-	}
-
 	[Serializable]
-	public class Row : SourceData.BaseRow
+	public class Row : BaseRow
 	{
-		public override bool UseAlias
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		public override string GetAlias
-		{
-			get
-			{
-				return "n";
-			}
-		}
-
 		public string id;
 
 		public string name_JP;
@@ -90,5 +44,39 @@ public class SourceTactics : SourceDataString<SourceTactics.Row>
 		public string name_L;
 
 		public string detail_L;
+
+		public override bool UseAlias => false;
+
+		public override string GetAlias => "n";
+	}
+
+	public override Row CreateRow()
+	{
+		return new Row
+		{
+			id = SourceData.GetString(0),
+			name_JP = SourceData.GetString(1),
+			name = SourceData.GetString(2),
+			dist = SourceData.GetInt(4),
+			move = SourceData.GetInt(5),
+			movePC = SourceData.GetInt(6),
+			party = SourceData.GetInt(7),
+			taunt = SourceData.GetInt(8),
+			melee = SourceData.GetInt(9),
+			range = SourceData.GetInt(10),
+			spell = SourceData.GetInt(11),
+			heal = SourceData.GetInt(12),
+			summon = SourceData.GetInt(13),
+			buff = SourceData.GetInt(14),
+			debuff = SourceData.GetInt(15),
+			tag = SourceData.GetStringArray(16),
+			detail_JP = SourceData.GetString(17),
+			detail = SourceData.GetString(18)
+		};
+	}
+
+	public override void SetRow(Row r)
+	{
+		map[r.id] = r;
 	}
 }

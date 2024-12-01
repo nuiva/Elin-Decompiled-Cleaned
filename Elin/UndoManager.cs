@@ -1,120 +1,108 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 public class UndoManager
 {
-	public UndoManager.Item lastItem
-	{
-		get
-		{
-			return this.items.LastItem<UndoManager.Item>();
-		}
-	}
-
-	public void Validate()
-	{
-		for (int i = this.items.Count - 1; i >= 0; i--)
-		{
-			if (this.items[i].Count() == 0)
-			{
-				this.items.RemoveAt(i);
-			}
-		}
-	}
-
-	public void NewItem()
-	{
-		this.items.Add(new UndoManager.Item());
-		if (this.items.Count > 10)
-		{
-			this.items.RemoveAt(0);
-		}
-	}
-
-	public void Add(Task t)
-	{
-		this.lastItem.list.Add(t);
-	}
-
-	public string GetText()
-	{
-		string text = "tUndo".lang() + Environment.NewLine;
-		if (this.items.Count == 0)
-		{
-			text += "tUndoNone".lang();
-		}
-		else
-		{
-			text += "tUndoNote".lang(this.lastItem.Count().ToString() ?? "", this.lastItem.name ?? "", null, null, null);
-		}
-		return text;
-	}
-
-	public void WriteNote(UINote n)
-	{
-		this.Validate();
-		n.Clear();
-		n.Space(10, 1);
-		n.AddText("NoteText_topic", "tUndo".lang(), FontColor.DontChange);
-		if (this.items.Count == 0)
-		{
-			n.AddText("tUndoNone".lang(), FontColor.DontChange);
-		}
-		else
-		{
-			n.AddText("tUndoNote".lang(this.lastItem.Count().ToString() ?? "", this.lastItem.name ?? "", null, null, null), FontColor.DontChange);
-		}
-		n.Build();
-	}
-
-	public void Perform()
-	{
-		this.Validate();
-		if (this.items.Count == 0)
-		{
-			SE.Beep();
-			return;
-		}
-		foreach (Task task in this.lastItem.list)
-		{
-			task.Destroy();
-		}
-		this.items.Remove(this.lastItem);
-		SE.Play("trash");
-	}
-
-	public List<UndoManager.Item> items = new List<UndoManager.Item>();
-
 	public class Item
 	{
+		public List<Task> list = new List<Task>();
+
 		public string name
 		{
 			get
 			{
-				if (this.list.Count <= 0)
+				if (list.Count <= 0)
 				{
 					return "none".lang();
 				}
-				return this.list[0].Name;
+				return list[0].Name;
 			}
 		}
 
 		public int Count()
 		{
 			int num = 0;
-			using (List<Task>.Enumerator enumerator = this.list.GetEnumerator())
+			foreach (Task item in list)
 			{
-				while (enumerator.MoveNext())
+				if (!item.isDestroyed)
 				{
-					if (!enumerator.Current.isDestroyed)
-					{
-						num++;
-					}
+					num++;
 				}
 			}
 			return num;
 		}
+	}
 
-		public List<Task> list = new List<Task>();
+	public List<Item> items = new List<Item>();
+
+	public Item lastItem => items.LastItem();
+
+	public void Validate()
+	{
+		for (int num = items.Count - 1; num >= 0; num--)
+		{
+			if (items[num].Count() == 0)
+			{
+				items.RemoveAt(num);
+			}
+		}
+	}
+
+	public void NewItem()
+	{
+		items.Add(new Item());
+		if (items.Count > 10)
+		{
+			items.RemoveAt(0);
+		}
+	}
+
+	public void Add(Task t)
+	{
+		lastItem.list.Add(t);
+	}
+
+	public string GetText()
+	{
+		string text = "";
+		text = "tUndo".lang() + Environment.NewLine;
+		if (items.Count == 0)
+		{
+			return text + "tUndoNone".lang();
+		}
+		return text + "tUndoNote".lang(lastItem.Count().ToString() ?? "", lastItem.name ?? "");
+	}
+
+	public void WriteNote(UINote n)
+	{
+		Validate();
+		n.Clear();
+		n.Space(10);
+		n.AddText("NoteText_topic", "tUndo".lang());
+		if (items.Count == 0)
+		{
+			n.AddText("tUndoNone".lang());
+		}
+		else
+		{
+			n.AddText("tUndoNote".lang(lastItem.Count().ToString() ?? "", lastItem.name ?? ""));
+		}
+		n.Build();
+	}
+
+	public void Perform()
+	{
+		Validate();
+		if (items.Count == 0)
+		{
+			SE.Beep();
+			return;
+		}
+		foreach (Task item in lastItem.list)
+		{
+			item.Destroy();
+		}
+		items.Remove(lastItem);
+		SE.Play("trash");
 	}
 }

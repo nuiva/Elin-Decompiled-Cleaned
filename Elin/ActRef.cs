@@ -1,15 +1,5 @@
-﻿using System;
-
 public struct ActRef
 {
-	public int idEle
-	{
-		get
-		{
-			return EClass.sources.elements.alias[this.aliasEle].id;
-		}
-	}
-
 	public Act act;
 
 	public string aliasEle;
@@ -23,4 +13,6 @@ public struct ActRef
 	public bool isPerfume;
 
 	public bool noFriendlyFire;
+
+	public int idEle => EClass.sources.elements.alias[aliasEle].id;
 }

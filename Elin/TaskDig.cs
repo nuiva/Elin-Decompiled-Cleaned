@@ -1,168 +1,134 @@
-﻿using System;
-
 public class TaskDig : BaseTaskHarvest
 {
-	public override BaseTaskHarvest.HarvestType harvestType
+	public enum Mode
 	{
-		get
-		{
-			return BaseTaskHarvest.HarvestType.Floor;
-		}
+		Default,
+		Ramp,
+		RemoveFloor
 	}
 
-	public override int RightHand
-	{
-		get
-		{
-			return 1101;
-		}
-	}
+	public Mode mode;
 
-	public override bool IsHostileAct
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public int ramp = 3;
 
-	public override bool LocalAct
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override HarvestType harvestType => HarvestType.Floor;
+
+	public override int RightHand => 1101;
+
+	public override bool IsHostileAct => true;
+
+	public override bool LocalAct => false;
 
 	public override int destDist
 	{
 		get
 		{
-			if (EClass._zone.IsSkyLevel)
+			if (!EClass._zone.IsSkyLevel)
 			{
-				return 1;
+				if (!EClass._zone.IsRegion)
+				{
+					return 1;
+				}
+				return 0;
 			}
-			if (!EClass._zone.IsRegion)
-			{
-				return 1;
-			}
-			return 0;
+			return 1;
 		}
 	}
 
-	public override bool destIgnoreConnection
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool destIgnoreConnection => true;
 
-	public override CursorInfo CursorIcon
-	{
-		get
-		{
-			return CursorSystem.Dig;
-		}
-	}
+	public override CursorInfo CursorIcon => CursorSystem.Dig;
 
 	public override string GetTextSmall(Card c)
 	{
-		if (!this.pos.cell.HasBridge)
+		if (!pos.cell.HasBridge)
 		{
-			return this.pos.cell.GetFloorName();
+			return pos.cell.GetFloorName();
 		}
-		return this.pos.cell.GetBridgeName();
+		return pos.cell.GetBridgeName();
 	}
 
 	public override void OnCreateProgress(Progress_Custom p)
 	{
-		base.SetTarget(this.owner, null);
-		p.textHint = this.pos.cell.GetFloorName();
-		p.maxProgress = this.maxProgress;
-		p.onProgressBegin = delegate()
+		SetTarget(owner);
+		p.textHint = pos.cell.GetFloorName();
+		p.maxProgress = maxProgress;
+		p.onProgressBegin = delegate
 		{
-			if (this.IsTooHard)
+			if (base.IsTooHard)
 			{
-				this.owner.Say("tooHardToDig", this.owner, this.pos.cell.HasBridge ? this.pos.cell.GetBridgeName() : this.pos.cell.GetFloorName(), null);
+				owner.Say("tooHardToDig", owner, pos.cell.HasBridge ? pos.cell.GetBridgeName() : pos.cell.GetFloorName());
 				p.Cancel();
-				return;
 			}
-			if (this.owner.Tool != null)
+			else if (owner.Tool != null)
 			{
-				this.owner.Say("dig_start", this.owner, this.owner.Tool, null, null);
+				owner.Say("dig_start", owner, owner.Tool);
 			}
 		};
-		p.onProgress = delegate(Progress_Custom _p)
+		p.onProgress = delegate
 		{
-			SourceMaterial.Row row = this.pos.cell.HasBridge ? this.pos.cell.matBridge : this.pos.cell.matFloor;
-			this.owner.PlaySound(row.GetSoundImpact(null), 1f, true);
-			row.PlayHitEffect(this.pos);
-			row.AddBlood(this.pos, 1);
-			this.owner.elements.ModExp(230, 5, false);
-			this.owner.renderer.NextFrame();
-			if (EClass._zone.IsCrime(this.owner, this))
+			SourceMaterial.Row row = (pos.cell.HasBridge ? pos.cell.matBridge : pos.cell.matFloor);
+			owner.PlaySound(row.GetSoundImpact());
+			row.PlayHitEffect(pos);
+			row.AddBlood(pos);
+			owner.elements.ModExp(230, 5);
+			owner.renderer.NextFrame();
+			if (EClass._zone.IsCrime(owner, this))
 			{
-				this.owner.pos.TryWitnessCrime(this.owner, null, 4, null);
+				owner.pos.TryWitnessCrime(owner);
 			}
 		};
 	}
 
 	public override HitResult GetHitResult()
 	{
-		if (EClass._zone.IsRegion && this.GetTreasureMap() != null)
+		if (EClass._zone.IsRegion && GetTreasureMap() != null)
 		{
 			return HitResult.Valid;
 		}
-		if (this.mode == TaskDig.Mode.RemoveFloor)
+		if (mode == Mode.RemoveFloor)
 		{
 			if (EClass._zone.IsRegion)
 			{
-				if (this.pos.matFloor.category == "soil")
+				if (pos.matFloor.category == "soil")
 				{
 					return HitResult.Valid;
 				}
 				return HitResult.Default;
 			}
-			else
+			if (EClass._zone.IsSkyLevel && (pos.Installed != null || pos.Charas.Count >= 2 || (pos.HasChara && pos.FirstChara != EClass.pc)))
 			{
-				if (EClass._zone.IsSkyLevel && (this.pos.Installed != null || this.pos.Charas.Count >= 2 || (this.pos.HasChara && this.pos.FirstChara != EClass.pc)))
-				{
-					return HitResult.Invalid;
-				}
-				if (this.pos.IsWater || this.pos.HasObj || (!EClass._zone.IsPCFaction && this.pos.HasBlock))
-				{
-					return HitResult.Invalid;
-				}
-				if (!this.pos.HasBridge && this.pos.sourceFloor.id == 40)
-				{
-					return HitResult.Invalid;
-				}
-				return HitResult.Valid;
+				return HitResult.Invalid;
 			}
+			if (pos.IsWater || pos.HasObj || (!EClass._zone.IsPCFaction && pos.HasBlock))
+			{
+				return HitResult.Invalid;
+			}
+			if (!pos.HasBridge && pos.sourceFloor.id == 40)
+			{
+				return HitResult.Invalid;
+			}
+			return HitResult.Valid;
 		}
-		else
+		if (pos.HasBridge)
 		{
-			if (!this.pos.HasBridge)
-			{
-				return HitResult.Default;
-			}
-			if (this.pos.HasObj)
+			if (pos.HasObj)
 			{
 				return HitResult.Warning;
 			}
 			return HitResult.Valid;
 		}
+		return HitResult.Default;
 	}
 
 	public Thing GetTreasureMap()
 	{
-		foreach (Thing thing in EClass.pc.things.List((Thing t) => t.trait is TraitScrollMapTreasure, false))
+		foreach (Thing item in EClass.pc.things.List((Thing t) => t.trait is TraitScrollMapTreasure))
 		{
-			TraitScrollMapTreasure traitScrollMapTreasure = thing.trait as TraitScrollMapTreasure;
-			if (this.pos.Equals(traitScrollMapTreasure.GetDest(true)))
+			TraitScrollMapTreasure traitScrollMapTreasure = item.trait as TraitScrollMapTreasure;
+			if (pos.Equals(traitScrollMapTreasure.GetDest(fix: true)))
 			{
-				return thing;
+				return item;
 			}
 		}
 		return null;
@@ -170,11 +136,11 @@ public class TaskDig : BaseTaskHarvest
 
 	public override void OnProgressComplete()
 	{
-		string idRecipe = this.pos.HasBridge ? this.pos.sourceBridge.RecipeID : this.pos.sourceFloor.RecipeID;
-		int num = this.pos.HasBridge ? this.pos.matBridge.hardness : this.pos.matFloor.hardness;
+		string idRecipe = (pos.HasBridge ? pos.sourceBridge.RecipeID : pos.sourceFloor.RecipeID);
+		int num = (pos.HasBridge ? pos.matBridge.hardness : pos.matFloor.hardness);
 		if (EClass._zone.IsRegion)
 		{
-			Thing map = this.GetTreasureMap();
+			Thing map = GetTreasureMap();
 			if (map != null || EClass.debug.enable)
 			{
 				if (map == null)
@@ -185,7 +151,7 @@ public class TaskDig : BaseTaskHarvest
 				Msg.Say("digTreasure");
 				Rand.UseSeed(map.refVal, delegate
 				{
-					Thing thing = ThingGen.CreateTreasure("chest_treasure", map.LV, TreasureType.Map);
+					Thing thing = ThingGen.CreateTreasure("chest_treasure", map.LV);
 					EClass._zone.AddCard(thing, EClass.pc.pos);
 					ThingGen.TryLickChest(thing);
 				});
@@ -194,53 +160,41 @@ public class TaskDig : BaseTaskHarvest
 				return;
 			}
 		}
-		switch (this.mode)
+		switch (mode)
 		{
-		case TaskDig.Mode.Default:
-			EClass._map.SetBridge(this.pos.x, this.pos.z, 0, 0, 0, 0);
+		case Mode.Default:
+			EClass._map.SetBridge(pos.x, pos.z);
 			break;
-		case TaskDig.Mode.Ramp:
-			EClass._map.MineFloor(this.pos, this.owner, false, true);
-			break;
-		case TaskDig.Mode.RemoveFloor:
-			EClass._map.MineFloor(this.pos, this.owner, false, true);
-			this.pos.Animate(AnimeID.Dig, true);
-			if (!this.owner.IsAgent)
+		case Mode.RemoveFloor:
+			EClass._map.MineFloor(pos, owner);
+			pos.Animate(AnimeID.Dig, animeBlock: true);
+			if (!owner.IsAgent)
 			{
-				this.owner.elements.ModExp(230, 20 + num / 2, false);
+				owner.elements.ModExp(230, 20 + num / 2);
 			}
 			break;
+		case Mode.Ramp:
+			EClass._map.MineFloor(pos, owner);
+			break;
 		}
-		if (EClass._zone.IsCrime(this.owner, this))
+		if (EClass._zone.IsCrime(owner, this))
 		{
 			EClass.player.ModKarma(-1);
 		}
 		if (EClass.rnd(2) == 0)
 		{
-			this.owner.stamina.Mod(-1);
+			owner.stamina.Mod(-1);
 		}
-		if (this.owner == null)
+		if (owner != null)
 		{
-			return;
+			if (owner.IsPC)
+			{
+				EClass.player.recipes.ComeUpWithRecipe(idRecipe, 30);
+			}
+			if (owner.IsPC && owner.IsAliveInCurrentZone && EClass._zone.IsSkyLevel && owner.pos.IsSky)
+			{
+				EClass.pc.FallFromZone();
+			}
 		}
-		if (this.owner.IsPC)
-		{
-			EClass.player.recipes.ComeUpWithRecipe(idRecipe, 30);
-		}
-		if (this.owner.IsPC && this.owner.IsAliveInCurrentZone && EClass._zone.IsSkyLevel && this.owner.pos.IsSky)
-		{
-			EClass.pc.FallFromZone();
-		}
-	}
-
-	public TaskDig.Mode mode;
-
-	public int ramp = 3;
-
-	public enum Mode
-	{
-		Default,
-		Ramp,
-		RemoveFloor
 	}
 }

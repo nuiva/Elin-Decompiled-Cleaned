@@ -1,29 +1,28 @@
-﻿using System;
-
 public class TraitTrainingDummy : Trait
 {
-	public override bool CanBeAttacked
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanBeAttacked => true;
 
 	public override bool IdleUse(Chara c, int dist)
 	{
-		return (dist <= 1 && ACT.Melee.Perform(c, this.owner, null)) || (c.TryEquipRanged() && dist < c.ranged.range && ACT.Ranged.Perform(c, this.owner, null));
+		if (dist <= 1 && ACT.Melee.Perform(c, owner))
+		{
+			return true;
+		}
+		if (c.TryEquipRanged() && dist < c.ranged.range && ACT.Ranged.Perform(c, owner))
+		{
+			return true;
+		}
+		return false;
 	}
 
 	public override void TrySetAct(ActPlan p)
 	{
-		if (!this.owner.IsInstalled)
+		if (owner.IsInstalled)
 		{
-			return;
+			p.TrySetAct(new AI_PracticeDummy
+			{
+				target = owner.Thing
+			}, owner);
 		}
-		p.TrySetAct(new AI_PracticeDummy
-		{
-			target = this.owner.Thing
-		}, this.owner);
 	}
 }

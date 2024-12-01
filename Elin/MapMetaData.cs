@@ -1,13 +1,7 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class MapMetaData : EClass
 {
-	public bool IsValidVersion()
-	{
-		return !global::Version.Get(this.version).IsBelow(EClass.core.versionMoongate);
-	}
-
 	[JsonProperty]
 	public string name;
 
@@ -24,4 +18,9 @@ public class MapMetaData : EClass
 	public PartialMap partial;
 
 	public string path;
+
+	public bool IsValidVersion()
+	{
+		return !Version.Get(version).IsBelow(EClass.core.versionMoongate);
+	}
 }

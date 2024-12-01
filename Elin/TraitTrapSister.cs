@@ -1,20 +1,6 @@
-﻿using System;
-
 public class TraitTrapSister : TraitTrap
 {
-	public override bool CanDisarmTrap
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanDisarmTrap => false;
 
-	public override int DestroyChanceOnActivateTrap
-	{
-		get
-		{
-			return 100;
-		}
-	}
+	public override int DestroyChanceOnActivateTrap => 100;
 }

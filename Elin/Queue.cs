@@ -1,15 +1,5 @@
-﻿using System;
-
 public class Queue
 {
-	public bool CanCancel
-	{
-		get
-		{
-			return !this.removed && this.interaction.IsRunning;
-		}
-	}
-
 	public AIAct interaction;
 
 	public UIButton button;
@@ -17,4 +7,16 @@ public class Queue
 	public bool removed;
 
 	public bool pinned;
+
+	public bool CanCancel
+	{
+		get
+		{
+			if (!removed)
+			{
+				return interaction.IsRunning;
+			}
+			return false;
+		}
+	}
 }

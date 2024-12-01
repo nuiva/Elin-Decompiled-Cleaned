@@ -1,18 +1,15 @@
-﻿using System;
+namespace Algorithms;
 
-namespace Algorithms
+public class WeightCell
 {
-	public class WeightCell
+	public bool blocked;
+
+	public byte[] weights = new byte[4];
+
+	public byte baseWeight;
+
+	public virtual bool IsPathBlocked(PathManager.MoveType moveType)
 	{
-		public virtual bool IsPathBlocked(PathManager.MoveType moveType)
-		{
-			return this.blocked;
-		}
-
-		public bool blocked;
-
-		public byte[] weights = new byte[4];
-
-		public byte baseWeight;
+		return blocked;
 	}
 }

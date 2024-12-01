@@ -1,4 +1,3 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -9,31 +8,23 @@ public class ActRanged : ActThrow
 	{
 		get
 		{
-			return Act.CC.IsPC && Act.TC == Act.CC && !Act.CC.HasCondition<ConReload>() && EClass.player.currentHotItem.Thing != null && !(EClass.player.currentHotItem.Thing.trait is TraitToolRangeCane);
+			if (Act.CC.IsPC && Act.TC == Act.CC && !Act.CC.HasCondition<ConReload>() && EClass.player.currentHotItem.Thing != null)
+			{
+				return !(EClass.player.currentHotItem.Thing.trait is TraitToolRangeCane);
+			}
+			return false;
 		}
 	}
 
-	public override CursorInfo CursorIcon
-	{
-		get
-		{
-			return CursorSystem.IconRange;
-		}
-	}
+	public override CursorInfo CursorIcon => CursorSystem.IconRange;
 
-	public override int PerformDistance
-	{
-		get
-		{
-			return 99;
-		}
-	}
+	public override int PerformDistance => 99;
 
 	public override string Name
 	{
 		get
 		{
-			if (!this.IsReload)
+			if (!IsReload)
 			{
 				return base.Name;
 			}
@@ -43,11 +34,11 @@ public class ActRanged : ActThrow
 
 	public override string GetText(string str = "")
 	{
-		if (!this.IsReload)
+		if (!IsReload)
 		{
 			return base.GetText(str);
 		}
-		return this.Name;
+		return Name;
 	}
 
 	public override bool CanPerform()
@@ -62,15 +53,17 @@ public class ActRanged : ActThrow
 		}
 		if (Act.TC == null)
 		{
-			return Act.CC.CanSeeLos(Act.TP, -1);
+			return Act.CC.CanSeeLos(Act.TP);
 		}
-		return Act.TC.IsAliveInCurrentZone && Act.CC.CanSeeLos(Act.TC.pos, -1);
+		if (!Act.TC.IsAliveInCurrentZone)
+		{
+			return false;
+		}
+		return Act.CC.CanSeeLos(Act.TC.pos);
 	}
 
 	public override bool Perform()
 	{
-		ActRanged.<>c__DisplayClass10_0 CS$<>8__locals1 = new ActRanged.<>c__DisplayClass10_0();
-		CS$<>8__locals1.<>4__this = this;
 		if (Act.TC == null)
 		{
 			Act.TC = Act.TP.FindAttackTarget();
@@ -93,57 +86,50 @@ public class ActRanged : ActThrow
 		{
 			Act.CC.TryEquipRanged();
 		}
-		CS$<>8__locals1.weapon = Act.CC.ranged;
-		if (CS$<>8__locals1.weapon != null && Act.CC.IsPC && Act.CC.body.IsTooHeavyToEquip(CS$<>8__locals1.weapon))
+		Thing weapon = Act.CC.ranged;
+		if (weapon != null && Act.CC.IsPC && Act.CC.body.IsTooHeavyToEquip(weapon))
 		{
-			Msg.Say("tooHeavyToEquip", CS$<>8__locals1.weapon, null, null, null);
+			Msg.Say("tooHeavyToEquip", weapon);
 			return false;
 		}
-		if (CS$<>8__locals1.weapon == null || !CS$<>8__locals1.weapon.CanAutoFire(Act.CC, Act.TC, false))
+		if (weapon == null || !weapon.CanAutoFire(Act.CC, Act.TC))
 		{
 			return false;
 		}
-		bool flag = CS$<>8__locals1.weapon.trait is TraitToolRangeGun;
-		bool flag2 = CS$<>8__locals1.weapon.trait is TraitToolRangeCane;
-		GameSetting.EffectData effectData;
-		if ((effectData = EClass.setting.effect.guns.TryGetValue(CS$<>8__locals1.weapon.id, null)) == null)
-		{
-			effectData = EClass.setting.effect.guns[flag2 ? "cane" : (flag ? "gun" : "bow")];
-		}
-		GameSetting.EffectData effectData2 = effectData;
-		CS$<>8__locals1.hasHit = false;
-		CS$<>8__locals1.numFire = effectData2.num;
-		CS$<>8__locals1.numFireWithoutDamageLoss = CS$<>8__locals1.numFire;
-		int num = CS$<>8__locals1.weapon.Evalue(602);
+		bool flag = weapon.trait is TraitToolRangeGun;
+		bool flag2 = weapon.trait is TraitToolRangeCane;
+		GameSetting.EffectData effectData = EClass.setting.effect.guns.TryGetValue(weapon.id) ?? EClass.setting.effect.guns[flag2 ? "cane" : (flag ? "gun" : "bow")];
+		bool hasHit = false;
+		int numFire = effectData.num;
+		int numFireWithoutDamageLoss = numFire;
+		int num = weapon.Evalue(602);
 		if (num > 0)
 		{
-			CS$<>8__locals1.numFire += num / 10 + ((num % 10 > EClass.rnd(10)) ? 1 : 0);
+			numFire += num / 10 + ((num % 10 > EClass.rnd(10)) ? 1 : 0);
 		}
-		CS$<>8__locals1.numFire += Act.CC.Evalue(1652);
-		int num2 = CS$<>8__locals1.numFire;
-		int num3 = 1 + CS$<>8__locals1.weapon.material.hardness / 30 + EClass.rnd(3);
-		CS$<>8__locals1.drill = CS$<>8__locals1.weapon.Evalue(606);
-		CS$<>8__locals1.scatter = CS$<>8__locals1.weapon.Evalue(607);
-		int num4 = CS$<>8__locals1.weapon.Evalue(604);
+		numFire += Act.CC.Evalue(1652);
+		int num2 = numFire;
+		int num3 = 1 + weapon.material.hardness / 30 + EClass.rnd(3);
+		int drill = weapon.Evalue(606);
+		int scatter = weapon.Evalue(607);
+		int num4 = weapon.Evalue(604);
 		if (num4 > 0)
 		{
-			for (int i = 0; i < CS$<>8__locals1.numFire; i++)
+			for (int i = 0; i < numFire; i++)
 			{
-				if (Mathf.Sqrt((float)num4) * 5f + 10f > (float)EClass.rnd(100))
+				if (Mathf.Sqrt(num4) * 5f + 10f > (float)EClass.rnd(100))
 				{
 					num2--;
 				}
 			}
 			num3 = Mathf.Max(1, num3 * 100 / (100 + num4 * 5));
 		}
-		CS$<>8__locals1.missSound = ((CS$<>8__locals1.weapon.trait is TraitToolRangeGun) ? "miss_bullet" : "miss_arrow");
-		if (CS$<>8__locals1.weapon.trait is TraitToolRangeCane)
+		string missSound = ((weapon.trait is TraitToolRangeGun) ? "miss_bullet" : "miss_arrow");
+		if (weapon.trait is TraitToolRangeCane)
 		{
-			foreach (Element element in from e in CS$<>8__locals1.weapon.elements.dict.Values
-			where e.source.categorySub == "eleAttack"
-			select e)
+			foreach (Element item in weapon.elements.dict.Values.Where((Element e) => e.source.categorySub == "eleAttack"))
 			{
-				num3 += element.source.LV / 15;
+				num3 += item.source.LV / 15;
 			}
 			if (Act.CC.IsPC)
 			{
@@ -158,9 +144,9 @@ public class ActRanged : ActThrow
 						ActPlan.warning = true;
 						Dialog.TryWarnMana(delegate
 						{
-							if (CS$<>8__locals1.<>4__this.Perform())
+							if (Perform())
 							{
-								EClass.player.EndTurn(true);
+								EClass.player.EndTurn();
 							}
 						});
 						return false;
@@ -171,17 +157,17 @@ public class ActRanged : ActThrow
 		}
 		else
 		{
-			if (this.IsReload)
+			if (IsReload)
 			{
-				return ActRanged.TryReload(CS$<>8__locals1.weapon, null);
+				return TryReload(weapon);
 			}
-			if (CS$<>8__locals1.weapon.c_ammo <= 0)
+			if (weapon.c_ammo <= 0)
 			{
-				if (!ActRanged.TryReload(CS$<>8__locals1.weapon, null))
+				if (!TryReload(weapon))
 				{
 					if (Act.CC.IsPC)
 					{
-						EInput.Consume(false, 1);
+						EInput.Consume();
 					}
 					return false;
 				}
@@ -192,69 +178,69 @@ public class ActRanged : ActThrow
 			}
 			if (Act.CC.HasCondition<ConFear>())
 			{
-				Act.CC.Say("fear", Act.CC, Act.TC, null, null);
+				Act.CC.Say("fear", Act.CC, Act.TC);
 				if (Act.CC.IsPC)
 				{
-					EInput.Consume(true, 1);
+					EInput.Consume(consumeAxis: true);
 				}
 				return true;
 			}
 		}
 		Act.CC.LookAt(Act.TP);
-		CS$<>8__locals1.index = 0;
-		CS$<>8__locals1.orgTP = Act.TP.Copy();
-		CS$<>8__locals1.points = new List<Point>();
-		if (CS$<>8__locals1.drill > 0)
+		int index = 0;
+		Point orgTP = Act.TP.Copy();
+		List<Point> points = new List<Point>();
+		if (drill > 0)
 		{
-			CS$<>8__locals1.points = EClass._map.ListPointsInLine(Act.CC.pos, Act.TP, CS$<>8__locals1.drill / 10 + ((CS$<>8__locals1.drill % 10 > EClass.rnd(10)) ? 1 : 0) + 1);
+			points = EClass._map.ListPointsInLine(Act.CC.pos, Act.TP, drill / 10 + ((drill % 10 > EClass.rnd(10)) ? 1 : 0) + 1);
 		}
-		else if (CS$<>8__locals1.scatter > 0)
+		else if (scatter > 0)
 		{
 			Act.TP.ForeachNeighbor(delegate(Point _p)
 			{
-				CS$<>8__locals1.points.Add(_p.Copy());
-			}, true);
+				points.Add(_p.Copy());
+			});
 		}
 		if (EClass.core.config.game.waitOnRange)
 		{
 			EClass.Wait(0.25f, Act.CC);
 		}
-		CS$<>8__locals1.<Perform>g__Shoot|1(Act.TC, Act.TP);
-		if (CS$<>8__locals1.points.Count > 0)
+		Shoot(Act.TC, Act.TP);
+		if (points.Count > 0)
 		{
 			Point obj = Act.TP.Copy();
-			foreach (Point point in CS$<>8__locals1.points)
+			foreach (Point item2 in points)
 			{
-				if (!point.Equals(obj))
+				if (!item2.Equals(obj))
 				{
-					Chara firstChara = point.FirstChara;
-					if ((firstChara == null || firstChara.IsHostile(Act.CC)) && (firstChara != null || CS$<>8__locals1.scatter != 0))
+					Chara firstChara = item2.FirstChara;
+					if ((firstChara == null || firstChara.IsHostile(Act.CC)) && (firstChara != null || scatter != 0))
 					{
-						CS$<>8__locals1.<Perform>g__Shoot|1(point.FirstChara, point);
+						Shoot(item2.FirstChara, item2);
 					}
 				}
 			}
 		}
-		if (!(CS$<>8__locals1.weapon.trait is TraitToolRangeCane))
+		if (!(weapon.trait is TraitToolRangeCane))
 		{
-			CS$<>8__locals1.weapon.c_ammo -= num2;
-			if (CS$<>8__locals1.weapon.ammoData != null)
+			weapon.c_ammo -= num2;
+			if (weapon.ammoData != null)
 			{
-				CS$<>8__locals1.weapon.ammoData.Num = CS$<>8__locals1.weapon.c_ammo;
+				weapon.ammoData.Num = weapon.c_ammo;
 			}
-			if (CS$<>8__locals1.weapon.c_ammo <= 0)
+			if (weapon.c_ammo <= 0)
 			{
-				CS$<>8__locals1.weapon.c_ammo = 0;
-				CS$<>8__locals1.weapon.ammoData = null;
+				weapon.c_ammo = 0;
+				weapon.ammoData = null;
 			}
 		}
 		if (Act.CC.IsPC)
 		{
-			LayerInventory.SetDirty(CS$<>8__locals1.weapon);
+			LayerInventory.SetDirty(weapon);
 		}
-		if (Act.TC != null && !CS$<>8__locals1.hasHit)
+		if (Act.TC != null && !hasHit)
 		{
-			Act.CC.PlaySound(CS$<>8__locals1.missSound, 1f, true);
+			Act.CC.PlaySound(missSound);
 		}
 		if (!Act.CC.isDead)
 		{
@@ -262,12 +248,70 @@ public class ActRanged : ActThrow
 			{
 				Act.CC.RemoveCondition<ConInvisibility>();
 			}
-			if (CS$<>8__locals1.weapon.trait is TraitToolRangeCane)
+			if (weapon.trait is TraitToolRangeCane)
 			{
-				Act.CC.mana.Mod(-num3 * CS$<>8__locals1.numFire);
+				Act.CC.mana.Mod(-num3 * numFire);
 			}
 		}
 		return true;
+		void Shoot(Card _tc, Point _tp)
+		{
+			float dmgMulti = 1f;
+			index++;
+			Act.TC = _tc;
+			Act.TP = _tp;
+			if (index == 1)
+			{
+				Act.TC?.Chara?.RequestProtection(Act.CC, delegate(Chara c)
+				{
+					Act.TC = c;
+				});
+			}
+			AttackProcess.Current.Prepare(Act.CC, weapon, Act.TC, Act.TP);
+			CellEffect effect = Act.TP.cell.effect;
+			if (effect != null && effect.id == 6 && EClass.rnd(2) == 0)
+			{
+				AttackProcess.Current.PlayRangedAnime(numFire);
+				Act.CC.PlaySound(missSound);
+				Act.CC.Say("abMistOfDarkness_miss", Act.CC);
+			}
+			else
+			{
+				AttackProcess.Current.numFire = numFire;
+				AttackProcess.Current.numFireWithoutDamageLoss = numFireWithoutDamageLoss;
+				AttackProcess.Current.posRangedAnime = Act.TP.Copy();
+				AttackProcess.Current.ignoreAnime = index > 1;
+				AttackProcess.Current.ignoreAttackSound = false;
+				if (drill > 0 && points.Count > 0)
+				{
+					AttackProcess.Current.posRangedAnime = points.LastItem();
+				}
+				else if (scatter > 0)
+				{
+					AttackProcess.Current.ignoreAnime = false;
+					AttackProcess.Current.ignoreAttackSound = index > 1;
+				}
+				if (scatter > 0)
+				{
+					dmgMulti = Mathf.Clamp(1.2f - 0.2f * (float)Act.CC.Dist(Act.TP) - (Act.TP.Equals(orgTP) ? 0f : 0.4f), 0.2f, 1f);
+				}
+				for (int j = 0; j < numFire; j++)
+				{
+					if (AttackProcess.Current.Perform(j, hasHit, dmgMulti))
+					{
+						hasHit = true;
+					}
+					if (Act.TC == null || !Act.TC.IsAliveInCurrentZone)
+					{
+						break;
+					}
+				}
+				if (Act.TC != null)
+				{
+					Act.CC.DoHostileAction(Act.TC);
+				}
+			}
+		}
 	}
 
 	public static bool TryReload(Thing weapon, Thing ammo = null)
@@ -281,22 +325,22 @@ public class ActRanged : ActThrow
 		{
 			if (weapon.ammoData.Num > 0)
 			{
-				Act.CC.Pick(weapon.ammoData, true, true);
+				Act.CC.Pick(weapon.ammoData);
 			}
 			weapon.ammoData = null;
 		}
+		int num = 0;
 		if (ammo == null)
 		{
 			ammo = Act.CC.FindAmmo(weapon);
 		}
-		int num;
 		if (ammo == null)
 		{
 			if (Act.CC.IsPC)
 			{
 				if (!weapon.IsMeleeWithAmmo)
 				{
-					Msg.Say("noAmmo", weapon, null, null, null);
+					Msg.Say("noAmmo", weapon);
 				}
 				return false;
 			}
@@ -306,7 +350,7 @@ public class ActRanged : ActThrow
 		{
 			num = Mathf.Min(ammo.Num, traitToolRange.MaxAmmo);
 			Thing thing = ammo.Split(num);
-			Act.CC.Say("takeAmmo", thing, null, null);
+			Act.CC.Say("takeAmmo", thing);
 			if (thing.GetRootCard() == Act.CC)
 			{
 				thing.parent.RemoveCard(thing);
@@ -314,11 +358,11 @@ public class ActRanged : ActThrow
 			weapon.ammoData = thing;
 		}
 		weapon.c_ammo = num;
-		int num2 = traitToolRange.ReloadTurn;
-		num2 = num2 * 100 / (100 + Act.CC.Evalue(1652) * 100);
-		if (traitToolRange.NeedReload && num2 > 0)
+		int reloadTurn = traitToolRange.ReloadTurn;
+		reloadTurn = reloadTurn * 100 / (100 + Act.CC.Evalue(1652) * 100);
+		if (traitToolRange.NeedReload && reloadTurn > 0)
 		{
-			Act.CC.AddCondition<ConReload>(num2 * 10, false);
+			Act.CC.AddCondition<ConReload>(reloadTurn * 10);
 		}
 		return true;
 	}

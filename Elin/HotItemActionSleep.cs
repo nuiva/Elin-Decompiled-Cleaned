@@ -1,22 +1,8 @@
-﻿using System;
-
 public class HotItemActionSleep : HotAction
 {
-	public override string Id
-	{
-		get
-		{
-			return "Sleep";
-		}
-	}
+	public override string Id => "Sleep";
 
-	public override bool CanName
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanName => false;
 
 	public override void Perform()
 	{
@@ -45,6 +31,6 @@ public class HotItemActionSleep : HotAction
 		{
 			EClass._zone.AddCard(thing2, EClass.pc.pos).Install();
 		}
-		EClass.pc.Sleep(thing, thing2, true, posBed, posPillow);
+		EClass.pc.Sleep(thing, thing2, pickup: true, posBed, posPillow);
 	}
 }

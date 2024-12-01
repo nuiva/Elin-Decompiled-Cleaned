@@ -1,5 +1,3 @@
-﻿using System;
-
 public class CINT
 {
 	public const int weight = 1;

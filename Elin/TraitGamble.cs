@@ -1,30 +1,10 @@
-﻿using System;
-
 public class TraitGamble : TraitItem
 {
-	public virtual string idMsg
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public virtual string idMsg => null;
 
-	public virtual string idSound
-	{
-		get
-		{
-			return this.idMsg;
-		}
-	}
+	public virtual string idSound => idMsg;
 
-	public virtual string idTalk
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public virtual string idTalk => null;
 
 	public override bool IdleUse(Chara c, int dist)
 	{
@@ -32,47 +12,55 @@ public class TraitGamble : TraitItem
 		{
 			return false;
 		}
-		if (!this.CanUse(c))
+		if (!CanUse(c))
 		{
 			return false;
 		}
-		if (!this.idSound.IsEmpty())
+		if (!idSound.IsEmpty())
 		{
-			c.PlaySound(this.idSound, 1f, true);
+			c.PlaySound(idSound);
 		}
-		if (!this.idTalk.IsEmpty())
+		if (!idTalk.IsEmpty())
 		{
 			EClass.player.forceTalk = true;
-			c.Talk(this.idTalk, null, null, false);
+			c.Talk(idTalk);
 		}
-		if (!this.idMsg.IsEmpty())
+		if (!idMsg.IsEmpty())
 		{
-			c.Say(this.idMsg, c, this.owner, null, null);
+			c.Say(idMsg, c, owner);
 		}
 		bool flag = EClass.rnd(2) == 0;
 		if (!c.IsPC)
 		{
-			int a = (1 + EClass.rnd(10)) * (flag ? 1 : -1);
-			this.owner.ModCurrency(a, "money");
+			int a = (1 + EClass.rnd(10)) * (flag ? 1 : (-1));
+			owner.ModCurrency(a);
 			if (flag && EClass.rnd(20) == 0)
 			{
-				this.owner.ModCurrency(1, "casino_coin");
+				owner.ModCurrency(1, "casino_coin");
 			}
 		}
 		if (flag)
 		{
-			this.owner.ShowEmo(Emo.happy, 0f, true);
+			owner.ShowEmo(Emo.happy);
 		}
 		return true;
 	}
 
 	public override bool CanUse(Chara c)
 	{
-		return this.owner.IsInstalled && (this.Electricity <= 0 || this.owner.isOn);
+		if (owner.IsInstalled)
+		{
+			if (Electricity <= 0)
+			{
+				return true;
+			}
+			return owner.isOn;
+		}
+		return false;
 	}
 
 	public override bool OnUse(Chara c)
 	{
-		return this.IdleUse(c, 0);
+		return IdleUse(c, 0);
 	}
 }

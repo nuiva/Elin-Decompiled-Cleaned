@@ -1,80 +1,42 @@
-﻿using System;
-
 public class TaskMine : BaseTaskHarvest
 {
-	public override BaseTaskHarvest.HarvestType harvestType
+	public enum Mode
 	{
-		get
-		{
-			return BaseTaskHarvest.HarvestType.Block;
-		}
+		Default,
+		Ramp
 	}
 
-	public override int destDist
-	{
-		get
-		{
-			return 1;
-		}
-	}
+	public Mode mode;
 
-	public override bool isBlock
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public int ramp = 3;
 
-	public override int RightHand
-	{
-		get
-		{
-			return 1004;
-		}
-	}
+	public bool mined;
 
-	public override bool destIgnoreConnection
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override HarvestType harvestType => HarvestType.Block;
 
-	public override bool ShowMapHighlightBlock
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override int destDist => 1;
 
-	public override CursorInfo CursorIcon
-	{
-		get
-		{
-			return CursorSystem.Mine;
-		}
-	}
+	public override bool isBlock => true;
 
-	public override bool IsHostileAct
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override int RightHand => 1004;
+
+	public override bool destIgnoreConnection => true;
+
+	public override bool ShowMapHighlightBlock => true;
+
+	public override CursorInfo CursorIcon => CursorSystem.Mine;
+
+	public override bool IsHostileAct => true;
 
 	public static bool CanMine(Point pos, Card t)
 	{
 		if (t != null && pos.HasBlock && (!pos.HasObj || !pos.sourceObj.tileType.IsBlockMount))
 		{
-			if (t.HasElement(220, 1))
+			if (t.HasElement(220))
 			{
 				return true;
 			}
-			if ((pos.matBlock.category == "wood" || pos.matBlock.category == "grass") && t.HasElement(225, 1))
+			if ((pos.matBlock.category == "wood" || pos.matBlock.category == "grass") && t.HasElement(225))
 			{
 				return true;
 			}
@@ -84,155 +46,140 @@ public class TaskMine : BaseTaskHarvest
 
 	public override string GetTextSmall(Card c)
 	{
-		if (!this.pos.cell.HasBlock)
+		if (!pos.cell.HasBlock)
 		{
-			return this.pos.cell.GetFloorName();
+			return pos.cell.GetFloorName();
 		}
-		return this.pos.cell.GetBlockName();
+		return pos.cell.GetBlockName();
 	}
 
 	public override void OnCreateProgress(Progress_Custom p)
 	{
-		base.SetTarget(this.owner, null);
-		p.textHint = this.pos.cell.GetBlockName();
-		p.maxProgress = this.maxProgress;
-		p.onProgressBegin = delegate()
+		SetTarget(owner);
+		p.textHint = pos.cell.GetBlockName();
+		p.maxProgress = maxProgress;
+		p.onProgressBegin = delegate
 		{
-			if (!TaskMine.CanMine(this.pos, this.owner.Tool))
+			if (!CanMine(pos, owner.Tool))
 			{
 				p.Cancel();
-				return;
 			}
-			if (this.IsTooHard)
+			else if (base.IsTooHard)
 			{
-				this.owner.Say("tooHardToMine", this.owner, this.pos.cell.GetBlockName(), null);
+				owner.Say("tooHardToMine", owner, pos.cell.GetBlockName());
 				p.Cancel();
-				return;
 			}
-			if (this.owner.Tool != null)
+			else if (owner.Tool != null)
 			{
-				this.owner.Say("mine_start", this.owner, this.owner.Tool, null, null);
+				owner.Say("mine_start", owner, owner.Tool);
 			}
 		};
-		p.onProgress = delegate(Progress_Custom _p)
+		p.onProgress = delegate
 		{
-			this.owner.LookAt(this.pos);
-			this.owner.PlaySound(this.pos.matBlock.GetSoundImpact(null), 1f, true);
-			this.pos.Animate(AnimeID.HitObj, true);
-			this.pos.matBlock.PlayHitEffect(this.pos);
-			this.pos.matBlock.AddBlood(this.pos, 1);
-			this.owner.renderer.NextFrame();
-			this.owner.elements.ModExp(220, 5, false);
-			if (EClass._zone.IsCrime(this.owner, this))
+			owner.LookAt(pos);
+			owner.PlaySound(pos.matBlock.GetSoundImpact());
+			pos.Animate(AnimeID.HitObj, animeBlock: true);
+			pos.matBlock.PlayHitEffect(pos);
+			pos.matBlock.AddBlood(pos);
+			owner.renderer.NextFrame();
+			owner.elements.ModExp(220, 5);
+			if (EClass._zone.IsCrime(owner, this))
 			{
-				this.owner.pos.TryWitnessCrime(this.owner, null, 4, null);
+				owner.pos.TryWitnessCrime(owner);
 			}
 		};
 	}
 
 	public override void DrawMarker(int x, int z, RenderParam p)
 	{
-		if (ActionMode.Mine.IsRoofEditMode(null) && this.pos.HasWallOrFence)
+		if (ActionMode.Mine.IsRoofEditMode() && pos.HasWallOrFence)
 		{
-			EClass.screen.guide.DrawWall(this.pos, this.Working ? EClass.Colors.blockColors.ActiveOpacity : EClass.Colors.blockColors.InactiveOpacity, false, 0f);
-			return;
+			EClass.screen.guide.DrawWall(pos, Working ? EClass.Colors.blockColors.ActiveOpacity : EClass.Colors.blockColors.InactiveOpacity);
 		}
-		base.DrawMarker(x, z, p);
+		else
+		{
+			base.DrawMarker(x, z, p);
+		}
 	}
 
 	public override HitResult GetHitResult()
 	{
-		if (ActionMode.Mine.IsRoofEditMode(null))
+		if (ActionMode.Mine.IsRoofEditMode())
 		{
-			if (this.pos.cell._roofBlock == 0)
+			if (pos.cell._roofBlock == 0)
 			{
 				return HitResult.Default;
 			}
 			return HitResult.Valid;
 		}
-		else if (this.pos.cell.HasBlock || !this.pos.cell.isSeen)
+		if (pos.cell.HasBlock || !pos.cell.isSeen)
 		{
-			if (this.pos.sourceBlock.tileType.Invisible && !ActionMode.Mine.IsActive)
+			if (pos.sourceBlock.tileType.Invisible && !ActionMode.Mine.IsActive)
 			{
 				return HitResult.Default;
 			}
-			if (this.mode == TaskMine.Mode.Ramp && (this.pos.cell.HasRamp || EClass._map.GetRampDir(this.pos.x, this.pos.z, EClass.sources.blocks.rows[this.ramp].tileType) == -1))
+			if (mode == Mode.Ramp && (pos.cell.HasRamp || EClass._map.GetRampDir(pos.x, pos.z, EClass.sources.blocks.rows[ramp].tileType) == -1))
 			{
 				return HitResult.Default;
 			}
 			return HitResult.Valid;
 		}
-		else
+		if (!mined && !pos.HasObj && owner != null && !owner.IsAgent && pos.Equals(owner.pos) && pos.Installed == null && EClass._zone.CanDigUnderground)
 		{
-			if (!this.mined && !this.pos.HasObj && this.owner != null && !this.owner.IsAgent && this.pos.Equals(this.owner.pos) && this.pos.Installed == null && EClass._zone.CanDigUnderground)
-			{
-				return HitResult.Valid;
-			}
-			return HitResult.Default;
+			return HitResult.Valid;
 		}
+		return HitResult.Default;
 	}
 
 	public override void OnProgressComplete()
 	{
-		string recipeID = this.pos.sourceBlock.RecipeID;
-		int hardness = this.pos.matBlock.hardness;
-		TaskMine.Mode mode = this.mode;
-		if (mode != TaskMine.Mode.Default)
+		string recipeID = pos.sourceBlock.RecipeID;
+		int hardness = pos.matBlock.hardness;
+		switch (mode)
 		{
-			if (mode == TaskMine.Mode.Ramp)
+		case Mode.Default:
+			if (pos.HasBlock || ActionMode.Mine.IsRoofEditMode())
 			{
-				EClass._map.MineRamp(this.pos, (this.ramp == 3) ? this.pos.matBlock.ramp : this.ramp, false);
+				if (owner.IsPC)
+				{
+					EClass.player.stats.digs++;
+				}
+				EClass._map.MineBlock(pos, recoverBlock: false, owner);
 			}
-		}
-		else if (this.pos.HasBlock || ActionMode.Mine.IsRoofEditMode(null))
-		{
-			if (this.owner.IsPC)
+			else if (pos.Installed == null)
 			{
-				EClass.player.stats.digs++;
+				EClass._zone.AddThing("stairsDown_cave", pos.x, pos.z).Install();
+				return;
 			}
-			EClass._map.MineBlock(this.pos, false, this.owner);
+			break;
+		case Mode.Ramp:
+			EClass._map.MineRamp(pos, (ramp == 3) ? pos.matBlock.ramp : ramp);
+			break;
 		}
-		else if (this.pos.Installed == null)
+		if (!owner.IsAgent)
 		{
-			EClass._zone.AddThing("stairsDown_cave", this.pos.x, this.pos.z).Install();
-			return;
-		}
-		if (!this.owner.IsAgent)
-		{
-			this.owner.elements.ModExp(220, 20 + hardness, false);
+			owner.elements.ModExp(220, 20 + hardness);
 			if (EClass.rnd(10) == 0)
 			{
-				EClass._map.TrySmoothPick(this.pos, ThingGen.Create("pebble", -1, -1), this.owner);
+				EClass._map.TrySmoothPick(pos, ThingGen.Create("pebble"), owner);
 			}
 			if (EClass.rnd(10) == 0)
 			{
-				EClass._map.TrySmoothPick(this.pos, ThingGen.Create("stone", -1, -1), this.owner);
+				EClass._map.TrySmoothPick(pos, ThingGen.Create("stone"), owner);
 			}
-			if (EClass._zone.IsCrime(this.owner, this))
+			if (EClass._zone.IsCrime(owner, this))
 			{
 				EClass.player.ModKarma(-1);
 			}
 			if (EClass.rnd(2) == 0)
 			{
-				this.owner.stamina.Mod(-1);
+				owner.stamina.Mod(-1);
 			}
 		}
-		if (this.owner != null && this.owner.IsPC)
+		if (owner != null && owner.IsPC)
 		{
 			EClass.player.recipes.ComeUpWithRecipe(recipeID, 30);
 		}
-		this.mined = true;
-	}
-
-	public TaskMine.Mode mode;
-
-	public int ramp = 3;
-
-	public bool mined;
-
-	public enum Mode
-	{
-		Default,
-		Ramp
+		mined = true;
 	}
 }

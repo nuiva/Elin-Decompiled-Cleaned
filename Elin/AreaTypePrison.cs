@@ -1,12 +1,4 @@
-﻿using System;
-
 public class AreaTypePrison : AreaTypeRoom
 {
-	public override bool IsPrison
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsPrison => true;
 }

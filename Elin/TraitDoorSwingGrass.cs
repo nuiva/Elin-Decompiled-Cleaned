@@ -1,12 +1,4 @@
-﻿using System;
-
 public class TraitDoorSwingGrass : TraitDoorSwing
 {
-	public override string idSound
-	{
-		get
-		{
-			return "grass_drop";
-		}
-	}
+	public override string idSound => "grass_drop";
 }

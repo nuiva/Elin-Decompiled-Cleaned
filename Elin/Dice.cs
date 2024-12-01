@@ -1,33 +1,46 @@
-﻿using System;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class Dice
 {
+	public static Dice Null = new Dice();
+
+	public int num;
+
+	public int sides;
+
+	public int bonus;
+
+	public Card card;
+
 	public static int Roll(int num, int sides, int bonus = 0, Card card = null)
 	{
-		Dice.<>c__DisplayClass1_0 CS$<>8__locals1;
-		CS$<>8__locals1.sides = sides;
-		CS$<>8__locals1.num = num;
-		CS$<>8__locals1.bonus = bonus;
 		int num2 = 1;
 		bool flag = true;
 		int num3 = 0;
 		if (card != null)
 		{
 			int num4 = card.Evalue(78);
-			flag = (num4 >= 0);
-			num2 = 1 + Mathf.Abs(num4 / 100) + ((Mathf.Abs(num4 % 100) > Dice.rnd(100)) ? 1 : 0);
+			flag = num4 >= 0;
+			num2 = 1 + Mathf.Abs(num4 / 100) + ((Mathf.Abs(num4 % 100) > rnd(100)) ? 1 : 0);
 		}
 		for (int i = 0; i < num2; i++)
 		{
-			int num5 = Dice.<Roll>g__Roll|1_0(ref CS$<>8__locals1);
+			int num5 = Roll();
 			if (i == 0 || (flag && num5 > num3) || (!flag && num5 < num3))
 			{
 				num3 = num5;
 			}
 		}
 		return num3;
+		int Roll()
+		{
+			int num6 = 0;
+			for (int j = 0; j < num; j++)
+			{
+				num6 += rnd(sides) + 1;
+			}
+			return num6 + bonus;
+		}
 	}
 
 	public static int RollMax(int num, int sides, int bonus = 0)
@@ -42,19 +55,19 @@ public class Dice
 
 	public Dice(int _num = 0, int _sides = 0, int _bonus = 0, Card _card = null)
 	{
-		this.num = _num;
-		this.sides = _sides;
-		this.bonus = _bonus;
-		this.card = _card;
+		num = _num;
+		sides = _sides;
+		bonus = _bonus;
+		card = _card;
 	}
 
 	public static Dice Parse(string raw)
 	{
-		Dice dice = new Dice(0, 0, 0, null);
-		string[] array = raw.Split(',', StringSplitOptions.None);
+		Dice dice = new Dice();
+		string[] array = raw.Split(',');
 		if (array.Length != 0)
 		{
-			string[] array2 = array[0].Split('d', StringSplitOptions.None);
+			string[] array2 = array[0].Split('d');
 			dice.num = int.Parse(array2[0]);
 			dice.sides = int.Parse(array2[1]);
 		}
@@ -67,17 +80,17 @@ public class Dice
 
 	public int Roll()
 	{
-		return Dice.Roll(this.num, this.sides, this.bonus, this.card);
+		return Roll(num, sides, bonus, card);
 	}
 
 	public int RollMax()
 	{
-		return Dice.RollMax(this.num, this.sides, this.bonus);
+		return RollMax(num, sides, bonus);
 	}
 
 	public override string ToString()
 	{
-		return this.num.ToString() + "d" + this.sides.ToString() + ((this.bonus > 0) ? ("+" + this.bonus.ToString()) : ((this.bonus < 0) ? (this.bonus.ToString() ?? "") : ""));
+		return num + "d" + sides + ((bonus > 0) ? ("+" + bonus) : ((bonus < 0) ? (bonus.ToString() ?? "") : ""));
 	}
 
 	public static Dice Create(Element ele, Card c)
@@ -85,7 +98,7 @@ public class Dice
 		string key = ele.source.alias;
 		if (!EClass.sources.calc.map.ContainsKey(key) && !ele.source.aliasRef.IsEmpty())
 		{
-			key = ele.source.alias.Split('_', StringSplitOptions.None)[0] + "_";
+			key = ele.source.alias.Split('_')[0] + "_";
 		}
 		if (!EClass.sources.calc.map.ContainsKey(key))
 		{
@@ -93,18 +106,16 @@ public class Dice
 		}
 		SourceCalc.Row row = EClass.sources.calc.map[key];
 		int power = ele.GetPower(c);
-		int ele2 = ele.source.aliasParent.IsEmpty() ? 0 : c.Evalue(ele.source.aliasParent);
-		Dice result;
+		int ele2 = ((!ele.source.aliasParent.IsEmpty()) ? c.Evalue(ele.source.aliasParent) : 0);
 		try
 		{
-			result = new Dice(Mathf.Max(1, row.num.Calc(power, ele2, 0)), Mathf.Max(1, row.sides.Calc(power, ele2, 0)), row.bonus.Calc(power, ele2, 0), c);
+			return new Dice(Mathf.Max(1, row.num.Calc(power, ele2)), Mathf.Max(1, row.sides.Calc(power, ele2)), row.bonus.Calc(power, ele2), c);
 		}
 		catch
 		{
 			Debug.Log(ele.id);
-			result = new Dice(0, 0, 0, null);
+			return new Dice();
 		}
-		return result;
 	}
 
 	public static Dice Create(string id, int power, Card c = null, Act act = null)
@@ -121,38 +132,15 @@ public class Dice
 		{
 			Element orCreateElement = c.elements.GetOrCreateElement(act.source.id);
 			power2 = orCreateElement.GetPower(c);
-			ele = (orCreateElement.source.aliasParent.IsEmpty() ? 0 : c.Evalue(orCreateElement.source.aliasParent));
+			ele = ((!orCreateElement.source.aliasParent.IsEmpty()) ? c.Evalue(orCreateElement.source.aliasParent) : 0);
 		}
-		Dice result;
 		try
 		{
-			result = new Dice(Mathf.Max(1, row.num.Calc(power2, ele, 0)), Mathf.Max(1, row.sides.Calc(power2, ele, 0)), row.bonus.Calc(power2, ele, 0), c);
+			return new Dice(Mathf.Max(1, row.num.Calc(power2, ele)), Mathf.Max(1, row.sides.Calc(power2, ele)), row.bonus.Calc(power2, ele), c);
 		}
 		catch
 		{
-			result = new Dice(0, 0, 0, null);
+			return new Dice();
 		}
-		return result;
 	}
-
-	[CompilerGenerated]
-	internal static int <Roll>g__Roll|1_0(ref Dice.<>c__DisplayClass1_0 A_0)
-	{
-		int num = 0;
-		for (int i = 0; i < A_0.num; i++)
-		{
-			num += Dice.rnd(A_0.sides) + 1;
-		}
-		return num + A_0.bonus;
-	}
-
-	public static Dice Null = new Dice(0, 0, 0, null);
-
-	public int num;
-
-	public int sides;
-
-	public int bonus;
-
-	public Card card;
 }

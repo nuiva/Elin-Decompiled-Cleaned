@@ -1,18 +1,7 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class ThingStack : EClass
 {
-	public void Add(Thing t)
-	{
-		this.list.Add(t);
-		this.count += t.Num;
-		if (t.Num > this.max)
-		{
-			this.max = t.Num;
-		}
-	}
-
 	public List<Thing> list = new List<Thing>();
 
 	public int count;
@@ -20,4 +9,14 @@ public class ThingStack : EClass
 	public int val;
 
 	public int max;
+
+	public void Add(Thing t)
+	{
+		list.Add(t);
+		count += t.Num;
+		if (t.Num > max)
+		{
+			max = t.Num;
+		}
+	}
 }

@@ -1,5 +1,3 @@
-﻿using System;
-
 public class Zone_Arena2 : Zone_Arena
 {
 	public override string IdProfile
@@ -16,11 +14,11 @@ public class Zone_Arena2 : Zone_Arena
 
 	public override void OnGenerateMap()
 	{
-		this.name = "";
+		name = "";
 	}
 
 	public override void OnCreateBP()
 	{
-		this.bp.ignoreRoad = true;
+		bp.ignoreRoad = true;
 	}
 }

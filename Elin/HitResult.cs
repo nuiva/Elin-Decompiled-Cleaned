@@ -1,11 +1,9 @@
-﻿using System;
-
 public enum HitResult
 {
-	Default,
-	Outline,
+	Default = 0,
+	Outline = 1,
 	Valid = 3,
-	Invalid,
-	Warning,
+	Invalid = 4,
+	Warning = 5,
 	NoTarget = -999
 }

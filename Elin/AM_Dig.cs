@@ -1,72 +1,56 @@
-﻿using System;
-
 public class AM_Dig : AM_Designation<TaskDig>
 {
-	public override int CostMoney
-	{
-		get
-		{
-			return 10;
-		}
-	}
+	public TaskDig.Mode mode;
 
-	public override string id
-	{
-		get
-		{
-			return "Dig" + this.mode.ToString();
-		}
-	}
+	public int ramp = 3;
 
-	public override bool AllowAutoClick
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override int CostMoney => 10;
+
+	public override string id => "Dig" + mode;
+
+	public override bool AllowAutoClick => true;
 
 	public override bool ForcedInstaComplete(TaskDig t)
 	{
-		return t.pos.sourceFloor.tileType.CanInstaComplete && this.mode == TaskDig.Mode.RemoveFloor;
+		if (t.pos.sourceFloor.tileType.CanInstaComplete)
+		{
+			return mode == TaskDig.Mode.RemoveFloor;
+		}
+		return false;
 	}
 
 	public override void OnUpdateCursor()
 	{
-		base.SetCursorOnMap(CursorSystem.Dig);
+		SetCursorOnMap(CursorSystem.Dig);
 	}
 
 	public void Activate(TaskDig.Mode _mode)
 	{
 		TaskDig.Mode mode = this.mode;
 		this.mode = _mode;
-		this.ramp = 3;
-		base.Activate(false, mode != this.mode);
+		ramp = 3;
+		Activate(toggle: false, mode != this.mode);
 	}
 
 	public override void OnActivate()
 	{
-		this.list = base.Designations.dig;
+		list = base.Designations.dig;
 		base.OnActivate();
 	}
 
 	public override void OnSelectStart(Point point)
 	{
-		EClass.ui.hud.hint.groupRadio.ToggleInteractable(false);
+		EClass.ui.hud.hint.groupRadio.ToggleInteractable(enable: false);
 	}
 
 	public override void OnSelectEnd(bool cancel)
 	{
-		EClass.ui.hud.hint.groupRadio.ToggleInteractable(true);
+		EClass.ui.hud.hint.groupRadio.ToggleInteractable(enable: true);
 	}
 
 	public override void OnCreateMold(bool processing = false)
 	{
-		this.mold.mode = this.mode;
-		this.mold.ramp = this.ramp;
+		mold.mode = mode;
+		mold.ramp = ramp;
 	}
-
-	public TaskDig.Mode mode;
-
-	public int ramp = 3;
 }

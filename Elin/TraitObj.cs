@@ -1,12 +1,4 @@
-﻿using System;
-
 public class TraitObj : TraitTile
 {
-	public override TileRow source
-	{
-		get
-		{
-			return EClass.sources.objs.rows[this.owner.refVal];
-		}
-	}
+	public override TileRow source => EClass.sources.objs.rows[owner.refVal];
 }

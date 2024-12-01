@@ -1,11 +1,76 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 public class SourceBlock : SourceDataInt<SourceBlock.Row>
 {
-	public override SourceBlock.Row CreateRow()
+	[Serializable]
+	public class Row : TileRow
 	{
-		return new SourceBlock.Row
+		public string[] reqHarvest;
+
+		public string idThing;
+
+		public int roof;
+
+		public string autoFloor;
+
+		public bool concrete;
+
+		public bool transparent;
+
+		public int[] transition;
+
+		[NonSerialized]
+		public bool isBlockOrRamp;
+
+		[NonSerialized]
+		public SourceFloor.Row sourceAutoFloor;
+
+		public string name_L;
+
+		public string detail_L;
+
+		public override bool UseAlias => true;
+
+		public override string GetAlias => alias;
+
+		public override string RecipeID => "b" + id;
+
+		public override RenderData defaultRenderData => FallbackRenderData;
+
+		public override void OnInit()
+		{
+			isBlockOrRamp = tileType == TileType.Block || tileType.IsRamp;
+		}
+
+		public override int GetTile(SourceMaterial.Row mat, int dir = 0)
+		{
+			return _tiles[dir % _tiles.Length];
+		}
+
+		public override RenderParam GetRenderParam(SourceMaterial.Row mat, int dir, Point point = null, int bridgeHeight = -1)
+		{
+			RenderParam renderParam = base.GetRenderParam(mat, dir, point, bridgeHeight);
+			if (tileType == TileType.HalfBlock)
+			{
+				int num = 104025;
+				Row row = ((id == 5) ? base.sources.blocks.rows[mat.defBlock] : this);
+				renderParam.tile = row._tiles[0];
+				renderParam.matColor = ((row.colorMod == 0) ? num : BaseTileMap.GetColorInt(ref mat.matColor, row.colorMod));
+				renderParam.tile2 = row.sourceAutoFloor._tiles[0];
+				renderParam.halfBlockColor = ((row.sourceAutoFloor.colorMod == 0) ? num : BaseTileMap.GetColorInt(ref mat.matColor, row.sourceAutoFloor.colorMod));
+			}
+			return renderParam;
+		}
+	}
+
+	public Dictionary<int, Row> _rows = new Dictionary<int, Row>();
+
+	public static RenderData FallbackRenderData;
+
+	public override Row CreateRow()
+	{
+		return new Row
 		{
 			id = SourceData.GetInt(0),
 			alias = SourceData.GetString(1),
@@ -40,33 +105,31 @@ public class SourceBlock : SourceDataInt<SourceBlock.Row>
 		};
 	}
 
-	public override void SetRow(SourceBlock.Row r)
+	public override void SetRow(Row r)
 	{
-		this.map[r.id] = r;
+		map[r.id] = r;
 	}
 
 	public override void BackupPref()
 	{
-		this._rows.Clear();
-		foreach (SourceBlock.Row row in this.rows)
+		_rows.Clear();
+		foreach (Row row in rows)
 		{
-			this._rows[row.id] = row;
+			_rows[row.id] = row;
 		}
 	}
 
 	public override void RestorePref()
 	{
-		foreach (SourceBlock.Row row in this.rows)
+		foreach (Row row in rows)
 		{
-			RenderRow renderRow = row;
-			SourceBlock.Row row2 = this._rows.TryGetValue(row.id, null);
-			renderRow.pref = (((row2 != null) ? row2.pref : null) ?? new SourcePref());
+			row.pref = _rows.TryGetValue(row.id)?.pref ?? new SourcePref();
 		}
 	}
 
 	public override void ValidatePref()
 	{
-		foreach (SourceBlock.Row row in this.rows)
+		foreach (Row row in rows)
 		{
 			row.pref.Validate();
 		}
@@ -75,7 +138,7 @@ public class SourceBlock : SourceDataInt<SourceBlock.Row>
 	public override void OnAfterImportData()
 	{
 		int num = 0;
-		foreach (SourceBlock.Row row in this.rows)
+		foreach (Row row in rows)
 		{
 			if (row.sort != 0)
 			{
@@ -84,107 +147,18 @@ public class SourceBlock : SourceDataInt<SourceBlock.Row>
 			row.sort = num;
 			num++;
 		}
-		this.rows.Sort((SourceBlock.Row a, SourceBlock.Row b) => a.id - b.id);
+		rows.Sort((Row a, Row b) => a.id - b.id);
 	}
 
 	public override void OnInit()
 	{
-		SourceBlock.FallbackRenderData = ResourceCache.Load<RenderData>("Scene/Render/Data/block");
-		Cell.blockList = this.rows;
+		FallbackRenderData = ResourceCache.Load<RenderData>("Scene/Render/Data/block");
+		Cell.blockList = rows;
 		SourceFloor floors = Core.Instance.sources.floors;
-		foreach (SourceBlock.Row row in this.rows)
+		foreach (Row row in rows)
 		{
 			row.Init();
 			row.sourceAutoFloor = (row.autoFloor.IsEmpty() ? floors.rows[40] : floors.alias[row.autoFloor]);
 		}
-	}
-
-	public Dictionary<int, SourceBlock.Row> _rows = new Dictionary<int, SourceBlock.Row>();
-
-	public static RenderData FallbackRenderData;
-
-	[Serializable]
-	public class Row : TileRow
-	{
-		public override bool UseAlias
-		{
-			get
-			{
-				return true;
-			}
-		}
-
-		public override string GetAlias
-		{
-			get
-			{
-				return this.alias;
-			}
-		}
-
-		public override string RecipeID
-		{
-			get
-			{
-				return "b" + this.id.ToString();
-			}
-		}
-
-		public override RenderData defaultRenderData
-		{
-			get
-			{
-				return SourceBlock.FallbackRenderData;
-			}
-		}
-
-		public override void OnInit()
-		{
-			this.isBlockOrRamp = (this.tileType == TileType.Block || this.tileType.IsRamp);
-		}
-
-		public override int GetTile(SourceMaterial.Row mat, int dir = 0)
-		{
-			return this._tiles[dir % this._tiles.Length];
-		}
-
-		public override RenderParam GetRenderParam(SourceMaterial.Row mat, int dir, Point point = null, int bridgeHeight = -1)
-		{
-			RenderParam renderParam = base.GetRenderParam(mat, dir, point, bridgeHeight);
-			if (this.tileType == TileType.HalfBlock)
-			{
-				int num = 104025;
-				SourceBlock.Row row = (this.id == 5) ? base.sources.blocks.rows[mat.defBlock] : this;
-				renderParam.tile = (float)row._tiles[0];
-				renderParam.matColor = (float)((row.colorMod == 0) ? num : BaseTileMap.GetColorInt(ref mat.matColor, row.colorMod));
-				renderParam.tile2 = row.sourceAutoFloor._tiles[0];
-				renderParam.halfBlockColor = ((row.sourceAutoFloor.colorMod == 0) ? num : BaseTileMap.GetColorInt(ref mat.matColor, row.sourceAutoFloor.colorMod));
-			}
-			return renderParam;
-		}
-
-		public string[] reqHarvest;
-
-		public string idThing;
-
-		public int roof;
-
-		public string autoFloor;
-
-		public bool concrete;
-
-		public bool transparent;
-
-		public int[] transition;
-
-		[NonSerialized]
-		public bool isBlockOrRamp;
-
-		[NonSerialized]
-		public SourceFloor.Row sourceAutoFloor;
-
-		public string name_L;
-
-		public string detail_L;
 	}
 }

@@ -1,43 +1,15 @@
-﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class ButtonChara : UIButton
 {
-	public void SetChara(Chara c, ButtonChara.Mode m)
+	public enum Mode
 	{
-		if (this.portrait)
-		{
-			this.portrait.SetChara(c, null);
-		}
-		if (m == ButtonChara.Mode.Ranking)
-		{
-			this.textBio.text = ((c.currentZone == null) ? "???" : c.currentZone.Name);
-		}
-		else
-		{
-			this.textAlias.text = c.Aka;
-			if (this.textBio)
-			{
-				this.textBio.text = string.Concat(new string[]
-				{
-					c.race.GetText("name", false).ToTitleCase(true),
-					" ",
-					Lang.Parse("age", c.bio.TextAge(c), null, null, null, null),
-					" ",
-					Lang._gender(c.bio.gender)
-				});
-			}
-		}
-		this.textName.text = c.Name;
-		if (this.layoutTag)
-		{
-			this.layoutTag.DestroyChildren(false, true);
-			HintIcon hintIcon = Util.Instantiate<HintIcon>("UI/Element/Item/Tag General", this.layoutTag);
-			hintIcon.text.SetText(c.job.GetName().ToTitleCase(true));
-			hintIcon.RebuildLayout(false);
-			this.layoutTag.RebuildLayout(false);
-		}
+		Default,
+		Hire,
+		Journal,
+		Embark,
+		Ranking
 	}
 
 	public Portrait portrait;
@@ -60,12 +32,32 @@ public class ButtonChara : UIButton
 
 	public LayoutGroup layoutTag;
 
-	public enum Mode
+	public void SetChara(Chara c, Mode m)
 	{
-		Default,
-		Hire,
-		Journal,
-		Embark,
-		Ranking
+		if ((bool)portrait)
+		{
+			portrait.SetChara(c);
+		}
+		if (m == Mode.Ranking)
+		{
+			textBio.text = ((c.currentZone == null) ? "???" : c.currentZone.Name);
+		}
+		else
+		{
+			textAlias.text = c.Aka;
+			if ((bool)textBio)
+			{
+				textBio.text = c.race.GetText().ToTitleCase(wholeText: true) + " " + Lang.Parse("age", c.bio.TextAge(c)) + " " + Lang._gender(c.bio.gender);
+			}
+		}
+		textName.text = c.Name;
+		if ((bool)layoutTag)
+		{
+			layoutTag.DestroyChildren();
+			HintIcon hintIcon = Util.Instantiate<HintIcon>("UI/Element/Item/Tag General", layoutTag);
+			hintIcon.text.SetText(c.job.GetName().ToTitleCase(wholeText: true));
+			hintIcon.RebuildLayout();
+			layoutTag.RebuildLayout();
+		}
 	}
 }

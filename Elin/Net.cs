@@ -1,133 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Cysharp.Threading.Tasks;
-using Cysharp.Threading.Tasks.CompilerServices;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class Net : MonoBehaviour
 {
-	public static bool ShowNetError
-	{
-		get
-		{
-			return EClass.core.config.test.showNetError || EClass.debug.enable;
-		}
-	}
-
-	public void ShowVote(string logs)
-	{
-		StringReader stringReader = new StringReader(logs);
-		for (string message = stringReader.ReadLine(); message != null; message = stringReader.ReadLine())
-		{
-			Debug.Log(message);
-		}
-	}
-
-	public void ShowChat(string logs)
-	{
-		foreach (JToken jtoken in ((JArray)JsonConvert.DeserializeObject(logs)))
-		{
-			Net.ChatLog chatLog = jtoken.ToObject<Net.ChatLog>();
-			Debug.Log(chatLog.name + "/" + chatLog.msg);
-		}
-	}
-
-	public static UniTask<bool> UploadFile(string id, string password, string name, string title, string path, string idLang)
-	{
-		Net.<UploadFile>d__13 <UploadFile>d__;
-		<UploadFile>d__.<>t__builder = AsyncUniTaskMethodBuilder<bool>.Create();
-		<UploadFile>d__.id = id;
-		<UploadFile>d__.password = password;
-		<UploadFile>d__.name = name;
-		<UploadFile>d__.title = title;
-		<UploadFile>d__.path = path;
-		<UploadFile>d__.idLang = idLang;
-		<UploadFile>d__.<>1__state = -1;
-		<UploadFile>d__.<>t__builder.Start<Net.<UploadFile>d__13>(ref <UploadFile>d__);
-		return <UploadFile>d__.<>t__builder.Task;
-	}
-
-	public static UniTask<FileInfo> DownloadFile(Net.DownloadMeta item, string path, string idLang)
-	{
-		Net.<DownloadFile>d__15 <DownloadFile>d__;
-		<DownloadFile>d__.<>t__builder = AsyncUniTaskMethodBuilder<FileInfo>.Create();
-		<DownloadFile>d__.item = item;
-		<DownloadFile>d__.path = path;
-		<DownloadFile>d__.idLang = idLang;
-		<DownloadFile>d__.<>1__state = -1;
-		<DownloadFile>d__.<>t__builder.Start<Net.<DownloadFile>d__15>(ref <DownloadFile>d__);
-		return <DownloadFile>d__.<>t__builder.Task;
-	}
-
-	public static UniTask<List<Net.DownloadMeta>> GetFileList(string idLang)
-	{
-		Net.<GetFileList>d__16 <GetFileList>d__;
-		<GetFileList>d__.<>t__builder = AsyncUniTaskMethodBuilder<List<Net.DownloadMeta>>.Create();
-		<GetFileList>d__.idLang = idLang;
-		<GetFileList>d__.<>1__state = -1;
-		<GetFileList>d__.<>t__builder.Start<Net.<GetFileList>d__16>(ref <GetFileList>d__);
-		return <GetFileList>d__.<>t__builder.Task;
-	}
-
-	public static UniTask<bool> SendVote(int id, string idLang)
-	{
-		Net.<SendVote>d__17 <SendVote>d__;
-		<SendVote>d__.<>t__builder = AsyncUniTaskMethodBuilder<bool>.Create();
-		<SendVote>d__.id = id;
-		<SendVote>d__.idLang = idLang;
-		<SendVote>d__.<>1__state = -1;
-		<SendVote>d__.<>t__builder.Start<Net.<SendVote>d__17>(ref <SendVote>d__);
-		return <SendVote>d__.<>t__builder.Task;
-	}
-
-	public static UniTask<List<Net.VoteLog>> GetVote(string idLang)
-	{
-		Net.<GetVote>d__18 <GetVote>d__;
-		<GetVote>d__.<>t__builder = AsyncUniTaskMethodBuilder<List<Net.VoteLog>>.Create();
-		<GetVote>d__.idLang = idLang;
-		<GetVote>d__.<>1__state = -1;
-		<GetVote>d__.<>t__builder.Start<Net.<GetVote>d__18>(ref <GetVote>d__);
-		return <GetVote>d__.<>t__builder.Task;
-	}
-
-	public static UniTask<bool> SendChat(string name, string msg, ChatCategory cat, string idLang)
-	{
-		Net.<SendChat>d__19 <SendChat>d__;
-		<SendChat>d__.<>t__builder = AsyncUniTaskMethodBuilder<bool>.Create();
-		<SendChat>d__.name = name;
-		<SendChat>d__.msg = msg;
-		<SendChat>d__.cat = cat;
-		<SendChat>d__.idLang = idLang;
-		<SendChat>d__.<>1__state = -1;
-		<SendChat>d__.<>t__builder.Start<Net.<SendChat>d__19>(ref <SendChat>d__);
-		return <SendChat>d__.<>t__builder.Task;
-	}
-
-	public static UniTask<List<Net.ChatLog>> GetChat(ChatCategory cat, string idLang)
-	{
-		Net.<GetChat>d__20 <GetChat>d__;
-		<GetChat>d__.<>t__builder = AsyncUniTaskMethodBuilder<List<Net.ChatLog>>.Create();
-		<GetChat>d__.idLang = idLang;
-		<GetChat>d__.<>1__state = -1;
-		<GetChat>d__.<>t__builder.Start<Net.<GetChat>d__20>(ref <GetChat>d__);
-		return <GetChat>d__.<>t__builder.Task;
-	}
-
-	public List<Net.ChatLog> chatList;
-
-	private const string urlScript = "http://ylva.php.xdomain.jp/script/";
-
-	private const string urlChat = "http://ylva.php.xdomain.jp/script/chat/";
-
-	private const string urlVote = "http://ylva.php.xdomain.jp/script/vote/";
-
-	private const string urlUpload = "http://ylva.php.xdomain.jp/script/uploader/";
-
-	public static bool isUploading;
-
 	public class ChatLog
 	{
 		public string name;
@@ -148,11 +29,6 @@ public class Net : MonoBehaviour
 
 	public class DownloadMeta
 	{
-		public bool IsValidVersion()
-		{
-			return !global::Version.Get(this.version).IsBelow(EClass.core.versionMoongate);
-		}
-
 		public string name;
 
 		public string title;
@@ -164,10 +40,333 @@ public class Net : MonoBehaviour
 		public string date;
 
 		public int version;
+
+		public bool IsValidVersion()
+		{
+			return !Version.Get(version).IsBelow(EClass.core.versionMoongate);
+		}
 	}
 
 	public class DownloadCahce
 	{
 		public Dictionary<string, string> items = new Dictionary<string, string>();
+	}
+
+	public List<ChatLog> chatList;
+
+	private const string urlScript = "http://ylva.php.xdomain.jp/script/";
+
+	private const string urlChat = "http://ylva.php.xdomain.jp/script/chat/";
+
+	private const string urlVote = "http://ylva.php.xdomain.jp/script/vote/";
+
+	private const string urlUpload = "http://ylva.php.xdomain.jp/script/uploader/";
+
+	public static bool isUploading;
+
+	public static bool ShowNetError
+	{
+		get
+		{
+			if (!EClass.core.config.test.showNetError)
+			{
+				return EClass.debug.enable;
+			}
+			return true;
+		}
+	}
+
+	public void ShowVote(string logs)
+	{
+		StringReader stringReader = new StringReader(logs);
+		for (string text = stringReader.ReadLine(); text != null; text = stringReader.ReadLine())
+		{
+			Debug.Log(text);
+		}
+	}
+
+	public void ShowChat(string logs)
+	{
+		foreach (JToken item in (JArray)JsonConvert.DeserializeObject(logs))
+		{
+			ChatLog chatLog = item.ToObject<ChatLog>();
+			Debug.Log(chatLog.name + "/" + chatLog.msg);
+		}
+	}
+
+	public static async UniTask<bool> UploadFile(string id, string password, string name, string title, string path, string idLang)
+	{
+		if (isUploading)
+		{
+			EClass.ui.Say("sys_uploadUploading");
+			return false;
+		}
+		EClass.ui.Say("sys_uploadStart");
+		byte[] array;
+		using (FileStream fileStream = File.OpenRead(path))
+		{
+			array = new byte[fileStream.Length];
+			fileStream.Read(array, 0, (int)fileStream.Length);
+		}
+		WWWForm wWWForm = new WWWForm();
+		wWWForm.AddField("mode", 1);
+		wWWForm.AddField("id", id);
+		wWWForm.AddField("name", name);
+		wWWForm.AddField("title", title);
+		wWWForm.AddField("cat", "Home");
+		wWWForm.AddField("idLang", idLang);
+		wWWForm.AddField("password", password);
+		wWWForm.AddField("submit", "Send");
+		wWWForm.AddField("version", EClass.core.version.GetInt().ToString() ?? "");
+		wWWForm.AddBinaryData("file", array, "file.z");
+		isUploading = true;
+		Debug.Log(id);
+		Debug.Log(name);
+		Debug.Log(title);
+		Debug.Log(idLang);
+		Debug.Log(password);
+		Debug.Log(array.Length);
+		using (UnityWebRequest www = UnityWebRequest.Post("http://ylva.php.xdomain.jp/script/uploader/uploader.php", wWWForm))
+		{
+			try
+			{
+				await www.SendWebRequest();
+				Debug.Log(www.result.ToString());
+				Debug.Log(www.downloadHandler.ToString());
+				Debug.Log(www.downloadHandler.text);
+				Debug.Log(www.downloadHandler.text.ToString());
+			}
+			catch (Exception ex)
+			{
+				EClass.ui.Say(ex.Message);
+			}
+			isUploading = false;
+			if (www.result != UnityWebRequest.Result.Success)
+			{
+				EClass.ui.Say((www.responseCode == 401) ? "sys_uploadConflict" : "sys_uploadFail");
+				return false;
+			}
+		}
+		EClass.ui.Say("sys_uploadSuccess");
+		return true;
+	}
+
+	public static async UniTask<FileInfo> DownloadFile(DownloadMeta item, string path, string idLang)
+	{
+		string fn = item.id + ".z";
+		DownloadCahce caches = IO.LoadFile<DownloadCahce>(CorePath.ZoneSaveUser + "cache.txt") ?? new DownloadCahce();
+		if (caches.items.TryGetValue(item.id) == item.date.Replace("\"", "") && File.Exists(path + fn))
+		{
+			Debug.Log("Returning Cache:" + path + fn);
+			return new FileInfo(path + fn);
+		}
+		using UnityWebRequest www = UnityWebRequest.Get("http://ylva.php.xdomain.jp/script/uploader/files/" + idLang + "/" + fn);
+		www.downloadHandler = new DownloadHandlerFile(path + fn);
+		try
+		{
+			await www.SendWebRequest();
+		}
+		catch (Exception ex)
+		{
+			EClass.ui.Say(ex.Message);
+		}
+		FileInfo fileInfo = new FileInfo(path + fn);
+		if (!fileInfo.Exists || www.result != UnityWebRequest.Result.Success)
+		{
+			if (ShowNetError)
+			{
+				EClass.ui.Say(www.error);
+			}
+			return null;
+		}
+		caches.items[item.id] = item.date;
+		IO.SaveFile(CorePath.ZoneSaveUser + "cache.txt", caches);
+		return fileInfo;
+	}
+
+	public static async UniTask<List<DownloadMeta>> GetFileList(string idLang)
+	{
+		List<DownloadMeta> list = new List<DownloadMeta>();
+		using UnityWebRequest www = UnityWebRequest.Get("http://ylva.php.xdomain.jp/script/uploader/files/" + idLang + "/index.txt");
+		try
+		{
+			await www.SendWebRequest();
+		}
+		catch (Exception ex)
+		{
+			EClass.ui.Say(ex.Message);
+		}
+		if (www.result != UnityWebRequest.Result.Success)
+		{
+			if (ShowNetError)
+			{
+				EClass.ui.Say(www.error);
+			}
+			return null;
+		}
+		StringReader stringReader = new StringReader(www.downloadHandler.text);
+		for (string text = stringReader.ReadLine(); text != null; text = stringReader.ReadLine())
+		{
+			if (!string.IsNullOrEmpty(text))
+			{
+				string[] array = text.Split(',');
+				list.Add(new DownloadMeta
+				{
+					path = array[0],
+					id = array[1].Replace("\"", ""),
+					name = array[2],
+					title = array[3],
+					date = array[6].Replace("\"", ""),
+					version = ((array.Length >= 9) ? array[8].ToInt() : 0)
+				});
+			}
+		}
+		return list;
+	}
+
+	public static async UniTask<bool> SendVote(int id, string idLang)
+	{
+		try
+		{
+			Debug.Log("Start Sending Vote:");
+			WWWForm wWWForm = new WWWForm();
+			wWWForm.AddField("vote", id.ToString() ?? "");
+			wWWForm.AddField("idLang", idLang);
+			wWWForm.AddField("submit", "Send");
+			using UnityWebRequest www = UnityWebRequest.Post("http://ylva.php.xdomain.jp/script/vote/vote.php", wWWForm);
+			await www.SendWebRequest();
+			if (www.result == UnityWebRequest.Result.ConnectionError || www.result == UnityWebRequest.Result.ProtocolError)
+			{
+				if (ShowNetError)
+				{
+					EClass.ui.Say(www.error);
+				}
+				return false;
+			}
+			Debug.Log(www.downloadHandler.text);
+			return true;
+		}
+		catch
+		{
+			return true;
+		}
+	}
+
+	public static async UniTask<List<VoteLog>> GetVote(string idLang)
+	{
+		List<VoteLog> list = new List<VoteLog>();
+		try
+		{
+			string uri = $"http://ylva.php.xdomain.jp/script/vote/logs/data_{idLang}.txt";
+			using UnityWebRequest www = UnityWebRequest.Get(uri);
+			await www.SendWebRequest();
+			if (www.result == UnityWebRequest.Result.ConnectionError || www.result == UnityWebRequest.Result.ProtocolError)
+			{
+				if (ShowNetError)
+				{
+					EClass.ui.Say(www.error);
+				}
+			}
+			else
+			{
+				StringReader stringReader = new StringReader(www.downloadHandler.text);
+				int num = 0;
+				for (string text = stringReader.ReadLine(); text != null; text = stringReader.ReadLine())
+				{
+					string[] array = text.Split(',');
+					if (num == 0)
+					{
+						list.Add(new VoteLog
+						{
+							name = array[0].Replace("\"", ""),
+							time = array[2].ToInt(),
+							index = num
+						});
+					}
+					else
+					{
+						list.Add(new VoteLog
+						{
+							name = array[0].Replace("\"", ""),
+							count = array[1].ToInt(),
+							index = num
+						});
+					}
+					num++;
+				}
+			}
+			return list;
+		}
+		catch
+		{
+			return list;
+		}
+	}
+
+	public static async UniTask<bool> SendChat(string name, string msg, ChatCategory cat, string idLang)
+	{
+		try
+		{
+			Debug.Log("Start Sending Text:");
+			WWWForm wWWForm = new WWWForm();
+			wWWForm.AddField("submit", "Send");
+			wWWForm.AddField("name", name);
+			wWWForm.AddField("msg", msg);
+			wWWForm.AddField("cat", cat.ToString());
+			wWWForm.AddField("idLang", idLang);
+			try
+			{
+				using UnityWebRequest www = UnityWebRequest.Post("http://ylva.php.xdomain.jp/script/chat/chat.php", wWWForm);
+				await www.SendWebRequest();
+				if (www.result == UnityWebRequest.Result.ConnectionError || www.result == UnityWebRequest.Result.ProtocolError)
+				{
+					if (ShowNetError)
+					{
+						EClass.ui.Say(www.error);
+					}
+					return false;
+				}
+				Debug.Log(www.downloadHandler.text);
+				return true;
+			}
+			catch
+			{
+			}
+		}
+		catch
+		{
+		}
+		return false;
+	}
+
+	public static async UniTask<List<ChatLog>> GetChat(ChatCategory cat, string idLang)
+	{
+		List<ChatLog> list = new List<ChatLog>();
+		try
+		{
+			string uri = $"http://ylva.php.xdomain.jp/script/chat/logs/all_{idLang}.json";
+			using UnityWebRequest www = UnityWebRequest.Get(uri);
+			await www.SendWebRequest();
+			if (www.result == UnityWebRequest.Result.ConnectionError || www.result == UnityWebRequest.Result.ProtocolError)
+			{
+				return null;
+			}
+			Debug.Log("Download Chat Logs: Success");
+			foreach (JToken item in (JArray)JsonConvert.DeserializeObject(www.downloadHandler.text))
+			{
+				list.Add(item.ToObject<ChatLog>());
+			}
+			foreach (ChatLog item2 in list)
+			{
+				item2.msg = item2.msg.Replace("\n", "").Replace("\r", "").Replace("&quot;", "\"")
+					.ToTitleCase();
+			}
+			list.Reverse();
+			return list;
+		}
+		catch
+		{
+			return list;
+		}
 	}
 }

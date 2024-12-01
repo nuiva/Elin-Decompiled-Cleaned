@@ -1,28 +1,162 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class AI_Fish : AIAct
 {
-	public override int MaxRestart
+	public class ProgressFish : AIProgress
 	{
-		get
+		public int hit = -1;
+
+		public Point posWater;
+
+		public override bool ShowProgress => false;
+
+		public override int MaxProgress => 100;
+
+		public override int LeftHand => -1;
+
+		public override int RightHand => 1107;
+
+		public override void OnStart()
 		{
-			return 9999;
+			if (!shouldCancel)
+			{
+				owner.PlaySound("fish_cast");
+				if (owner.Tool != null)
+				{
+					owner.Say("fish_start", owner, owner.Tool);
+				}
+				else
+				{
+					owner.Say("fish_start2", owner);
+				}
+			}
+		}
+
+		public override void OnProgress()
+		{
+			if (owner.IsPC && (owner.Tool == null || !owner.Tool.HasElement(245)))
+			{
+				Cancel();
+			}
+			else if (hit >= 0)
+			{
+				owner.renderer.PlayAnime(AnimeID.Fishing);
+				owner.PlaySound("fish_fight");
+				Ripple();
+				int a = Mathf.Clamp(10 - EClass.rnd(owner.Evalue(245) + 1) / 10, 5, 10);
+				if (hit > EClass.rnd(a))
+				{
+					hit = 100;
+					progress = MaxProgress;
+				}
+				hit++;
+			}
+			else
+			{
+				if (EClass.rnd(Mathf.Clamp(10 - EClass.rnd(owner.Evalue(245) + 1) / 5, 2, 10)) == 0 && progress >= 10)
+				{
+					hit = 0;
+				}
+				if (progress == 2 || (progress >= 8 && progress % 6 == 0 && EClass.rnd(3) == 0))
+				{
+					owner.renderer.PlayAnime(AnimeID.Shiver);
+					Ripple();
+				}
+			}
+		}
+
+		public void Ripple()
+		{
+			if (posWater != null)
+			{
+				Effect.Get("ripple").Play(posWater, -0.04f);
+				posWater.PlaySound("fish_splash");
+			}
+		}
+
+		public override void OnProgressComplete()
+		{
+			owner.renderer.PlayAnime(AnimeID.Fishing);
+			if (hit < 100)
+			{
+				Fail();
+				return;
+			}
+			if (owner.IsPC && !EClass.debug.enable)
+			{
+				if (EClass.player.eqBait == null || EClass.player.eqBait.isDestroyed)
+				{
+					Msg.Say("noBait");
+					return;
+				}
+				EClass.player.eqBait.ModNum(-1);
+			}
+			Thing thing = Makefish(owner);
+			if (thing == null)
+			{
+				Fail();
+				return;
+			}
+			int num = thing.Num;
+			EClass._zone.AddCard(thing, owner.pos);
+			thing.renderer.PlayAnime(AnimeID.Jump);
+			owner.Say("fish_get", owner, thing);
+			owner.PlaySound("fish_get");
+			owner.elements.ModExp(245, 100);
+			if (thing.id == "medal")
+			{
+				thing.isHidden = false;
+			}
+			if (owner.IsPC)
+			{
+				if (EClass.game.config.preference.pickFish)
+				{
+					if (StatsBurden.GetPhase((EClass.pc.ChildrenWeight + thing.ChildrenAndSelfWeight) * 100 / EClass.pc.WeightLimit) >= 3)
+					{
+						EClass.pc.Say("tooHeavy", thing);
+						shouldCancel = true;
+					}
+					else
+					{
+						owner.Pick(thing);
+					}
+				}
+			}
+			else
+			{
+				foreach (Thing item in owner.things.List((Thing t) => t.source._origin == "fish"))
+				{
+					item.Destroy();
+				}
+			}
+			if (EClass.rnd(2) == 0 || num > 1)
+			{
+				owner.stamina.Mod(-1 * num);
+			}
+		}
+
+		public void Fail()
+		{
+			if (owner.IsPC)
+			{
+				owner.Say("fish_miss", owner);
+			}
+			owner.stamina.Mod(-1);
 		}
 	}
+
+	public Point pos;
+
+	public static bool shouldCancel;
+
+	public override int MaxRestart => 9999;
+
+	public override TargetType TargetType => TargetType.Ground;
 
 	public override bool CanManualCancel()
 	{
 		return true;
-	}
-
-	public override TargetType TargetType
-	{
-		get
-		{
-			return TargetType.Ground;
-		}
 	}
 
 	public override bool CanPerform()
@@ -32,101 +166,94 @@ public class AI_Fish : AIAct
 
 	public override AIProgress CreateProgress()
 	{
-		return new AI_Fish.ProgressFish
+		return new ProgressFish
 		{
-			posWater = this.pos
+			posWater = pos
 		};
 	}
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		if (!this.owner.IsPC)
+		if (!owner.IsPC)
 		{
-			this.owner.TryPickGroundItem();
+			owner.TryPickGroundItem();
 		}
-		if (this.pos != null)
+		if (pos != null)
 		{
-			if (!this.pos.cell.IsTopWaterAndNoSnow)
+			if (!pos.cell.IsTopWaterAndNoSnow)
 			{
-				yield return this.Cancel();
+				yield return Cancel();
 			}
-			yield return base.DoGoto(this.pos, 1, false, null);
-			this.owner.LookAt(this.pos);
-			if (this.owner.IsPC)
+			yield return DoGoto(pos, 1);
+			owner.LookAt(pos);
+			if (owner.IsPC)
 			{
 				EClass.player.TryEquipBait();
 				if (EClass.player.eqBait == null)
 				{
 					Msg.Say("noBait");
-					yield return this.Cancel();
+					yield return Cancel();
 				}
 			}
-			if (!this.pos.cell.IsTopWaterAndNoSnow || this.owner.Dist(this.pos) > 1)
+			if (!pos.cell.IsTopWaterAndNoSnow || owner.Dist(pos) > 1)
 			{
-				yield return this.Cancel();
+				yield return Cancel();
 			}
-			AIAct.Status status = base.DoProgress();
-			if (AI_Fish.shouldCancel)
+			Status status = DoProgress();
+			if (shouldCancel)
 			{
-				AI_Fish.shouldCancel = false;
-				yield return this.Cancel();
+				shouldCancel = false;
+				yield return Cancel();
 			}
-			if (status == AIAct.Status.Running)
+			if (status == Status.Running)
 			{
-				yield return AIAct.Status.Running;
+				yield return Status.Running;
 			}
-			if (this.owner == EClass.pc)
+			if (owner == EClass.pc)
 			{
-				yield return base.Restart();
+				yield return Restart();
 			}
-			yield return base.DoWait(2);
-			if (this.owner != null)
+			yield return DoWait(2);
+			if (owner != null)
 			{
-				if (!this.owner.IsPC)
+				if (!owner.IsPC)
 				{
-					this.owner.TryPickGroundItem();
+					owner.TryPickGroundItem();
 				}
-				if (this.owner.IsPCFaction && !this.owner.IsPCParty)
+				if (owner.IsPCFaction && !owner.IsPCParty)
 				{
-					this.owner.ClearInventory(ClearInventoryType.Purge);
+					owner.ClearInventory(ClearInventoryType.Purge);
 				}
 			}
-			yield return base.Success(null);
+			yield return Success();
 		}
-		if (this.owner.fov == null)
+		if (owner.fov == null)
 		{
-			yield return this.Cancel();
+			yield return Cancel();
 		}
-		List<Point> list = this.owner.fov.ListPoints();
+		List<Point> list = owner.fov.ListPoints();
 		foreach (Point p in list)
 		{
-			if (!p.cell.IsTopWaterAndNoSnow)
+			if (p.cell.IsTopWaterAndNoSnow)
 			{
-				int num;
-				for (int _x = p.x - 1; _x <= p.x + 1; _x = num + 1)
+				continue;
+			}
+			for (int _x = p.x - 1; _x <= p.x + 1; _x++)
+			{
+				for (int _z = p.z - 1; _z <= p.z + 1; _z++)
 				{
-					for (int _z = p.z - 1; _z <= p.z + 1; _z = num + 1)
+					Point.shared.Set(_x, _z);
+					if (Point.shared.IsValid && Point.shared.cell.IsTopWaterAndNoSnow)
 					{
-						Point.shared.Set(_x, _z);
-						if (Point.shared.IsValid && Point.shared.cell.IsTopWaterAndNoSnow)
-						{
-							Point dest = Point.shared.Copy();
-							yield return base.DoGoto(dest, 0, false, null);
-							this.owner.LookAt(dest);
-							yield return base.DoProgress();
-							yield return AIAct.Status.Success;
-							dest = null;
-						}
-						num = _z;
+						Point dest = Point.shared.Copy();
+						yield return DoGoto(dest);
+						owner.LookAt(dest);
+						yield return DoProgress();
+						yield return Status.Success;
 					}
-					num = _x;
 				}
-				p = null;
 			}
 		}
-		List<Point>.Enumerator enumerator = default(List<Point>.Enumerator);
-		yield break;
-		yield break;
 	}
 
 	public static Point GetFishingPoint(Point p)
@@ -157,24 +284,12 @@ public class AI_Fish : AIAct
 		{
 			return null;
 		}
-		int[] source = new int[]
+		int[] array = new int[15]
 		{
-			233,
-			235,
-			236,
-			236,
-			236,
-			1170,
-			1143,
-			1144,
-			727,
-			728,
-			237,
-			869,
-			1178,
-			1179,
-			1180
+			233, 235, 236, 236, 236, 1170, 1143, 1144, 727, 728,
+			237, 869, 1178, 1179, 1180
 		};
+		Thing thing = null;
 		int num2 = 1;
 		string text = "";
 		if (c.IsPC || EClass.rnd(20) == 0)
@@ -200,16 +315,7 @@ public class AI_Fish : AIAct
 				}
 				if (EClass.rnd(50) == 0 || EClass.debug.enable)
 				{
-					text = new string[]
-					{
-						"659",
-						"758",
-						"759",
-						"806",
-						"828",
-						"1190",
-						"1191"
-					}.RandomItem<string>();
+					text = new string[7] { "659", "758", "759", "806", "828", "1190", "1191" }.RandomItem();
 				}
 			}
 			if (EClass.rnd(40) == 0 && EClass.rnd(40) < num / 3 + 10)
@@ -217,14 +323,13 @@ public class AI_Fish : AIAct
 				text = "medal";
 			}
 		}
-		Thing thing;
 		if (text != "")
 		{
-			thing = ThingGen.Create(text, -1, -1);
+			thing = ThingGen.Create(text);
 		}
 		else if (EClass.rnd(5 + num / 3) == 0)
 		{
-			thing = ThingGen.Create(source.RandomItem<int>().ToString() ?? "", -1, -1);
+			thing = ThingGen.Create(array.RandomItem().ToString() ?? "");
 		}
 		else
 		{
@@ -247,174 +352,5 @@ public class AI_Fish : AIAct
 			thing.SetBlessedState(BlessedState.Normal);
 		}
 		return thing;
-	}
-
-	public Point pos;
-
-	public static bool shouldCancel;
-
-	public class ProgressFish : AIProgress
-	{
-		public override bool ShowProgress
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		public override int MaxProgress
-		{
-			get
-			{
-				return 100;
-			}
-		}
-
-		public override int LeftHand
-		{
-			get
-			{
-				return -1;
-			}
-		}
-
-		public override int RightHand
-		{
-			get
-			{
-				return 1107;
-			}
-		}
-
-		public override void OnStart()
-		{
-			if (AI_Fish.shouldCancel)
-			{
-				return;
-			}
-			this.owner.PlaySound("fish_cast", 1f, true);
-			if (this.owner.Tool != null)
-			{
-				this.owner.Say("fish_start", this.owner, this.owner.Tool, null, null);
-				return;
-			}
-			this.owner.Say("fish_start2", this.owner, null, null);
-		}
-
-		public override void OnProgress()
-		{
-			if (this.owner.IsPC && (this.owner.Tool == null || !this.owner.Tool.HasElement(245, 1)))
-			{
-				this.Cancel();
-				return;
-			}
-			if (this.hit >= 0)
-			{
-				this.owner.renderer.PlayAnime(AnimeID.Fishing, default(Vector3), false);
-				this.owner.PlaySound("fish_fight", 1f, true);
-				this.Ripple();
-				int a = Mathf.Clamp(10 - EClass.rnd(this.owner.Evalue(245) + 1) / 10, 5, 10);
-				if (this.hit > EClass.rnd(a))
-				{
-					this.hit = 100;
-					this.progress = this.MaxProgress;
-				}
-				this.hit++;
-				return;
-			}
-			if (EClass.rnd(Mathf.Clamp(10 - EClass.rnd(this.owner.Evalue(245) + 1) / 5, 2, 10)) == 0 && this.progress >= 10)
-			{
-				this.hit = 0;
-			}
-			if (this.progress == 2 || (this.progress >= 8 && this.progress % 6 == 0 && EClass.rnd(3) == 0))
-			{
-				this.owner.renderer.PlayAnime(AnimeID.Shiver, default(Vector3), false);
-				this.Ripple();
-			}
-		}
-
-		public void Ripple()
-		{
-			if (this.posWater != null)
-			{
-				Effect.Get("ripple").Play(this.posWater, -0.04f, null, null);
-				this.posWater.PlaySound("fish_splash", true, 1f, true);
-			}
-		}
-
-		public override void OnProgressComplete()
-		{
-			this.owner.renderer.PlayAnime(AnimeID.Fishing, default(Vector3), false);
-			if (this.hit < 100)
-			{
-				this.Fail();
-				return;
-			}
-			if (this.owner.IsPC && !EClass.debug.enable)
-			{
-				if (EClass.player.eqBait == null || EClass.player.eqBait.isDestroyed)
-				{
-					Msg.Say("noBait");
-					return;
-				}
-				EClass.player.eqBait.ModNum(-1, true);
-			}
-			Thing thing = AI_Fish.Makefish(this.owner);
-			if (thing == null)
-			{
-				this.Fail();
-				return;
-			}
-			int num = thing.Num;
-			EClass._zone.AddCard(thing, this.owner.pos);
-			thing.renderer.PlayAnime(AnimeID.Jump, default(Vector3), false);
-			this.owner.Say("fish_get", this.owner, thing, null, null);
-			this.owner.PlaySound("fish_get", 1f, true);
-			this.owner.elements.ModExp(245, 100, false);
-			if (thing.id == "medal")
-			{
-				thing.isHidden = false;
-			}
-			if (this.owner.IsPC)
-			{
-				if (EClass.game.config.preference.pickFish)
-				{
-					if (StatsBurden.GetPhase((EClass.pc.ChildrenWeight + thing.ChildrenAndSelfWeight) * 100 / EClass.pc.WeightLimit) >= 3)
-					{
-						EClass.pc.Say("tooHeavy", thing, null, null);
-						AI_Fish.shouldCancel = true;
-					}
-					else
-					{
-						this.owner.Pick(thing, true, true);
-					}
-				}
-			}
-			else
-			{
-				foreach (Thing thing2 in this.owner.things.List((Thing t) => t.source._origin == "fish", false))
-				{
-					thing2.Destroy();
-				}
-			}
-			if (EClass.rnd(2) == 0 || num > 1)
-			{
-				this.owner.stamina.Mod(-1 * num);
-			}
-		}
-
-		public void Fail()
-		{
-			if (this.owner.IsPC)
-			{
-				this.owner.Say("fish_miss", this.owner, null, null);
-			}
-			this.owner.stamina.Mod(-1);
-		}
-
-		public int hit = -1;
-
-		public Point posWater;
 	}
 }

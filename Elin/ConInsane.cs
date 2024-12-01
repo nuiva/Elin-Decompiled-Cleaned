@@ -1,14 +1,6 @@
-﻿using System;
-
 public class ConInsane : BadCondition
 {
-	public override Emo2 EmoIcon
-	{
-		get
-		{
-			return Emo2.insane;
-		}
-	}
+	public override Emo2 EmoIcon => Emo2.insane;
 
 	public override void Tick()
 	{
@@ -16,25 +8,25 @@ public class ConInsane : BadCondition
 		{
 			if (EClass.rnd(5) == 0)
 			{
-				this.owner.Say("insane_act", this.owner, null, null);
+				owner.Say("insane_act", owner);
 			}
 			else
 			{
-				this.owner.Talk("insane", null, null, false);
+				owner.Talk("insane");
 			}
 		}
 		if (EClass.rnd(5) == 0)
 		{
-			this.owner.AddCondition<ConConfuse>(EClass.rnd(100), false);
+			owner.AddCondition<ConConfuse>(EClass.rnd(100));
 		}
 		if (EClass.rnd(5) == 0)
 		{
-			this.owner.AddCondition<ConDim>(EClass.rnd(100), false);
+			owner.AddCondition<ConDim>(EClass.rnd(100));
 		}
 		if (EClass.rnd(5) == 0)
 		{
-			this.owner.AddCondition<ConFear>(EClass.rnd(100), false);
+			owner.AddCondition<ConFear>(EClass.rnd(100));
 		}
-		base.Mod(-1, false);
+		Mod(-1);
 	}
 }

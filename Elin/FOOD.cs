@@ -1,5 +1,3 @@
-﻿using System;
-
 public class FOOD
 {
 	public const int food_poison = 702;
@@ -16,14 +14,5 @@ public class FOOD
 
 	public const int food_CHA = 700;
 
-	public static readonly int[] IDS = new int[]
-	{
-		702,
-		703,
-		704,
-		705,
-		706,
-		701,
-		700
-	};
+	public static readonly int[] IDS = new int[7] { 702, 703, 704, 705, 706, 701, 700 };
 }

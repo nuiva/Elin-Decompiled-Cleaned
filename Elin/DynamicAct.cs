@@ -1,89 +1,7 @@
-﻿using System;
+using System;
 
 public class DynamicAct : Act
 {
-	public override string ID
-	{
-		get
-		{
-			return this.id;
-		}
-	}
-
-	public override TargetType TargetType
-	{
-		get
-		{
-			return this._targetType;
-		}
-	}
-
-	public override bool IsHostileAct
-	{
-		get
-		{
-			return this.isHostileAct;
-		}
-	}
-
-	public override CursorInfo CursorIcon
-	{
-		get
-		{
-			return this.cursor;
-		}
-	}
-
-	public override bool CloseLayers
-	{
-		get
-		{
-			return this.closeLayers;
-		}
-	}
-
-	public override string GetText(string str = "")
-	{
-		return Lang.Get(this.id);
-	}
-
-	public override int PerformDistance
-	{
-		get
-		{
-			return this.dist;
-		}
-	}
-
-	public override bool CanPressRepeat
-	{
-		get
-		{
-			return this.canRepeat != null && this.canRepeat();
-		}
-	}
-
-	public DynamicAct(string _id, Func<bool> _onPerform = null, bool _closeLayers = false)
-	{
-		this.id = _id;
-		this.onPerform = _onPerform;
-		this.closeLayers = _closeLayers;
-		DynamicAct.lastAct = this;
-	}
-
-	public override bool LocalAct
-	{
-		get
-		{
-			return !(this.id == "actNewZone") && this.localAct;
-		}
-	}
-
-	public override bool Perform()
-	{
-		return this.onPerform != null && this.onPerform();
-	}
-
 	public static DynamicAct lastAct;
 
 	public new string id;
@@ -103,4 +21,62 @@ public class DynamicAct : Act
 	public int dist = 1;
 
 	public TargetType _targetType = TargetType.Any;
+
+	public override string ID => id;
+
+	public override TargetType TargetType => _targetType;
+
+	public override bool IsHostileAct => isHostileAct;
+
+	public override CursorInfo CursorIcon => cursor;
+
+	public override bool CloseLayers => closeLayers;
+
+	public override int PerformDistance => dist;
+
+	public override bool CanPressRepeat
+	{
+		get
+		{
+			if (canRepeat == null)
+			{
+				return false;
+			}
+			return canRepeat();
+		}
+	}
+
+	public override bool LocalAct
+	{
+		get
+		{
+			if (!(id == "actNewZone"))
+			{
+				return localAct;
+			}
+			return false;
+		}
+	}
+
+	public override string GetText(string str = "")
+	{
+		return Lang.Get(id);
+	}
+
+	public DynamicAct(string _id, Func<bool> _onPerform = null, bool _closeLayers = false)
+	{
+		id = _id;
+		onPerform = _onPerform;
+		closeLayers = _closeLayers;
+		lastAct = this;
+	}
+
+	public override bool Perform()
+	{
+		if (onPerform != null)
+		{
+			return onPerform();
+		}
+		return false;
+	}
 }

@@ -1,35 +1,16 @@
-﻿using System;
 using UnityEngine;
 
 public class Resistance : Element
 {
+	public override bool ShowPotential => false;
+
+	public override bool ShowXP => false;
+
+	public override string ShortName => EClass.sources.elements.alias[base.source.aliasParent].GetName();
+
 	public override bool CanLink(ElementContainer owner)
 	{
 		return !base.IsGlobalElement;
-	}
-
-	public override bool ShowPotential
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public override bool ShowXP
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public override string ShortName
-	{
-		get
-		{
-			return EClass.sources.elements.alias[base.source.aliasParent].GetName();
-		}
 	}
 
 	public override Sprite GetIcon(string suffix = "")

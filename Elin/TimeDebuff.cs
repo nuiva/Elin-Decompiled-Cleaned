@@ -1,17 +1,13 @@
-﻿using System;
-
 public class TimeDebuff : BaseDebuff
 {
-	public override bool TimeBased
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool TimeBased => true;
 
 	public override bool CanStack(Condition c)
 	{
-		return !c.givenByPcParty || c.givenByPcParty == base.givenByPcParty;
+		if (c.givenByPcParty)
+		{
+			return c.givenByPcParty == base.givenByPcParty;
+		}
+		return true;
 	}
 }

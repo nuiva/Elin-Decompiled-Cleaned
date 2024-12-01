@@ -1,55 +1,47 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class PopupManager : EClass
 {
-	public WidgetPopup Instance
+	public class Item
 	{
-		get
-		{
-			return WidgetPopup.Instance;
-		}
+		[JsonProperty]
+		public string text;
 	}
+
+	[JsonProperty]
+	public List<Item> items = new List<Item>();
+
+	public WidgetPopup Instance => WidgetPopup.Instance;
 
 	public void Add(string id)
 	{
 		string text = GameLang.Convert(Resources.Load<TextAsset>(CorePath.Text_Popup + id).text);
-		this.Add(new PopupManager.Item
+		Add(new Item
 		{
 			text = text
 		});
 	}
 
-	public void Add(PopupManager.Item item)
+	public void Add(Item item)
 	{
-		this.items.Add(item);
-		if (EClass.debug.ignorePopup)
+		items.Add(item);
+		if (!EClass.debug.ignorePopup)
 		{
-			return;
+			if (!Instance)
+			{
+				EClass.ui.widgets.ActivateWidget("Popup");
+			}
+			else
+			{
+				Instance.OnAddItem(item);
+			}
+			EClass.Sound.Play("popup_add");
 		}
-		if (!this.Instance)
-		{
-			EClass.ui.widgets.ActivateWidget("Popup");
-		}
-		else
-		{
-			this.Instance.OnAddItem(item);
-		}
-		EClass.Sound.Play("popup_add");
 	}
 
 	public void Remove(int index)
 	{
-	}
-
-	[JsonProperty]
-	public List<PopupManager.Item> items = new List<PopupManager.Item>();
-
-	public class Item
-	{
-		[JsonProperty]
-		public string text;
 	}
 }

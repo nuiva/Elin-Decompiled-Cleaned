@@ -1,80 +1,80 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class CodexManager : EClass
 {
+	[JsonProperty]
+	public Dictionary<string, CodexCreature> creatures = new Dictionary<string, CodexCreature>();
+
 	public CodexCreature GetOrCreate(string id)
 	{
-		CodexCreature codexCreature = this.creatures.TryGetValue(id, null);
+		CodexCreature codexCreature = creatures.TryGetValue(id);
 		if (codexCreature == null)
 		{
 			codexCreature = new CodexCreature
 			{
 				id = id
 			};
-			this.creatures[id] = codexCreature;
+			creatures[id] = codexCreature;
 		}
 		return codexCreature;
 	}
 
 	public void OnLoad()
 	{
-		foreach (KeyValuePair<string, CodexCreature> keyValuePair in this.creatures)
+		foreach (KeyValuePair<string, CodexCreature> creature in creatures)
 		{
-			keyValuePair.Value.id = keyValuePair.Key;
+			creature.Value.id = creature.Key;
 		}
 	}
 
 	public void AddCard(string id, int num = 1)
 	{
-		this.GetOrCreate(id).numCard += num;
+		GetOrCreate(id).numCard += num;
 	}
 
 	public bool Has(string id)
 	{
-		return this.creatures.ContainsKey(id);
+		return creatures.ContainsKey(id);
 	}
 
 	public void MarkCardDrop(string id)
 	{
-		this.GetOrCreate(id).droppedCard = true;
+		GetOrCreate(id).droppedCard = true;
 	}
 
 	public bool DroppedCard(string id)
 	{
-		return this.creatures.ContainsKey(id) && this.creatures[id].droppedCard;
+		if (creatures.ContainsKey(id))
+		{
+			return creatures[id].droppedCard;
+		}
+		return false;
 	}
 
 	public void AddKill(string id)
 	{
-		CodexCreature orCreate = this.GetOrCreate(id);
-		int kills = orCreate.kills;
-		orCreate.kills = kills + 1;
+		GetOrCreate(id).kills++;
 	}
 
 	public void AddWeakspot(string id)
 	{
-		CodexCreature orCreate = this.GetOrCreate(id);
-		int weakspot = orCreate.weakspot;
-		orCreate.weakspot = weakspot + 1;
+		GetOrCreate(id).weakspot++;
 	}
 
 	public void AddSpawn(string id)
 	{
-		CodexCreature orCreate = this.GetOrCreate(id);
-		int spawns = orCreate.spawns;
-		orCreate.spawns = spawns + 1;
+		GetOrCreate(id).spawns++;
 	}
 
 	public List<CardRow> ListKills()
 	{
 		List<CardRow> list = new List<CardRow>();
-		foreach (KeyValuePair<string, CodexCreature> keyValuePair in this.creatures)
+		foreach (KeyValuePair<string, CodexCreature> creature in creatures)
 		{
-			if (keyValuePair.Value.kills > 0)
+			if (creature.Value.kills > 0)
 			{
-				CardRow cardRow = EClass.sources.cards.map.TryGetValue(keyValuePair.Key, null);
+				CardRow cardRow = EClass.sources.cards.map.TryGetValue(creature.Key);
 				if (cardRow != null && !cardRow.HasTag(CTAG.noRandomProduct))
 				{
 					list.Add(cardRow);
@@ -83,7 +83,4 @@ public class CodexManager : EClass
 		}
 		return list;
 	}
-
-	[JsonProperty]
-	public Dictionary<string, CodexCreature> creatures = new Dictionary<string, CodexCreature>();
 }

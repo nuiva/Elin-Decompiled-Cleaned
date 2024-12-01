@@ -1,16 +1,13 @@
-﻿using System;
+namespace Algorithms;
 
-namespace Algorithms
+[Author("Franco, Gustavo")]
+public interface IPriorityQueue<T>
 {
-	[Author("Franco, Gustavo")]
-	public interface IPriorityQueue<T>
-	{
-		int Push(T item);
+	int Push(T item);
 
-		T Pop();
+	T Pop();
 
-		T Peek();
+	T Peek();
 
-		void Update(int i);
-	}
+	void Update(int i);
 }

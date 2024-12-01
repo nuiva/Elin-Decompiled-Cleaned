@@ -1,22 +1,8 @@
-﻿using System;
-
 public class ConFear : BadCondition
 {
-	public override Emo2 EmoIcon
-	{
-		get
-		{
-			return Emo2.fear;
-		}
-	}
+	public override Emo2 EmoIcon => Emo2.fear;
 
-	public override bool ConsumeTurn
-	{
-		get
-		{
-			return !this.owner.IsPC;
-		}
-	}
+	public override bool ConsumeTurn => !owner.IsPC;
 
 	public override int GetPhase()
 	{
@@ -25,17 +11,17 @@ public class ConFear : BadCondition
 
 	public override void Tick()
 	{
-		base.Mod(-1, false);
-		foreach (Condition condition in this.owner.conditions)
+		Mod(-1);
+		foreach (Condition condition in owner.conditions)
 		{
 			if (condition.ConsumeTurn && condition != this)
 			{
 				return;
 			}
 		}
-		if (!this.owner.IsPC && !EClass._zone.IsRegion)
+		if (!owner.IsPC && !EClass._zone.IsRegion)
 		{
-			this.owner.TryMoveFrom((this.owner.enemy != null) ? this.owner.enemy.pos : EClass.pc.pos);
+			owner.TryMoveFrom((owner.enemy != null) ? owner.enemy.pos : EClass.pc.pos);
 		}
 	}
 }

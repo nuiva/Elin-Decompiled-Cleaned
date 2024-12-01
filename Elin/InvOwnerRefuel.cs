@@ -1,52 +1,37 @@
-﻿using System;
-
 public class InvOwnerRefuel : InvOwnerDraglet
 {
-	public override InvOwnerDraglet.ProcessType processType
-	{
-		get
-		{
-			return InvOwnerDraglet.ProcessType.Consume;
-		}
-	}
+	public override ProcessType processType => ProcessType.Consume;
 
-	public override string langTransfer
-	{
-		get
-		{
-			return "invRefuel";
-		}
-	}
+	public override string langTransfer => "invRefuel";
 
-	public override bool DenyImportant
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool DenyImportant => true;
 
 	public override bool AllowStockIngredients
 	{
 		get
 		{
-			return EClass._zone.IsPCFaction || EClass._zone is Zone_Tent;
+			if (!EClass._zone.IsPCFaction)
+			{
+				return EClass._zone is Zone_Tent;
+			}
+			return true;
 		}
 	}
 
-	public InvOwnerRefuel(Card owner = null, Card container = null, CurrencyType _currency = CurrencyType.None) : base(owner, container, _currency)
+	public InvOwnerRefuel(Card owner = null, Card container = null, CurrencyType _currency = CurrencyType.None)
+		: base(owner, container, _currency)
 	{
 	}
 
 	public override bool ShouldShowGuide(Thing t)
 	{
-		return this.owner.trait.IsFuel(t);
+		return owner.trait.IsFuel(t);
 	}
 
 	public override void _OnProcess(Thing t)
 	{
-		int fuelValue = this.owner.trait.GetFuelValue(t);
-		int num = (this.owner.trait.MaxFuel - this.owner.c_charges) / fuelValue;
+		int fuelValue = owner.trait.GetFuelValue(t);
+		int num = (owner.trait.MaxFuel - owner.c_charges) / fuelValue;
 		if (num == 0)
 		{
 			SE.BeepSmall();
@@ -58,6 +43,6 @@ public class InvOwnerRefuel : InvOwnerDraglet
 			num = t.Num;
 		}
 		Thing t2 = t.Split(num);
-		this.owner.trait.Refuel(t2);
+		owner.trait.Refuel(t2);
 	}
 }

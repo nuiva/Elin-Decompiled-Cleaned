@@ -1,53 +1,36 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
 
 public class QuestSupplyCat : QuestSupply
 {
-	public SourceCategory.Row Cat
-	{
-		get
-		{
-			return EClass.sources.categories.map[this.idCat];
-		}
-	}
+	[JsonProperty]
+	public string idCat;
 
-	public override string RefDrama2
-	{
-		get
-		{
-			return this.Cat.GetName();
-		}
-	}
+	public SourceCategory.Row Cat => EClass.sources.categories.map[idCat];
+
+	public override string RefDrama2 => Cat.GetName();
+
+	public override string NameDeliver => Cat.GetName();
 
 	public override bool IsDestThing(Thing t)
 	{
-		return !t.c_isImportant && !t.isEquipped && t.category.IsChildOf(this.idCat) && t.things.Count == 0;
-	}
-
-	public override string NameDeliver
-	{
-		get
+		if (!t.c_isImportant && !t.isEquipped && t.category.IsChildOf(idCat))
 		{
-			return this.Cat.GetName();
+			return t.things.Count == 0;
 		}
+		return false;
 	}
 
 	public override void SetIdThing()
 	{
-		List<SourceCategory.Row> source = (from c in EClass.sources.categories.rows
-		where c._parent == "meal"
-		select c).ToList<SourceCategory.Row>();
-		this.idCat = source.RandomItem<SourceCategory.Row>().id;
+		List<SourceCategory.Row> list = EClass.sources.categories.rows.Where((SourceCategory.Row c) => c._parent == "meal").ToList();
+		idCat = list.RandomItem().id;
 	}
 
 	public override string GetTextProgress()
 	{
-		string @ref = (this.GetDestThing() != null) ? "supplyInInv".lang().TagColor(FontColor.Good, null) : "supplyNotInInv".lang();
-		return "progressSupply".lang(this.Cat.GetName() + Lang.space + this.TextExtra2.IsEmpty(""), @ref, null, null, null);
+		string @ref = ((GetDestThing() != null) ? "supplyInInv".lang().TagColor(FontColor.Good) : "supplyNotInInv".lang());
+		return "progressSupply".lang(Cat.GetName() + Lang.space + TextExtra2.IsEmpty(""), @ref);
 	}
-
-	[JsonProperty]
-	public string idCat;
 }

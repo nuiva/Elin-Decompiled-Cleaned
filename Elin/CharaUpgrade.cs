@@ -1,36 +1,64 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class CharaUpgrade : EClass
 {
-	public void Reset(Chara c)
+	public class Item : EClass
 	{
-		foreach (CharaUpgrade.Item item in this.items)
+		[JsonProperty]
+		public int[] ints = new int[4];
+
+		public int idEle
 		{
-			Element element = c.elements.GetElement(item.idEle);
-			if (element != null)
+			get
 			{
-				if (element is Feat)
-				{
-					c.SetFeat(item.idEle, 0, false);
-				}
-				else
-				{
-					c.elements.ModBase(item.idEle, -item.value);
-				}
+				return ints[0];
+			}
+			set
+			{
+				ints[0] = value;
 			}
 		}
-		this.items.Clear();
-		c.feat += this.spent;
-		this.spent = 0;
-		this.count = 0;
-		c.Refresh(false);
-		this.reset++;
+
+		public int value
+		{
+			get
+			{
+				return ints[1];
+			}
+			set
+			{
+				ints[1] = value;
+			}
+		}
+
+		public int cost
+		{
+			get
+			{
+				return ints[2];
+			}
+			set
+			{
+				ints[2] = value;
+			}
+		}
+
+		public DNA.Type type
+		{
+			get
+			{
+				return ints[3].ToEnum<DNA.Type>();
+			}
+			set
+			{
+				ints[3] = (int)value;
+			}
+		}
 	}
 
 	[JsonProperty]
-	public List<CharaUpgrade.Item> items = new List<CharaUpgrade.Item>();
+	public List<Item> items = new List<Item>();
 
 	[JsonProperty]
 	public int count;
@@ -44,57 +72,28 @@ public class CharaUpgrade : EClass
 	[JsonProperty]
 	public bool halt;
 
-	public class Item : EClass
+	public void Reset(Chara c)
 	{
-		public int idEle
+		foreach (Item item in items)
 		{
-			get
+			Element element = c.elements.GetElement(item.idEle);
+			if (element != null)
 			{
-				return this.ints[0];
-			}
-			set
-			{
-				this.ints[0] = value;
+				if (element is Feat)
+				{
+					c.SetFeat(item.idEle, 0);
+				}
+				else
+				{
+					c.elements.ModBase(item.idEle, -item.value);
+				}
 			}
 		}
-
-		public int value
-		{
-			get
-			{
-				return this.ints[1];
-			}
-			set
-			{
-				this.ints[1] = value;
-			}
-		}
-
-		public int cost
-		{
-			get
-			{
-				return this.ints[2];
-			}
-			set
-			{
-				this.ints[2] = value;
-			}
-		}
-
-		public DNA.Type type
-		{
-			get
-			{
-				return this.ints[3].ToEnum<DNA.Type>();
-			}
-			set
-			{
-				this.ints[3] = (int)value;
-			}
-		}
-
-		[JsonProperty]
-		public int[] ints = new int[4];
+		items.Clear();
+		c.feat += spent;
+		spent = 0;
+		count = 0;
+		c.Refresh();
+		reset++;
 	}
 }

@@ -1,22 +1,8 @@
-﻿using System;
-
 public class AM_EloMap : AM_BaseSim
 {
-	public override bool ShouldPauseGame
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool ShouldPauseGame => true;
 
-	public EloMapActor actor
-	{
-		get
-		{
-			return EClass.scene.elomapActor;
-		}
-	}
+	public EloMapActor actor => EClass.scene.elomapActor;
 
 	public override void OnActivate()
 	{

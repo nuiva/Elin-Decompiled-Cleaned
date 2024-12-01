@@ -1,43 +1,19 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public class TraitItemProc : TraitItem
 {
-	public EffectId IdEffect
-	{
-		get
-		{
-			return base.GetParam(1, null).ToEnum(true);
-		}
-	}
+	public EffectId IdEffect => GetParam(1).ToEnum<EffectId>();
 
-	public string n1
-	{
-		get
-		{
-			return base.GetParam(2, null);
-		}
-	}
+	public string n1 => GetParam(2);
 
-	public override int CraftNum
-	{
-		get
-		{
-			return this.GetCraftNum();
-		}
-	}
+	public override int CraftNum => GetCraftNum();
 
-	public override bool CanChangeHeight
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanChangeHeight => false;
 
 	public int GetCraftNum()
 	{
-		if (this.owner.id == "bandage")
+		if (owner.id == "bandage")
 		{
 			return 2 + EClass.rnd(2);
 		}
@@ -46,35 +22,35 @@ public class TraitItemProc : TraitItem
 
 	public override bool OnUse(Chara c)
 	{
-		int num = this.owner.Power;
-		if (this.IdEffect == EffectId.Buff && this.n1 == "ConBandage")
+		int num = owner.Power;
+		if (IdEffect == EffectId.Buff && n1 == "ConBandage")
 		{
-			num += this.owner.Evalue(750) * 5;
-			num = num * (100 + (int)Mathf.Sqrt((float)c.Evalue(300)) * 5) / 100;
+			num += owner.Evalue(750) * 5;
+			num = num * (100 + (int)Mathf.Sqrt(c.Evalue(300)) * 5) / 100;
 		}
-		ActEffect.Proc(this.IdEffect, base.GetParamInt(3, num), this.owner.blessedState, c, null, new ActRef
+		ActEffect.Proc(IdEffect, GetParamInt(3, num), owner.blessedState, c, null, new ActRef
 		{
-			n1 = this.n1
+			n1 = n1
 		});
 		if (c.ExistsOnMap)
 		{
-			FoodEffect.ProcTrait(c, this.owner);
+			FoodEffect.ProcTrait(c, owner);
 		}
-		if (this.IdEffect == EffectId.RemedyJure)
+		if (IdEffect == EffectId.RemedyJure)
 		{
-			c.Say("destory_feather", this.owner, null, null);
+			c.Say("destory_feather", owner);
 		}
-		this.owner.ModNum(-1, true);
+		owner.ModNum(-1);
 		return true;
 	}
 
 	public override Action GetHealAction(Chara c)
 	{
-		if (this.IdEffect == EffectId.Buff && this.n1 == "ConBandage" && !c.HasCondition<ConBandage>())
+		if (IdEffect == EffectId.Buff && n1 == "ConBandage" && !c.HasCondition<ConBandage>())
 		{
-			return delegate()
+			return delegate
 			{
-				this.OnUse(c);
+				OnUse(c);
 			};
 		}
 		return null;

@@ -1,57 +1,10 @@
-﻿using System;
+using System;
 
 public class SourceArea : SourceDataString<SourceArea.Row>
 {
-	public override SourceArea.Row CreateRow()
-	{
-		return new SourceArea.Row
-		{
-			id = SourceData.GetString(0),
-			name_JP = SourceData.GetString(1),
-			name = SourceData.GetString(2),
-			textAssign_JP = SourceData.GetString(3),
-			textAssign = SourceData.GetString(4),
-			detail_JP = SourceData.GetString(5),
-			tag = SourceData.GetString(6),
-			detail = SourceData.GetString(7)
-		};
-	}
-
-	public override void SetRow(SourceArea.Row r)
-	{
-		this.map[r.id] = r;
-	}
-
-	public override string[] ImportFields
-	{
-		get
-		{
-			return new string[]
-			{
-				"textAssign"
-			};
-		}
-	}
-
 	[Serializable]
-	public class Row : SourceData.BaseRow
+	public class Row : BaseRow
 	{
-		public override bool UseAlias
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		public override string GetAlias
-		{
-			get
-			{
-				return "n";
-			}
-		}
-
 		public string id;
 
 		public string name_JP;
@@ -73,5 +26,31 @@ public class SourceArea : SourceDataString<SourceArea.Row>
 		public string detail_L;
 
 		public string textAssign_L;
+
+		public override bool UseAlias => false;
+
+		public override string GetAlias => "n";
+	}
+
+	public override string[] ImportFields => new string[1] { "textAssign" };
+
+	public override Row CreateRow()
+	{
+		return new Row
+		{
+			id = SourceData.GetString(0),
+			name_JP = SourceData.GetString(1),
+			name = SourceData.GetString(2),
+			textAssign_JP = SourceData.GetString(3),
+			textAssign = SourceData.GetString(4),
+			detail_JP = SourceData.GetString(5),
+			tag = SourceData.GetString(6),
+			detail = SourceData.GetString(7)
+		};
+	}
+
+	public override void SetRow(Row r)
+	{
+		map[r.id] = r;
 	}
 }

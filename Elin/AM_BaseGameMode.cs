@@ -1,46 +1,16 @@
-﻿using System;
-
 public class AM_BaseGameMode : ActionMode
 {
-	public override AreaHighlightMode AreaHihlight
-	{
-		get
-		{
-			return AreaHighlightMode.None;
-		}
-	}
+	public bool isMouseOnMap;
 
-	public override bool ShowActionHint
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override AreaHighlightMode AreaHihlight => AreaHighlightMode.None;
 
-	public override bool HideSubWidgets
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool ShowActionHint => false;
 
-	public override BaseTileSelector.HitType hitType
-	{
-		get
-		{
-			return BaseTileSelector.HitType.Default;
-		}
-	}
+	public override bool HideSubWidgets => false;
 
-	public override BaseTileSelector.SelectType selectType
-	{
-		get
-		{
-			return BaseTileSelector.SelectType.Single;
-		}
-	}
+	public override BaseTileSelector.HitType hitType => BaseTileSelector.HitType.Default;
+
+	public override BaseTileSelector.SelectType selectType => BaseTileSelector.SelectType.Single;
 
 	public override BaseGameScreen TargetGameScreen
 	{
@@ -54,44 +24,34 @@ public class AM_BaseGameMode : ActionMode
 		}
 	}
 
-	protected Point hit
-	{
-		get
-		{
-			return Scene.HitPoint;
-		}
-	}
+	protected Point hit => Scene.HitPoint;
 
 	public override void OnUpdateInput()
 	{
-		this.isMouseOnMap = (!EClass.ui.isPointerOverUI && this.hit.IsValid);
+		isMouseOnMap = !EClass.ui.isPointerOverUI && hit.IsValid;
 		if (EInput.leftMouse.down && EClass.ui.isPointerOverUI)
 		{
 			EInput.leftMouse.Consume();
 			return;
 		}
-		EAction action = EInput.action;
-		if (action != EAction.Help)
+		switch (EInput.action)
 		{
-			if (action != EAction.Log)
+		case EAction.Cancel:
+			if (!WidgetSearch.Instance)
 			{
-				if (action == EAction.Cancel && !WidgetSearch.Instance)
-				{
-					HotItemContext.Show("system", EInput.uiMousePosition);
-				}
+				HotItemContext.Show("system", EInput.uiMousePosition);
 			}
-			else
-			{
-				WidgetMainText.ToggleLog();
-			}
-		}
-		else
-		{
+			break;
+		case EAction.Help:
 			LayerHelp.Toggle("general", "1");
+			break;
+		case EAction.Log:
+			WidgetMainText.ToggleLog();
+			break;
 		}
 		if (EClass.pc.currentZone.IsActiveZone)
 		{
-			this._OnUpdateInput();
+			_OnUpdateInput();
 		}
 	}
 
@@ -112,6 +72,4 @@ public class AM_BaseGameMode : ActionMode
 	{
 		return HitResult.Default;
 	}
-
-	public bool isMouseOnMap;
 }

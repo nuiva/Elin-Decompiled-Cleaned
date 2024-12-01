@@ -1,23 +1,10 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class LayerBaseCraft : ELayer
 {
-	public virtual bool CanCancelAI
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool CanCancelAI => false;
 
-	public virtual bool RepeatAI
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool RepeatAI => false;
 
 	public virtual List<Thing> GetTargets()
 	{

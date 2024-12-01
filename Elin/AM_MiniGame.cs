@@ -1,44 +1,12 @@
-﻿using System;
-
 public class AM_MiniGame : ActionMode
 {
-	public override bool ShowActionHint
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool ShowActionHint => false;
 
-	public override bool ShowMouseoverTarget
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool ShowMouseoverTarget => false;
 
-	public override bool AllowGeneralInput
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool AllowGeneralInput => false;
 
-	public override bool AllowHotbar
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool AllowHotbar => false;
 
-	public override BaseTileSelector.HitType hitType
-	{
-		get
-		{
-			return BaseTileSelector.HitType.None;
-		}
-	}
+	public override BaseTileSelector.HitType hitType => BaseTileSelector.HitType.None;
 }

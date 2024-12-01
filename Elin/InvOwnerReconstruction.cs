@@ -1,47 +1,47 @@
-﻿using System;
-
 public class InvOwnerReconstruction : InvOwnerEffect
 {
-	public override bool CanTargetAlly
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanTargetAlly => true;
 
-	public override string langTransfer
-	{
-		get
-		{
-			return "invReconstruct";
-		}
-	}
+	public override string langTransfer => "invReconstruct";
 
-	public override string langWhat
-	{
-		get
-		{
-			return "target_what";
-		}
-	}
+	public override string langWhat => "target_what";
 
 	public override Thing CreateDefaultContainer()
 	{
-		return ThingGen.CreateScroll(8288, 1);
+		return ThingGen.CreateScroll(8288);
 	}
 
 	public override bool ShouldShowGuide(Thing t)
 	{
-		return !t.HasTag(CTAG.godArtifact) && !(t.trait is TraitTent) && !(t.trait is TraitStairs) && t.trait.CanBeDropped && !t.category.IsChildOf("currency") && t.IsEquipment && !t.isReplica;
+		if (t.HasTag(CTAG.godArtifact))
+		{
+			return false;
+		}
+		if (t.trait is TraitTent)
+		{
+			return false;
+		}
+		if (t.trait is TraitStairs)
+		{
+			return false;
+		}
+		if (!t.trait.CanBeDropped || t.category.IsChildOf("currency"))
+		{
+			return false;
+		}
+		if (!t.IsEquipment)
+		{
+			return false;
+		}
+		if (t.isReplica)
+		{
+			return false;
+		}
+		return true;
 	}
 
 	public override void _OnProcess(Thing t)
 	{
-		ActEffect.Proc(EffectId.Reconstruction, 100, this.state, t.GetRootCard(), t, default(ActRef));
-	}
-
-	public InvOwnerReconstruction() : base(null, null, CurrencyType.Money)
-	{
+		ActEffect.Proc(EffectId.Reconstruction, 100, state, t.GetRootCard(), t);
 	}
 }

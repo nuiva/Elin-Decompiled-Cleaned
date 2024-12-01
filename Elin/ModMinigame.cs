@@ -1,33 +1,32 @@
-﻿using System;
 using UnityEngine;
 
 public class ModMinigame<T> : MiniGame where T : Component
 {
+	public T game;
+
 	public void Load()
 	{
-		Debug.Log(this.path);
-		if (!this.game)
+		Debug.Log(path);
+		if (!game)
 		{
-			this.asset = AssetBundle.LoadFromFile(this.path + "/Asset_" + this.id + "/asset");
-			UnityEngine.Object @object = this.asset.LoadAsset(this.id);
+			asset = AssetBundle.LoadFromFile(path + "/Asset_" + id + "/asset");
+			Object @object = asset.LoadAsset(id);
 			Debug.Log(@object);
-			this.go = (UnityEngine.Object.Instantiate(@object) as GameObject);
-			Debug.Log(this.go);
-			this.game = this.go.GetComponentInChildren<T>();
+			go = Object.Instantiate(@object) as GameObject;
+			Debug.Log(go);
+			game = go.GetComponentInChildren<T>();
 		}
-		base.SetAudioMixer(this.go);
-		Debug.Log(this.game);
+		SetAudioMixer(go);
+		Debug.Log(game);
 	}
 
 	public void Kill()
 	{
-		UnityEngine.Object.Destroy(this.go);
-		this.game = default(T);
-		if (this.asset)
+		Object.Destroy(go);
+		game = null;
+		if ((bool)asset)
 		{
-			this.asset.Unload(true);
+			asset.Unload(unloadAllLoadedObjects: true);
 		}
 	}
-
-	public T game;
 }

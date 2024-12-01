@@ -1,19 +1,12 @@
-﻿using System;
 using UnityEngine.UI;
 
 public class DragItem : EClass
 {
-	public virtual UIButton Button
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public virtual UIButton Button => null;
 
 	public virtual Image GetDragImage()
 	{
-		return this.Button.icon;
+		return Button.icon;
 	}
 
 	public virtual void OnStartDrag()

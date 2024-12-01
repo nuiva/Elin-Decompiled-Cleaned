@@ -1,23 +1,24 @@
-﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Newtonsoft.Json;
 
 public class Gross : EClass
 {
-	public virtual int Refresh()
+	[StructLayout(LayoutKind.Sequential, Size = 1)]
+	public struct Mod
 	{
-		return this.value;
-	}
-
-	public virtual List<Gross.Mod> GetMods()
-	{
-		return new List<Gross.Mod>();
 	}
 
 	[JsonProperty]
 	public int value;
 
-	public struct Mod
+	public virtual int Refresh()
 	{
+		return value;
+	}
+
+	public virtual List<Mod> GetMods()
+	{
+		return new List<Mod>();
 	}
 }

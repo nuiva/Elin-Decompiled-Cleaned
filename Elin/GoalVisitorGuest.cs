@@ -1,24 +1,16 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class GoalVisitorGuest : Goal
 {
-	public override int MaxRestart
-	{
-		get
-		{
-			return 10;
-		}
-	}
+	public override int MaxRestart => 10;
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		if (EClass.rnd(10) == 0 && this.owner.FindBed() == null)
+		if (EClass.rnd(10) == 0 && owner.FindBed() == null)
 		{
-			this.owner.TryAssignBed();
+			owner.TryAssignBed();
 		}
-		yield return base.DoIdle(3);
-		yield return base.Restart();
-		yield break;
+		yield return DoIdle();
+		yield return Restart();
 	}
 }

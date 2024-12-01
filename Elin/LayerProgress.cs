@@ -1,58 +1,88 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
-using DG.Tweening.Core;
-using DG.Tweening.Plugins.Options;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class LayerProgress : ELayer
 {
+	public static bool completed;
+
+	public static bool isActive;
+
+	public static float progress;
+
+	public float speed;
+
+	public float minTime;
+
+	public float endTime;
+
+	public float minProgress;
+
+	public Slider bar;
+
+	public Text text;
+
+	public Action onComplete;
+
+	public Func<bool> funcComplete;
+
+	public UniTask<bool> unitask;
+
+	public Action onCancel;
+
+	public bool useUnitask;
+
+	public CanvasGroup cg;
+
+	private float value;
+
 	public void Init(string hint)
 	{
-		this.text.text = hint;
-		LayerProgress.completed = false;
-		LayerProgress.isActive = true;
-		LayerProgress.progress = (this.value = 0f);
-		this.cg.alpha = 0f;
-		this.cg.DOFade(1f, 0.1f).SetEase(Ease.InCubic).SetDelay(0.2f);
+		text.text = hint;
+		completed = false;
+		isActive = true;
+		progress = (value = 0f);
+		cg.alpha = 0f;
+		cg.DOFade(1f, 0.1f).SetEase(Ease.InCubic).SetDelay(0.2f);
 	}
 
 	public void Update()
 	{
-		if (this.onCancel != null && Input.GetKeyDown(KeyCode.Escape))
+		if (onCancel != null && Input.GetKeyDown(KeyCode.Escape))
 		{
-			LayerProgress.isActive = false;
-			this.Close();
-			this.onCancel();
+			isActive = false;
+			Close();
+			onCancel();
 			return;
 		}
-		this.minTime -= Time.deltaTime;
-		if (LayerProgress.progress < 0.9f)
+		minTime -= Time.deltaTime;
+		if (progress < 0.9f)
 		{
-			LayerProgress.progress += this.minProgress * Time.deltaTime;
+			progress += minProgress * Time.deltaTime;
 		}
-		this.value = Mathf.Lerp(this.value, LayerProgress.progress, Time.deltaTime * this.speed);
-		if (this.useUnitask && this.unitask.Status == UniTaskStatus.Succeeded)
+		value = Mathf.Lerp(value, progress, Time.deltaTime * speed);
+		if (useUnitask && unitask.Status == UniTaskStatus.Succeeded)
 		{
-			LayerProgress.completed = true;
+			completed = true;
 		}
-		this.bar.value = Mathf.Clamp(this.value, 0f, 1f);
-		if (LayerProgress.completed && this.minTime < 0f)
+		bar.value = Mathf.Clamp(value, 0f, 1f);
+		if (!completed || !(minTime < 0f))
 		{
-			LayerProgress.progress = 1f;
-			this.speed *= 5f;
-			this.endTime -= Time.deltaTime;
-			if (this.endTime > 0f)
+			return;
+		}
+		progress = 1f;
+		speed *= 5f;
+		endTime -= Time.deltaTime;
+		if (!(endTime > 0f))
+		{
+			isActive = false;
+			Close();
+			if (onComplete != null)
 			{
-				return;
-			}
-			LayerProgress.isActive = false;
-			this.Close();
-			if (this.onComplete != null)
-			{
-				this.onComplete();
+				onComplete();
 			}
 		}
 	}
@@ -86,42 +116,10 @@ public class LayerProgress : ELayer
 		LayerProgress layerProgress = ELayer.ui.AddLayer<LayerProgress>();
 		layerProgress.Init(text);
 		layerProgress.onComplete = onComplete;
-		ThreadPool.QueueUserWorkItem(delegate(object a)
+		ThreadPool.QueueUserWorkItem(delegate
 		{
 			thread();
-			LayerProgress.completed = true;
+			completed = true;
 		});
 	}
-
-	public static bool completed;
-
-	public static bool isActive;
-
-	public static float progress;
-
-	public float speed;
-
-	public float minTime;
-
-	public float endTime;
-
-	public float minProgress;
-
-	public Slider bar;
-
-	public Text text;
-
-	public Action onComplete;
-
-	public Func<bool> funcComplete;
-
-	public UniTask<bool> unitask;
-
-	public Action onCancel;
-
-	public bool useUnitask;
-
-	public CanvasGroup cg;
-
-	private float value;
 }

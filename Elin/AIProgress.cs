@@ -1,102 +1,60 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class AIProgress : AIAct
 {
-	public override bool IsAutoTurn
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public int progress;
 
-	public override int MaxProgress
-	{
-		get
-		{
-			return 20;
-		}
-	}
+	public override bool IsAutoTurn => true;
 
-	public override int CurrentProgress
-	{
-		get
-		{
-			return this.progress;
-		}
-	}
+	public override int MaxProgress => 20;
 
-	public virtual int Interval
-	{
-		get
-		{
-			return 2;
-		}
-	}
+	public override int CurrentProgress => progress;
 
-	public virtual string TextOrbit
-	{
-		get
-		{
-			return (this.progress * 100 / this.MaxProgress).ToString() + "%";
-		}
-	}
+	public virtual int Interval => 2;
 
-	public virtual string TextHint
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public virtual string TextOrbit => progress * 100 / MaxProgress + "%";
 
-	public override bool CancelWhenMoved
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public virtual string TextHint => null;
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override bool CancelWhenMoved => true;
+
+	public override IEnumerable<Status> Run()
 	{
-		if (this.owner.IsPC)
+		if (owner.IsPC)
 		{
-			ActionMode.Adv.SetTurbo(-1);
+			ActionMode.Adv.SetTurbo();
 		}
-		for (;;)
+		while (true)
 		{
-			this.OnBeforeProgress();
-			if (!this.CanProgress())
+			OnBeforeProgress();
+			if (!CanProgress())
 			{
-				yield return this.Cancel();
+				yield return Cancel();
 			}
-			if (this.progress == 0)
+			if (progress == 0)
 			{
-				this.OnProgressBegin();
+				OnProgressBegin();
 			}
-			if (this.status != AIAct.Status.Running)
+			if (status != 0)
 			{
-				yield return this.status;
+				yield return status;
 			}
-			if (this.progress % this.Interval == 0)
+			if (progress % Interval == 0)
 			{
-				this.OnProgress();
+				OnProgress();
 			}
-			this.progress++;
-			if (this.status != AIAct.Status.Running)
+			progress++;
+			if (status != 0)
 			{
-				yield return this.status;
+				yield return status;
 			}
-			if (this.progress >= this.MaxProgress)
+			if (progress >= MaxProgress)
 			{
-				this.OnProgressComplete();
-				yield return base.Success(null);
+				OnProgressComplete();
+				yield return Success();
 			}
-			yield return AIAct.Status.Running;
+			yield return Status.Running;
 		}
-		yield break;
 	}
 
 	public virtual void OnProgressBegin()
@@ -105,8 +63,6 @@ public class AIProgress : AIAct
 
 	public void CompleteProgress()
 	{
-		this.progress = this.MaxProgress;
+		progress = MaxProgress;
 	}
-
-	public int progress;
 }

@@ -1,20 +1,13 @@
-﻿using System;
 using UnityEngine;
 
 public class RenderDataPcc : RenderDataChara
 {
-	public override string prefabName
-	{
-		get
-		{
-			return "CharaActorPCC";
-		}
-	}
+	public Vector3 _scale;
+
+	public override string prefabName => "CharaActorPCC";
 
 	private void OnValidate()
 	{
-		this._offset = this.offset;
+		_offset = offset;
 	}
-
-	public Vector3 _scale;
 }

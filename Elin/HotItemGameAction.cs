@@ -1,39 +1,24 @@
-﻿using System;
-
 public class HotItemGameAction : HotItem
 {
-	public virtual Act act
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public virtual Act act => null;
 
-	public override bool IsGameAction
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsGameAction => true;
 
 	public override void OnClick(ButtonHotItem b, Hotbar h)
 	{
-		this.hotbar.Select(this);
+		hotbar.Select(this);
 	}
 
 	public override void OnRightClick(ButtonHotItem b)
 	{
-		this.hotbar.Select(this);
+		hotbar.Select(this);
 	}
 
 	public override void OnMarkMapHighlights()
 	{
-		if (this.act == null)
+		if (act != null)
 		{
-			return;
+			act.OnMarkMapHighlights();
 		}
-		this.act.OnMarkMapHighlights();
 	}
 }

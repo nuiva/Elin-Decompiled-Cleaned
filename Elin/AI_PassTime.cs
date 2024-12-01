@@ -1,36 +1,52 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class AI_PassTime : AIAct
 {
-	public virtual AI_PassTime.Type type
+	public enum Type
+	{
+		passTime,
+		meditate,
+		selfHarm
+	}
+
+	public Thing target;
+
+	public bool startedFull;
+
+	public virtual Type type => Type.passTime;
+
+	public virtual int exp => 0;
+
+	public virtual int turns => 3000;
+
+	public override bool IsAutoTurn => true;
+
+	public override bool LocalAct => type == Type.selfHarm;
+
+	public override TargetType TargetType
 	{
 		get
 		{
-			return AI_PassTime.Type.passTime;
+			if (type != 0)
+			{
+				return TargetType.Self;
+			}
+			return TargetType.Any;
 		}
 	}
 
-	public virtual int exp
+	public bool IsFull
 	{
 		get
 		{
-			return 0;
-		}
-	}
-
-	public virtual int turns
-	{
-		get
-		{
-			return 3000;
-		}
-	}
-
-	public override bool IsAutoTurn
-	{
-		get
-		{
+			if (owner != null)
+			{
+				if (owner.hp == owner.MaxHP)
+				{
+					return owner.mana.value == owner.mana.max;
+				}
+				return false;
+			}
 			return true;
 		}
 	}
@@ -40,95 +56,59 @@ public class AI_PassTime : AIAct
 		return true;
 	}
 
-	public override bool LocalAct
-	{
-		get
-		{
-			return this.type == AI_PassTime.Type.selfHarm;
-		}
-	}
-
-	public override TargetType TargetType
-	{
-		get
-		{
-			if (this.type != AI_PassTime.Type.passTime)
-			{
-				return TargetType.Self;
-			}
-			return TargetType.Any;
-		}
-	}
-
 	public override MultiSprite GetStateIcon()
 	{
-		AI_PassTime.Type type = this.type;
-		if (type == AI_PassTime.Type.meditate)
+		return type switch
 		{
-			return EClass.core.refs.stateIcons.meditation;
-		}
-		if (type != AI_PassTime.Type.selfHarm)
-		{
-			return base.GetStateIcon();
-		}
-		return EClass.core.refs.stateIcons.selfharm;
-	}
-
-	public bool IsFull
-	{
-		get
-		{
-			return this.owner == null || (this.owner.hp == this.owner.MaxHP && this.owner.mana.value == this.owner.mana.max);
-		}
+			Type.meditate => EClass.core.refs.stateIcons.meditation, 
+			Type.selfHarm => EClass.core.refs.stateIcons.selfharm, 
+			_ => base.GetStateIcon(), 
+		};
 	}
 
 	public override void OnStart()
 	{
-		this.startedFull = this.IsFull;
+		startedFull = IsFull;
 	}
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		if (this.target != null)
+		if (target != null)
 		{
-			yield return base.DoGoto(this.target.pos, 0, false, null);
+			yield return DoGoto(target.pos);
 		}
-		this.owner.Say(this.type.ToString() + "_start", this.owner, null, null);
-		int num2;
-		for (int i = 0; i < this.turns; i = num2 + 1)
+		owner.Say(type.ToString() + "_start", owner);
+		for (int i = 0; i < turns; i++)
 		{
-			if (this.exp > 0 && i % 5 == 0)
+			if (exp > 0 && i % 5 == 0)
 			{
-				this.owner.ModExp(base.GetType().Name, this.exp);
+				owner.ModExp(GetType().Name, exp);
 			}
-			if (this.type == AI_PassTime.Type.selfHarm)
+			if (type == Type.selfHarm)
 			{
 				if (EClass.rnd(10) == 0)
 				{
-					this.owner.AddCondition<ConBleed>(50, false);
+					owner.AddCondition<ConBleed>(50);
 				}
 				else if (EClass.rnd(10) == 0)
 				{
-					this.owner.DamageHP(5 + EClass.rnd(5), AttackSource.None, null);
-					if (this.owner != null)
+					owner.DamageHP(5 + EClass.rnd(5));
+					if (owner != null)
 					{
-						this.owner.Teleport(ActEffect.GetTeleportPos(EClass.pc.pos, 6), false, false);
+						owner.Teleport(ActEffect.GetTeleportPos(EClass.pc.pos));
 					}
 				}
 			}
 			else
 			{
-				foreach (Chara chara in EClass.pc.party.members)
+				foreach (Chara member in EClass.pc.party.members)
 				{
 					bool flag = false;
-					using (List<Condition>.Enumerator enumerator2 = chara.conditions.GetEnumerator())
+					foreach (Condition condition in member.conditions)
 					{
-						while (enumerator2.MoveNext())
+						if (condition.PreventRegen)
 						{
-							if (enumerator2.Current.PreventRegen)
-							{
-								flag = true;
-							}
+							flag = true;
 						}
 					}
 					if (!flag)
@@ -136,59 +116,42 @@ public class AI_PassTime : AIAct
 						int num = 1 + EClass.pc.Evalue(6003) / 5;
 						if (EClass.rnd(3) == 0)
 						{
-							chara.HealHP(num * (chara.IsPC ? 1 : 2), HealSource.None);
+							member.HealHP(num * (member.IsPC ? 1 : 2));
 						}
-						chara.mana.Mod(num * (chara.IsPC ? 1 : 2));
+						member.mana.Mod(num * (member.IsPC ? 1 : 2));
 					}
 				}
 				if (i == 50 && EClass.pc.pos.IsHotSpring && (!EClass.pc.IsPCC || EClass.pc.pccData.state == PCCState.Undie))
 				{
-					int p = EClass._zone.elements.Has(3701) ? 150 : 100;
-					foreach (Chara chara2 in EClass.pc.party.members)
+					int p = (EClass._zone.elements.Has(3701) ? 150 : 100);
+					foreach (Chara member2 in EClass.pc.party.members)
 					{
-						Condition condition = chara2.AddCondition<ConHotspring>(p, false);
-						if (condition != null)
-						{
-							condition.SetPerfume(3);
-						}
+						member2.AddCondition<ConHotspring>(p)?.SetPerfume();
 					}
 				}
-				if (!this.startedFull && this.IsFull)
+				if (!startedFull && IsFull)
 				{
-					yield return base.Success(null);
+					yield return Success();
 				}
-				if (!EClass.debug.enable && this.owner.CanSleep() && EClass.rnd(10) == 0)
+				if (!EClass.debug.enable && owner.CanSleep() && EClass.rnd(10) == 0)
 				{
-					this.owner.Sleep(null, null, false, null, null);
-					yield return base.Success(null);
+					owner.Sleep();
+					yield return Success();
 				}
 			}
-			yield return base.KeepRunning();
-			num2 = i;
+			yield return KeepRunning();
 		}
-		if (this.owner != null)
+		if (owner != null)
 		{
-			this.owner.Say(this.type.ToString() + "_end", this.owner, null, null);
+			owner.Say(type.ToString() + "_end", owner);
 		}
-		yield break;
 	}
 
 	public override void OnCancel()
 	{
-		if (this.owner != null)
+		if (owner != null)
 		{
-			this.owner.Say(this.type.ToString() + "_end", this.owner, null, null);
+			owner.Say(type.ToString() + "_end", owner);
 		}
-	}
-
-	public Thing target;
-
-	public bool startedFull;
-
-	public enum Type
-	{
-		passTime,
-		meditate,
-		selfHarm
 	}
 }

@@ -1,14 +1,6 @@
-﻿using System;
-
 public class TraitBait : TraitEquipItem
 {
-	public override int DefaultStock
-	{
-		get
-		{
-			return 2 + EClass.rnd(10);
-		}
-	}
+	public override int DefaultStock => 2 + EClass.rnd(10);
 
 	public override Thing EQ
 	{

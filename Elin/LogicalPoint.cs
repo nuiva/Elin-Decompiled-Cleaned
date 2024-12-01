@@ -1,20 +1,18 @@
-﻿using System;
-
 public class LogicalPoint : Point
 {
-	public virtual LogicalPointManager manager
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public new int index;
+
+	public bool open;
+
+	public int life = 5;
+
+	public virtual LogicalPointManager manager => null;
 
 	public new void Set(Point p)
 	{
-		this.x = p.x;
-		this.z = p.z;
-		this.index = base.index;
+		x = p.x;
+		z = p.z;
+		index = base.index;
 	}
 
 	public virtual void Update()
@@ -23,12 +21,6 @@ public class LogicalPoint : Point
 
 	public virtual void Kill()
 	{
-		this.manager.Remove(this.index);
+		manager.Remove(index);
 	}
-
-	public new int index;
-
-	public bool open;
-
-	public int life = 5;
 }

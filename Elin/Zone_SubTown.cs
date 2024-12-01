@@ -1,26 +1,19 @@
-﻿using System;
-
 public class Zone_SubTown : Zone_Town
 {
-	public override bool CanBeDeliverDestination
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeDeliverDestination => false;
 
 	public override void OnGenerateRooms(BaseMapGen gen)
 	{
 		base.OnGenerateRooms(gen);
-		if (this.id == "foxtown")
+		if (!(id == "foxtown"))
 		{
-			foreach (Chara chara in EClass._map.charas)
+			return;
+		}
+		foreach (Chara chara in EClass._map.charas)
+		{
+			if (!chara.IsPCFaction)
 			{
-				if (!chara.IsPCFaction)
-				{
-					chara.SetFaith(EClass.game.religions.Trickery);
-				}
+				chara.SetFaith(EClass.game.religions.Trickery);
 			}
 		}
 	}

@@ -1,48 +1,31 @@
-﻿using System;
 using UnityEngine;
 
 public class TraitShackle : Trait
 {
-	public virtual Vector3 GetRestrainPos
-	{
-		get
-		{
-			return EClass.setting.render.posShackle;
-		}
-	}
+	public virtual Vector3 GetRestrainPos => EClass.setting.render.posShackle;
 
-	public virtual AnimeID animeId
-	{
-		get
-		{
-			return AnimeID.Shiver;
-		}
-	}
+	public virtual AnimeID animeId => AnimeID.Shiver;
+
+	public override bool CanBeHeld => !IsRestraining();
+
+	public override string LangUse => "ActRestrain";
 
 	public override bool CanStackTo(Thing to)
 	{
 		return false;
 	}
 
-	public override bool CanBeHeld
-	{
-		get
-		{
-			return !this.IsRestraining();
-		}
-	}
-
 	public override bool CanUse(Chara c)
 	{
-		return EClass._zone.IsPCFaction && this.owner.IsInstalled && !EClass.pc.isRestrained && (this.owner.pos.FirstChara == null || !this.owner.pos.FirstChara.isRestrained);
-	}
-
-	public override string LangUse
-	{
-		get
+		if (EClass._zone.IsPCFaction && owner.IsInstalled && !EClass.pc.isRestrained)
 		{
-			return "ActRestrain";
+			if (owner.pos.FirstChara != null)
+			{
+				return !owner.pos.FirstChara.isRestrained;
+			}
+			return true;
 		}
+		return false;
 	}
 
 	public override void TrySetHeldAct(ActPlan p)
@@ -55,42 +38,41 @@ public class TraitShackle : Trait
 
 	public override bool OnUse(Chara c)
 	{
-		c.MoveImmediate(this.owner.pos, true, true);
-		new ActRestrain
-		{
-			shackle = this
-		}.Perform(c, c, c.pos);
+		c.MoveImmediate(owner.pos);
+		ActRestrain actRestrain = new ActRestrain();
+		actRestrain.shackle = this;
+		actRestrain.Perform(c, c, c.pos);
 		return true;
 	}
 
 	public void Restrain(Card tc, bool msg = false)
 	{
 		tc.isRestrained = true;
-		this.owner.c_uidRefCard = tc.uid;
+		owner.c_uidRefCard = tc.uid;
 		if (msg)
 		{
-			tc.Say("restrained", tc, null, null);
+			tc.Say("restrained", tc);
 		}
 	}
 
 	public bool IsRestraining()
 	{
-		if (!this.owner.IsInstalled || this.owner.pos == null || EClass.player.simulatingZone)
+		if (!owner.IsInstalled || owner.pos == null || EClass.player.simulatingZone)
 		{
 			return false;
 		}
-		foreach (Chara chara in this.owner.pos.Charas)
+		foreach (Chara chara in owner.pos.Charas)
 		{
-			if (chara.isRestrained && this.owner.c_uidRefCard == chara.uid)
+			if (chara.isRestrained && owner.c_uidRefCard == chara.uid)
 			{
 				return true;
 			}
 		}
 		foreach (Chara chara2 in EClass._map.charas)
 		{
-			if (chara2.isChara && chara2.isRestrained && chara2.pos.Equals(this.owner.pos))
+			if (chara2.isChara && chara2.isRestrained && chara2.pos.Equals(owner.pos))
 			{
-				this.owner.c_uidRefCard = chara2.uid;
+				owner.c_uidRefCard = chara2.uid;
 				return true;
 			}
 		}

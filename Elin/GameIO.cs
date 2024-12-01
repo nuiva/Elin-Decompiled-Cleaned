@@ -1,80 +1,74 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using UnityEngine;
 
 public class GameIO : EClass
 {
-	public static string pathBackup
+	public static JsonSerializerSettings jsReadGame = new JsonSerializerSettings
 	{
-		get
-		{
-			return CorePath.RootSave + "Backup/";
-		}
-	}
+		NullValueHandling = NullValueHandling.Ignore,
+		DefaultValueHandling = DefaultValueHandling.Ignore,
+		PreserveReferencesHandling = PreserveReferencesHandling.Objects,
+		TypeNameHandling = TypeNameHandling.Auto,
+		Error = IO.OnError
+	};
 
-	public static string pathSaveRoot
+	public static JsonSerializerSettings jsWriteGame = new JsonSerializerSettings
 	{
-		get
-		{
-			return CorePath.RootSave;
-		}
-	}
+		NullValueHandling = NullValueHandling.Ignore,
+		DefaultValueHandling = DefaultValueHandling.Ignore,
+		PreserveReferencesHandling = PreserveReferencesHandling.Objects,
+		TypeNameHandling = TypeNameHandling.Auto,
+		ContractResolver = ShouldSerializeContractResolver.Instance,
+		Error = IO.OnError
+	};
 
-	public static string pathCurrentSave
-	{
-		get
-		{
-			return GameIO.pathSaveRoot + Game.id + "/";
-		}
-	}
+	public static Formatting formatting = Formatting.Indented;
 
-	public static string pathTemp
-	{
-		get
-		{
-			return GameIO.pathCurrentSave + "Temp/";
-		}
-	}
+	public static string pathBackup => CorePath.RootSave + "Backup/";
 
-	public static int NumBackup
-	{
-		get
-		{
-			return (int)MathF.Max(5f, (float)EClass.core.config.game.numBackup);
-		}
-	}
+	public static string pathSaveRoot => CorePath.RootSave;
+
+	public static string pathCurrentSave => pathSaveRoot + Game.id + "/";
+
+	public static string pathTemp => pathCurrentSave + "Temp/";
+
+	public static int NumBackup => (int)MathF.Max(5f, EClass.core.config.game.numBackup);
 
 	public static bool compressSave
 	{
 		get
 		{
-			return EClass.core.config.compressSave && !EClass.debug.dontCompressSave;
+			if (EClass.core.config.compressSave)
+			{
+				return !EClass.debug.dontCompressSave;
+			}
+			return false;
 		}
 	}
 
 	public static void ResetTemp()
 	{
-		DirectoryInfo directoryInfo = new DirectoryInfo(GameIO.pathTemp);
+		DirectoryInfo directoryInfo = new DirectoryInfo(pathTemp);
 		if (directoryInfo.Exists)
 		{
-			directoryInfo.Delete(true);
+			directoryInfo.Delete(recursive: true);
 		}
-		IO.CreateDirectory(GameIO.pathTemp);
+		IO.CreateDirectory(pathTemp);
 	}
 
 	public static void ClearTemp()
 	{
-		DirectoryInfo directoryInfo = new DirectoryInfo(GameIO.pathTemp);
+		DirectoryInfo directoryInfo = new DirectoryInfo(pathTemp);
 		if (directoryInfo.Exists)
 		{
 			DirectoryInfo[] directories = directoryInfo.GetDirectories();
 			for (int i = 0; i < directories.Length; i++)
 			{
-				directories[i].Delete(true);
+				directories[i].Delete(recursive: true);
 			}
 			FileInfo[] files = directoryInfo.GetFiles();
 			for (int i = 0; i < files.Length; i++)
@@ -86,12 +80,12 @@ public class GameIO : EClass
 
 	public static GameIndex SaveGame()
 	{
-		string text = JsonConvert.SerializeObject(EClass.core.game, GameIO.formatting, GameIO.jsWriteGame);
-		string path = GameIO.pathCurrentSave + "game.txt";
+		string text = JsonConvert.SerializeObject(EClass.core.game, formatting, jsWriteGame);
+		string path = pathCurrentSave + "game.txt";
 		GameIndex gameIndex = new GameIndex().Create(EClass.core.game);
 		gameIndex.id = Game.id;
-		IO.SaveFile(GameIO.pathCurrentSave + "index.txt", gameIndex, false, null);
-		if (GameIO.compressSave)
+		IO.SaveFile(pathCurrentSave + "index.txt", gameIndex);
+		if (compressSave)
 		{
 			IO.Compress(path, text);
 		}
@@ -99,16 +93,16 @@ public class GameIO : EClass
 		{
 			File.WriteAllText(path, text);
 		}
-		foreach (DirectoryInfo directoryInfo in new DirectoryInfo(GameIO.pathCurrentSave).GetDirectories())
+		DirectoryInfo[] directories = new DirectoryInfo(pathCurrentSave).GetDirectories();
+		foreach (DirectoryInfo directoryInfo in directories)
 		{
-			int key;
-			if (int.TryParse(directoryInfo.Name, out key) && !EClass.game.spatials.map.ContainsKey(key))
+			if (int.TryParse(directoryInfo.Name, out var result) && !EClass.game.spatials.map.ContainsKey(result))
 			{
 				IO.DeleteDirectory(directoryInfo.FullName);
 				Debug.Log("Deleting unused map:" + directoryInfo.FullName);
 			}
 		}
-		GameIO.ClearTemp();
+		ClearTemp();
 		return gameIndex;
 	}
 
@@ -116,100 +110,92 @@ public class GameIO : EClass
 	{
 		Debug.Log("Start backup:" + index.id);
 		string id = index.id;
-		IO.CreateDirectory(GameIO.pathBackup);
-		string text = GameIO.pathBackup + id;
+		IO.CreateDirectory(pathBackup);
+		string text = pathBackup + id;
 		IO.CreateDirectory(text);
 		Debug.Log(text);
-		List<DirectoryInfo> dirs = new DirectoryInfo(text).GetDirectories().ToList<DirectoryInfo>();
+		List<DirectoryInfo> dirs = new DirectoryInfo(text).GetDirectories().ToList();
 		dirs.ForeachReverse(delegate(DirectoryInfo i)
 		{
-			int num;
-			if (!int.TryParse(i.Name, out num))
+			if (!int.TryParse(i.Name, out var _))
 			{
 				dirs.Remove(i);
 			}
 		});
 		dirs.Sort((DirectoryInfo a, DirectoryInfo b) => int.Parse(a.Name) - int.Parse(b.Name));
 		int count = dirs.Count;
-		Debug.Log("Deleting excess backup:" + dirs.Count.ToString() + "/" + GameIO.NumBackup.ToString());
-		if (count > GameIO.NumBackup)
+		Debug.Log("Deleting excess backup:" + dirs.Count + "/" + NumBackup);
+		if (count > NumBackup)
 		{
-			for (int j = 0; j < count - GameIO.NumBackup; j++)
+			for (int j = 0; j < count - NumBackup; j++)
 			{
 				IO.DeleteDirectory(dirs[j].FullName);
 			}
 		}
 		Debug.Log("Copying backup:");
-		string newId = GameIO.GetNewId(text + "/", "", (dirs.Count == 0) ? 1 : int.Parse(dirs.LastItem<DirectoryInfo>().Name));
-		IO.CopyDir(GameIO.pathSaveRoot + id + "/", text + "/" + newId, (string s) => s == "Temp");
+		string newId = GetNewId(text + "/", "", (dirs.Count == 0) ? 1 : int.Parse(dirs.LastItem().Name));
+		IO.CopyDir(pathSaveRoot + id + "/", text + "/" + newId, (string s) => s == "Temp");
 	}
 
 	public static Game LoadGame(string id, string root)
 	{
 		Game.id = id;
-		GameIO.ClearTemp();
+		ClearTemp();
 		string path = root + "/game.txt";
-		return JsonConvert.DeserializeObject<Game>(IO.IsCompressed(path) ? IO.Decompress(path) : File.ReadAllText(path), GameIO.jsReadGame);
+		return JsonConvert.DeserializeObject<Game>(IO.IsCompressed(path) ? IO.Decompress(path) : File.ReadAllText(path), jsReadGame);
 	}
 
 	public static void UpdateGameIndex(GameIndex i)
 	{
 		i.madeBackup = true;
-		IO.SaveFile(i.path + "/index.txt", i, false, null);
+		IO.SaveFile(i.path + "/index.txt", i);
 	}
 
 	public static void SaveFile(string path, object obj)
 	{
-		IO.SaveFile(path, obj, GameIO.compressSave, GameIO.jsWriteGame);
+		IO.SaveFile(path, obj, compressSave, jsWriteGame);
 	}
 
 	public static T LoadFile<T>(string path) where T : new()
 	{
-		return IO.LoadFile<T>(path, GameIO.compressSave, GameIO.jsReadGame);
+		return IO.LoadFile<T>(path, compressSave, jsReadGame);
 	}
 
 	public static bool FileExist(string id)
 	{
-		return File.Exists(string.Concat(new string[]
-		{
-			GameIO.pathSaveRoot,
-			Game.id,
-			"/",
-			id,
-			".txt"
-		}));
+		return File.Exists(pathSaveRoot + Game.id + "/" + id + ".txt");
 	}
 
 	public static void DeleteGame(string id, bool deleteBackup = true)
 	{
-		if (!Directory.Exists(GameIO.pathSaveRoot + id))
+		if (!Directory.Exists(pathSaveRoot + id))
 		{
 			return;
 		}
-		DirectoryInfo directoryInfo = new DirectoryInfo(GameIO.pathSaveRoot + id);
+		DirectoryInfo directoryInfo = new DirectoryInfo(pathSaveRoot + id);
 		if (directoryInfo.Exists)
 		{
-			directoryInfo.Delete(true);
+			directoryInfo.Delete(recursive: true);
 		}
 		if (deleteBackup)
 		{
-			directoryInfo = new DirectoryInfo(GameIO.pathBackup + id);
+			directoryInfo = new DirectoryInfo(pathBackup + id);
 			if (directoryInfo.Exists)
 			{
-				directoryInfo.Delete(true);
+				directoryInfo.Delete(recursive: true);
 			}
 		}
 	}
 
 	public static void MakeDirectories(string id)
 	{
-		if (!Directory.Exists(GameIO.pathSaveRoot + id))
+		if (!Directory.Exists(pathSaveRoot + id))
 		{
-			Directory.CreateDirectory(GameIO.pathSaveRoot + id);
+			Directory.CreateDirectory(pathSaveRoot + id);
 		}
-		if (!Directory.Exists(GameIO.pathSaveRoot + id + "/Temp"))
+		if (!Directory.Exists(pathSaveRoot + id + "/Temp"))
 		{
-			Directory.CreateDirectory(GameIO.pathSaveRoot + id + "/Temp");
+			Directory.CreateDirectory(pathSaveRoot + id + "/Temp");
 		}
 	}
 
@@ -221,15 +207,14 @@ public class GameIO : EClass
 		{
 			return list;
 		}
-		foreach (DirectoryInfo directoryInfo2 in directoryInfo.GetDirectories())
+		DirectoryInfo[] directories = directoryInfo.GetDirectories();
+		foreach (DirectoryInfo directoryInfo2 in directories)
 		{
-			DirectoryInfo directoryInfo3 = directoryInfo2;
-			if (File.Exists(((directoryInfo3 != null) ? directoryInfo3.ToString() : null) + "/index.txt"))
+			if (File.Exists(directoryInfo2?.ToString() + "/index.txt"))
 			{
 				try
 				{
-					DirectoryInfo directoryInfo4 = directoryInfo2;
-					GameIndex gameIndex = IO.LoadFile<GameIndex>(((directoryInfo4 != null) ? directoryInfo4.ToString() : null) + "/index.txt", false, null);
+					GameIndex gameIndex = IO.LoadFile<GameIndex>(directoryInfo2?.ToString() + "/index.txt");
 					gameIndex.id = directoryInfo2.Name;
 					gameIndex.path = directoryInfo2.FullName;
 					list.Add(gameIndex);
@@ -243,31 +228,26 @@ public class GameIO : EClass
 		{
 			list.Sort(delegate(GameIndex a, GameIndex b)
 			{
-				int num;
-				int.TryParse(a.id, out num);
-				int num2;
-				int.TryParse(b.id, out num2);
-				return num2 - num;
+				int.TryParse(a.id, out var result);
+				int.TryParse(b.id, out var result2);
+				return result2 - result;
 			});
 		}
 		else
 		{
-			list.Sort((GameIndex a, GameIndex b) => b.real.GetRawReal(0) - a.real.GetRawReal(0));
+			list.Sort((GameIndex a, GameIndex b) => b.real.GetRawReal() - a.real.GetRawReal());
 		}
 		return list;
 	}
 
 	public static void DeleteEmptyGameFolders()
 	{
-		foreach (DirectoryInfo directoryInfo in new DirectoryInfo(GameIO.pathSaveRoot).GetDirectories())
+		DirectoryInfo[] directories = new DirectoryInfo(pathSaveRoot).GetDirectories();
+		foreach (DirectoryInfo directoryInfo in directories)
 		{
-			if (directoryInfo.Name != "Backup")
+			if (directoryInfo.Name != "Backup" && !File.Exists(directoryInfo?.ToString() + "/game.txt"))
 			{
-				DirectoryInfo directoryInfo2 = directoryInfo;
-				if (!File.Exists(((directoryInfo2 != null) ? directoryInfo2.ToString() : null) + "/game.txt"))
-				{
-					directoryInfo.Delete(true);
-				}
+				directoryInfo.Delete(recursive: true);
 			}
 		}
 	}
@@ -277,7 +257,7 @@ public class GameIO : EClass
 		string text = "";
 		for (int i = start; i < 999999; i++)
 		{
-			text = prefix + i.ToString();
+			text = prefix + i;
 			if (!Directory.Exists(path + text))
 			{
 				break;
@@ -285,25 +265,4 @@ public class GameIO : EClass
 		}
 		return text;
 	}
-
-	public static JsonSerializerSettings jsReadGame = new JsonSerializerSettings
-	{
-		NullValueHandling = NullValueHandling.Ignore,
-		DefaultValueHandling = DefaultValueHandling.Ignore,
-		PreserveReferencesHandling = PreserveReferencesHandling.Objects,
-		TypeNameHandling = TypeNameHandling.Auto,
-		Error = new EventHandler<Newtonsoft.Json.Serialization.ErrorEventArgs>(IO.OnError)
-	};
-
-	public static JsonSerializerSettings jsWriteGame = new JsonSerializerSettings
-	{
-		NullValueHandling = NullValueHandling.Ignore,
-		DefaultValueHandling = DefaultValueHandling.Ignore,
-		PreserveReferencesHandling = PreserveReferencesHandling.Objects,
-		TypeNameHandling = TypeNameHandling.Auto,
-		ContractResolver = ShouldSerializeContractResolver.Instance,
-		Error = new EventHandler<Newtonsoft.Json.Serialization.ErrorEventArgs>(IO.OnError)
-	};
-
-	public static Formatting formatting = Formatting.Indented;
 }

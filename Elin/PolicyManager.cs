@@ -1,39 +1,43 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class PolicyManager : EClass
 {
+	[JsonProperty]
+	public List<Policy> list = new List<Policy>();
+
+	public FactionBranch owner;
+
 	public void SetOwner(FactionBranch _owner)
 	{
-		this.owner = _owner;
-		foreach (Policy policy in this.list)
+		owner = _owner;
+		foreach (Policy item in list)
 		{
-			policy.SetOwner(this.owner);
+			item.SetOwner(owner);
 		}
-		this.RefreshEffects();
+		RefreshEffects();
 	}
 
 	public void AddPolicy(string id)
 	{
-		this.AddPolicy(EClass.sources.elements.alias[id].id, true);
+		AddPolicy(EClass.sources.elements.alias[id].id);
 	}
 
 	public Policy AddPolicy(int id, bool show = true)
 	{
-		if (this.owner.elements.GetElement(id) == null)
+		if (owner.elements.GetElement(id) == null)
 		{
-			this.owner.elements.SetBase(id, 1, 0);
+			owner.elements.SetBase(id, 1);
 		}
 		Policy policy = new Policy
 		{
 			id = id
 		};
-		policy.SetOwner(this.owner);
-		this.list.Add(policy);
+		policy.SetOwner(owner);
+		list.Add(policy);
 		if (show)
 		{
-			WidgetPopText.Say("rewardPolicy".lang(EClass.sources.elements.map[id].GetName(), null, null, null, null), FontColor.Default, null);
+			WidgetPopText.Say("rewardPolicy".lang(EClass.sources.elements.map[id].GetName()));
 		}
 		if (policy.source.tag.Contains("globalPolicy"))
 		{
@@ -44,31 +48,31 @@ public class PolicyManager : EClass
 
 	public void Activate(int id)
 	{
-		foreach (Policy policy in this.list)
+		foreach (Policy item in list)
 		{
-			if (policy.id == id)
+			if (item.id == id)
 			{
-				policy.active = true;
+				item.active = true;
 			}
 		}
 	}
 
 	public void SetActive(int id, bool active)
 	{
-		foreach (Policy policy in this.list)
+		foreach (Policy item in list)
 		{
-			if (policy.id == id)
+			if (item.id == id)
 			{
-				policy.active = active;
+				item.active = active;
 			}
 		}
 	}
 
 	public bool IsActive(int id, int days = -1)
 	{
-		foreach (Policy policy in this.list)
+		foreach (Policy item in list)
 		{
-			if (policy.active && policy.id == id && (days == -1 || policy.days >= days))
+			if (item.active && item.id == id && (days == -1 || item.days >= days))
 			{
 				return true;
 			}
@@ -78,14 +82,11 @@ public class PolicyManager : EClass
 
 	public bool HasPolicy(int id)
 	{
-		using (List<Policy>.Enumerator enumerator = this.list.GetEnumerator())
+		foreach (Policy item in list)
 		{
-			while (enumerator.MoveNext())
+			if (item.id == id)
 			{
-				if (enumerator.Current.id == id)
-				{
-					return true;
-				}
+				return true;
 			}
 		}
 		return false;
@@ -93,30 +94,30 @@ public class PolicyManager : EClass
 
 	public void OnSimulateHour(VirtualDate date)
 	{
-		foreach (Policy policy in this.list)
+		foreach (Policy item in list)
 		{
-			if (policy.active)
+			if (item.active)
 			{
-				policy.OnAdvanceHour(date);
+				item.OnAdvanceHour(date);
 				if (date.hour == 0)
 				{
-					policy.days++;
+					item.days++;
 				}
 			}
 			else
 			{
-				policy.days = 0;
+				item.days = 0;
 			}
 		}
 	}
 
 	public int GetValue(int id)
 	{
-		foreach (Policy policy in this.list)
+		foreach (Policy item in list)
 		{
-			if (policy.id == id && policy.active)
+			if (item.id == id && item.active)
 			{
-				return policy.Ele.Value;
+				return item.Ele.Value;
 			}
 		}
 		return 0;
@@ -125,11 +126,11 @@ public class PolicyManager : EClass
 	public int CurrentAP()
 	{
 		int num = 0;
-		foreach (Policy policy in this.list)
+		foreach (Policy item in list)
 		{
-			if (policy.active)
+			if (item.active)
 			{
-				num += policy.Cost;
+				num += item.Cost;
 			}
 		}
 		return num;
@@ -137,30 +138,25 @@ public class PolicyManager : EClass
 
 	public void RefreshEffects()
 	{
-		foreach (Happiness happiness in this.owner.happiness.list)
+		foreach (Happiness item in owner.happiness.list)
 		{
-			happiness.OnRefreshEffect();
+			item.OnRefreshEffect();
 		}
-		foreach (BaseHomeResource baseHomeResource in this.owner.resources.list)
+		foreach (BaseHomeResource item2 in owner.resources.list)
 		{
-			baseHomeResource.OnRefreshEffect();
+			item2.OnRefreshEffect();
 		}
-		foreach (Policy policy in this.list)
+		foreach (Policy item3 in list)
 		{
-			if (policy.active)
+			if (item3.active)
 			{
-				policy.RefreshEffect(null);
+				item3.RefreshEffect();
 			}
 		}
-		this.owner.resources.SetDirty();
+		owner.resources.SetDirty();
 	}
 
 	public void Validate()
 	{
 	}
-
-	[JsonProperty]
-	public List<Policy> list = new List<Policy>();
-
-	public FactionBranch owner;
 }

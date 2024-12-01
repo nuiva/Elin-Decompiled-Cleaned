@@ -1,75 +1,7 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class HappinessSummary : EClass
 {
-	public HappinessSummary(FactionBranch b)
-	{
-		List<Chara> members = b.members;
-		foreach (Chara chara in members)
-		{
-			this.happiness += chara.happiness;
-			this.hunger += chara.hunger.value;
-			this.fatigue += chara.stamina.value;
-			this.depression += chara.depression.value;
-			this.bladder += chara.bladder.value;
-			this.hygine += chara.hygiene.value;
-		}
-		int count = members.Count;
-		this.happiness /= count;
-		this.hunger /= count;
-		this.fatigue /= count;
-		this.depression /= count;
-		this.bladder /= count;
-		this.hygine /= count;
-	}
-
-	public string GetText()
-	{
-		string text = "";
-		text = string.Concat(new string[]
-		{
-			text,
-			"happiness".lang(),
-			": ",
-			this.happiness.ToString(),
-			"\n"
-		});
-		text = string.Concat(new string[]
-		{
-			text,
-			EClass.pc.hunger.name,
-			": ",
-			this.hunger.ToString(),
-			"\n"
-		});
-		text = string.Concat(new string[]
-		{
-			text,
-			EClass.pc.stamina.name,
-			": ",
-			this.fatigue.ToString(),
-			"\n"
-		});
-		text = string.Concat(new string[]
-		{
-			text,
-			EClass.pc.depression.name,
-			": ",
-			this.depression.ToString(),
-			"\n"
-		});
-		text = string.Concat(new string[]
-		{
-			text,
-			EClass.pc.bladder.name,
-			": ",
-			this.bladder.ToString(),
-			"\n"
-		});
-		return text + EClass.pc.hygiene.name + ": " + this.hygine.ToString();
-	}
-
 	public int happiness;
 
 	public int hunger;
@@ -81,4 +13,36 @@ public class HappinessSummary : EClass
 	public int bladder;
 
 	public int hygine;
+
+	public HappinessSummary(FactionBranch b)
+	{
+		List<Chara> members = b.members;
+		foreach (Chara item in members)
+		{
+			happiness += item.happiness;
+			hunger += item.hunger.value;
+			fatigue += item.stamina.value;
+			depression += item.depression.value;
+			bladder += item.bladder.value;
+			hygine += item.hygiene.value;
+		}
+		int count = members.Count;
+		happiness /= count;
+		hunger /= count;
+		fatigue /= count;
+		depression /= count;
+		bladder /= count;
+		hygine /= count;
+	}
+
+	public string GetText()
+	{
+		string text = "";
+		text = text + "happiness".lang() + ": " + happiness + "\n";
+		text = text + EClass.pc.hunger.name + ": " + hunger + "\n";
+		text = text + EClass.pc.stamina.name + ": " + fatigue + "\n";
+		text = text + EClass.pc.depression.name + ": " + depression + "\n";
+		text = text + EClass.pc.bladder.name + ": " + bladder + "\n";
+		return text + EClass.pc.hygiene.name + ": " + hygine;
+	}
 }

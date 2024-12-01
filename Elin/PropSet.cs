@@ -1,34 +1,33 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class PropSet : Dictionary<int, Card>
 {
+	public int num;
+
 	public void Add(Card c)
 	{
-		this.ModNum(c.Num);
-		base.Add(c.uid, c);
+		ModNum(c.Num);
+		Add(c.uid, c);
 	}
 
 	public void Remove(Card c)
 	{
-		this.ModNum(-c.Num);
-		base.Remove(c.uid);
+		ModNum(-c.Num);
+		Remove(c.uid);
 	}
 
 	public bool Contains(Card c)
 	{
-		return base.ContainsKey(c.uid);
+		return ContainsKey(c.uid);
 	}
 
 	public virtual void ModNum(int a)
 	{
-		this.num += a;
+		num += a;
 	}
 
 	public void OnChangeNum(int a)
 	{
-		this.ModNum(a);
+		ModNum(a);
 	}
-
-	public int num;
 }

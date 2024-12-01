@@ -1,31 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 public class EffectManager : EMono
 {
-	public void Add(Effect e)
+	[Serializable]
+	public class EffectList : DynamicAsset<Effect>
 	{
-		this.list.Add(e);
-	}
-
-	public void Remove(Effect e)
-	{
-		this.list.Remove(e);
-	}
-
-	public void KillAll()
-	{
-		for (int i = this.list.Count - 1; i >= 0; i--)
+		public Effect Get(string id)
 		{
-			this.list[i].Kill();
-		}
-	}
-
-	public void UpdateEffects()
-	{
-		for (int i = this.list.Count - 1; i >= 0; i--)
-		{
-			this.list[i].OnUpdate();
+			return GetNew(id);
 		}
 	}
 
@@ -34,14 +17,31 @@ public class EffectManager : EMono
 
 	public static EffectManager Instance;
 
-	public EffectManager.EffectList effects;
+	public EffectList effects;
 
-	[Serializable]
-	public class EffectList : DynamicAsset<Effect>
+	public void Add(Effect e)
 	{
-		public Effect Get(string id)
+		list.Add(e);
+	}
+
+	public void Remove(Effect e)
+	{
+		list.Remove(e);
+	}
+
+	public void KillAll()
+	{
+		for (int num = list.Count - 1; num >= 0; num--)
 		{
-			return base.GetNew(id, null);
+			list[num].Kill();
+		}
+	}
+
+	public void UpdateEffects()
+	{
+		for (int num = list.Count - 1; num >= 0; num--)
+		{
+			list[num].OnUpdate();
 		}
 	}
 }

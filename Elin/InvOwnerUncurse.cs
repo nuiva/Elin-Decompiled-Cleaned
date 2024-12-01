@@ -1,34 +1,14 @@
-﻿using System;
-
 public class InvOwnerUncurse : InvOwnerEffect
 {
-	public override bool CanTargetAlly
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanTargetAlly => true;
 
-	public override string langTransfer
-	{
-		get
-		{
-			return "invUncurse";
-		}
-	}
+	public override string langTransfer => "invUncurse";
 
-	public override string langWhat
-	{
-		get
-		{
-			return "target_what";
-		}
-	}
+	public override string langWhat => "target_what";
 
 	public override Thing CreateDefaultContainer()
 	{
-		return ThingGen.CreateScroll(this.superior ? 8241 : 8240, 1);
+		return ThingGen.CreateScroll(superior ? 8241 : 8240);
 	}
 
 	public override bool ShouldShowGuide(Thing t)
@@ -38,10 +18,6 @@ public class InvOwnerUncurse : InvOwnerEffect
 
 	public override void _OnProcess(Thing t)
 	{
-		ActEffect.Proc(EffectId.Uncurse, 100, this.state, t.GetRootCard(), t, default(ActRef));
-	}
-
-	public InvOwnerUncurse() : base(null, null, CurrencyType.Money)
-	{
+		ActEffect.Proc(EffectId.Uncurse, 100, state, t.GetRootCard(), t);
 	}
 }

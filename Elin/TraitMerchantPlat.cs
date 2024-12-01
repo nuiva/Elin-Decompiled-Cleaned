@@ -1,5 +1,3 @@
-﻿using System;
-
 public class TraitMerchantPlat : TraitMerchant
 {
 	public override ShopType ShopType
@@ -14,27 +12,9 @@ public class TraitMerchantPlat : TraitMerchant
 		}
 	}
 
-	public override CurrencyType CurrencyType
-	{
-		get
-		{
-			return CurrencyType.Plat;
-		}
-	}
+	public override CurrencyType CurrencyType => CurrencyType.Plat;
 
-	public override string LangBarter
-	{
-		get
-		{
-			return "daBuyPlat";
-		}
-	}
+	public override string LangBarter => "daBuyPlat";
 
-	public override bool CanInvite
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanInvite => false;
 }

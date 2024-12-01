@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -6,241 +6,30 @@ using UnityEngine.UI;
 
 public class UIMapPreview : EMono
 {
-	private void Awake()
+	public class GenThread : EClass
 	{
-		if (this.image)
-		{
-			this.texDefault = this.image.texture;
-		}
-	}
+		public ZoneBlueprint bp;
 
-	public void GenerateMap(ZoneBlueprint bp)
-	{
-		if (this.thread == null)
-		{
-			this.thread = new UIMapPreview.GenThread();
-			this.thread.Init();
-		}
-		else
-		{
-			if (!this.thread.done)
-			{
-				return;
-			}
-			this.image.texture = this.texDefault;
-			this.thread.Reset();
-		}
-		this.thread.bp.genSetting = bp.genSetting;
-		this.thread.bp.zoneProfile = bp.zoneProfile;
-		this.thread.bp.genSetting.seed = EMono.rnd(20000);
-		ThreadPool.QueueUserWorkItem(delegate(object a)
-		{
-			this.thread.Start();
-		});
-		base.CancelInvoke();
-		base.InvokeRepeating("CheckThread", 0f, 0.1f);
-	}
+		public Map map;
 
-	public void CheckThread()
-	{
-		if (this.thread.done)
-		{
-			this.SetMap(this.thread.bp.map);
-			base.CancelInvoke();
-		}
-	}
+		public bool done = true;
 
-	public void SetMap(Map _map)
-	{
-		this.map = _map;
-		if (_map == null)
+		public void Init()
 		{
-			this.image.texture = this.texDefault;
-			return;
+			bp = new ZoneBlueprint();
+			bp.Create();
+			Reset();
 		}
-		this.cells = this.map.cells;
-		int num = this.limitBounds ? ((this.map.bounds.Width > this.map.bounds.Height) ? this.map.bounds.Width : this.map.bounds.Height) : this.map.Size;
-		this.Size = num;
-		this.offsetX = ((this.map.bounds.Width > this.map.bounds.Height) ? 0 : ((num - _map.bounds.Width) / 2));
-		this.offsetZ = ((this.map.bounds.Width > this.map.bounds.Height) ? ((num - _map.bounds.Height) / 2) : 0);
-		this.px = new Color[this.Size * this.Size];
-		if (this.tex)
-		{
-			UnityEngine.Object.DestroyImmediate(this.tex);
-		}
-		this.tex = new Texture2D(this.Size, this.Size)
-		{
-			filterMode = this.filter,
-			wrapMode = TextureWrapMode.Clamp
-		};
-		for (int i = 0; i < this.Size * this.Size; i++)
-		{
-			this.px[i].a = this.voidAlpha;
-		}
-		this.tex.SetPixels(this.px);
-		if (this.limitBounds)
-		{
-			for (int j = 0; j < this.map.bounds.Height; j++)
-			{
-				for (int k = 0; k < this.map.bounds.Width; k++)
-				{
-					this._RefreshPoint(this.map.bounds.x + k, this.map.bounds.z + j, false);
-				}
-			}
-		}
-		else
-		{
-			for (int l = 0; l < this.Size; l++)
-			{
-				for (int m = 0; m < this.Size; m++)
-				{
-					this._RefreshPoint(m, l, false);
-				}
-			}
-		}
-		this.tex.SetPixels(this.px);
-		this.tex.Apply();
-		if (this.matMap)
-		{
-			this.matMap.SetTexture("_MainTex", this.tex);
-		}
-		if (this.image)
-		{
-			this.image.texture = this.tex;
-		}
-	}
 
-	public void UpdateMap(int x, int z)
-	{
-		this._RefreshPoint(x, z, true);
-		this.tex.Apply();
-	}
+		public void Reset()
+		{
+			done = false;
+		}
 
-	public void UpdateMap(List<Cell> newPoints)
-	{
-		foreach (Cell cell in newPoints)
+		public void Start()
 		{
-			this._RefreshPoint((int)cell.x, (int)cell.z, true);
+			done = true;
 		}
-		this.tex.Apply();
-	}
-
-	public void _RefreshPoint(int x, int z, bool apply = true)
-	{
-		if (x >= EMono._map.Size || z >= EMono._map.Size)
-		{
-			return;
-		}
-		Cell cell = this.cells[x, z];
-		int num = x;
-		int num2 = z;
-		if (this.limitBounds)
-		{
-			num = x - EMono._map.bounds.x + this.offsetX;
-			num2 = z - EMono._map.bounds.z + this.offsetZ;
-		}
-		int num3 = num2 * this.Size + num;
-		if (num3 >= this.px.Length || num3 < 0)
-		{
-			return;
-		}
-		if (this.monoColor)
-		{
-			if (!cell.isSeen)
-			{
-				this.px[num3] = this.colorSurround;
-			}
-			else if (cell.isSurrounded)
-			{
-				this.px[num3] = this.colorSurround;
-			}
-			else if (cell.IsTopWater)
-			{
-				this.px[num3] = this.colorWater;
-			}
-			else if (cell.HasBlock)
-			{
-				this.px[num3] = this.colorEdge;
-			}
-			else
-			{
-				this.px[num3] = this.colorDefault;
-			}
-		}
-		else if (!cell.isSeen)
-		{
-			this.px[num3] = this.colorSurround;
-		}
-		else if (cell.HasZoneStairs(true))
-		{
-			this.px[num3] = this.colorStairs;
-		}
-		else if (cell.isSurrounded)
-		{
-			this.px[num3] = this.colorSurround;
-		}
-		else if (cell.HasBlock)
-		{
-			this.px[num3] = cell.matBlock.GetColor();
-		}
-		else
-		{
-			SourceMaterial.Row row = (cell.bridgeHeight != 0) ? cell.matBridge : cell.matFloor;
-			if (!Application.isEditor && !EMono._zone.IsRegion && cell.IsSnowTile)
-			{
-				row = MATERIAL.sourceSnow;
-			}
-			Color color = cell.IsSky ? this.colorSky : row.GetColor();
-			if (color.r > this.maxColor)
-			{
-				color.r = this.maxColor;
-			}
-			else if (color.r < this.minColor)
-			{
-				color.r = this.minColor;
-			}
-			if (color.g > this.maxColor)
-			{
-				color.g = this.maxColor;
-			}
-			else if (color.g < this.minColor)
-			{
-				color.g = this.minColor;
-			}
-			if (color.b > this.maxColor)
-			{
-				color.b = this.maxColor;
-			}
-			else if (color.b < this.minColor)
-			{
-				color.b = this.minColor;
-			}
-			this.px[num3] = color;
-		}
-		if (cell.isSeen)
-		{
-			if (cell.HasBlock)
-			{
-				this.px[num3] *= 0.4f;
-			}
-			else if (cell.room != null)
-			{
-				this.px[num3] *= 0.9f;
-			}
-		}
-		if (!EMono._map.bounds.Contains(x, z))
-		{
-			this.px[num3].a = this.voidAlpha;
-		}
-		else
-		{
-			this.px[num3].a = 1f;
-		}
-		if (!apply)
-		{
-			return;
-		}
-		this.tex.SetPixel(num, num2, this.px[num3]);
 	}
 
 	public Color colorDefault;
@@ -290,7 +79,7 @@ public class UIMapPreview : EMono
 
 	public bool limitBounds;
 
-	public UIMapPreview.GenThread thread;
+	public GenThread thread;
 
 	public float voidAlpha;
 
@@ -298,29 +87,238 @@ public class UIMapPreview : EMono
 
 	public float maxColor;
 
-	public class GenThread : EClass
+	private void Awake()
 	{
-		public void Init()
+		if ((bool)image)
 		{
-			this.bp = new ZoneBlueprint();
-			this.bp.Create();
-			this.Reset();
+			texDefault = image.texture;
 		}
+	}
 
-		public void Reset()
+	public void GenerateMap(ZoneBlueprint bp)
+	{
+		if (thread == null)
 		{
-			this.done = false;
+			thread = new GenThread();
+			thread.Init();
 		}
-
-		public void Start()
+		else
 		{
-			this.done = true;
+			if (!thread.done)
+			{
+				return;
+			}
+			image.texture = texDefault;
+			thread.Reset();
 		}
+		thread.bp.genSetting = bp.genSetting;
+		thread.bp.zoneProfile = bp.zoneProfile;
+		thread.bp.genSetting.seed = EMono.rnd(20000);
+		ThreadPool.QueueUserWorkItem(delegate
+		{
+			thread.Start();
+		});
+		CancelInvoke();
+		InvokeRepeating("CheckThread", 0f, 0.1f);
+	}
 
-		public ZoneBlueprint bp;
+	public void CheckThread()
+	{
+		if (thread.done)
+		{
+			SetMap(thread.bp.map);
+			CancelInvoke();
+		}
+	}
 
-		public Map map;
+	public void SetMap(Map _map)
+	{
+		map = _map;
+		if (_map == null)
+		{
+			image.texture = texDefault;
+			return;
+		}
+		cells = map.cells;
+		int num = (Size = ((!limitBounds) ? map.Size : ((map.bounds.Width > map.bounds.Height) ? map.bounds.Width : map.bounds.Height)));
+		offsetX = ((map.bounds.Width <= map.bounds.Height) ? ((num - _map.bounds.Width) / 2) : 0);
+		offsetZ = ((map.bounds.Width > map.bounds.Height) ? ((num - _map.bounds.Height) / 2) : 0);
+		px = new Color[Size * Size];
+		if ((bool)tex)
+		{
+			UnityEngine.Object.DestroyImmediate(tex);
+		}
+		tex = new Texture2D(Size, Size)
+		{
+			filterMode = filter,
+			wrapMode = TextureWrapMode.Clamp
+		};
+		for (int i = 0; i < Size * Size; i++)
+		{
+			px[i].a = voidAlpha;
+		}
+		tex.SetPixels(px);
+		if (limitBounds)
+		{
+			for (int j = 0; j < map.bounds.Height; j++)
+			{
+				for (int k = 0; k < map.bounds.Width; k++)
+				{
+					_RefreshPoint(map.bounds.x + k, map.bounds.z + j, apply: false);
+				}
+			}
+		}
+		else
+		{
+			for (int l = 0; l < Size; l++)
+			{
+				for (int m = 0; m < Size; m++)
+				{
+					_RefreshPoint(m, l, apply: false);
+				}
+			}
+		}
+		tex.SetPixels(px);
+		tex.Apply();
+		if ((bool)matMap)
+		{
+			matMap.SetTexture("_MainTex", tex);
+		}
+		if ((bool)image)
+		{
+			image.texture = tex;
+		}
+	}
 
-		public bool done = true;
+	public void UpdateMap(int x, int z)
+	{
+		_RefreshPoint(x, z);
+		tex.Apply();
+	}
+
+	public void UpdateMap(List<Cell> newPoints)
+	{
+		foreach (Cell newPoint in newPoints)
+		{
+			_RefreshPoint(newPoint.x, newPoint.z);
+		}
+		tex.Apply();
+	}
+
+	public void _RefreshPoint(int x, int z, bool apply = true)
+	{
+		if (x >= EMono._map.Size || z >= EMono._map.Size)
+		{
+			return;
+		}
+		Cell cell = cells[x, z];
+		int num = x;
+		int num2 = z;
+		if (limitBounds)
+		{
+			num = x - EMono._map.bounds.x + offsetX;
+			num2 = z - EMono._map.bounds.z + offsetZ;
+		}
+		int num3 = num2 * Size + num;
+		if (num3 >= px.Length || num3 < 0)
+		{
+			return;
+		}
+		if (monoColor)
+		{
+			if (!cell.isSeen)
+			{
+				px[num3] = colorSurround;
+			}
+			else if (cell.isSurrounded)
+			{
+				px[num3] = colorSurround;
+			}
+			else if (cell.IsTopWater)
+			{
+				px[num3] = colorWater;
+			}
+			else if (cell.HasBlock)
+			{
+				px[num3] = colorEdge;
+			}
+			else
+			{
+				px[num3] = colorDefault;
+			}
+		}
+		else if (!cell.isSeen)
+		{
+			px[num3] = colorSurround;
+		}
+		else if (cell.HasZoneStairs())
+		{
+			px[num3] = colorStairs;
+		}
+		else if (cell.isSurrounded)
+		{
+			px[num3] = colorSurround;
+		}
+		else if (cell.HasBlock)
+		{
+			px[num3] = cell.matBlock.GetColor();
+		}
+		else
+		{
+			SourceMaterial.Row row = ((cell.bridgeHeight != 0) ? cell.matBridge : cell.matFloor);
+			if (!Application.isEditor && !EMono._zone.IsRegion && cell.IsSnowTile)
+			{
+				row = MATERIAL.sourceSnow;
+			}
+			Color color = (cell.IsSky ? colorSky : row.GetColor());
+			if (color.r > maxColor)
+			{
+				color.r = maxColor;
+			}
+			else if (color.r < minColor)
+			{
+				color.r = minColor;
+			}
+			if (color.g > maxColor)
+			{
+				color.g = maxColor;
+			}
+			else if (color.g < minColor)
+			{
+				color.g = minColor;
+			}
+			if (color.b > maxColor)
+			{
+				color.b = maxColor;
+			}
+			else if (color.b < minColor)
+			{
+				color.b = minColor;
+			}
+			px[num3] = color;
+		}
+		if (cell.isSeen)
+		{
+			if (cell.HasBlock)
+			{
+				px[num3] *= 0.4f;
+			}
+			else if (cell.room != null)
+			{
+				px[num3] *= 0.9f;
+			}
+		}
+		if (!EMono._map.bounds.Contains(x, z))
+		{
+			px[num3].a = voidAlpha;
+		}
+		else
+		{
+			px[num3].a = 1f;
+		}
+		if (apply)
+		{
+			tex.SetPixel(num, num2, px[num3]);
+		}
 	}
 }

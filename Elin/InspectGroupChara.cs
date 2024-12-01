@@ -1,14 +1,8 @@
-﻿using System;
+using System;
 
 public class InspectGroupChara : InspectGroup<Chara>
 {
-	public override string MultiName
-	{
-		get
-		{
-			return "Chara";
-		}
-	}
+	public override string MultiName => "Chara";
 
 	public override void OnSetActions()
 	{
@@ -20,19 +14,18 @@ public class InspectGroupChara : InspectGroup<Chara>
 		}
 		if (first.IsHomeMember())
 		{
-			base.Add("tTalk".lang(), "", delegate()
+			Add("tTalk".lang(), "", (Action)delegate
 			{
 				first.ShowDialog();
-			}, false, 0, false);
+			}, sound: false, 0, auto: false);
 			return;
 		}
-		base.Add(text, "", delegate()
+		Add(text, "", (Action)delegate
 		{
 			if (!first.IsHomeMember())
 			{
 				SE.Beep();
-				return;
 			}
-		}, false, 0, false);
+		}, sound: false, 0, auto: false);
 	}
 }

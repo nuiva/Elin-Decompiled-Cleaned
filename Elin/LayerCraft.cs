@@ -1,4 +1,3 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -6,475 +5,6 @@ using UnityEngine.UI;
 
 public class LayerCraft : LayerBaseCraft
 {
-	public override void RefreshCurrentGrid()
-	{
-		this.RefreshRecipe(true);
-	}
-
-	public override void ClearButtons()
-	{
-		this.RefreshRecipe(true);
-	}
-
-	public override string GetTextHeader(Window window)
-	{
-		return null;
-	}
-
-	public override void OnAfterInit()
-	{
-		this.info1.searchMode = StockSearchMode.AroundPC;
-		this.info1.ddList.pivot.SetActive(true);
-		LayerCraft.Instance = this;
-	}
-
-	public override void OnKill()
-	{
-		if (this.workbenchCrafted)
-		{
-			Tutorial.Play("middle_click");
-		}
-		if (this.pickaxeCrafted)
-		{
-			Tutorial.Play("hardness");
-		}
-		string key = (this.factory == null) ? "hand" : this.factory.id;
-		ELayer.player.lastRecipes[key] = this.recipe.id;
-	}
-
-	public void SetFactory(Thing t)
-	{
-		this.factory = t;
-		this.RefreshCategory("all", true);
-		bool flag = t != null && t.trait.IsRequireFuel;
-		this.transFuel.SetActive(flag);
-		if (flag)
-		{
-			Action <>9__2;
-			this.buttonRefuel.SetOnClick(delegate
-			{
-				foreach (Window window in this.windows)
-				{
-					window.SetInteractable(false, 0f);
-				}
-				Layer layer = LayerDragGrid.Create(new InvOwnerRefuel(t, null, CurrencyType.None), false);
-				Action onKill;
-				if ((onKill = <>9__2) == null)
-				{
-					onKill = (<>9__2 = delegate()
-					{
-						if (!this.isDestroyed)
-						{
-							this.OnEndCraft();
-						}
-					});
-				}
-				layer.SetOnKill(onKill);
-			});
-			this.buttonAutoRefuel.SetOnClick(delegate
-			{
-				SE.Click();
-				t.autoRefuel = !t.autoRefuel;
-				this.RefreshProduct();
-			});
-		}
-	}
-
-	public void OnClickCraft()
-	{
-		Dictionary<Thing, int> dictionary = new Dictionary<Thing, int>();
-		foreach (Recipe.Ingredient ingredient in this.recipe.ingredients)
-		{
-			if (ingredient.thing != null)
-			{
-				if (!dictionary.ContainsKey(ingredient.thing))
-				{
-					dictionary.Add(ingredient.thing, 0);
-				}
-				Dictionary<Thing, int> dictionary2 = dictionary;
-				Thing thing = ingredient.thing;
-				dictionary2[thing] += ingredient.req * this.inputNum.Num;
-			}
-		}
-		foreach (KeyValuePair<Thing, int> keyValuePair in dictionary)
-		{
-			if (keyValuePair.Key.Num < keyValuePair.Value)
-			{
-				SE.Beep();
-				Msg.Say("craftDupError");
-				return;
-			}
-		}
-		if (this.inputNum.Num == 0)
-		{
-			SE.Beep();
-			return;
-		}
-		Thing thing2 = this.factory;
-		TraitCrafter traitCrafter = ((thing2 != null) ? thing2.trait : null) as TraitCrafter;
-		if (traitCrafter == null)
-		{
-			traitCrafter = Trait.SelfFactory;
-			traitCrafter.owner = ELayer.pc;
-		}
-		(traitCrafter as TraitFactory).recipe = this.recipe;
-		string id = this.recipe.id;
-		if (!(id == "workbench"))
-		{
-			if (id == "axe" || id == "hammer" || id == "pickaxe")
-			{
-				this.pickaxeCrafted = true;
-			}
-		}
-		else
-		{
-			this.workbenchCrafted = true;
-		}
-		ELayer.pc.SetAI(new AI_UseCrafter
-		{
-			crafter = traitCrafter,
-			layer = this,
-			recipe = this.recipe,
-			num = this.inputNum.Num
-		});
-		ActionMode.Adv.SetTurbo(-1);
-		base.gameObject.SetActive(false);
-	}
-
-	public override List<Thing> GetTargets()
-	{
-		List<Thing> list = new List<Thing>();
-		foreach (Recipe.Ingredient ingredient in this.recipe.ingredients)
-		{
-			if (!ingredient.optional || (ingredient.thing != null && !ingredient.thing.isDestroyed))
-			{
-				list.Add(ingredient.thing);
-			}
-		}
-		return list;
-	}
-
-	public override int GetReqIngredient(int index)
-	{
-		return this.recipe.ingredients[index].req * this.inputNum.Num;
-	}
-
-	public override void OnEndCraft()
-	{
-		this.OnCompleteCraft();
-	}
-
-	public void OnCompleteCraft()
-	{
-		base.CancelInvoke("WaitUntilIdle");
-		EInput.haltInput = true;
-		TweenUtil.Tween(this.waitComplete, null, delegate()
-		{
-			EInput.haltInput = false;
-			base.gameObject.SetActive(true);
-			foreach (Window window in this.windows)
-			{
-				window.SetInteractable(true, 0.5f);
-			}
-			this.list.Redraw();
-			this.RefreshRecipe(true);
-			this.windowList.groupTab.RefreshButtons();
-			this.list.Select<Recipe>((Recipe r) => this.recipe.id == r.id, false);
-		});
-	}
-
-	public void WaitUntilIdle()
-	{
-		if (!ActionMode.Adv.IsActive || ELayer.pc.HasNoGoal)
-		{
-			base.CancelInvoke();
-			this.Close();
-		}
-	}
-
-	private void Update()
-	{
-		float axis = Input.GetAxis("Mouse ScrollWheel");
-		if (Input.GetMouseButton(0))
-		{
-			this.wcount = 2;
-		}
-		if (axis != 0f)
-		{
-			this.wcount = 2;
-			return;
-		}
-		if (this.wcount > 0)
-		{
-			this.wcount--;
-			return;
-		}
-		this.RefreshInfo();
-	}
-
-	public void RefreshInfo()
-	{
-		ButtonGrid buttonGrid = InputModuleEX.GetComponentOf<ButtonGrid>();
-		if (buttonGrid && buttonGrid.recipe == null)
-		{
-			buttonGrid = null;
-		}
-		if (buttonGrid == this.lastB)
-		{
-			return;
-		}
-		this.lastB = buttonGrid;
-	}
-
-	public void RefreshCategory(string cat, bool first = false)
-	{
-		Dictionary<string, int> cats = new Dictionary<string, int>();
-		RecipeManager.BuildList();
-		BaseList baseList = this.list;
-		UIList.Callback<Recipe, ButtonGrid> callback = new UIList.Callback<Recipe, ButtonGrid>();
-		callback.onClick = delegate(Recipe a, ButtonGrid b)
-		{
-			this.recipe = a;
-			SE.Play("click_recipe");
-			this.RefreshRecipe(true);
-			ELayer.player.recipes.hoveredRecipes.Add(a.id);
-			b.Dettach("recipe_new");
-			this.list.Select(a, false);
-		};
-		callback.onRedraw = delegate(Recipe a, ButtonGrid b, int i)
-		{
-			if (a.ingredients.Count == 0)
-			{
-				a.BuildIngredientList();
-			}
-			b.SetCraftRecipe(a, ButtonGrid.Mode.Recipe, false);
-			if (!ELayer.player.recipes.hoveredRecipes.Contains(a.id))
-			{
-				b.Attach("recipe_new", false);
-			}
-		};
-		callback.onList = delegate(UIList.SortMode m)
-		{
-			this.newRecipes.Clear();
-			foreach (RecipeSource recipeSource in ELayer.player.recipes.ListSources(this.factory, this.newRecipes))
-			{
-				if (cat == "all" || recipeSource.row.Category.IsChildOf(cat))
-				{
-					Recipe o2 = Recipe.Create(recipeSource, -1, null);
-					this.list.Add(o2);
-				}
-				SourceCategory.Row row = recipeSource.row.Category.GetSecondRoot();
-				if (row.id != "lightsource" && row.IsChildOf("armor"))
-				{
-					row = ELayer.sources.categories.map["armor"];
-				}
-				Dictionary<string, int> cats;
-				if (!cats.ContainsKey(row.id))
-				{
-					cats.Add(row.id, 1);
-				}
-				else
-				{
-					cats = cats;
-					string id = row.id;
-					int num = cats[id];
-					cats[id] = num + 1;
-				}
-			}
-			this.list.objects.Sort((object a, object b) => (b as Recipe).GetSortVal() - (a as Recipe).GetSortVal());
-			int count = this.newRecipes.Count;
-		};
-		callback.onSort = ((Recipe a, UIList.SortMode m) => a.GetSortVal());
-		baseList.callbacks = callback;
-		this.list.sortMode = UIList.SortMode.ByLevel;
-		this.list.List();
-		if (cats.Count > 1 && !this.tabBuilt)
-		{
-			this.windowList.AddTab("all", null, delegate
-			{
-				this.RefreshCategory("all", false);
-			}, null, null);
-			using (Dictionary<string, int>.Enumerator enumerator = cats.GetEnumerator())
-			{
-				while (enumerator.MoveNext())
-				{
-					KeyValuePair<string, int> c = enumerator.Current;
-					this.windowList.AddTab(ELayer.sources.categories.map[c.Key].GetName() + "(" + c.Value.ToString() + ")", null, delegate
-					{
-						this.RefreshCategory(c.Key, false);
-					}, null, null);
-				}
-			}
-			this.tabBuilt = true;
-			this.windowList.BuildTabs(0);
-		}
-		this.list.Scroll(0);
-		if (this.list.rows.Count > 0)
-		{
-			object o = this.list.rows[0].objects[0];
-			if (first)
-			{
-				string key = (this.factory == null) ? "hand" : this.factory.id;
-				if (ELayer.player.lastRecipes.ContainsKey(key))
-				{
-					string b2 = ELayer.player.lastRecipes[key];
-					foreach (object obj in this.list.objects)
-					{
-						if ((obj as Recipe).id == b2)
-						{
-							o = obj;
-							break;
-						}
-					}
-				}
-				this.list.Scroll(o);
-				if (!this.list.Select(o, true))
-				{
-					this.list.Scroll(0);
-					this.list.Select(this.list.rows[0].objects[0], false);
-					return;
-				}
-			}
-			else
-			{
-				this.list.Select(o, true);
-			}
-		}
-	}
-
-	public void OnChangeIngredient()
-	{
-		this.RefreshRecipe(true);
-	}
-
-	public void RefreshRecipe(bool first)
-	{
-		foreach (Recipe.Ingredient ingredient in this.recipe.ingredients)
-		{
-			if (this.info1.recipe != this.recipe || (!ingredient.optional && (ingredient.thing == null || ingredient.thing.isDestroyed)))
-			{
-				ingredient.SetThing(null);
-			}
-		}
-		if (first)
-		{
-			this.toggleCraftTo.SetToggle(false, null);
-			this.toggleRepeat.SetToggle(false, null);
-			this.inputNum.Num = 1;
-			this.info1.recipe = null;
-		}
-		this.info1.factory = this.factory;
-		this.info1.SetRecipe(this.recipe);
-		this.recipe.OnChangeIngredient();
-		this.RefreshProduct();
-		this.RefreshTrackButton();
-	}
-
-	public void RefreshTrackButton()
-	{
-		QuestTrackCraft quest = null;
-		foreach (Quest quest2 in ELayer.game.quests.list)
-		{
-			if (quest2 is QuestTrackCraft)
-			{
-				quest = (quest2 as QuestTrackCraft);
-				break;
-			}
-		}
-		this.buttonTrack.SetOnClick(delegate
-		{
-			if (quest != null && quest.idRecipe == this.recipe.id)
-			{
-				ELayer.game.quests.Remove(quest);
-			}
-			else
-			{
-				if (quest != null)
-				{
-					ELayer.game.quests.Remove(quest);
-				}
-				QuestTrackCraft questTrackCraft = Quest.Create("track_craft", null, null) as QuestTrackCraft;
-				questTrackCraft.SetRecipe(this.recipe);
-				ELayer.game.quests.Start(questTrackCraft);
-			}
-			if (!WidgetQuestTracker.Instance)
-			{
-				ELayer.player.questTracker = true;
-				ELayer.ui.widgets.ActivateWidget("QuestTracker");
-				WidgetHotbar.RefreshButtons();
-			}
-			WidgetQuestTracker.Instance.Refresh();
-			this.RefreshTrackButton();
-		});
-		this.buttonTrack.icon.SetActive(quest != null && quest.idRecipe == this.recipe.id);
-	}
-
-	public void RefreshInputNum()
-	{
-		this.inputNum.SetMinMax(1, this.recipe.GetMaxCount());
-		this.inputNum.onValueChanged = delegate(int n)
-		{
-			this.RefreshProduct();
-		};
-		this.inputNum.Validate();
-	}
-
-	public void RefreshProduct()
-	{
-		this.RefreshInputNum();
-		ELayer.screen.tileSelector.summary.countValid = this.inputNum.Num;
-		ELayer.screen.tileSelector.summary.factory = this.factory;
-		this.info1.RefreshBalance();
-		if (this.factory != null)
-		{
-			this.textFuel.text = "craftFuel".lang(((int)((float)this.factory.c_charges / (float)this.factory.trait.MaxFuel * 100f)).ToString() ?? "", null, null, null, null);
-			this.buttonAutoRefuel.mainText.text = (this.factory.autoRefuel ? "On" : "Off");
-			this.buttonAutoRefuel.icon.SetAlpha(this.factory.autoRefuel ? 1f : 0.4f);
-		}
-		this.RefreshQuality();
-		List<Thing> list = new List<Thing>();
-		foreach (Recipe.Ingredient ingredient in this.recipe.ingredients)
-		{
-			if (ingredient.thing != null)
-			{
-				list.Add(ingredient.thing);
-			}
-		}
-		Thing thing = this.recipe.Craft(BlessedState.Normal, false, list, null, true);
-		thing.SetNum(this.inputNum.Num);
-		if (thing.sockets != null)
-		{
-			thing.sockets.Clear();
-		}
-		if (thing.IsEquipmentOrRanged)
-		{
-			foreach (Element element in thing.elements.dict.Values.ToList<Element>())
-			{
-				if (!element.IsTrait)
-				{
-					thing.elements.Remove(element.id);
-				}
-			}
-		}
-		this.info1.buttonProduct.SetCard(thing, ButtonGrid.Mode.Default, null);
-		thing.WriteNote(this.info1.note, null, IInspect.NoteMode.Product, this.recipe);
-		this.product = thing;
-	}
-
-	public bool IsQualityMet()
-	{
-		return true;
-	}
-
-	public void RefreshQuality()
-	{
-	}
-
-	public void OnClickExamine()
-	{
-		ELayer.ui.AddLayer<LayerInfo>().Set(this.product, false);
-	}
-
 	public static LayerCraft Instance;
 
 	public UIDynamicList list;
@@ -536,4 +66,455 @@ public class LayerCraft : LayerBaseCraft
 	public ButtonGrid lastB;
 
 	private bool tabBuilt;
+
+	public override void RefreshCurrentGrid()
+	{
+		RefreshRecipe(first: true);
+	}
+
+	public override void ClearButtons()
+	{
+		RefreshRecipe(first: true);
+	}
+
+	public override string GetTextHeader(Window window)
+	{
+		return null;
+	}
+
+	public override void OnAfterInit()
+	{
+		info1.searchMode = StockSearchMode.AroundPC;
+		info1.ddList.pivot.SetActive(enable: true);
+		Instance = this;
+	}
+
+	public override void OnKill()
+	{
+		if (workbenchCrafted)
+		{
+			Tutorial.Play("middle_click");
+		}
+		if (pickaxeCrafted)
+		{
+			Tutorial.Play("hardness");
+		}
+		string key = ((factory == null) ? "hand" : factory.id);
+		ELayer.player.lastRecipes[key] = recipe.id;
+	}
+
+	public void SetFactory(Thing t)
+	{
+		factory = t;
+		RefreshCategory("all", first: true);
+		bool flag = t != null && t.trait.IsRequireFuel;
+		transFuel.SetActive(flag);
+		if (!flag)
+		{
+			return;
+		}
+		buttonRefuel.SetOnClick(delegate
+		{
+			foreach (Window window in windows)
+			{
+				window.SetInteractable(enable: false, 0f);
+			}
+			LayerDragGrid.Create(new InvOwnerRefuel(t)).SetOnKill(delegate
+			{
+				if (!isDestroyed)
+				{
+					OnEndCraft();
+				}
+			});
+		});
+		buttonAutoRefuel.SetOnClick(delegate
+		{
+			SE.Click();
+			t.autoRefuel = !t.autoRefuel;
+			RefreshProduct();
+		});
+	}
+
+	public void OnClickCraft()
+	{
+		Dictionary<Thing, int> dictionary = new Dictionary<Thing, int>();
+		foreach (Recipe.Ingredient ingredient in recipe.ingredients)
+		{
+			if (ingredient.thing != null)
+			{
+				if (!dictionary.ContainsKey(ingredient.thing))
+				{
+					dictionary.Add(ingredient.thing, 0);
+				}
+				dictionary[ingredient.thing] += ingredient.req * inputNum.Num;
+			}
+		}
+		foreach (KeyValuePair<Thing, int> item in dictionary)
+		{
+			if (item.Key.Num < item.Value)
+			{
+				SE.Beep();
+				Msg.Say("craftDupError");
+				return;
+			}
+		}
+		if (inputNum.Num == 0)
+		{
+			SE.Beep();
+			return;
+		}
+		TraitCrafter traitCrafter = factory?.trait as TraitCrafter;
+		if (traitCrafter == null)
+		{
+			traitCrafter = Trait.SelfFactory;
+			traitCrafter.owner = ELayer.pc;
+		}
+		(traitCrafter as TraitFactory).recipe = recipe;
+		switch (recipe.id)
+		{
+		case "workbench":
+			workbenchCrafted = true;
+			break;
+		case "axe":
+		case "hammer":
+		case "pickaxe":
+			pickaxeCrafted = true;
+			break;
+		}
+		ELayer.pc.SetAI(new AI_UseCrafter
+		{
+			crafter = traitCrafter,
+			layer = this,
+			recipe = recipe,
+			num = inputNum.Num
+		});
+		ActionMode.Adv.SetTurbo();
+		base.gameObject.SetActive(value: false);
+	}
+
+	public override List<Thing> GetTargets()
+	{
+		List<Thing> list = new List<Thing>();
+		foreach (Recipe.Ingredient ingredient in recipe.ingredients)
+		{
+			if (!ingredient.optional || (ingredient.thing != null && !ingredient.thing.isDestroyed))
+			{
+				list.Add(ingredient.thing);
+			}
+		}
+		return list;
+	}
+
+	public override int GetReqIngredient(int index)
+	{
+		return recipe.ingredients[index].req * inputNum.Num;
+	}
+
+	public override void OnEndCraft()
+	{
+		OnCompleteCraft();
+	}
+
+	public void OnCompleteCraft()
+	{
+		CancelInvoke("WaitUntilIdle");
+		EInput.haltInput = true;
+		TweenUtil.Tween(waitComplete, null, delegate
+		{
+			EInput.haltInput = false;
+			base.gameObject.SetActive(value: true);
+			foreach (Window window in windows)
+			{
+				window.SetInteractable(enable: true);
+			}
+			list.Redraw();
+			RefreshRecipe(first: true);
+			windowList.groupTab.RefreshButtons();
+			list.Select((Recipe r) => recipe.id == r.id);
+		});
+	}
+
+	public void WaitUntilIdle()
+	{
+		if (!ActionMode.Adv.IsActive || ELayer.pc.HasNoGoal)
+		{
+			CancelInvoke();
+			Close();
+		}
+	}
+
+	private void Update()
+	{
+		float axis = Input.GetAxis("Mouse ScrollWheel");
+		if (Input.GetMouseButton(0))
+		{
+			wcount = 2;
+		}
+		if (axis != 0f)
+		{
+			wcount = 2;
+		}
+		else if (wcount > 0)
+		{
+			wcount--;
+		}
+		else
+		{
+			RefreshInfo();
+		}
+	}
+
+	public void RefreshInfo()
+	{
+		ButtonGrid buttonGrid = InputModuleEX.GetComponentOf<ButtonGrid>();
+		if ((bool)buttonGrid && buttonGrid.recipe == null)
+		{
+			buttonGrid = null;
+		}
+		if (!(buttonGrid == lastB))
+		{
+			lastB = buttonGrid;
+		}
+	}
+
+	public void RefreshCategory(string cat, bool first = false)
+	{
+		Dictionary<string, int> cats = new Dictionary<string, int>();
+		RecipeManager.BuildList();
+		list.callbacks = new UIList.Callback<Recipe, ButtonGrid>
+		{
+			onClick = delegate(Recipe a, ButtonGrid b)
+			{
+				recipe = a;
+				SE.Play("click_recipe");
+				RefreshRecipe(first: true);
+				ELayer.player.recipes.hoveredRecipes.Add(a.id);
+				b.Dettach("recipe_new");
+				list.Select(a);
+			},
+			onRedraw = delegate(Recipe a, ButtonGrid b, int i)
+			{
+				if (a.ingredients.Count == 0)
+				{
+					a.BuildIngredientList();
+				}
+				b.SetCraftRecipe(a, ButtonGrid.Mode.Recipe);
+				if (!ELayer.player.recipes.hoveredRecipes.Contains(a.id))
+				{
+					b.Attach("recipe_new", rightAttach: false);
+				}
+			},
+			onList = delegate
+			{
+				newRecipes.Clear();
+				foreach (RecipeSource item in ELayer.player.recipes.ListSources(factory, newRecipes))
+				{
+					if (cat == "all" || item.row.Category.IsChildOf(cat))
+					{
+						Recipe o = Recipe.Create(item);
+						list.Add(o);
+					}
+					SourceCategory.Row row = item.row.Category.GetSecondRoot();
+					if (row.id != "lightsource" && row.IsChildOf("armor"))
+					{
+						row = ELayer.sources.categories.map["armor"];
+					}
+					if (!cats.ContainsKey(row.id))
+					{
+						cats.Add(row.id, 1);
+					}
+					else
+					{
+						cats[row.id]++;
+					}
+				}
+				list.objects.Sort((object a, object b) => (b as Recipe).GetSortVal() - (a as Recipe).GetSortVal());
+				_ = newRecipes.Count;
+			},
+			onSort = (Recipe a, UIList.SortMode m) => a.GetSortVal()
+		};
+		list.sortMode = UIList.SortMode.ByLevel;
+		list.List();
+		if (cats.Count > 1 && !tabBuilt)
+		{
+			windowList.AddTab("all", null, delegate
+			{
+				RefreshCategory("all");
+			});
+			foreach (KeyValuePair<string, int> c in cats)
+			{
+				windowList.AddTab(ELayer.sources.categories.map[c.Key].GetName() + "(" + c.Value + ")", null, delegate
+				{
+					RefreshCategory(c.Key);
+				});
+			}
+			tabBuilt = true;
+			windowList.BuildTabs(0);
+		}
+		list.Scroll();
+		if (list.rows.Count <= 0)
+		{
+			return;
+		}
+		object o2 = list.rows[0].objects[0];
+		if (first)
+		{
+			string key = ((factory == null) ? "hand" : factory.id);
+			if (ELayer.player.lastRecipes.ContainsKey(key))
+			{
+				string text = ELayer.player.lastRecipes[key];
+				foreach (object @object in list.objects)
+				{
+					if ((@object as Recipe).id == text)
+					{
+						o2 = @object;
+						break;
+					}
+				}
+			}
+			list.Scroll(o2);
+			if (!list.Select(o2, invoke: true))
+			{
+				list.Scroll();
+				list.Select(list.rows[0].objects[0]);
+			}
+		}
+		else
+		{
+			list.Select(o2, invoke: true);
+		}
+	}
+
+	public void OnChangeIngredient()
+	{
+		RefreshRecipe(first: true);
+	}
+
+	public void RefreshRecipe(bool first)
+	{
+		foreach (Recipe.Ingredient ingredient in recipe.ingredients)
+		{
+			if (info1.recipe != recipe || (!ingredient.optional && (ingredient.thing == null || ingredient.thing.isDestroyed)))
+			{
+				ingredient.SetThing();
+			}
+		}
+		if (first)
+		{
+			toggleCraftTo.SetToggle(isOn: false);
+			toggleRepeat.SetToggle(isOn: false);
+			inputNum.Num = 1;
+			info1.recipe = null;
+		}
+		info1.factory = factory;
+		info1.SetRecipe(recipe);
+		recipe.OnChangeIngredient();
+		RefreshProduct();
+		RefreshTrackButton();
+	}
+
+	public void RefreshTrackButton()
+	{
+		QuestTrackCraft quest = null;
+		foreach (Quest item in ELayer.game.quests.list)
+		{
+			if (item is QuestTrackCraft)
+			{
+				quest = item as QuestTrackCraft;
+				break;
+			}
+		}
+		buttonTrack.SetOnClick(delegate
+		{
+			if (quest != null && quest.idRecipe == recipe.id)
+			{
+				ELayer.game.quests.Remove(quest);
+			}
+			else
+			{
+				if (quest != null)
+				{
+					ELayer.game.quests.Remove(quest);
+				}
+				QuestTrackCraft questTrackCraft = Quest.Create("track_craft") as QuestTrackCraft;
+				questTrackCraft.SetRecipe(recipe);
+				ELayer.game.quests.Start(questTrackCraft);
+			}
+			if (!WidgetQuestTracker.Instance)
+			{
+				ELayer.player.questTracker = true;
+				ELayer.ui.widgets.ActivateWidget("QuestTracker");
+				WidgetHotbar.RefreshButtons();
+			}
+			WidgetQuestTracker.Instance.Refresh();
+			RefreshTrackButton();
+		});
+		buttonTrack.icon.SetActive(quest != null && quest.idRecipe == recipe.id);
+	}
+
+	public void RefreshInputNum()
+	{
+		inputNum.SetMinMax(1, recipe.GetMaxCount());
+		inputNum.onValueChanged = delegate
+		{
+			RefreshProduct();
+		};
+		inputNum.Validate();
+	}
+
+	public void RefreshProduct()
+	{
+		RefreshInputNum();
+		ELayer.screen.tileSelector.summary.countValid = inputNum.Num;
+		ELayer.screen.tileSelector.summary.factory = factory;
+		info1.RefreshBalance();
+		if (factory != null)
+		{
+			textFuel.text = "craftFuel".lang(((int)((float)factory.c_charges / (float)factory.trait.MaxFuel * 100f)).ToString() ?? "");
+			buttonAutoRefuel.mainText.text = (factory.autoRefuel ? "On" : "Off");
+			buttonAutoRefuel.icon.SetAlpha(factory.autoRefuel ? 1f : 0.4f);
+		}
+		RefreshQuality();
+		List<Thing> list = new List<Thing>();
+		foreach (Recipe.Ingredient ingredient in recipe.ingredients)
+		{
+			if (ingredient.thing != null)
+			{
+				list.Add(ingredient.thing);
+			}
+		}
+		Thing thing = recipe.Craft(BlessedState.Normal, sound: false, list, null, model: true);
+		thing.SetNum(inputNum.Num);
+		if (thing.sockets != null)
+		{
+			thing.sockets.Clear();
+		}
+		if (thing.IsEquipmentOrRanged)
+		{
+			foreach (Element item in thing.elements.dict.Values.ToList())
+			{
+				if (!item.IsTrait)
+				{
+					thing.elements.Remove(item.id);
+				}
+			}
+		}
+		info1.buttonProduct.SetCard(thing);
+		thing.WriteNote(info1.note, null, IInspect.NoteMode.Product, recipe);
+		product = thing;
+	}
+
+	public bool IsQualityMet()
+	{
+		return true;
+	}
+
+	public void RefreshQuality()
+	{
+	}
+
+	public void OnClickExamine()
+	{
+		ELayer.ui.AddLayer<LayerInfo>().Set(product);
+	}
 }

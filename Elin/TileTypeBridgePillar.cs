@@ -1,22 +1,8 @@
-﻿using System;
-
 public class TileTypeBridgePillar : TileTypeObj
 {
-	public override BaseTileSelector.SelectType SelectType
-	{
-		get
-		{
-			return BaseTileSelector.SelectType.Multiple;
-		}
-	}
+	public override BaseTileSelector.SelectType SelectType => BaseTileSelector.SelectType.Multiple;
 
-	public override bool CanBuiltOnBlock
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanBuiltOnBlock => true;
 
 	protected override HitResult HitTest(Point pos)
 	{

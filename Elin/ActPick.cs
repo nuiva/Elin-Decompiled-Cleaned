@@ -1,35 +1,25 @@
-﻿using System;
-
 public class ActPick : Act
 {
-	public override bool LocalAct
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool LocalAct => false;
 
-	public override CursorInfo CursorIcon
-	{
-		get
-		{
-			return CursorSystem.Inventory;
-		}
-	}
+	public override CursorInfo CursorIcon => CursorSystem.Inventory;
 
 	public override bool CanPerform()
 	{
-		return Act.TP != null && Act.TP.detail != null && Act.TP.detail.things.Count != 0;
+		if (Act.TP == null || Act.TP.detail == null || Act.TP.detail.things.Count == 0)
+		{
+			return false;
+		}
+		return true;
 	}
 
 	public override bool Perform()
 	{
-		foreach (Card card in Act.TP.ListCards(false))
+		foreach (Card item in Act.TP.ListCards())
 		{
-			if (card.isThing && card.placeState == PlaceState.roaming)
+			if (item.isThing && item.placeState == PlaceState.roaming)
 			{
-				Act.CC.Pick(card.Thing, true, true);
+				Act.CC.Pick(item.Thing);
 			}
 		}
 		return true;

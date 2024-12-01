@@ -1,47 +1,49 @@
-﻿using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 public class AI_Deconstruct : AIAct
 {
+	public Card target;
+
 	public bool IsValidTarget()
 	{
-		return this.target != null && this.target.ExistsOnMap && this.target.isDeconstructing;
+		if (target != null && target.ExistsOnMap)
+		{
+			return target.isDeconstructing;
+		}
+		return false;
 	}
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		if (this.target != null)
+		if (target != null)
 		{
-			this.target.SetDeconstruct(true);
+			target.SetDeconstruct(deconstruct: true);
 		}
 		else
 		{
-			this.target = EClass._map.props.deconstructing.RandomItem<Card>();
+			target = EClass._map.props.deconstructing.RandomItem();
 		}
-		if (!this.IsValidTarget())
+		if (!IsValidTarget())
 		{
-			yield return this.Cancel();
+			yield return Cancel();
 		}
-		yield return base.DoGoto(this.target, null);
-		Progress_Custom progress_Custom = new Progress_Custom();
-		progress_Custom.canProgress = (() => this.IsValidTarget());
-		progress_Custom.onProgressBegin = delegate()
+		yield return DoGoto(target);
+		Progress_Custom seq = new Progress_Custom
 		{
-		};
-		progress_Custom.onProgress = delegate(Progress_Custom p)
-		{
-			this.owner.PlaySound(this.target.material.GetSoundImpact(null), 1f, true);
-			this.target.renderer.PlayAnime(AnimeID.Shiver, default(Vector3), false);
-		};
-		progress_Custom.onProgressComplete = delegate()
-		{
-			this.target.Deconstruct();
-		};
-		Progress_Custom seq = progress_Custom.SetDuration(30, 2);
-		yield return base.Do(seq, null);
-		yield break;
+			canProgress = () => IsValidTarget(),
+			onProgressBegin = delegate
+			{
+			},
+			onProgress = delegate
+			{
+				owner.PlaySound(target.material.GetSoundImpact());
+				target.renderer.PlayAnime(AnimeID.Shiver);
+			},
+			onProgressComplete = delegate
+			{
+				target.Deconstruct();
+			}
+		}.SetDuration(30);
+		yield return Do(seq);
 	}
-
-	public Card target;
 }

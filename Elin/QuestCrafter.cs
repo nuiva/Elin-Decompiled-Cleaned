@@ -1,31 +1,22 @@
-﻿using System;
-
 public class QuestCrafter : QuestProgression
 {
 	public override bool CanUpdateOnTalk(Chara c)
 	{
-		switch (this.phase)
+		return phase switch
 		{
-		case 0:
-			return EClass._map.Installed.Find("workbench", -1, -1, false) != null;
-		case 1:
-		{
-			Thing equippedThing = EClass.pc.body.GetEquippedThing(45);
-			return ((equippedThing != null) ? equippedThing.id : null) == "torch_held";
-		}
-		case 2:
-			return EClass._map.rooms.listLot.Count > 0;
-		default:
-			return false;
-		}
+			0 => EClass._map.Installed.Find("workbench") != null, 
+			1 => EClass.pc.body.GetEquippedThing(45)?.id == "torch_held", 
+			2 => EClass._map.rooms.listLot.Count > 0, 
+			_ => false, 
+		};
 	}
 
 	public override void OnDropReward()
 	{
-		base.DropReward("housePlate");
-		base.DropReward("343");
-		base.DropReward("432");
-		base.DropReward(ThingGen.CreateRecipe("torch_wall"));
-		base.DropReward(ThingGen.CreateRecipe("factory_sign"));
+		DropReward("housePlate");
+		DropReward("343");
+		DropReward("432");
+		DropReward(ThingGen.CreateRecipe("torch_wall"));
+		DropReward(ThingGen.CreateRecipe("factory_sign"));
 	}
 }

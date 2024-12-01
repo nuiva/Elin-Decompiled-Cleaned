@@ -1,20 +1,6 @@
-﻿using System;
-
 public class TraitFarris : TraitUniqueMerchant
 {
-	public override ShopType ShopType
-	{
-		get
-		{
-			return ShopType.Farris;
-		}
-	}
+	public override ShopType ShopType => ShopType.Farris;
 
-	public override bool CanBeBanished
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeBanished => false;
 }

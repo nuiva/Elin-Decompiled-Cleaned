@@ -1,39 +1,14 @@
-﻿using System;
 using UnityEngine;
 
 public class TraitCoreZone : Trait
 {
-	public override bool CanBeDestroyed
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeDestroyed => false;
 
-	public override bool CanOnlyCarry
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanOnlyCarry => true;
 
-	public override bool CanPutAway
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanPutAway => false;
 
-	public override bool IsLightOn
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsLightOn => true;
 
 	public override void SetName(ref string s)
 	{
@@ -47,18 +22,18 @@ public class TraitCoreZone : Trait
 	{
 		if (EClass._zone.IsUserZone)
 		{
-			p.TrySetAct("actNewZone", delegate()
+			p.TrySetAct("actNewZone", delegate
 			{
-				EClass.pc.MoveZone(EClass._zone.ParentZone, ZoneTransition.EnterState.Auto);
+				EClass.pc.MoveZone(EClass._zone.ParentZone);
 				return false;
-			}, this.owner, CursorSystem.MoveZone, 1, false, true, false);
+			}, owner, CursorSystem.MoveZone);
 		}
-		if (!EClass._zone.IsPCFaction || !this.owner.IsInstalled)
+		if (!EClass._zone.IsPCFaction || !owner.IsInstalled)
 		{
 			return;
 		}
-		p.TrySetAct("actCallReserve", () => LayerPeople.CreateReserve(), this.owner, null, 1, false, true, false);
-		p.TrySetAct("actNameZone", delegate()
+		p.TrySetAct("actCallReserve", () => LayerPeople.CreateReserve(), owner);
+		p.TrySetAct("actNameZone", delegate
 		{
 			Dialog.InputName("dialogChangeName", EClass._zone.Name, delegate(bool cancel, string text)
 			{
@@ -68,59 +43,62 @@ public class TraitCoreZone : Trait
 					EClass._zone.idPrefix = 0;
 					WidgetDate.Refresh();
 				}
-			}, Dialog.InputType.Default);
+			});
 			return false;
-		}, this.owner, null, 1, false, true, false);
+		}, owner);
 		if (EClass.player.spawnZone != EClass._zone)
 		{
-			p.TrySetAct("actSetSpawn", delegate()
+			p.TrySetAct("actSetSpawn", delegate
 			{
-				Effect.Get("aura_heaven").Play(EClass.pc.pos, 0f, null, null);
+				Effect.Get("aura_heaven").Play(EClass.pc.pos);
 				EClass.Sound.Play("worship");
 				EClass.player.spawnZone = EClass._zone;
-				Msg.Say("setSpawn", this.owner, null, null, null);
+				Msg.Say("setSpawn", owner);
 				return true;
-			}, this.owner, null, 1, false, true, false);
+			}, owner);
 		}
 		if (EClass.pc.homeZone != EClass._zone)
 		{
-			p.TrySetAct("actSetHome", delegate()
+			p.TrySetAct("actSetHome", delegate
 			{
 				Dialog.YesNo("dialogSetHome", delegate
 				{
-					Effect.Get("aura_heaven").Play(EClass.pc.pos, 0f, null, null);
+					Effect.Get("aura_heaven").Play(EClass.pc.pos);
 					EClass.Sound.Play("worship");
 					EClass.pc.homeZone = EClass._zone;
 					Msg.Say("setHome");
-				}, null, "yes", "no");
+				});
 				return false;
-			}, this.owner, null, 1, false, true, false);
+			}, owner);
 		}
 		if (Application.isEditor || (EClass.Branch.resources.worth.bestRank > 0 && EClass.Branch.resources.worth.bestRank <= 100 && !EClass._zone.name.IsEmpty()))
 		{
-			p.TrySetAct("actUploadMap", delegate()
+			p.TrySetAct("actUploadMap", delegate
 			{
 				EClass.ui.AddLayer<LayerUploader>();
 				return false;
-			}, this.owner, null, 1, false, true, false);
+			}, owner);
 		}
-		if (EClass._zone != EClass.game.StartZone && !(EClass._zone is Zone_Vernis))
+		if (EClass._zone == EClass.game.StartZone || EClass._zone is Zone_Vernis)
 		{
-			p.TrySetAct("actAbandonHome", delegate()
-			{
-				Dialog.YesNo("dialogAbandonHome", delegate
-				{
-					if (!EClass.world.date.IsExpired(EClass._zone.GetInt(2, null) + 43200))
-					{
-						Msg.Say("claimCooldown");
-						return;
-					}
-					this.owner.Die(null, null, AttackSource.None);
-					EClass.player.DropReward(ThingGen.Create("deed", -1, -1), false);
-					EClass._zone.AbandonZone();
-				}, null, "yes", "no");
-				return false;
-			}, this.owner, null, 1, false, true, false);
+			return;
 		}
+		p.TrySetAct("actAbandonHome", delegate
+		{
+			Dialog.YesNo("dialogAbandonHome", delegate
+			{
+				if (!EClass.world.date.IsExpired(EClass._zone.GetInt(2) + 43200))
+				{
+					Msg.Say("claimCooldown");
+				}
+				else
+				{
+					owner.Die();
+					EClass.player.DropReward(ThingGen.Create("deed"));
+					EClass._zone.AbandonZone();
+				}
+			});
+			return false;
+		}, owner);
 	}
 }

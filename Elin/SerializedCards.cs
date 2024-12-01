@@ -1,753 +1,12 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class SerializedCards : EClass
 {
-	public void Add(Card c)
-	{
-		SerializedCards.<>c__DisplayClass4_0 CS$<>8__locals1;
-		CS$<>8__locals1.c = c;
-		CS$<>8__locals1.data = new SerializedCards.Data
-		{
-			id = CS$<>8__locals1.c.id,
-			idEditor = CS$<>8__locals1.c.c_idEditor,
-			idRefCard = CS$<>8__locals1.c.c_idRefCard,
-			idTrait = CS$<>8__locals1.c.c_idTrait,
-			tags = CS$<>8__locals1.c.c_editorTags,
-			traitVals = CS$<>8__locals1.c.c_editorTraitVal,
-			obj = CS$<>8__locals1.c.mapObj,
-			idMat = CS$<>8__locals1.c.material.id,
-			x = CS$<>8__locals1.c.pos.x,
-			z = CS$<>8__locals1.c.pos.z,
-			placeState = (int)CS$<>8__locals1.c.placeState,
-			dir = CS$<>8__locals1.c.dir,
-			altitude = CS$<>8__locals1.c.altitude,
-			fx = (int)(CS$<>8__locals1.c.fx * 1000f),
-			fy = (int)(CS$<>8__locals1.c.fy * 1000f),
-			lightColor = CS$<>8__locals1.c.c_lightColor,
-			bits1 = CS$<>8__locals1.c._bits1.ToInt(),
-			bits2 = CS$<>8__locals1.c._bits2.ToInt(),
-			tile = CS$<>8__locals1.c.sourceCard.tiles[0],
-			idRender = CS$<>8__locals1.c.sourceCard.idRenderData,
-			refVal = CS$<>8__locals1.c.refVal,
-			idSkin = CS$<>8__locals1.c.idSkin,
-			idDeity = CS$<>8__locals1.c.c_idDeity
-		};
-		if (CS$<>8__locals1.c.c_idBacker != 0)
-		{
-			SourceBacker.Row row = EClass.sources.backers.map.TryGetValue(CS$<>8__locals1.c.c_idBacker, null);
-			if (row != null && row.isStatic != 0)
-			{
-				CS$<>8__locals1.data.idBacker = CS$<>8__locals1.c.c_idBacker;
-			}
-		}
-		if (CS$<>8__locals1.c.material.id == CS$<>8__locals1.c.DefaultMaterial.id)
-		{
-			CS$<>8__locals1.data.idMat = -1;
-		}
-		CS$<>8__locals1.data.idDyeMat = (CS$<>8__locals1.c.isDyed ? CS$<>8__locals1.c.c_dyeMat : -1);
-		if (CS$<>8__locals1.c.isChara)
-		{
-			Point orgPos = CS$<>8__locals1.c.Chara.orgPos;
-			if (orgPos != null)
-			{
-				CS$<>8__locals1.data.x = orgPos.x;
-				CS$<>8__locals1.data.z = orgPos.z;
-			}
-			if (CS$<>8__locals1.c.Chara.isDead)
-			{
-				CS$<>8__locals1.data.isDead = true;
-			}
-			if (CS$<>8__locals1.c.Chara.uidEditor == 0)
-			{
-				int num = 1;
-				foreach (Chara chara in EClass._map.charas.Concat(EClass._map.deadCharas))
-				{
-					if (chara.uidEditor >= num)
-					{
-						num = chara.uidEditor + 1;
-					}
-				}
-				CS$<>8__locals1.c.Chara.uidEditor = num;
-			}
-			CS$<>8__locals1.data.lv = CS$<>8__locals1.c.LV;
-			CS$<>8__locals1.data.element = CS$<>8__locals1.c.c_idMainElement;
-			CS$<>8__locals1.data.uidEditor = CS$<>8__locals1.c.Chara.uidEditor;
-		}
-		SerializedCards.<Add>g__TryAddStr|4_0(52, ref CS$<>8__locals1);
-		this.cards.Add(CS$<>8__locals1.data);
-		CS$<>8__locals1.data.ints[0] = CS$<>8__locals1.data._bits1.ToInt();
-	}
-
-	public void Restore(Map map, Map orgMap, bool addToZone, PartialMap partial = null)
-	{
-		List<Thing> things = map.things;
-		List<Chara> serializedCharas = map.serializedCharas;
-		bool isUserZone = EClass._zone.IsUserZone;
-		this.importedCards.Clear();
-		foreach (SerializedCards.Data data in this.cards)
-		{
-			int num = data.dir;
-			Point point = new Point(data.x, data.z);
-			if (partial != null)
-			{
-				if (partial.result.ruined.Contains(point.index))
-				{
-					continue;
-				}
-				num -= partial.dir;
-				int num2 = point.x - partial.offsetX;
-				int num3 = point.z - partial.offsetZ;
-				switch (partial.dir)
-				{
-				case 1:
-				{
-					int num4 = num2;
-					num2 = num3;
-					num3 = -num4;
-					break;
-				}
-				case 2:
-					num2 = -num2;
-					num3 = -num3;
-					break;
-				case 3:
-				{
-					int num5 = num2;
-					num2 = -num3;
-					num3 = num5;
-					break;
-				}
-				}
-				point.x = num2 + partial.destX;
-				point.z = num3 + partial.destZ;
-				if (!partial.validPoints.Contains(point.index) || !point.IsValid)
-				{
-					continue;
-				}
-				if (!partial.editMode)
-				{
-					Card card = null;
-					string id = data.id;
-					if (!(id == "sign_spawnThing"))
-					{
-						if (id == "sign_spawnChara")
-						{
-							card = CharaGen.CreateFromFilter(data.idRefCard.IsEmpty(EClass._zone.biome.spawn.GetRandomCharaId()), EClass._zone.DangerLv, -1);
-						}
-					}
-					else
-					{
-						card = ThingGen.CreateFromFilter(data.idRefCard.IsEmpty(EClass._zone.biome.spawn.GetRandomThingId()), EClass._zone.DangerLv);
-					}
-					if (card != null)
-					{
-						card.pos = point;
-						EClass._zone.AddCard(card, card.pos);
-						if (card.trait.IsDoor)
-						{
-							EClass._map.OnSetBlockOrDoor(card.pos.x, card.pos.z);
-							continue;
-						}
-						continue;
-					}
-				}
-			}
-			data._bits1.SetInt(data.ints[0]);
-			string text = data.id;
-			if (data.idV != 0)
-			{
-				text = (data.idV.ToString() ?? "");
-			}
-			if (addToZone && partial != null && !partial.editMode)
-			{
-				string id = data.id;
-				if (!(id == "editor_torch"))
-				{
-					if (id == "editor_torch_wall")
-					{
-						text = EClass._zone.biome.style.GetIdLight(true);
-					}
-				}
-				else
-				{
-					text = EClass._zone.biome.style.GetIdLight(false);
-				}
-			}
-			CardRow source = EClass.sources.cards.map.TryGetValue(text, null);
-			if (source != null)
-			{
-				Card card2 = null;
-				if (source.isChara)
-				{
-					if (orgMap != null)
-					{
-						bool flag = false;
-						if (source.quality >= 4)
-						{
-							using (Dictionary<int, Chara>.ValueCollection.Enumerator enumerator2 = EClass.game.cards.globalCharas.Values.GetEnumerator())
-							{
-								while (enumerator2.MoveNext())
-								{
-									if (enumerator2.Current.id == text)
-									{
-										flag = true;
-										break;
-									}
-								}
-							}
-						}
-						if (!flag)
-						{
-							foreach (Chara chara in orgMap.charas.Concat(orgMap.serializedCharas).Concat(orgMap.deadCharas))
-							{
-								if (source.quality >= 4 && chara.id == text)
-								{
-									flag = true;
-									break;
-								}
-								if (chara.id == text && chara.orgPos != null && chara.orgPos.Equals(point))
-								{
-									flag = true;
-									break;
-								}
-							}
-						}
-						if (flag)
-						{
-							continue;
-						}
-					}
-					card2 = CharaGen.Create(text, -1);
-					if (data.ints.Length > 20)
-					{
-						card2.Chara.SetLv(data.lv);
-						if (data.element != 0)
-						{
-							card2.Chara.SetMainElement(data.element, 0, false);
-						}
-					}
-					card2.Chara.orgPos = point.Copy();
-					if (data.isDead)
-					{
-						card2.hp = -1;
-						card2.Chara.isDead = true;
-					}
-					card2.Chara.hunger.value = EClass.rnd(EClass.rnd(20) + 1);
-					if (!addToZone)
-					{
-						serializedCharas.Add(card2.Chara);
-					}
-				}
-				else
-				{
-					PlaceState placeState = data.placeState.ToEnum<PlaceState>();
-					if (isUserZone && ((placeState != PlaceState.installed && !data.bits1.IsOn(13)) || text == "medal"))
-					{
-						continue;
-					}
-					if (source.isOrigin)
-					{
-						text = SpawnListThing.Get("origin_" + text, (SourceThing.Row a) => a.origin == source).GetFirst().id;
-					}
-					card2 = ThingGen.Create(text, -1, EClass._zone.DangerLv);
-					card2.ChangeMaterial((data.idMat == -1) ? card2.DefaultMaterial.id : data.idMat);
-					if (!addToZone)
-					{
-						things.Add(card2.Thing);
-					}
-					card2.altitude = data.altitude;
-					card2.placeState = placeState;
-					card2.c_lightColor = data.lightColor;
-				}
-				if (num < 0)
-				{
-					num = Mathf.Abs(card2.sourceCard.tiles.Length + num);
-				}
-				card2.pos = point;
-				card2.dir = num;
-				card2._bits1.SetInt(data.bits1);
-				card2._bits2.SetInt(data.bits2);
-				card2.isPlayerCreation = true;
-				card2.autoRefuel = true;
-				card2.c_editorTraitVal = data.traitVals;
-				card2.c_idRefCard = data.idRefCard;
-				card2.isImported = true;
-				card2.refVal = data.refVal;
-				card2.idSkin = data.idSkin;
-				card2.c_idDeity = data.idDeity;
-				if (isUserZone)
-				{
-					bool isRoofItem = card2.isRoofItem;
-				}
-				if (data.idBacker != 0)
-				{
-					Debug.Log(data.idBacker);
-					card2.c_idBacker = data.idBacker;
-				}
-				if (this.version >= 2 && data.idDyeMat != -1)
-				{
-					card2.Dye(EClass.sources.materials.rows[data.idDyeMat]);
-				}
-				card2.mapObj = data.obj;
-				Dictionary<int, object> mapObj = card2.mapObj;
-				if (((mapObj != null) ? mapObj.TryGetValue(2, null) : null) != null)
-				{
-					card2.mapObj.Remove(2);
-				}
-				if (data.cstr != null)
-				{
-					foreach (KeyValuePair<int, string> keyValuePair in data.cstr)
-					{
-						card2.SetStr(keyValuePair.Key, keyValuePair.Value);
-					}
-				}
-				if (card2.freePos)
-				{
-					card2.fx = (float)data.fx * 0.001f;
-					card2.fy = (float)data.fy * 0.001f;
-				}
-				if (!data.idEditor.IsEmpty())
-				{
-					card2.c_idEditor = data.idEditor;
-				}
-				if (!data.idTrait.IsEmpty())
-				{
-					card2.c_idTrait = data.idTrait;
-					card2.ApplyTrait();
-					card2.trait.OnCreate(EClass._zone.lv);
-				}
-				if (!data.tags.IsEmpty())
-				{
-					card2.c_editorTags = data.tags;
-					try
-					{
-						foreach (string value in data.tags.Split(',', StringSplitOptions.None))
-						{
-							card2.ApplyEditorTags(value.ToEnum(true));
-						}
-					}
-					catch
-					{
-						Debug.LogWarning("Could not convert editor tag:" + card2.Name + "/" + data.tags);
-					}
-				}
-				if (card2.isChara)
-				{
-					card2.Chara.homeZone = EClass._zone;
-					card2.Chara.uidEditor = data.uidEditor;
-					if (card2.isBackerContent)
-					{
-						card2.ApplyBacker(card2.c_idBacker);
-					}
-				}
-				if (addToZone)
-				{
-					EClass._zone.AddCard(card2, card2.pos);
-					if (card2.trait.IsDoor)
-					{
-						EClass._map.OnSetBlockOrDoor(card2.pos.x, card2.pos.z);
-					}
-					if (partial != null && !card2.sourceCard.lightData.IsEmpty())
-					{
-						partial.result.hasLight = true;
-					}
-				}
-				this.importedCards.Add(card2);
-			}
-		}
-		foreach (Card card3 in this.importedCards)
-		{
-			if (card3.trait is TraitShackle)
-			{
-				foreach (Card card4 in this.importedCards)
-				{
-					if (card4.isRestrained && card4.pos.Equals(card3.pos))
-					{
-						card3.c_uidRefCard = card4.uid;
-					}
-				}
-			}
-			card3.trait.OnImportMap();
-		}
-	}
-
-	[CompilerGenerated]
-	internal static void <Add>g__TryAddStr|4_0(int key, ref SerializedCards.<>c__DisplayClass4_0 A_1)
-	{
-		string str = A_1.c.GetStr(key, null);
-		if (!str.IsEmpty())
-		{
-			if (A_1.data.cstr == null)
-			{
-				A_1.data.cstr = new Dictionary<int, string>();
-			}
-			A_1.data.cstr[key] = str;
-		}
-	}
-
-	[JsonProperty]
-	public List<SerializedCards.Data> cards = new List<SerializedCards.Data>();
-
-	[JsonProperty]
-	public int version = 2;
-
-	public List<Card> importedCards = new List<Card>();
-
 	public class Data : EClass
 	{
-		public int idDyeMat
-		{
-			get
-			{
-				return this.ints[2];
-			}
-			set
-			{
-				this.ints[2] = value;
-			}
-		}
-
-		public int idV
-		{
-			get
-			{
-				return this.ints[3];
-			}
-			set
-			{
-				this.ints[3] = value;
-			}
-		}
-
-		public int idMat
-		{
-			get
-			{
-				return this.ints[4];
-			}
-			set
-			{
-				this.ints[4] = value;
-			}
-		}
-
-		public int x
-		{
-			get
-			{
-				return this.ints[5];
-			}
-			set
-			{
-				this.ints[5] = value;
-			}
-		}
-
-		public int z
-		{
-			get
-			{
-				return this.ints[6];
-			}
-			set
-			{
-				this.ints[6] = value;
-			}
-		}
-
-		public int dir
-		{
-			get
-			{
-				return this.ints[7];
-			}
-			set
-			{
-				this.ints[7] = value;
-			}
-		}
-
-		public int placeState
-		{
-			get
-			{
-				return this.ints[8];
-			}
-			set
-			{
-				this.ints[8] = value;
-			}
-		}
-
-		public int altitude
-		{
-			get
-			{
-				return this.ints[9];
-			}
-			set
-			{
-				this.ints[9] = value;
-			}
-		}
-
-		public int fx
-		{
-			get
-			{
-				return this.ints[10];
-			}
-			set
-			{
-				this.ints[10] = value;
-			}
-		}
-
-		public int fy
-		{
-			get
-			{
-				return this.ints[11];
-			}
-			set
-			{
-				this.ints[11] = value;
-			}
-		}
-
-		public int lightColor
-		{
-			get
-			{
-				return this.ints[12];
-			}
-			set
-			{
-				this.ints[12] = value;
-			}
-		}
-
-		public int bits1
-		{
-			get
-			{
-				return this.ints[13];
-			}
-			set
-			{
-				this.ints[13] = value;
-			}
-		}
-
-		public int tile
-		{
-			get
-			{
-				return this.ints[14];
-			}
-			set
-			{
-				this.ints[14] = value;
-			}
-		}
-
-		public int refVal
-		{
-			get
-			{
-				return this.ints[15];
-			}
-			set
-			{
-				this.ints[15] = value;
-			}
-		}
-
-		public int idSkin
-		{
-			get
-			{
-				return this.ints[16];
-			}
-			set
-			{
-				this.ints[16] = value;
-			}
-		}
-
-		public int idBacker
-		{
-			get
-			{
-				return this.ints[17];
-			}
-			set
-			{
-				this.ints[17] = value;
-			}
-		}
-
-		public int bits2
-		{
-			get
-			{
-				return this.ints[18];
-			}
-			set
-			{
-				this.ints[18] = value;
-			}
-		}
-
-		public int uidEditor
-		{
-			get
-			{
-				return this.ints[19];
-			}
-			set
-			{
-				this.ints[19] = value;
-			}
-		}
-
-		public int lv
-		{
-			get
-			{
-				return this.ints[20];
-			}
-			set
-			{
-				this.ints[20] = value;
-			}
-		}
-
-		public int element
-		{
-			get
-			{
-				return this.ints[21];
-			}
-			set
-			{
-				this.ints[21] = value;
-			}
-		}
-
-		public string id
-		{
-			get
-			{
-				return this.strs[0];
-			}
-			set
-			{
-				this.strs[0] = value;
-			}
-		}
-
-		public string idEditor
-		{
-			get
-			{
-				return this.strs[1];
-			}
-			set
-			{
-				this.strs[1] = value;
-			}
-		}
-
-		public string idTrait
-		{
-			get
-			{
-				return this.strs[2];
-			}
-			set
-			{
-				this.strs[2] = value;
-			}
-		}
-
-		public string tags
-		{
-			get
-			{
-				return this.strs[3];
-			}
-			set
-			{
-				this.strs[3] = value;
-			}
-		}
-
-		public string idRender
-		{
-			get
-			{
-				return this.strs[4];
-			}
-			set
-			{
-				this.strs[4] = value;
-			}
-		}
-
-		public string traitVals
-		{
-			get
-			{
-				return this.strs[5];
-			}
-			set
-			{
-				this.strs[5] = value;
-			}
-		}
-
-		public string idRefCard
-		{
-			get
-			{
-				return this.strs[6];
-			}
-			set
-			{
-				this.strs[6] = value;
-			}
-		}
-
-		public string idDeity
-		{
-			get
-			{
-				return this.strs[7];
-			}
-			set
-			{
-				this.strs[7] = value;
-			}
-		}
-
-		public bool isDead
-		{
-			get
-			{
-				return this._bits1[0];
-			}
-			set
-			{
-				this._bits1[0] = value;
-			}
-		}
-
 		[JsonProperty]
 		public int[] ints = new int[30];
 
@@ -761,5 +20,737 @@ public class SerializedCards : EClass
 		public Dictionary<int, string> cstr;
 
 		public BitArray32 _bits1;
+
+		public int idDyeMat
+		{
+			get
+			{
+				return ints[2];
+			}
+			set
+			{
+				ints[2] = value;
+			}
+		}
+
+		public int idV
+		{
+			get
+			{
+				return ints[3];
+			}
+			set
+			{
+				ints[3] = value;
+			}
+		}
+
+		public int idMat
+		{
+			get
+			{
+				return ints[4];
+			}
+			set
+			{
+				ints[4] = value;
+			}
+		}
+
+		public int x
+		{
+			get
+			{
+				return ints[5];
+			}
+			set
+			{
+				ints[5] = value;
+			}
+		}
+
+		public int z
+		{
+			get
+			{
+				return ints[6];
+			}
+			set
+			{
+				ints[6] = value;
+			}
+		}
+
+		public int dir
+		{
+			get
+			{
+				return ints[7];
+			}
+			set
+			{
+				ints[7] = value;
+			}
+		}
+
+		public int placeState
+		{
+			get
+			{
+				return ints[8];
+			}
+			set
+			{
+				ints[8] = value;
+			}
+		}
+
+		public int altitude
+		{
+			get
+			{
+				return ints[9];
+			}
+			set
+			{
+				ints[9] = value;
+			}
+		}
+
+		public int fx
+		{
+			get
+			{
+				return ints[10];
+			}
+			set
+			{
+				ints[10] = value;
+			}
+		}
+
+		public int fy
+		{
+			get
+			{
+				return ints[11];
+			}
+			set
+			{
+				ints[11] = value;
+			}
+		}
+
+		public int lightColor
+		{
+			get
+			{
+				return ints[12];
+			}
+			set
+			{
+				ints[12] = value;
+			}
+		}
+
+		public int bits1
+		{
+			get
+			{
+				return ints[13];
+			}
+			set
+			{
+				ints[13] = value;
+			}
+		}
+
+		public int tile
+		{
+			get
+			{
+				return ints[14];
+			}
+			set
+			{
+				ints[14] = value;
+			}
+		}
+
+		public int refVal
+		{
+			get
+			{
+				return ints[15];
+			}
+			set
+			{
+				ints[15] = value;
+			}
+		}
+
+		public int idSkin
+		{
+			get
+			{
+				return ints[16];
+			}
+			set
+			{
+				ints[16] = value;
+			}
+		}
+
+		public int idBacker
+		{
+			get
+			{
+				return ints[17];
+			}
+			set
+			{
+				ints[17] = value;
+			}
+		}
+
+		public int bits2
+		{
+			get
+			{
+				return ints[18];
+			}
+			set
+			{
+				ints[18] = value;
+			}
+		}
+
+		public int uidEditor
+		{
+			get
+			{
+				return ints[19];
+			}
+			set
+			{
+				ints[19] = value;
+			}
+		}
+
+		public int lv
+		{
+			get
+			{
+				return ints[20];
+			}
+			set
+			{
+				ints[20] = value;
+			}
+		}
+
+		public int element
+		{
+			get
+			{
+				return ints[21];
+			}
+			set
+			{
+				ints[21] = value;
+			}
+		}
+
+		public string id
+		{
+			get
+			{
+				return strs[0];
+			}
+			set
+			{
+				strs[0] = value;
+			}
+		}
+
+		public string idEditor
+		{
+			get
+			{
+				return strs[1];
+			}
+			set
+			{
+				strs[1] = value;
+			}
+		}
+
+		public string idTrait
+		{
+			get
+			{
+				return strs[2];
+			}
+			set
+			{
+				strs[2] = value;
+			}
+		}
+
+		public string tags
+		{
+			get
+			{
+				return strs[3];
+			}
+			set
+			{
+				strs[3] = value;
+			}
+		}
+
+		public string idRender
+		{
+			get
+			{
+				return strs[4];
+			}
+			set
+			{
+				strs[4] = value;
+			}
+		}
+
+		public string traitVals
+		{
+			get
+			{
+				return strs[5];
+			}
+			set
+			{
+				strs[5] = value;
+			}
+		}
+
+		public string idRefCard
+		{
+			get
+			{
+				return strs[6];
+			}
+			set
+			{
+				strs[6] = value;
+			}
+		}
+
+		public string idDeity
+		{
+			get
+			{
+				return strs[7];
+			}
+			set
+			{
+				strs[7] = value;
+			}
+		}
+
+		public bool isDead
+		{
+			get
+			{
+				return _bits1[0];
+			}
+			set
+			{
+				_bits1[0] = value;
+			}
+		}
+	}
+
+	[JsonProperty]
+	public List<Data> cards = new List<Data>();
+
+	[JsonProperty]
+	public int version = 2;
+
+	public List<Card> importedCards = new List<Card>();
+
+	public void Add(Card c)
+	{
+		Data data = new Data
+		{
+			id = c.id,
+			idEditor = c.c_idEditor,
+			idRefCard = c.c_idRefCard,
+			idTrait = c.c_idTrait,
+			tags = c.c_editorTags,
+			traitVals = c.c_editorTraitVal,
+			obj = c.mapObj,
+			idMat = c.material.id,
+			x = c.pos.x,
+			z = c.pos.z,
+			placeState = (int)c.placeState,
+			dir = c.dir,
+			altitude = c.altitude,
+			fx = (int)(c.fx * 1000f),
+			fy = (int)(c.fy * 1000f),
+			lightColor = c.c_lightColor,
+			bits1 = c._bits1.ToInt(),
+			bits2 = c._bits2.ToInt(),
+			tile = c.sourceCard.tiles[0],
+			idRender = c.sourceCard.idRenderData,
+			refVal = c.refVal,
+			idSkin = c.idSkin,
+			idDeity = c.c_idDeity
+		};
+		if (c.c_idBacker != 0)
+		{
+			SourceBacker.Row row = EClass.sources.backers.map.TryGetValue(c.c_idBacker);
+			if (row != null && row.isStatic != 0)
+			{
+				data.idBacker = c.c_idBacker;
+			}
+		}
+		if (c.material.id == c.DefaultMaterial.id)
+		{
+			data.idMat = -1;
+		}
+		data.idDyeMat = (c.isDyed ? c.c_dyeMat : (-1));
+		if (c.isChara)
+		{
+			Point orgPos = c.Chara.orgPos;
+			if (orgPos != null)
+			{
+				data.x = orgPos.x;
+				data.z = orgPos.z;
+			}
+			if (c.Chara.isDead)
+			{
+				data.isDead = true;
+			}
+			if (c.Chara.uidEditor == 0)
+			{
+				int num = 1;
+				foreach (Chara item in EClass._map.charas.Concat(EClass._map.deadCharas))
+				{
+					if (item.uidEditor >= num)
+					{
+						num = item.uidEditor + 1;
+					}
+				}
+				c.Chara.uidEditor = num;
+			}
+			data.lv = c.LV;
+			data.element = c.c_idMainElement;
+			data.uidEditor = c.Chara.uidEditor;
+		}
+		TryAddStr(52);
+		cards.Add(data);
+		data.ints[0] = data._bits1.ToInt();
+		void TryAddStr(int key)
+		{
+			string str = c.GetStr(key);
+			if (!str.IsEmpty())
+			{
+				if (data.cstr == null)
+				{
+					data.cstr = new Dictionary<int, string>();
+				}
+				data.cstr[key] = str;
+			}
+		}
+	}
+
+	public void Restore(Map map, Map orgMap, bool addToZone, PartialMap partial = null)
+	{
+		List<Thing> things = map.things;
+		List<Chara> serializedCharas = map.serializedCharas;
+		bool isUserZone = EClass._zone.IsUserZone;
+		importedCards.Clear();
+		foreach (Data card3 in cards)
+		{
+			int num = card3.dir;
+			Point point = new Point(card3.x, card3.z);
+			if (partial != null)
+			{
+				if (partial.result.ruined.Contains(point.index))
+				{
+					continue;
+				}
+				num -= partial.dir;
+				int num2 = point.x - partial.offsetX;
+				int num3 = point.z - partial.offsetZ;
+				switch (partial.dir)
+				{
+				case 1:
+				{
+					int num5 = num2;
+					num2 = num3;
+					num3 = -num5;
+					break;
+				}
+				case 2:
+					num2 = -num2;
+					num3 = -num3;
+					break;
+				case 3:
+				{
+					int num4 = num2;
+					num2 = -num3;
+					num3 = num4;
+					break;
+				}
+				}
+				point.x = num2 + partial.destX;
+				point.z = num3 + partial.destZ;
+				if (!partial.validPoints.Contains(point.index) || !point.IsValid)
+				{
+					continue;
+				}
+				if (!partial.editMode)
+				{
+					Card card = null;
+					string id = card3.id;
+					if (!(id == "sign_spawnThing"))
+					{
+						if (id == "sign_spawnChara")
+						{
+							card = CharaGen.CreateFromFilter(card3.idRefCard.IsEmpty(EClass._zone.biome.spawn.GetRandomCharaId()), EClass._zone.DangerLv);
+						}
+					}
+					else
+					{
+						card = ThingGen.CreateFromFilter(card3.idRefCard.IsEmpty(EClass._zone.biome.spawn.GetRandomThingId()), EClass._zone.DangerLv);
+					}
+					if (card != null)
+					{
+						card.pos = point;
+						EClass._zone.AddCard(card, card.pos);
+						if (card.trait.IsDoor)
+						{
+							EClass._map.OnSetBlockOrDoor(card.pos.x, card.pos.z);
+						}
+						continue;
+					}
+				}
+			}
+			card3._bits1.SetInt(card3.ints[0]);
+			string text = card3.id;
+			if (card3.idV != 0)
+			{
+				text = card3.idV.ToString() ?? "";
+			}
+			if (addToZone && partial != null && !partial.editMode)
+			{
+				string id = card3.id;
+				if (!(id == "editor_torch"))
+				{
+					if (id == "editor_torch_wall")
+					{
+						text = EClass._zone.biome.style.GetIdLight(wall: true);
+					}
+				}
+				else
+				{
+					text = EClass._zone.biome.style.GetIdLight(wall: false);
+				}
+			}
+			CardRow source = EClass.sources.cards.map.TryGetValue(text);
+			if (source == null)
+			{
+				continue;
+			}
+			Card card2 = null;
+			if (source.isChara)
+			{
+				if (orgMap != null)
+				{
+					bool flag = false;
+					if (source.quality >= 4)
+					{
+						foreach (Chara value2 in EClass.game.cards.globalCharas.Values)
+						{
+							if (value2.id == text)
+							{
+								flag = true;
+								break;
+							}
+						}
+					}
+					if (!flag)
+					{
+						foreach (Chara item in orgMap.charas.Concat(orgMap.serializedCharas).Concat(orgMap.deadCharas))
+						{
+							if (source.quality >= 4 && item.id == text)
+							{
+								flag = true;
+								break;
+							}
+							if (item.id == text && item.orgPos != null && item.orgPos.Equals(point))
+							{
+								flag = true;
+								break;
+							}
+						}
+					}
+					if (flag)
+					{
+						continue;
+					}
+				}
+				card2 = CharaGen.Create(text);
+				if (card3.ints.Length > 20)
+				{
+					card2.Chara.SetLv(card3.lv);
+					if (card3.element != 0)
+					{
+						card2.Chara.SetMainElement(card3.element);
+					}
+				}
+				card2.Chara.orgPos = point.Copy();
+				if (card3.isDead)
+				{
+					card2.hp = -1;
+					card2.Chara.isDead = true;
+				}
+				card2.Chara.hunger.value = EClass.rnd(EClass.rnd(20) + 1);
+				if (!addToZone)
+				{
+					serializedCharas.Add(card2.Chara);
+				}
+			}
+			else
+			{
+				PlaceState placeState = card3.placeState.ToEnum<PlaceState>();
+				if (isUserZone && ((placeState != PlaceState.installed && !card3.bits1.IsOn(13)) || text == "medal"))
+				{
+					continue;
+				}
+				if (source.isOrigin)
+				{
+					text = SpawnListThing.Get("origin_" + text, (SourceThing.Row a) => a.origin == source).GetFirst().id;
+				}
+				card2 = ThingGen.Create(text, -1, EClass._zone.DangerLv);
+				card2.ChangeMaterial((card3.idMat == -1) ? card2.DefaultMaterial.id : card3.idMat);
+				if (!addToZone)
+				{
+					things.Add(card2.Thing);
+				}
+				card2.altitude = card3.altitude;
+				card2.placeState = placeState;
+				card2.c_lightColor = card3.lightColor;
+			}
+			if (num < 0)
+			{
+				num = Mathf.Abs(card2.sourceCard.tiles.Length + num);
+			}
+			card2.pos = point;
+			card2.dir = num;
+			card2._bits1.SetInt(card3.bits1);
+			card2._bits2.SetInt(card3.bits2);
+			card2.isPlayerCreation = true;
+			card2.autoRefuel = true;
+			card2.c_editorTraitVal = card3.traitVals;
+			card2.c_idRefCard = card3.idRefCard;
+			card2.isImported = true;
+			card2.refVal = card3.refVal;
+			card2.idSkin = card3.idSkin;
+			card2.c_idDeity = card3.idDeity;
+			if (isUserZone)
+			{
+				_ = card2.isRoofItem;
+			}
+			if (card3.idBacker != 0)
+			{
+				Debug.Log(card3.idBacker);
+				card2.c_idBacker = card3.idBacker;
+			}
+			if (version >= 2 && card3.idDyeMat != -1)
+			{
+				card2.Dye(EClass.sources.materials.rows[card3.idDyeMat]);
+			}
+			card2.mapObj = card3.obj;
+			if (card2.mapObj?.TryGetValue(2) != null)
+			{
+				card2.mapObj.Remove(2);
+			}
+			if (card3.cstr != null)
+			{
+				foreach (KeyValuePair<int, string> item2 in card3.cstr)
+				{
+					card2.SetStr(item2.Key, item2.Value);
+				}
+			}
+			if (card2.freePos)
+			{
+				card2.fx = (float)card3.fx * 0.001f;
+				card2.fy = (float)card3.fy * 0.001f;
+			}
+			if (!card3.idEditor.IsEmpty())
+			{
+				card2.c_idEditor = card3.idEditor;
+			}
+			if (!card3.idTrait.IsEmpty())
+			{
+				card2.c_idTrait = card3.idTrait;
+				card2.ApplyTrait();
+				card2.trait.OnCreate(EClass._zone.lv);
+			}
+			if (!card3.tags.IsEmpty())
+			{
+				card2.c_editorTags = card3.tags;
+				try
+				{
+					string[] array = card3.tags.Split(',');
+					foreach (string value in array)
+					{
+						card2.ApplyEditorTags(value.ToEnum<EditorTag>());
+					}
+				}
+				catch
+				{
+					Debug.LogWarning("Could not convert editor tag:" + card2.Name + "/" + card3.tags);
+				}
+			}
+			if (card2.isChara)
+			{
+				card2.Chara.homeZone = EClass._zone;
+				card2.Chara.uidEditor = card3.uidEditor;
+				if (card2.isBackerContent)
+				{
+					card2.ApplyBacker(card2.c_idBacker);
+				}
+			}
+			if (addToZone)
+			{
+				EClass._zone.AddCard(card2, card2.pos);
+				if (card2.trait.IsDoor)
+				{
+					EClass._map.OnSetBlockOrDoor(card2.pos.x, card2.pos.z);
+				}
+				if (partial != null && !card2.sourceCard.lightData.IsEmpty())
+				{
+					partial.result.hasLight = true;
+				}
+			}
+			importedCards.Add(card2);
+		}
+		foreach (Card importedCard in importedCards)
+		{
+			if (importedCard.trait is TraitShackle)
+			{
+				foreach (Card importedCard2 in importedCards)
+				{
+					if (importedCard2.isRestrained && importedCard2.pos.Equals(importedCard.pos))
+					{
+						importedCard.c_uidRefCard = importedCard2.uid;
+					}
+				}
+			}
+			importedCard.trait.OnImportMap();
+		}
 	}
 }

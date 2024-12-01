@@ -1,40 +1,28 @@
-﻿using System;
-
 public class TaskCut : TaskDesignation
 {
-	public override CursorInfo CursorIcon
-	{
-		get
-		{
-			return CursorSystem.IconCut;
-		}
-	}
+	public override CursorInfo CursorIcon => CursorSystem.IconCut;
 
-	public override int destDist
-	{
-		get
-		{
-			return 1;
-		}
-	}
+	public override int destDist => 1;
 
 	public override void OnStart()
 	{
-		if (this.pos.cell.CanMakeStraw())
+		if (pos.cell.CanMakeStraw())
 		{
-			this.owner.ShowEmo(Emo.straw, 0f, true);
-			return;
+			owner.ShowEmo(Emo.straw);
 		}
-		this.owner.ShowEmo(Emo.cut, 0f, true);
+		else
+		{
+			owner.ShowEmo(Emo.cut);
+		}
 	}
 
 	public override HitResult GetHitResult()
 	{
-		if (this.pos.HasObj && !this.pos.HasMinableBlock)
+		if (pos.HasObj && !pos.HasMinableBlock)
 		{
 			return HitResult.Valid;
 		}
-		if (this.pos.HasDecal && EClass.debug.godBuild && BuildMenu.Instance)
+		if (pos.HasDecal && EClass.debug.godBuild && (bool)BuildMenu.Instance)
 		{
 			return HitResult.Valid;
 		}
@@ -43,43 +31,43 @@ public class TaskCut : TaskDesignation
 
 	public override void OnCreateProgress(Progress_Custom p)
 	{
-		p.maxProgress = this.pos.cell.sourceObj.hp / 10 + 1;
+		p.maxProgress = pos.cell.sourceObj.hp / 10 + 1;
 	}
 
 	public override void OnProgress()
 	{
-		SourceObj.Row sourceObj = this.pos.cell.sourceObj;
-		if (this.pos.cell.CanMakeStraw())
+		_ = pos.cell.sourceObj;
+		if (pos.cell.CanMakeStraw())
 		{
-			this.owner.SetTempHand(1006, -1);
+			owner.SetTempHand(1006, -1);
 		}
-		else if (this.pos.cell.matObj.UseAxe)
+		else if (pos.cell.matObj.UseAxe)
 		{
-			this.owner.SetTempHand(1100, -1);
+			owner.SetTempHand(1100, -1);
 		}
-		else if (this.pos.cell.matObj.UsePick)
+		else if (pos.cell.matObj.UsePick)
 		{
-			this.owner.SetTempHand(1004, -1);
+			owner.SetTempHand(1004, -1);
 		}
 		else
 		{
-			this.owner.SetTempHand(1000, -1);
+			owner.SetTempHand(1000, -1);
 		}
-		this.owner.LookAt(this.pos);
-		this.pos.PlaySound(this.pos.cell.matObj.GetSoundImpact(null), true, 1f, true);
-		this.pos.cell.matObj.PlayHitEffect(this.pos);
-		this.pos.cell.matObj.AddBlood(this.pos, 1);
-		this.pos.Animate(AnimeID.HitObj, false);
-		if (this.IsToolValid() && EClass.setting.toolConsumeHP)
+		owner.LookAt(pos);
+		pos.PlaySound(pos.cell.matObj.GetSoundImpact());
+		pos.cell.matObj.PlayHitEffect(pos);
+		pos.cell.matObj.AddBlood(pos);
+		pos.Animate(AnimeID.HitObj);
+		if (IsToolValid() && EClass.setting.toolConsumeHP)
 		{
-			Act.TOOL.DamageHP(1, AttackSource.None, null);
+			Act.TOOL.DamageHP(1);
 		}
 	}
 
 	public override void OnProgressComplete()
 	{
-		string text = this.pos.sourceObj.reqHarvest[0];
-		EClass._map.MineObj(this.pos, null, null);
-		EClass._map.SetDecal(this.pos.x, this.pos.z, 0, 1, true);
+		_ = pos.sourceObj.reqHarvest[0];
+		EClass._map.MineObj(pos);
+		EClass._map.SetDecal(pos.x, pos.z);
 	}
 }

@@ -1,57 +1,50 @@
-﻿using System;
 using DG.Tweening;
 
 public class TraitSwing : Trait
 {
-	public override Trait.TileMode tileMode
+	public bool swinging;
+
+	private Tween tween;
+
+	public override TileMode tileMode
 	{
 		get
 		{
-			if (!this.UseAltTiles)
+			if (!UseAltTiles)
 			{
-				return Trait.TileMode.Default;
+				return TileMode.Default;
 			}
-			return Trait.TileMode.DefaultNoAnime;
+			return TileMode.DefaultNoAnime;
 		}
 	}
 
-	public override bool UseAltTiles
-	{
-		get
-		{
-			return !this.swinging;
-		}
-	}
+	public override bool UseAltTiles => !swinging;
 
 	public override void OnStepped(Chara c)
 	{
-		this.owner.isOn = true;
-		this.swinging = false;
+		owner.isOn = true;
+		swinging = false;
 	}
 
 	public override void OnSteppedOut(Chara c)
 	{
-		bool isOn = this.owner.isOn;
-		this.owner.isOn = this.owner.pos.HasChara;
-		if (isOn && !this.owner.isOn)
+		bool isOn = owner.isOn;
+		owner.isOn = owner.pos.HasChara;
+		if (isOn && !owner.isOn)
 		{
-			if (this.tween != null)
+			if (tween != null)
 			{
-				this.tween.Kill(false);
+				tween.Kill();
 			}
-			this.swinging = true;
-			this.owner.PlaySound("swing", 1f, true);
-			this.tween = TweenUtil.Tween(5f, null, null).OnComplete(delegate
+			swinging = true;
+			owner.PlaySound("swing");
+			tween = TweenUtil.Tween(5f).OnComplete(delegate
 			{
-				this.swinging = false;
+				swinging = false;
 			}).OnKill(delegate
 			{
-				this.swinging = false;
+				swinging = false;
 			});
 		}
 	}
-
-	public bool swinging;
-
-	private Tween tween;
 }

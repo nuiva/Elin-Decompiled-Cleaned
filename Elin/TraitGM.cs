@@ -1,12 +1,4 @@
-﻿using System;
-
 public class TraitGM : TraitUniqueGuildPersonnel
 {
-	public override int GuidePriotiy
-	{
-		get
-		{
-			return 100;
-		}
-	}
+	public override int GuidePriotiy => 100;
 }

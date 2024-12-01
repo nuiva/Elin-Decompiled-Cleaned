@@ -1,34 +1,28 @@
-﻿using System;
-
 public class TraitPhone : TraitItem
 {
+	public ZoneEventPhone ev;
+
 	public override void OnSimulateHour(VirtualDate date)
 	{
-		if (!date.IsRealTime || !this.owner.IsInstalled)
-		{
-			return;
-		}
-		if (EClass.rnd(10) == 0)
+		if (date.IsRealTime && owner.IsInstalled && EClass.rnd(10) == 0)
 		{
 			EClass._zone.events.Add(new ZoneEventPhone
 			{
-				uidPhone = this.owner.uid
-			}, false);
+				uidPhone = owner.uid
+			});
 		}
 	}
 
 	public override bool CanUse(Chara c)
 	{
-		return this.ev != null;
+		return ev != null;
 	}
 
 	public override bool OnUse(Chara c)
 	{
 		SE.Play("electricity_insufficient");
 		Msg.SayNothingHappen();
-		this.ev.Kill();
+		ev.Kill();
 		return true;
 	}
-
-	public ZoneEventPhone ev;
 }

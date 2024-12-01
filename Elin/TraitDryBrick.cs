@@ -1,22 +1,8 @@
-﻿using System;
-
 public class TraitDryBrick : TraitBrewery
 {
-	public override TraitBrewery.Type type
-	{
-		get
-		{
-			return TraitBrewery.Type.Food;
-		}
-	}
+	public override Type type => Type.Food;
 
-	public override string idMsg
-	{
-		get
-		{
-			return "driedFood";
-		}
-	}
+	public override string idMsg => "driedFood";
 
 	public override string GetProductID(Card c)
 	{

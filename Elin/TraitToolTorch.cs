@@ -1,55 +1,48 @@
-﻿using System;
-
 public class TraitToolTorch : TraitTool
 {
-	public bool IsLit
-	{
-		get
-		{
-			return EClass.pc.GetCondition<ConTorch>() != null;
-		}
-	}
+	public bool IsLit => EClass.pc.GetCondition<ConTorch>() != null;
 
 	public override void OnEnterScreen()
 	{
-		this.RefreshRenderer();
+		RefreshRenderer();
 	}
 
 	public override void RefreshRenderer()
 	{
-		if (!this.owner.renderer.isSynced)
+		if (owner.renderer.isSynced)
 		{
-			return;
+			if (IsLit)
+			{
+				owner.renderer.AddExtra("torch_held");
+			}
+			else
+			{
+				owner.renderer.RemoveExtra("torch_held");
+			}
 		}
-		if (this.IsLit)
-		{
-			this.owner.renderer.AddExtra("torch_held");
-			return;
-		}
-		this.owner.renderer.RemoveExtra("torch_held");
 	}
 
 	public override void OnSetCurrentItem()
 	{
 		EClass.pc.RecalculateFOV();
-		if (this.IsLit)
+		if (IsLit)
 		{
-			EClass.pc.PlaySound("torch_lit", 1f, true);
+			EClass.pc.PlaySound("torch_lit");
 		}
 	}
 
 	public override void OnUnsetCurrentItem()
 	{
 		EClass.pc.RecalculateFOV();
-		this.RefreshRenderer();
+		RefreshRenderer();
 	}
 
 	public void ToggleOn()
 	{
-		EClass.pc.Say("torch_start", EClass.pc, this.owner, null, null);
-		EClass.pc.AddCondition<ConTorch>(100, false);
-		EClass.pc.PlaySound("torch_lit", 1f, true);
-		this.RefreshRenderer();
+		EClass.pc.Say("torch_start", EClass.pc, owner);
+		EClass.pc.AddCondition<ConTorch>();
+		EClass.pc.PlaySound("torch_lit");
+		RefreshRenderer();
 	}
 
 	public override void TrySetHeldAct(ActPlan p)
@@ -57,57 +50,46 @@ public class TraitToolTorch : TraitTool
 		ConTorch con = EClass.pc.GetCondition<ConTorch>();
 		if (p.IsSelfOrNeighbor)
 		{
-			Func<bool> <>9__1;
-			foreach (Card card in p.pos.ListCards(false))
+			foreach (Card item in p.pos.ListCards())
 			{
-				if (card.trait.IsLighting && con == null && card.isOn)
+				if (item.trait.IsLighting && con == null && item.isOn)
 				{
-					string lang = "ActTorch";
-					Func<bool> onPerform;
-					if ((onPerform = <>9__1) == null)
+					p.TrySetAct("ActTorch", delegate
 					{
-						onPerform = (<>9__1 = delegate()
-						{
-							this.ToggleOn();
-							return true;
-						});
-					}
-					p.TrySetAct(lang, onPerform, this.owner, null, 1, false, true, false);
+						ToggleOn();
+						return true;
+					}, owner);
 					break;
 				}
 			}
 		}
-		if (p.IsSelf)
+		if (!p.IsSelf)
 		{
-			if (con != null)
-			{
-				p.TrySetAct("ActExtinguishTorch", delegate()
-				{
-					con.Kill(false);
-					this.RefreshRenderer();
-					return true;
-				}, null, 1);
-				return;
-			}
-			Thing log = EClass.pc.things.Find("log", -1, -1);
-			string text = "ActTorch".lang() + " ";
-			string str = text;
-			string s = "consumeResource";
-			string name = EClass.sources.cards.map["log"].GetName();
-			string @ref = 1.ToString() ?? "";
-			Thing log2 = log;
-			text = str + s.lang(name, @ref, ((log2 != null) ? log2.Num : 0).ToString() ?? "", null, null);
-			p.TrySetAct(text, delegate()
-			{
-				if (log == null)
-				{
-					Msg.Say("noLogForTorch");
-					return false;
-				}
-				log.ModNum(-1, true);
-				this.ToggleOn();
-				return true;
-			}, this.owner, null, 1, false, true, false);
+			return;
 		}
+		if (con != null)
+		{
+			p.TrySetAct("ActExtinguishTorch", delegate
+			{
+				con.Kill();
+				RefreshRenderer();
+				return true;
+			});
+			return;
+		}
+		Thing log = EClass.pc.things.Find("log");
+		string text = "ActTorch".lang() + " ";
+		text += "consumeResource".lang(EClass.sources.cards.map["log"].GetName(), 1.ToString() ?? "", (log?.Num ?? 0).ToString() ?? "");
+		p.TrySetAct(text, delegate
+		{
+			if (log == null)
+			{
+				Msg.Say("noLogForTorch");
+				return false;
+			}
+			log.ModNum(-1);
+			ToggleOn();
+			return true;
+		}, owner);
 	}
 }

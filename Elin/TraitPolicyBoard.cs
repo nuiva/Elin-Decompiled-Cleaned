@@ -1,14 +1,6 @@
-﻿using System;
-
 public class TraitPolicyBoard : TraitItem
 {
-	public override string LangUse
-	{
-		get
-		{
-			return "actRead";
-		}
-	}
+	public override string LangUse => "actRead";
 
 	public override bool OnUse(Chara c)
 	{

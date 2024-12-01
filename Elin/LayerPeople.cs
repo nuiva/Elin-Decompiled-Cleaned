@@ -1,9 +1,34 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine.UI;
 
 public class LayerPeople : ELayer
 {
+	public enum Mode
+	{
+		Default,
+		Select,
+		Double,
+		Hire
+	}
+
+	public enum ShowMode
+	{
+		Job,
+		Race,
+		Work
+	}
+
+	public static Chara slaveToBuy;
+
+	public ShowMode showMode;
+
+	public LayoutGroup layoutMenu;
+
+	public Action onConfirm;
+
+	public UIMultiList multi;
+
 	public override bool HeaderIsListOf(int id)
 	{
 		return true;
@@ -11,66 +36,68 @@ public class LayerPeople : ELayer
 
 	public override void OnInit()
 	{
-		this.showMode = ELayer.player.pref.modePoeple;
-		if (this.multi.owners.Count == 0)
+		showMode = ELayer.player.pref.modePoeple;
+		if (multi.owners.Count == 0)
 		{
-			this.multi.AddOwner(0, new ListPeople
+			multi.AddOwner(0, new ListPeople
 			{
 				textTab = "residents",
 				memberType = FactionMemberType.Default
 			});
-			this.multi.AddOwner(0, new ListPeople
+			multi.AddOwner(0, new ListPeople
 			{
 				textTab = "livestock",
 				memberType = FactionMemberType.Livestock
 			});
-			this.multi.AddOwner(0, new ListPeople
+			multi.AddOwner(0, new ListPeople
 			{
 				textTab = "guests",
 				memberType = FactionMemberType.Guest
 			});
-			this.langHint = "h_residents";
+			langHint = "h_residents";
 		}
-		this.multi.Build(ELayer.player.pref.sortPeople);
-		this.multi.owners[0].menu = new WindowMenu(this.layoutMenu);
+		multi.Build(ELayer.player.pref.sortPeople);
+		multi.owners[0].menu = new WindowMenu(layoutMenu);
 	}
 
 	public LayerPeople SetOnConfirm(Action _onConfirm)
 	{
-		this.onConfirm = _onConfirm;
+		onConfirm = _onConfirm;
 		return this;
 	}
 
 	public void Confirm()
 	{
-		if (this.onConfirm != null)
+		if (onConfirm != null)
 		{
-			this.onConfirm();
+			onConfirm();
 		}
-		this.Close();
+		Close();
 	}
 
 	public override void OnKill()
 	{
-		ELayer.player.pref.sortPeople = this.multi.owners[0].list.sortMode;
-		ELayer.player.pref.modePoeple = this.showMode;
+		ELayer.player.pref.sortPeople = multi.owners[0].list.sortMode;
+		ELayer.player.pref.modePoeple = showMode;
 		ELayer.scene.screenElin.focusOption = null;
 	}
 
 	public override void OnSwitchContent(Window window)
 	{
-		if (this.multi.Double)
+		if (multi.Double)
 		{
-			this.multi.owners[window.windowIndex].OnSwitchContent();
-			return;
+			multi.owners[window.windowIndex].OnSwitchContent();
 		}
-		this.multi.owners[window.idTab].OnSwitchContent();
+		else
+		{
+			multi.owners[window.idTab].OnSwitchContent();
+		}
 	}
 
-	public static LayerPeople Create(LayerPeople.Mode mode)
+	public static LayerPeople Create(Mode mode)
 	{
 		string path = "LayerPeople";
-		if (mode == LayerPeople.Mode.Double)
+		if (mode == Mode.Double)
 		{
 			path = "LayerPeople/LayerPeopleDouble";
 		}
@@ -79,17 +106,19 @@ public class LayerPeople : ELayer
 
 	public static LayerPeople Create<T>(string langHint = null, Chara owner = null) where T : BaseListPeople
 	{
-		LayerPeople layerPeople = LayerPeople.Create(LayerPeople.Mode.Select);
-		T t = Activator.CreateInstance<T>();
-		t.owner = owner;
-		layerPeople.multi.AddOwner(0, t);
+		LayerPeople layerPeople = Create(Mode.Select);
+		T o = new T
+		{
+			owner = owner
+		};
+		layerPeople.multi.AddOwner(0, o);
 		layerPeople.langHint = langHint;
 		return layerPeople;
 	}
 
 	public static LayerPeople CreateReserve()
 	{
-		LayerPeople layerPeople = LayerPeople.Create(LayerPeople.Mode.Hire);
+		LayerPeople layerPeople = Create(Mode.Hire);
 		layerPeople.multi.AddOwner(0, new ListPeopleCallReserve
 		{
 			textHeader = "actCallReserve"
@@ -101,7 +130,7 @@ public class LayerPeople : ELayer
 
 	public static LayerPeople CreateBed(TraitBed bed)
 	{
-		LayerPeople layerPeople = LayerPeople.Create(LayerPeople.Mode.Double);
+		LayerPeople layerPeople = Create(Mode.Double);
 		layerPeople.multi.AddOwner(0, new ListPeopleBed
 		{
 			textHeader = "candidates",
@@ -109,7 +138,7 @@ public class LayerPeople : ELayer
 		});
 		layerPeople.multi.AddOwner(1, new ListPeopleBed
 		{
-			textHeader = "listBedHolder".lang(bed.MaxHolders.ToString() ?? "", null, null, null, null),
+			textHeader = "listBedHolder".lang(bed.MaxHolders.ToString() ?? ""),
 			bed = bed
 		});
 		ELayer.ui.AddLayer(layerPeople);
@@ -118,7 +147,7 @@ public class LayerPeople : ELayer
 
 	public static LayerPeople CreateSelectEmbarkMembers(List<Chara> settlers)
 	{
-		LayerPeople layerPeople = LayerPeople.Create(LayerPeople.Mode.Double);
+		LayerPeople layerPeople = Create(Mode.Double);
 		List<Chara> list = new List<Chara>();
 		foreach (Chara chara in ELayer.game.lastActiveZone.map.charas)
 		{
@@ -142,14 +171,14 @@ public class LayerPeople : ELayer
 
 	public static LayerPeople Create(BaseListPeople list)
 	{
-		LayerPeople layerPeople = LayerPeople.Create(LayerPeople.Mode.Select);
+		LayerPeople layerPeople = Create(Mode.Select);
 		layerPeople.multi.AddOwner(0, list);
 		return layerPeople;
 	}
 
 	public static LayerPeople CreateSelect(string langHeader, string langHint, Action<UIList> onList, Action<Chara> onClick, Func<Chara, string> _onShowSubText = null)
 	{
-		LayerPeople layerPeople = LayerPeople.Create(LayerPeople.Mode.Select);
+		LayerPeople layerPeople = Create(Mode.Select);
 		layerPeople.multi.AddOwner(0, new ListPeopleSelect
 		{
 			textHeader = langHeader,
@@ -160,30 +189,5 @@ public class LayerPeople : ELayer
 		layerPeople.langHint = langHint;
 		ELayer.ui.AddLayer(layerPeople);
 		return layerPeople;
-	}
-
-	public static Chara slaveToBuy;
-
-	public LayerPeople.ShowMode showMode;
-
-	public LayoutGroup layoutMenu;
-
-	public Action onConfirm;
-
-	public UIMultiList multi;
-
-	public enum Mode
-	{
-		Default,
-		Select,
-		Double,
-		Hire
-	}
-
-	public enum ShowMode
-	{
-		Job,
-		Race,
-		Work
 	}
 }

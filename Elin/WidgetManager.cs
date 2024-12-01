@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using SFB;
@@ -7,48 +7,49 @@ using UnityEngine.UI;
 
 public class WidgetManager : EMono
 {
-	public List<Widget.Meta> metas
+	public class SaveData
 	{
-		get
-		{
-			return EMono.setting.ui.widgetMetas;
-		}
+		public Dictionary<string, Widget.Config> dict;
 	}
 
-	public Dictionary<string, Widget.Config> configs
-	{
-		get
-		{
-			return EMono.player.widgets.dict;
-		}
-	}
+	public Dictionary<string, Widget.Meta> metaMap = new Dictionary<string, Widget.Meta>();
+
+	public string currentPath;
+
+	[NonSerialized]
+	public List<Widget> list = new List<Widget>();
+
+	private bool first;
+
+	public List<Widget.Meta> metas => EMono.setting.ui.widgetMetas;
+
+	public Dictionary<string, Widget.Config> configs => EMono.player.widgets.dict;
 
 	public void OnActivateZone()
 	{
-		if (!this.first)
+		if (!first)
 		{
 			return;
 		}
-		this.first = false;
-		foreach (Widget.Config config in this.configs.Values)
+		first = false;
+		foreach (Widget.Config value in configs.Values)
 		{
-			if (config.state == Widget.State.Active)
+			if (value.state == Widget.State.Active)
 			{
-				this.ActivateWidget(config);
+				ActivateWidget(value);
 			}
 		}
-		bool flag = EMono.ui.layerFloat.GetLayer<LayerInventory>(false);
-		if (this.GetWidget("Equip") == null)
+		bool flag = EMono.ui.layerFloat.GetLayer<LayerInventory>();
+		if (GetWidget("Equip") == null)
 		{
 			if (flag)
 			{
-				this.Activate("Equip");
-				return;
+				Activate("Equip");
 			}
 		}
 		else if (!flag)
 		{
-			this.DeactivateWidget("Equip");
+			DeactivateWidget("Equip");
 		}
 	}
 
@@ -57,128 +58,128 @@ public class WidgetManager : EMono
 		if (Application.isEditor && EMono.debug.resetPlayerConfig && !EMono.player.isEditor)
 		{
 			EMono.player.useSubWidgetTheme = false;
-			EMono.ui.widgets.Load(false, null);
+			EMono.ui.widgets.Load(isSubTheme: false);
 		}
-		this.first = true;
+		first = true;
 		if (EMono.player.useSubWidgetTheme)
 		{
 			if (EMono.player.subWidgets == null)
 			{
-				this.Load(true, null);
+				Load(isSubTheme: true);
 			}
 		}
 		else if (EMono.player.mainWidgets == null)
 		{
-			this.Load(false, null);
+			Load(isSubTheme: false);
 			if (Screen.width <= 1300 && !EMono.player.useSubWidgetTheme)
 			{
-				foreach (KeyValuePair<string, Widget.Config> keyValuePair in EMono.player.mainWidgets.dict)
+				foreach (KeyValuePair<string, Widget.Config> item in EMono.player.mainWidgets.dict)
 				{
-					if (keyValuePair.Key == "StatsBar")
+					if (item.Key == "StatsBar")
 					{
-						keyValuePair.Value.state = Widget.State.Inactive;
+						item.Value.state = Widget.State.Inactive;
 					}
 				}
 			}
 		}
-		if (this.metaMap.Count == 0)
+		if (metaMap.Count == 0)
 		{
-			foreach (Widget.Meta meta in this.metas)
+			foreach (Widget.Meta meta in metas)
 			{
-				this.metaMap.Add(meta.id, meta);
+				metaMap.Add(meta.id, meta);
 			}
 		}
-		foreach (Widget.Meta meta2 in this.metas)
+		foreach (Widget.Meta meta2 in metas)
 		{
-			if (!this.configs.ContainsKey(meta2.id))
+			if (!configs.ContainsKey(meta2.id))
 			{
 				Widget.Config config = new Widget.Config
 				{
 					meta = meta2,
 					valid = true,
 					id = meta2.id,
-					state = (meta2.enabled ? Widget.State.Active : Widget.State.Inactive),
+					state = ((!meta2.enabled) ? Widget.State.Inactive : Widget.State.Active),
 					locked = meta2.locked
 				};
 				config.skin.SetID(0);
-				this.configs.Add(meta2.id, config);
+				configs.Add(meta2.id, config);
 			}
 			else
 			{
-				Widget.Config config2 = this.configs[meta2.id];
+				Widget.Config config2 = configs[meta2.id];
 				config2.valid = true;
 				config2.meta = meta2;
 			}
 		}
-		foreach (Widget.Config config3 in this.configs.Values.ToList<Widget.Config>())
+		foreach (Widget.Config item2 in configs.Values.ToList())
 		{
-			if (!config3.valid)
+			if (!item2.valid)
 			{
-				this.configs.Remove(config3.id);
+				configs.Remove(item2.id);
 			}
 		}
 	}
 
 	public void OnKillGame()
 	{
-		this.KillWidgets();
+		KillWidgets();
 	}
 
 	public void OnChangeActionMode()
 	{
-		foreach (Widget widget in this.list)
+		foreach (Widget item in list)
 		{
-			widget.OnChangeActionMode();
+			item.OnChangeActionMode();
 		}
 	}
 
 	public void UpdateConfigs()
 	{
-		foreach (Widget widget in this.list)
+		foreach (Widget item in list)
 		{
-			widget.UpdateConfig();
+			item.UpdateConfig();
 		}
 	}
 
 	public void Activate(string id)
 	{
-		if (!this.GetWidget(id))
+		if (!GetWidget(id))
 		{
-			this.ActivateWidget(this.configs[id]);
+			ActivateWidget(configs[id]);
 		}
 	}
 
 	public Widget Toggle(string id)
 	{
-		Widget widget = this.GetWidget(id);
-		if (widget)
+		Widget widget = GetWidget(id);
+		if ((bool)widget)
 		{
-			this.DeactivateWidget(widget);
+			DeactivateWidget(widget);
 			return null;
 		}
-		return this.ActivateWidget(this.configs[id]);
+		return ActivateWidget(configs[id]);
 	}
 
 	public Widget Toggle(Widget.Config c)
 	{
-		Widget widget = this.GetWidget(c.id);
-		if (widget)
+		Widget widget = GetWidget(c.id);
+		if ((bool)widget)
 		{
-			this.DeactivateWidget(widget);
+			DeactivateWidget(widget);
 			return null;
 		}
-		return this.ActivateWidget(c);
+		return ActivateWidget(c);
 	}
 
 	public void ToggleLock(Widget.Config c)
 	{
 		c.locked = !c.locked;
-		this.RefreshWidget(c);
+		RefreshWidget(c);
 	}
 
 	public Widget ActivateWidget(Widget.Config c)
 	{
-		return this.ActivateWidget(c.id);
+		return ActivateWidget(c.id);
 	}
 
 	public Widget ActivateWidget(string id)
@@ -190,11 +191,11 @@ public class WidgetManager : EMono
 			Debug.LogError("Widget:" + id + " not found.");
 			return null;
 		}
-		this.list.Add(widget);
+		list.Add(widget);
 		widget.gameObject.name = text;
 		widget.Activate();
-		this.RefreshWidget(widget);
-		if (LayerWidget.Instance)
+		RefreshWidget(widget);
+		if ((bool)LayerWidget.Instance)
 		{
 			widget.OnManagerActivate();
 		}
@@ -204,11 +205,11 @@ public class WidgetManager : EMono
 			bool flag = false;
 			if (setSiblingAfter != null)
 			{
-				foreach (Widget widget2 in this.list)
+				foreach (Widget item in list)
 				{
-					if (widget2.GetType() == setSiblingAfter)
+					if (item.GetType() == setSiblingAfter)
 					{
-						widget.transform.SetSiblingIndex(widget2.transform.GetSiblingIndex() + 1);
+						widget.transform.SetSiblingIndex(item.transform.GetSiblingIndex() + 1);
 						flag = true;
 						break;
 					}
@@ -224,25 +225,24 @@ public class WidgetManager : EMono
 
 	public void RefreshWidget(Widget.Config c)
 	{
-		this.RefreshWidget(this.GetWidget(c.id));
+		RefreshWidget(GetWidget(c.id));
 	}
 
 	public void RefreshWidget(Widget w)
 	{
-		if (!w)
+		if ((bool)w)
 		{
-			return;
+			w.dragPanel.GetComponent<Graphic>().raycastTarget = !w.config.locked;
 		}
-		w.dragPanel.GetComponent<Graphic>().raycastTarget = !w.config.locked;
 	}
 
 	public Widget GetWidget(string id)
 	{
-		foreach (Widget widget in this.list)
+		foreach (Widget item in list)
 		{
-			if (widget.gameObject.name == "Widget" + id)
+			if (item.gameObject.name == "Widget" + id)
 			{
-				return widget;
+				return item;
 			}
 		}
 		return null;
@@ -250,48 +250,47 @@ public class WidgetManager : EMono
 
 	public void DeactivateWidget(string id)
 	{
-		this.DeactivateWidget(this.GetWidget(id));
+		DeactivateWidget(GetWidget(id));
 	}
 
 	public void DeactivateWidget(Widget w)
 	{
-		if (w == null)
+		if (!(w == null))
 		{
-			return;
-		}
-		this.list.Remove(w);
-		w.Deactivate();
-		if (LayerWidget.Instance)
-		{
-			LayerWidget.Instance.Refresh();
+			list.Remove(w);
+			w.Deactivate();
+			if ((bool)LayerWidget.Instance)
+			{
+				LayerWidget.Instance.Refresh();
+			}
 		}
 	}
 
 	public void KillWidgets()
 	{
-		this.DestroyChildren(true, true);
-		this.list.Clear();
-		this.first = true;
+		this.DestroyChildren(destroyInactive: true);
+		list.Clear();
+		first = true;
 	}
 
 	public void Show()
 	{
-		foreach (Widget widget in this.list)
+		foreach (Widget item in list)
 		{
-			if (widget.IsInRightMode())
+			if (item.IsInRightMode())
 			{
-				widget.gameObject.SetActive(true);
+				item.gameObject.SetActive(value: true);
 			}
 		}
 	}
 
 	public void Hide()
 	{
-		foreach (Widget widget in this.list)
+		foreach (Widget item in list)
 		{
-			if (widget is WidgetCurrentTool || widget is WidgetQuestTracker || widget is WidgetTracker || widget is WidgetMemo || widget is WidgetEquip)
+			if (item is WidgetCurrentTool || item is WidgetQuestTracker || item is WidgetTracker || item is WidgetMemo || item is WidgetEquip)
 			{
-				widget.gameObject.SetActive(false);
+				item.gameObject.SetActive(value: false);
 			}
 		}
 	}
@@ -302,18 +301,18 @@ public class WidgetManager : EMono
 		{
 			WidgetMainText.Instance._ToggleLog();
 		}
-		if (WidgetMainText.Instance)
+		if ((bool)WidgetMainText.Instance)
 		{
-			(WidgetMainText.boxBk = WidgetMainText.Instance.box).transform.SetParent(base.transform.parent, false);
+			(WidgetMainText.boxBk = WidgetMainText.Instance.box).transform.SetParent(base.transform.parent, worldPositionStays: false);
 		}
-		this.KillWidgets();
+		KillWidgets();
 		if (toggleTheme)
 		{
 			EMono.player.useSubWidgetTheme = !EMono.player.useSubWidgetTheme;
 		}
-		this.OnGameInstantiated();
-		this.OnActivateZone();
-		this.OnChangeActionMode();
+		OnGameInstantiated();
+		OnActivateZone();
+		OnChangeActionMode();
 	}
 
 	public void DialogSave(Action onSave = null)
@@ -325,13 +324,15 @@ public class WidgetManager : EMono
 			{
 				if (!EMono.debug.enable && (text.Contains("Default.json") || text.Contains("Modern.json") || text.Contains("Classic.json")))
 				{
-					Dialog.Ok("dialogInvalidTheme", null);
-					return;
+					Dialog.Ok("dialogInvalidTheme");
 				}
-				this.Save(text);
-				if (onSave != null)
+				else
 				{
-					onSave();
+					Save(text);
+					if (onSave != null)
+					{
+						onSave();
+					}
 				}
 			}
 		});
@@ -341,11 +342,11 @@ public class WidgetManager : EMono
 	{
 		EMono.core.WaitForEndOfFrame(delegate
 		{
-			string[] array = StandaloneFileBrowser.OpenFilePanel("Load Widget Theme", CorePath.WidgetSave, "json", false);
+			string[] array = StandaloneFileBrowser.OpenFilePanel("Load Widget Theme", CorePath.WidgetSave, "json", multiselect: false);
 			if (array.Length != 0)
 			{
-				this.Load(EMono.player.useSubWidgetTheme, array[0]);
-				this.Reset(false);
+				Load(EMono.player.useSubWidgetTheme, array[0]);
+				Reset(toggleTheme: false);
 				if (onLoad != null)
 				{
 					onLoad();
@@ -360,8 +361,8 @@ public class WidgetManager : EMono
 		{
 			path = CorePath.WidgetSave + (EMono.player.useSubWidgetTheme ? EMono.core.config.other.idSubWidgetTheme : EMono.core.config.other.idMainWidgetTheme) + ".json";
 		}
-		this.UpdateConfigs();
-		IO.SaveFile(path, EMono.player.widgets, false, null);
+		UpdateConfigs();
+		IO.SaveFile(path, EMono.player.widgets);
 	}
 
 	public void Load(bool isSubTheme, string path = null)
@@ -370,7 +371,7 @@ public class WidgetManager : EMono
 		{
 			path = CorePath.WidgetSave + (isSubTheme ? EMono.core.config.other.idSubWidgetTheme : EMono.core.config.other.idMainWidgetTheme) + ".json";
 		}
-		WidgetManager.SaveData saveData = IO.LoadFile<WidgetManager.SaveData>(path, false, null);
+		SaveData saveData = IO.LoadFile<SaveData>(path);
 		if (isSubTheme)
 		{
 			EMono.player.subWidgets = saveData;
@@ -379,20 +380,6 @@ public class WidgetManager : EMono
 		{
 			EMono.player.mainWidgets = saveData;
 		}
-		this.currentPath = path;
-	}
-
-	public Dictionary<string, Widget.Meta> metaMap = new Dictionary<string, Widget.Meta>();
-
-	public string currentPath;
-
-	[NonSerialized]
-	public List<Widget> list = new List<Widget>();
-
-	private bool first;
-
-	public class SaveData
-	{
-		public Dictionary<string, Widget.Config> dict;
+		currentPath = path;
 	}
 }

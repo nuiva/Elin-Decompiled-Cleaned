@@ -1,30 +1,24 @@
-﻿using System;
-
 public class TraitLeash : TraitTool
 {
 	public override void TrySetHeldAct(ActPlan p)
 	{
-		p.pos.ListCards(false).ForEach(delegate(Card a)
+		p.pos.ListCards().ForEach(delegate(Card a)
 		{
 			Chara c = a.Chara;
-			if (c == null || !c.IsPCParty || c.IsPC)
+			if (c != null && c.IsPCParty && !c.IsPC && p.IsSelfOrNeighbor && EClass.pc.CanSee(a))
 			{
-				return;
-			}
-			if (p.IsSelfOrNeighbor && EClass.pc.CanSee(a))
-			{
-				p.TrySetAct(c.isLeashed ? "actUnleash" : "actLeash", delegate()
+				p.TrySetAct(c.isLeashed ? "actUnleash" : "actLeash", delegate
 				{
-					EClass.pc.Say(c.isLeashed ? "use_leash2" : "use_leash", c, this.owner, null, null);
-					EClass.pc.PlaySound("ride", 1f, true);
+					EClass.pc.Say(c.isLeashed ? "use_leash2" : "use_leash", c, owner);
+					EClass.pc.PlaySound("ride");
 					c.isLeashed = !c.isLeashed;
 					if (c.isLeashed)
 					{
-						c.Talk("pervert2", null, null, false);
+						c.Talk("pervert2");
 					}
-					c.PlayAnime(AnimeID.Shiver, false);
+					c.PlayAnime(AnimeID.Shiver);
 					return false;
-				}, c, null, 1, false, true, false);
+				}, c);
 			}
 		});
 	}

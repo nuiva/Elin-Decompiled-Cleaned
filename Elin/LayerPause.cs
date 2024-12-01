@@ -1,4 +1,3 @@
-﻿using System;
 using UnityEngine;
 
 public class LayerPause : ELayer
@@ -7,7 +6,7 @@ public class LayerPause : ELayer
 	{
 		if (Input.anyKeyDown)
 		{
-			this.Close();
+			Close();
 		}
 	}
 

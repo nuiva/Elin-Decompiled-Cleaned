@@ -1,17 +1,9 @@
-﻿using System;
-
 public class RenderDataChara : RenderDataCard
 {
-	public override string prefabName
-	{
-		get
-		{
-			return "CharaActor";
-		}
-	}
+	public override string prefabName => "CharaActor";
 
 	private void OnValidate()
 	{
-		this._offset = this.offset;
+		_offset = offset;
 	}
 }

@@ -1,91 +1,34 @@
-﻿using System;
 using UnityEngine;
 
 public class BaseSticky : EClass
 {
-	public virtual string idSound
-	{
-		get
-		{
-			return "sticky";
-		}
-	}
+	public UIItem item;
 
-	public virtual int idIcon
-	{
-		get
-		{
-			return 0;
-		}
-	}
+	public virtual string idSound => "sticky";
 
-	public virtual bool animate
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public virtual int idIcon => 0;
 
-	public virtual bool bold
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool animate => true;
 
-	public virtual bool ShouldShow
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public virtual bool bold => false;
 
-	public virtual bool Removable
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool ShouldShow => true;
 
-	public virtual bool ForceShowText
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool Removable => false;
 
-	public virtual bool AllowMultiple
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool ForceShowText => false;
 
-	public virtual bool RemoveOnClick
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool AllowMultiple => false;
 
-	public virtual string idLang
-	{
-		get
-		{
-			return "";
-		}
-	}
+	public virtual bool RemoveOnClick => false;
+
+	public virtual string idLang => "";
+
+	public WidgetSticky widget => WidgetSticky.Instance;
 
 	public virtual string GetText()
 	{
-		return this.idLang.lang();
+		return idLang.lang();
 	}
 
 	public virtual void Refresh()
@@ -98,55 +41,45 @@ public class BaseSticky : EClass
 
 	public virtual void RefreshButton()
 	{
-		UIButton button = this.item.button1;
-		this.SetText();
-		if (this.idIcon == -1)
+		UIButton button = item.button1;
+		SetText();
+		if (idIcon == -1)
 		{
-			button.icon.SetActive(false);
+			button.icon.SetActive(enable: false);
 		}
 		else
 		{
-			button.icon.sprite = this.widget.icons[this.idIcon];
+			button.icon.sprite = widget.icons[idIcon];
 			button.icon.SetNativeSize();
 		}
-		button.onClick.AddListener(delegate()
+		button.onClick.AddListener(delegate
 		{
-			this.OnClick();
-			if (this.RemoveOnClick)
+			OnClick();
+			if (RemoveOnClick)
 			{
 				WidgetSticky.Instance._Remove(this);
 			}
 		});
-		button.onRightClick = delegate()
+		button.onRightClick = delegate
 		{
-			if (this.Removable)
+			if (Removable)
 			{
-				this.widget._Remove(this);
+				widget._Remove(this);
 			}
 			else
 			{
 				SE.Beep();
 			}
-			EInput.Consume(false, 1);
+			EInput.Consume();
 		};
-		button.mainText.SetActive(this.widget.extra.showText || this.ForceShowText);
-		button.RebuildLayout(false);
+		button.mainText.SetActive(widget.extra.showText || ForceShowText);
+		button.RebuildLayout();
 	}
 
 	public virtual void SetText()
 	{
-		UIButton button = this.item.button1;
-		button.mainText.fontStyle = (this.bold ? FontStyle.Bold : FontStyle.Normal);
-		button.mainText.SetText(this.GetText());
+		UIButton button = item.button1;
+		button.mainText.fontStyle = (bold ? FontStyle.Bold : FontStyle.Normal);
+		button.mainText.SetText(GetText());
 	}
-
-	public WidgetSticky widget
-	{
-		get
-		{
-			return WidgetSticky.Instance;
-		}
-	}
-
-	public UIItem item;
 }

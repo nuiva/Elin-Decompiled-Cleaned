@@ -1,51 +1,25 @@
-﻿using System;
-
 public class TraitTile : Trait
 {
-	public virtual TileRow source
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public virtual TileRow source => null;
 
-	public virtual string suffix
-	{
-		get
-		{
-			return "";
-		}
-	}
+	public virtual string suffix => "";
 
-	public override bool CanExtendBuild
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanExtendBuild => true;
 
-	public override bool CanBuildInTown
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBuildInTown => false;
 
 	public override void SetName(ref string s)
 	{
-		s = this.source.GetName();
+		s = source.GetName();
 	}
 
 	public override Recipe GetRecipe()
 	{
-		return Recipe.Create(RecipeManager.dict[this.source.RecipeID + this.suffix], this.owner.material.id, null);
+		return Recipe.Create(RecipeManager.dict[source.RecipeID + suffix], owner.material.id);
 	}
 
 	public override Recipe GetBuildModeRecipe()
 	{
-		return Recipe.Create(RecipeManager.dict[this.source.RecipeID + this.suffix], -1, this.owner.Thing);
+		return Recipe.Create(RecipeManager.dict[source.RecipeID + suffix], -1, owner.Thing);
 	}
 }

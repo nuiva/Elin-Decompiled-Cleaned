@@ -1,59 +1,32 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class HomeResource : BaseHomeResource
 {
-	public override void OnAdvanceDay()
-	{
-		this.lastValue = this.value;
-	}
-
-	public override void Mod(int a, bool popText = true)
-	{
-		if (a == 0)
-		{
-			return;
-		}
-		this.value += a;
-		if (popText)
-		{
-			WidgetPopText.SayValue(base.Name, a, false, base.Sprite);
-		}
-	}
-
-	public void AddResource(int a, ref string s)
-	{
-		if (a == 0)
-		{
-			return;
-		}
-		this.value += a;
-		s = s + (base.Name + " " + a.ToString()).TagColorGoodBad(() => a > 0, false) + ",";
-	}
-
-	public class CostList : List<HomeResource.Cost>
+	public class CostList : List<Cost>
 	{
 		public string GetText()
 		{
 			string text = "";
-			using (List<HomeResource.Cost>.Enumerator enumerator = base.GetEnumerator())
+			using Enumerator enumerator = GetEnumerator();
+			while (enumerator.MoveNext())
 			{
-				while (enumerator.MoveNext())
-				{
-					HomeResource.Cost c = enumerator.Current;
-					text = text + (c.resource.Name + ":" + c.cost.ToString()).TagColorGoodBad(() => c.resource.value >= c.cost, () => c.resource.value < c.cost, false) + " ";
-				}
+				Cost c = enumerator.Current;
+				text = text + (c.resource.Name + ":" + c.cost).TagColorGoodBad(() => c.resource.value >= c.cost, () => c.resource.value < c.cost) + " ";
 			}
 			return text;
 		}
 
 		public bool CanPay()
 		{
-			foreach (HomeResource.Cost cost in this)
+			using (Enumerator enumerator = GetEnumerator())
 			{
-				if (cost.resource.value < cost.cost)
+				while (enumerator.MoveNext())
 				{
-					return false;
+					Cost current = enumerator.Current;
+					if (current.resource.value < current.cost)
+					{
+						return false;
+					}
 				}
 			}
 			return true;
@@ -61,23 +34,51 @@ public class HomeResource : BaseHomeResource
 
 		public void Pay()
 		{
-			foreach (HomeResource.Cost cost in this)
+			using Enumerator enumerator = GetEnumerator();
+			while (enumerator.MoveNext())
 			{
-				cost.resource.Mod(-cost.cost, true);
+				Cost current = enumerator.Current;
+				current.resource.Mod(-current.cost);
 			}
 		}
 	}
 
 	public class Cost
 	{
-		public Cost(HomeResource _resource, int _cost)
-		{
-			this.resource = _resource;
-			this.cost = _cost;
-		}
-
 		public int cost;
 
 		public HomeResource resource;
+
+		public Cost(HomeResource _resource, int _cost)
+		{
+			resource = _resource;
+			cost = _cost;
+		}
+	}
+
+	public override void OnAdvanceDay()
+	{
+		lastValue = value;
+	}
+
+	public override void Mod(int a, bool popText = true)
+	{
+		if (a != 0)
+		{
+			value += a;
+			if (popText)
+			{
+				WidgetPopText.SayValue(base.Name, a, negative: false, base.Sprite);
+			}
+		}
+	}
+
+	public void AddResource(int a, ref string s)
+	{
+		if (a != 0)
+		{
+			value += a;
+			s = s + (base.Name + " " + a).TagColorGoodBad(() => a > 0) + ",";
+		}
 	}
 }

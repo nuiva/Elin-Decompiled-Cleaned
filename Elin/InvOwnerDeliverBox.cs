@@ -1,16 +1,9 @@
-﻿using System;
-
 public class InvOwnerDeliverBox : InvOwnerDraglet
 {
-	public override string langTransfer
-	{
-		get
-		{
-			return "invDeliver";
-		}
-	}
+	public override string langTransfer => "invDeliver";
 
-	public InvOwnerDeliverBox(Card owner = null, Card container = null, CurrencyType _currency = CurrencyType.None) : base(owner, container, _currency)
+	public InvOwnerDeliverBox(Card owner = null, Card container = null, CurrencyType _currency = CurrencyType.None)
+		: base(owner, container, _currency)
 	{
 	}
 

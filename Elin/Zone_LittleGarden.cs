@@ -1,14 +1,6 @@
-﻿using System;
-
 public class Zone_LittleGarden : Zone_Civilized
 {
-	public override ZoneTransition.EnterState RegionEnterState
-	{
-		get
-		{
-			return ZoneTransition.EnterState.Right;
-		}
-	}
+	public override ZoneTransition.EnterState RegionEnterState => ZoneTransition.EnterState.Right;
 
 	public override void OnRegenerate()
 	{

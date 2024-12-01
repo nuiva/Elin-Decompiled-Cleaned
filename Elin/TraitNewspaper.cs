@@ -1,5 +1,3 @@
-﻿using System;
-
 public class TraitNewspaper : TraitScroll
 {
 	public override void OnRead(Chara c)
@@ -9,13 +7,13 @@ public class TraitNewspaper : TraitScroll
 
 	public override void TrySetAct(ActPlan p)
 	{
-		if (!p.altAction && this.CanRead(EClass.pc))
+		if (!p.altAction && CanRead(EClass.pc))
 		{
-			p.TrySetAct("invRead", delegate()
+			p.TrySetAct("invRead", delegate
 			{
 				EClass.ui.AddLayer<LayerNewspaper>();
 				return false;
-			}, this.owner, null, 1, false, true, false);
+			}, owner);
 		}
 	}
 }

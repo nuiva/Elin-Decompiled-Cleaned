@@ -1,51 +1,24 @@
-﻿using System;
-using UnityEngine;
-
 public class TraitScrollStatic : TraitScroll
 {
 	public override SourceElement.Row source
 	{
 		get
 		{
-			if (this.owner.sourceCard.vals.Length == 0)
+			if (owner.sourceCard.vals.Length == 0)
 			{
 				return null;
 			}
-			return EClass.sources.elements.alias.TryGetValue(this.owner.sourceCard.vals[0], null);
+			return EClass.sources.elements.alias.TryGetValue(owner.sourceCard.vals[0]);
 		}
 	}
 
-	public virtual EffectId idEffect
-	{
-		get
-		{
-			return this.owner.sourceCard.vals[1].ToEnum(true);
-		}
-	}
+	public virtual EffectId idEffect => owner.sourceCard.vals[1].ToEnum<EffectId>();
 
-	public virtual int Power
-	{
-		get
-		{
-			return int.Parse(this.owner.sourceCard.vals[2]);
-		}
-	}
+	public virtual int Power => int.Parse(owner.sourceCard.vals[2]);
 
-	public virtual string AliasEle
-	{
-		get
-		{
-			return this.owner.sourceCard.vals.TryGet(3, true);
-		}
-	}
+	public virtual string AliasEle => owner.sourceCard.vals.TryGet(3, returnNull: true);
 
-	public virtual string N1
-	{
-		get
-		{
-			return this.owner.sourceCard.vals.TryGet(4, -1);
-		}
-	}
+	public virtual string N1 => owner.sourceCard.vals.TryGet(4);
 
 	public override bool CanRead(Chara c)
 	{
@@ -56,28 +29,28 @@ public class TraitScrollStatic : TraitScroll
 	{
 		if ((c.isConfused || c.HasCondition<ConDim>()) && EClass.rnd(4) == 0)
 		{
-			c.Say("stagger", c, null, null);
+			c.Say("stagger", c);
 			if (EClass.rnd(2) == 0)
 			{
 				TraitBaseSpellbook.ReadFailEffect(c);
 			}
 			return;
 		}
-		if (c.IsPC && (this.idEffect == EffectId.Identify || this.idEffect == EffectId.GreaterIdentify))
+		if (c.IsPC && (idEffect == EffectId.Identify || idEffect == EffectId.GreaterIdentify))
 		{
-			foreach (Thing thing in EClass.pc.things.List((Thing t) => t.id == this.owner.id, true))
+			foreach (Thing item in EClass.pc.things.List((Thing t) => t.id == owner.id, onlyAccessible: true))
 			{
-				thing.Identify(false, IDTSource.Identify);
+				item.Identify(show: false);
 			}
 		}
-		this.owner.ModNum(-1, true);
-		c.PlayEffect("cast", true, 0f, default(Vector3));
-		ActEffect.ProcAt(this.idEffect, this.Power, this.owner.blessedState, c, null, c.pos, false, new ActRef
+		owner.ModNum(-1);
+		c.PlayEffect("cast");
+		ActEffect.ProcAt(idEffect, Power, owner.blessedState, c, null, c.pos, isNeg: false, new ActRef
 		{
-			aliasEle = this.AliasEle,
-			n1 = this.N1,
-			refThing = this.owner.Thing
+			aliasEle = AliasEle,
+			n1 = N1,
+			refThing = owner.Thing
 		});
-		c.elements.ModExp(285, 50, false);
+		c.elements.ModExp(285, 50);
 	}
 }

@@ -1,129 +1,74 @@
-﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class HotItem : UIButton.Item
 {
-	public override Sprite SpriteHighlight
-	{
-		get
-		{
-			return EClass.core.refs.spritesHighlight[1];
-		}
-	}
+	public ButtonHotItem button;
 
-	public override bool IsSelectable
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public Hotbar hotbar;
 
-	public override string TextTip
-	{
-		get
-		{
-			return base.TextTip + this.TextHotkey();
-		}
-	}
+	public bool disabled;
 
-	public string TextHotkey()
-	{
-		if (!this.hotbar.ShowFunctionKey)
-		{
-			return "";
-		}
-		int num = this.hotbar.CurrentPage.items.IndexOf(this) + 1;
-		if (num > 8)
-		{
-			return "";
-		}
-		return " (F" + num.ToString() + ")";
-	}
+	public override Sprite SpriteHighlight => EClass.core.refs.spritesHighlight[1];
 
-	public virtual void OnClick(ButtonHotItem b, Hotbar h)
-	{
-		this.OnClick(b);
-	}
+	public override bool IsSelectable => true;
 
-	public virtual void OnRightClick(ButtonHotItem b)
-	{
-		WidgetHotbar widget = b.widget;
-		if (widget == null)
-		{
-			return;
-		}
-		widget.ShowContextMenu();
-	}
+	public override string TextTip => base.TextTip + TextHotkey();
 
 	public virtual Thing RenderThing
 	{
 		get
 		{
-			if (EClass.pc.ai.RenderThing != null)
+			if (EClass.pc.ai.RenderThing == null)
 			{
-				return EClass.pc.ai.RenderThing;
-			}
-			if (EClass.player.renderThing != null)
-			{
+				if (EClass.player.renderThing == null)
+				{
+					if (!(Thing?.trait is TraitAbility))
+					{
+						return Thing;
+					}
+					return null;
+				}
 				return EClass.player.renderThing;
 			}
-			Thing thing = this.Thing;
-			if (!(((thing != null) ? thing.trait : null) is TraitAbility))
-			{
-				return this.Thing;
-			}
-			return null;
+			return EClass.pc.ai.RenderThing;
 		}
 	}
 
-	public virtual Thing Thing
+	public virtual Thing Thing => null;
+
+	public virtual Thing Tool => null;
+
+	public virtual bool IsTool => false;
+
+	public virtual bool LookAtMouse => false;
+
+	public virtual bool IsGameAction => false;
+
+	public virtual bool UseUIObjMaterial => false;
+
+	public string TextHotkey()
 	{
-		get
+		if (!hotbar.ShowFunctionKey)
 		{
-			return null;
+			return "";
 		}
+		int num = hotbar.CurrentPage.items.IndexOf(this) + 1;
+		if (num > 8)
+		{
+			return "";
+		}
+		return " (F" + num + ")";
 	}
 
-	public virtual Thing Tool
+	public virtual void OnClick(ButtonHotItem b, Hotbar h)
 	{
-		get
-		{
-			return null;
-		}
+		OnClick(b);
 	}
 
-	public virtual bool IsTool
+	public virtual void OnRightClick(ButtonHotItem b)
 	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool LookAtMouse
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool IsGameAction
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool UseUIObjMaterial
-	{
-		get
-		{
-			return false;
-		}
+		b.widget?.ShowContextMenu();
 	}
 
 	public virtual bool CanAutoFire(Chara tg)
@@ -145,16 +90,18 @@ public class HotItem : UIButton.Item
 
 	public virtual void SetImage(Image icon)
 	{
-		icon.sprite = (this.GetSprite() ?? EClass.core.refs.icons.defaultHotItem);
-		icon.color = this.SpriteColor;
-		icon.transform.localScale = this.SpriteScale;
+		icon.sprite = GetSprite() ?? EClass.core.refs.icons.defaultHotItem;
+		icon.color = SpriteColor;
+		icon.transform.localScale = SpriteScale;
 		icon.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-		if (this.AdjustImageSize)
+		if (AdjustImageSize)
 		{
 			icon.SetNativeSize();
-			return;
 		}
-		icon.Rect().sizeDelta = new Vector2(48f, 48f);
+		else
+		{
+			icon.Rect().sizeDelta = new Vector2(48f, 48f);
+		}
 	}
 
 	public virtual bool TrySetAct(ActPlan p)
@@ -169,10 +116,4 @@ public class HotItem : UIButton.Item
 	public virtual void OnRenderTile(Point point, HitResult result, int dir)
 	{
 	}
-
-	public ButtonHotItem button;
-
-	public Hotbar hotbar;
-
-	public bool disabled;
 }

@@ -1,98 +1,8 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class AI_HaulResource : TaskPoint
 {
-	public override IEnumerable<AIAct.Status> Run()
-	{
-		bool flag;
-		do
-		{
-			flag = true;
-			int num2;
-			for (int i = 0; i < this.recipe.ingredients.Count; i = num2 + 1)
-			{
-				Recipe.Ingredient ing = this.recipe.ingredients[i];
-				if (this.reqs[i] > 0)
-				{
-					if (ing.thing == null)
-					{
-						ing.RefreshThing();
-					}
-					if (ing.thing == null || ing.thing.isDestroyed)
-					{
-						ing.thing = null;
-						yield return this.Cancel();
-					}
-					if (!this.HoldingResource(ing))
-					{
-						yield return base.DoGrab(ing.thing, this.reqs[i], false, null);
-					}
-					if (this.target == null)
-					{
-						for (;;)
-						{
-							Point objPos = null;
-							Point blockPos = null;
-							this.pos.ForeachMultiSize(this.recipe.W, this.recipe.H, delegate(Point p, bool main)
-							{
-								if (p.HasObj && !p.HasMinableBlock && !this.recipe.tileType.AllowObj)
-								{
-									objPos = p.Copy();
-								}
-								if (p.HasBlock && !this.recipe.tileType.CanBuiltOnBlock)
-								{
-									blockPos = p.Copy();
-								}
-							});
-							if (blockPos != null)
-							{
-								yield return base.Do(new TaskMine
-								{
-									pos = blockPos
-								}, null);
-							}
-							else
-							{
-								if (objPos == null)
-								{
-									break;
-								}
-								yield return base.Do(new TaskCut
-								{
-									pos = objPos
-								}, null);
-							}
-						}
-						yield return base.DoGoto(this.pos, this.destDist, this.destIgnoreConnection, null);
-					}
-					else
-					{
-						yield return base.DoGoto(this.target, null);
-					}
-					if (this.reqs[i] > 0 && this.HoldingResource(ing))
-					{
-						int num = Mathf.Min(this.reqs[i], this.owner.held.Num);
-						this.reqs[i] -= num;
-						this.resources.Add(this.owner.SplitHeld(num) as Thing);
-						this.owner.PlaySound("build_resource", 1f, true);
-					}
-					flag = false;
-					break;
-				}
-				num2 = i;
-			}
-		}
-		while (!flag);
-		yield break;
-	}
-
-	public bool HoldingResource(Recipe.Ingredient ing)
-	{
-		return this.owner != null && this.owner.held != null && this.owner.held.id == ing.id && (ing.mat == -1 || this.owner.held.material.id == ing.mat) && (ing.refVal == -1 || this.owner.held.refVal == ing.refVal);
-	}
-
 	public Recipe recipe;
 
 	public Thing target;
@@ -100,4 +10,97 @@ public class AI_HaulResource : TaskPoint
 	public List<Thing> resources;
 
 	public int[] reqs;
+
+	public override IEnumerable<Status> Run()
+	{
+		bool flag;
+		do
+		{
+			flag = true;
+			for (int i = 0; i < recipe.ingredients.Count; i++)
+			{
+				Recipe.Ingredient ing = recipe.ingredients[i];
+				if (reqs[i] <= 0)
+				{
+					continue;
+				}
+				if (ing.thing == null)
+				{
+					ing.RefreshThing();
+				}
+				if (ing.thing == null || ing.thing.isDestroyed)
+				{
+					ing.thing = null;
+					yield return Cancel();
+				}
+				if (!HoldingResource(ing))
+				{
+					yield return DoGrab(ing.thing, reqs[i]);
+				}
+				if (target == null)
+				{
+					while (true)
+					{
+						Point objPos = null;
+						Point blockPos = null;
+						pos.ForeachMultiSize(recipe.W, recipe.H, delegate(Point p, bool main)
+						{
+							if (p.HasObj && !p.HasMinableBlock && !recipe.tileType.AllowObj)
+							{
+								objPos = p.Copy();
+							}
+							if (p.HasBlock && !recipe.tileType.CanBuiltOnBlock)
+							{
+								blockPos = p.Copy();
+							}
+						});
+						if (blockPos != null)
+						{
+							yield return Do(new TaskMine
+							{
+								pos = blockPos
+							});
+							continue;
+						}
+						if (objPos == null)
+						{
+							break;
+						}
+						yield return Do(new TaskCut
+						{
+							pos = objPos
+						});
+					}
+					yield return DoGoto(pos, destDist, destIgnoreConnection);
+				}
+				else
+				{
+					yield return DoGoto(target);
+				}
+				if (reqs[i] > 0 && HoldingResource(ing))
+				{
+					int num = Mathf.Min(reqs[i], owner.held.Num);
+					reqs[i] -= num;
+					resources.Add(owner.SplitHeld(num) as Thing);
+					owner.PlaySound("build_resource");
+				}
+				flag = false;
+				break;
+			}
+		}
+		while (!flag);
+	}
+
+	public bool HoldingResource(Recipe.Ingredient ing)
+	{
+		if (owner != null && owner.held != null && owner.held.id == ing.id && (ing.mat == -1 || owner.held.material.id == ing.mat))
+		{
+			if (ing.refVal != -1)
+			{
+				return owner.held.refVal == ing.refVal;
+			}
+			return true;
+		}
+		return false;
+	}
 }

@@ -1,34 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-
 public class TaskBaseBuild : TaskDesignation
 {
 	public bool CanPlaceCard(Point pos, Card c)
 	{
-		TaskBaseBuild.<>c__DisplayClass0_0 CS$<>8__locals1;
-		CS$<>8__locals1.c = c;
-		CS$<>8__locals1.pos = pos;
-		return TaskBaseBuild.<CanPlaceCard>g__InstallCheck|0_0<TraitBed>(ref CS$<>8__locals1);
-	}
-
-	[CompilerGenerated]
-	internal static bool <CanPlaceCard>g__InstallCheck|0_0<T>(ref TaskBaseBuild.<>c__DisplayClass0_0 A_0) where T : Trait
-	{
-		if (!(A_0.c.trait is T))
+		if (!InstallCheck<TraitBed>())
 		{
-			return true;
+			return false;
 		}
-		using (List<Thing>.Enumerator enumerator = A_0.pos.Things.GetEnumerator())
+		return true;
+		bool InstallCheck<T>() where T : Trait
 		{
-			while (enumerator.MoveNext())
+			if (!(c.trait is T))
 			{
-				if (enumerator.Current.trait is T)
+				return true;
+			}
+			foreach (Thing thing in pos.Things)
+			{
+				if (thing.trait is T)
 				{
 					return false;
 				}
 			}
+			return true;
 		}
-		return true;
 	}
 }

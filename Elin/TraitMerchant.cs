@@ -1,38 +1,12 @@
-﻿using System;
-
 public class TraitMerchant : TraitCitizen
 {
-	public override int GuidePriotiy
-	{
-		get
-		{
-			return 10;
-		}
-	}
+	public override int GuidePriotiy => 10;
 
-	public override string IDRumor
-	{
-		get
-		{
-			return "shopkeeper";
-		}
-	}
+	public override string IDRumor => "shopkeeper";
 
-	public override ShopType ShopType
-	{
-		get
-		{
-			return ShopType.Goods;
-		}
-	}
+	public override ShopType ShopType => ShopType.Goods;
 
-	public override bool CanInvest
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanInvest => true;
 
 	public override void OnCreate(int lv)
 	{

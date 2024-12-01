@@ -1,31 +1,29 @@
-﻿using System;
-
 public class TraitDoorSwing : TraitDoor
 {
+	public bool isOpen;
+
 	public override bool IsOpen()
 	{
-		return this.isOpen;
+		return isOpen;
 	}
 
 	public override void ToggleDoor(bool sound = true, bool refresh = true)
 	{
 		if (sound)
 		{
-			this.owner.PlaySound(this.idSound, 1f, true);
+			owner.PlaySound(idSound);
 		}
-		this.isOpen = !this.isOpen;
-		this.count = 0;
+		isOpen = !isOpen;
+		count = 0;
 		if (refresh)
 		{
-			EClass._map.RefreshSingleTile(this.owner.pos.x, this.owner.pos.z);
-			EClass._map.RefreshFOV(this.owner.pos.x, this.owner.pos.z, 6, false);
+			EClass._map.RefreshSingleTile(owner.pos.x, owner.pos.z);
+			EClass._map.RefreshFOV(owner.pos.x, owner.pos.z);
 		}
 	}
 
 	public override void OnChangePlaceState(PlaceState state)
 	{
-		this.isOpen = false;
+		isOpen = false;
 	}
-
-	public bool isOpen;
 }

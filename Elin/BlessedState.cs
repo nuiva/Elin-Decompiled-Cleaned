@@ -1,5 +1,3 @@
-﻿using System;
-
 public enum BlessedState
 {
 	Doomed = -2,

@@ -1,50 +1,7 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class ZoneTransition : EClass
 {
-	public Zone lastZone
-	{
-		get
-		{
-			return RefZone.Get(this.uidLastZone);
-		}
-	}
-
-	public static ZoneTransition.EnterState DirToState(int dir)
-	{
-		if (dir == 0)
-		{
-			return ZoneTransition.EnterState.Top;
-		}
-		if (dir == 1)
-		{
-			return ZoneTransition.EnterState.Right;
-		}
-		if (dir == 3)
-		{
-			return ZoneTransition.EnterState.Bottom;
-		}
-		return ZoneTransition.EnterState.Left;
-	}
-
-	[JsonProperty]
-	public int uidLastZone;
-
-	[JsonProperty]
-	public int x;
-
-	[JsonProperty]
-	public int z;
-
-	[JsonProperty]
-	public ZoneTransition.EnterState state;
-
-	[JsonProperty]
-	public string idTele;
-
-	public float ratePos = -1f;
-
 	public enum EnterState
 	{
 		Auto,
@@ -68,5 +25,35 @@ public class ZoneTransition : EClass
 		UndergroundOrSky,
 		Moongate,
 		Fall
+	}
+
+	[JsonProperty]
+	public int uidLastZone;
+
+	[JsonProperty]
+	public int x;
+
+	[JsonProperty]
+	public int z;
+
+	[JsonProperty]
+	public EnterState state;
+
+	[JsonProperty]
+	public string idTele;
+
+	public float ratePos = -1f;
+
+	public Zone lastZone => RefZone.Get(uidLastZone);
+
+	public static EnterState DirToState(int dir)
+	{
+		return dir switch
+		{
+			0 => EnterState.Top, 
+			1 => EnterState.Right, 
+			3 => EnterState.Bottom, 
+			_ => EnterState.Left, 
+		};
 	}
 }

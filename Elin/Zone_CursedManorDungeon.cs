@@ -1,22 +1,10 @@
-﻿using System;
-
 public class Zone_CursedManorDungeon : Zone_Dungeon
 {
-	public bool IsBossLv
-	{
-		get
-		{
-			return base.lv == -6;
-		}
-	}
+	public const int LvBoss = -6;
 
-	public override bool LockExit
-	{
-		get
-		{
-			return base.lv < -6;
-		}
-	}
+	public bool IsBossLv => base.lv == -6;
+
+	public override bool LockExit => base.lv < -6;
 
 	public override string idExport
 	{
@@ -32,7 +20,7 @@ public class Zone_CursedManorDungeon : Zone_Dungeon
 
 	public override void OnGenerateMap()
 	{
-		if (this.IsBossLv)
+		if (IsBossLv)
 		{
 			foreach (Thing thing in EClass._map.things)
 			{
@@ -53,6 +41,4 @@ public class Zone_CursedManorDungeon : Zone_Dungeon
 	{
 		return "Dungeon";
 	}
-
-	public const int LvBoss = -6;
 }

@@ -1,133 +1,120 @@
-﻿using System;
 using System.Linq;
 
 public class LayerWidget : ELayer
 {
+	public static LayerWidget Instance;
+
+	public UIList list;
+
+	public UIList list2;
+
 	public override void OnInit()
 	{
 		ELayer.ui.HideFloats();
 		WidgetManager widgets = ELayer.ui.widgets;
-		LayerWidget.Instance = this;
-		BaseList baseList = this.list;
-		BaseList baseList2 = this.list2;
-		UIList.Callback<Widget.Config, ItemWidget> callback = new UIList.Callback<Widget.Config, ItemWidget>();
-		callback.onClick = delegate(Widget.Config a, ItemWidget b)
+		Instance = this;
+		UIList uIList = list;
+		UIList uIList2 = list2;
+		UIList.Callback<Widget.Config, ItemWidget> obj = new UIList.Callback<Widget.Config, ItemWidget>
 		{
-		};
-		callback.onInstantiate = delegate(Widget.Config a, ItemWidget b)
-		{
-			b.buttonActivate.mainText.text = Lang.Get("Widget" + a.id);
-			b.buttonActivate.subText.SetActive(a.IsSystem);
-			b.buttonActivate.onClick.AddListener(delegate()
+			onClick = delegate
 			{
-				if (a.IsSealed)
+			},
+			onInstantiate = delegate(Widget.Config a, ItemWidget b)
+			{
+				b.buttonActivate.mainText.text = Lang.Get("Widget" + a.id);
+				b.buttonActivate.subText.SetActive(a.IsSystem);
+				b.buttonActivate.onClick.AddListener(delegate
 				{
-					SE.Beep();
-					return;
-				}
-				if (a.id == "QuestTracker")
-				{
-					if (ELayer.ui.widgets.GetWidget("QuestTracker") != null)
+					if (a.IsSealed)
 					{
-						ELayer.player.questTracker = false;
+						SE.Beep();
 					}
 					else
 					{
-						ELayer.player.questTracker = true;
+						if (a.id == "QuestTracker")
+						{
+							if (ELayer.ui.widgets.GetWidget("QuestTracker") != null)
+							{
+								ELayer.player.questTracker = false;
+							}
+							else
+							{
+								ELayer.player.questTracker = true;
+							}
+							WidgetHotbar.RefreshButtons();
+						}
+						widgets.Toggle(a)?.SoundActivate();
+						Refresh();
 					}
-					WidgetHotbar.RefreshButtons();
-				}
-				Widget widget2 = widgets.Toggle(a);
-				if (widget2 != null)
+				});
+				b.buttonLock.onClick.AddListener(delegate
 				{
-					widget2.SoundActivate();
-				}
-				this.Refresh();
-			});
-			b.buttonLock.onClick.AddListener(delegate()
-			{
-				widgets.ToggleLock(a);
-				this.Refresh();
-			});
-			b.config = a;
+					widgets.ToggleLock(a);
+					Refresh();
+				});
+				b.config = a;
+			},
+			onRefresh = Refresh
 		};
-		callback.onRefresh = new Action(this.Refresh);
-		UIList.ICallback callbacks = callback;
-		baseList2.callbacks = callback;
-		baseList.callbacks = callbacks;
-		foreach (Widget.Meta meta in ELayer.setting.ui.widgetMetas)
+		UIList.ICallback callbacks = obj;
+		uIList2.callbacks = obj;
+		uIList.callbacks = callbacks;
+		foreach (Widget.Meta widgetMeta in ELayer.setting.ui.widgetMetas)
 		{
-			Widget.Config config = widgets.configs[meta.id];
-			if (config.IsInRightMode() && !meta.debugOnly)
+			Widget.Config config = widgets.configs[widgetMeta.id];
+			if (config.IsInRightMode() && !widgetMeta.debugOnly)
 			{
 				if (config.id.Contains("Hotbar"))
 				{
-					this.list2.Add(config);
+					list2.Add(config);
 				}
 				else
 				{
-					this.list.Add(config);
+					list.Add(config);
 				}
 			}
 		}
-		this.list.Refresh(false);
-		this.list2.Refresh(false);
-		foreach (Widget widget in widgets.list)
+		list.Refresh();
+		list2.Refresh();
+		foreach (Widget item in widgets.list)
 		{
-			widget.OnManagerActivate();
+			item.OnManagerActivate();
 		}
-		this.windows[0].AddBottomSpace(20);
-		Action <>9__7;
-		this.windows[0].AddBottomButton("resetWidget", delegate
+		windows[0].AddBottomSpace();
+		windows[0].AddBottomButton("resetWidget", delegate
 		{
-			string langDetail = "dialogResetWidget";
-			Action actionYes;
-			if ((actionYes = <>9__7) == null)
+			Dialog.YesNo("dialogResetWidget", delegate
 			{
-				actionYes = (<>9__7 = delegate()
-				{
-					this.Close();
-					ELayer.ui.widgets.Load(ELayer.player.useSubWidgetTheme, null);
-					ELayer.ui.widgets.Reset(false);
-					ELayer.ui.AddLayer<LayerWidget>();
-				});
-			}
-			Dialog.YesNo(langDetail, actionYes, null, "yes", "no");
-		}, false);
-		Action <>9__8;
-		this.windows[0].AddBottomButton("loadTheme", delegate
+				Close();
+				ELayer.ui.widgets.Load(ELayer.player.useSubWidgetTheme);
+				ELayer.ui.widgets.Reset(toggleTheme: false);
+				ELayer.ui.AddLayer<LayerWidget>();
+			});
+		});
+		windows[0].AddBottomButton("loadTheme", delegate
 		{
-			WidgetManager widgets = widgets;
-			Action onLoad;
-			if ((onLoad = <>9__8) == null)
+			widgets.DialogLoad(delegate
 			{
-				onLoad = (<>9__8 = delegate()
-				{
-					this.Close();
-					ELayer.ui.AddLayer<LayerWidget>();
-				});
-			}
-			widgets.DialogLoad(onLoad);
-		}, false);
-		this.windows[0].AddBottomButton("saveTheme", delegate
+				Close();
+				ELayer.ui.AddLayer<LayerWidget>();
+			});
+		});
+		windows[0].AddBottomButton("saveTheme", delegate
 		{
 			widgets.DialogSave(delegate
 			{
-				Dialog.Ok("dialogSaveTheme", null);
+				Dialog.Ok("dialogSaveTheme");
 			});
-		}, false);
+		});
 	}
 
 	public override void OnUpdateInput()
 	{
-		if (EInput.leftMouse.clicked)
+		if (EInput.leftMouse.clicked && !EInput.leftMouse.dragging)
 		{
-			if (EInput.leftMouse.dragging)
-			{
-				return;
-			}
 			Widget componentOf = InputModuleEX.GetComponentOf<Widget>();
-			if (componentOf)
+			if ((bool)componentOf)
 			{
 				componentOf.ShowContextMenu();
 			}
@@ -136,9 +123,9 @@ public class LayerWidget : ELayer
 
 	public void Refresh()
 	{
-		foreach (UIList.ButtonPair buttonPair in this.list.buttons.Concat(this.list2.buttons))
+		foreach (UIList.ButtonPair item in list.buttons.Concat(list2.buttons))
 		{
-			ItemWidget itemWidget = buttonPair.component as ItemWidget;
+			ItemWidget itemWidget = item.component as ItemWidget;
 			itemWidget.imageLock.SetActive(itemWidget.config.locked);
 			itemWidget.imageActive.SetActive(itemWidget.config.state == Widget.State.Active);
 			itemWidget.buttonLock.mainText.text = Lang.Get(itemWidget.config.locked ? "unlockWidget" : "lockWidget");
@@ -147,16 +134,10 @@ public class LayerWidget : ELayer
 
 	public override void OnKill()
 	{
-		foreach (Widget widget in ELayer.ui.widgets.list)
+		foreach (Widget item in ELayer.ui.widgets.list)
 		{
-			widget.OnManagerDeactivate();
+			item.OnManagerDeactivate();
 		}
 		ELayer.ui.ShowFloats();
 	}
-
-	public static LayerWidget Instance;
-
-	public UIList list;
-
-	public UIList list2;
 }

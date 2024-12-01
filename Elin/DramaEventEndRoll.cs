@@ -1,30 +1,25 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 public class DramaEventEndRoll : DramaEvent
 {
-	public UIDynamicList list
-	{
-		get
-		{
-			return this.sequence.manager.listCredit;
-		}
-	}
+	private float timer;
+
+	public UIDynamicList list => sequence.manager.listCredit;
 
 	public override bool Play()
 	{
-		if (this.progress == 0)
+		if (progress == 0)
 		{
-			this.sequence.manager.endroll.SetActive(true);
-			this.Init();
-			this.progress++;
+			sequence.manager.endroll.SetActive(enable: true);
+			Init();
+			progress++;
 		}
 		else
 		{
-			this.timer += Time.deltaTime;
-			if (this.timer < 0.08f)
+			timer += Time.deltaTime;
+			if (timer < 0.08f)
 			{
 				return false;
 			}
@@ -32,9 +27,9 @@ public class DramaEventEndRoll : DramaEvent
 			{
 				return true;
 			}
-			if (this.list.dsv.contentAnchoredPosition <= -this.list.dsv.contentSize + this.list.dsv.viewportSize + 1f)
+			if (list.dsv.contentAnchoredPosition <= 0f - list.dsv.contentSize + list.dsv.viewportSize + 1f)
 			{
-				if ((!EInput.rightMouse.pressedLong || !Application.isEditor) && EInput.IsAnyKeyDown(true, true))
+				if ((!EInput.rightMouse.pressedLong || !Application.isEditor) && EInput.IsAnyKeyDown())
 				{
 					return true;
 				}
@@ -50,7 +45,7 @@ public class DramaEventEndRoll : DramaEvent
 				{
 					num = (Application.isEditor ? 200f : 30f);
 				}
-				this.list.dsv.contentAnchoredPosition += Time.deltaTime * this.sequence.manager.creditSpeed * num;
+				list.dsv.contentAnchoredPosition += Time.deltaTime * sequence.manager.creditSpeed * num;
 			}
 		}
 		return false;
@@ -59,71 +54,92 @@ public class DramaEventEndRoll : DramaEvent
 	public void Init()
 	{
 		ExcelData excelData = new ExcelData("Data/Raw/credit", 1);
-		List<Dictionary<string, string>> items = excelData.BuildList("_default");
+		List<Dictionary<string, string>> items = excelData.BuildList();
 		int index = 0;
-		this.list.Clear();
-		BaseList list = this.list;
-		UIList.Callback<string, UIItem> callback = new UIList.Callback<string, UIItem>();
-		callback.onRedraw = delegate(string a, UIItem b, int i)
+		list.Clear();
+		list.callbacks = new UIList.Callback<string, UIItem>
 		{
-			b.text1.SetText(BackerContent.ConvertName(a));
-		};
-		callback.onList = delegate(UIList.SortMode m)
-		{
-			List<string> list2 = IO.LoadTextArray(CorePath.CorePackage.TextCommon + "endroll").ToList<string>();
-			for (int i = 0; i < Screen.height / 32 + 1; i++)
+			onRedraw = delegate(string a, UIItem b, int i)
 			{
-				base.<Init>g__Space|0(true);
-			}
-			foreach (string text in list2)
+				b.text1.SetText(BackerContent.ConvertName(a));
+			},
+			onList = delegate
 			{
-				if (text.StartsWith("#"))
+				List<string> list = IO.LoadTextArray(CorePath.CorePackage.TextCommon + "endroll").ToList();
+				for (int j = 0; j < Screen.height / 32 + 1; j++)
 				{
-					string[] array = text.Replace("#", "").Split(',', StringSplitOptions.None);
-					string text2 = array[0];
-					int num = array[1].ToInt();
-					using (List<Dictionary<string, string>>.Enumerator enumerator2 = items.GetEnumerator())
+					Space(newline: true);
+				}
+				foreach (string item in list)
+				{
+					if (item.StartsWith("#"))
 					{
-						while (enumerator2.MoveNext())
+						string[] array = item.Replace("#", "").Split(',');
+						string text = array[0];
+						int num = array[1].ToInt();
+						foreach (Dictionary<string, string> item2 in items)
 						{
-							Dictionary<string, string> dictionary = enumerator2.Current;
-							int index;
 							if (index % 5 < num)
-							{
-								for (int j = 0; j < num; j++)
-								{
-									this.list.Add("");
-									index = index;
-									index++;
-								}
-							}
-							if ((text2 == "Abandon" && dictionary["abandon"] == "Yes") || dictionary["Pledge"] == text2)
-							{
-								base.<Init>g__AddBacker|1(dictionary["Name"]);
-							}
-							if (index % 5 >= 5 - num)
 							{
 								for (int k = 0; k < num; k++)
 								{
 									this.list.Add("");
-									index = index;
+									index++;
+								}
+							}
+							if ((text == "Abandon" && item2["abandon"] == "Yes") || item2["Pledge"] == text)
+							{
+								AddBacker(item2["Name"]);
+							}
+							if (index % 5 >= 5 - num)
+							{
+								for (int l = 0; l < num; l++)
+								{
+									this.list.Add("");
 									index++;
 								}
 							}
 						}
-						continue;
+					}
+					else
+					{
+						Add(item);
 					}
 				}
-				base.<Init>g__Add|2(text);
-			}
-			for (int l = 0; l < Screen.height / 32 / 2 - 1; l++)
-			{
-				base.<Init>g__Space|0(true);
+				for (int n = 0; n < Screen.height / 32 / 2 - 1; n++)
+				{
+					Space(newline: true);
+				}
 			}
 		};
-		list.callbacks = callback;
-		this.list.List();
+		list.List();
+		void Add(string s)
+		{
+			Space(newline: false);
+			list.Add("");
+			list.Add("");
+			list.Add(s);
+			list.Add("");
+			list.Add("");
+			index += 5;
+		}
+		void AddBacker(string s)
+		{
+			list.Add(s);
+			index++;
+		}
+		void Space(bool newline)
+		{
+			int num2 = (newline ? 5 : 0);
+			if (index % 5 != 0)
+			{
+				num2 += 5 - index % 5;
+			}
+			for (int num3 = 0; num3 < num2; num3++)
+			{
+				list.Add("");
+				index++;
+			}
+		}
 	}
-
-	private float timer;
 }

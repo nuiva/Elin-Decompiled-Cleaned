@@ -1,30 +1,22 @@
-﻿using System;
-
 public class Zone_VernisMine : Zone_Dungeon
 {
-	public bool IsBossLv
-	{
-		get
-		{
-			return base.lv == -8;
-		}
-	}
+	public const int LvBoss = -8;
+
+	public bool IsBossLv => base.lv == -8;
 
 	public override bool LockExit
 	{
 		get
 		{
-			return base.lv == -1 && EClass.game.quests.GetPhase<QuestVernis>() < 7;
+			if (base.lv == -1)
+			{
+				return EClass.game.quests.GetPhase<QuestVernis>() < 7;
+			}
+			return false;
 		}
 	}
 
-	public override float OreChance
-	{
-		get
-		{
-			return 4f;
-		}
-	}
+	public override float OreChance => 4f;
 
 	public override string idExport
 	{
@@ -45,21 +37,18 @@ public class Zone_VernisMine : Zone_Dungeon
 
 	public override void OnGenerateMap()
 	{
-		if (this.IsBossLv)
+		if (IsBossLv)
 		{
 			return;
 		}
-		base.PlaceRail(Zone_Dungeon.RailType.Mine);
+		PlaceRail();
 		EClass._map.ForeachCell(delegate(Cell c)
 		{
-			if (EClass.rnd(5) == 0 || c._block == 0 || c.HasObj || c.isSurrounded || c.hasDoor)
+			if (EClass.rnd(5) != 0 && c._block != 0 && !c.HasObj && !c.isSurrounded && !c.hasDoor)
 			{
-				return;
+				c.GetSharedPoint().SetObj(24, 1, EClass.rnd(3));
 			}
-			c.GetSharedPoint().SetObj(24, 1, EClass.rnd(3));
 		});
 		base.OnGenerateMap();
 	}
-
-	public const int LvBoss = -8;
 }

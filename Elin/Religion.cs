@@ -1,135 +1,58 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class Religion : EClass
 {
-	public virtual string id
-	{
-		get
-		{
-			return "";
-		}
-	}
+	[JsonProperty]
+	public int relation;
 
-	public virtual bool IsAvailable
-	{
-		get
-		{
-			return false;
-		}
-	}
+	[JsonProperty]
+	public int giftRank;
+
+	[JsonProperty]
+	public int mood;
+
+	public static Religion recentWrath;
+
+	public SourceReligion.Row _source;
+
+	public virtual string id => "";
+
+	public virtual bool IsAvailable => false;
+
+	public string Name => source.GetName();
+
+	public SourceReligion.Row source => _source ?? (_source = EClass.sources.religions.map[id]);
+
+	public string NameShort => source.GetTextArray("name2")[1];
+
+	public string NameDomain => source.GetTextArray("name2")[0];
+
+	public string TextType => ("sub_" + source.type).lang();
+
+	public string TextGodGender => source.GetText("textType");
+
+	public string TextMood => GetTextTemper();
+
+	public bool IsEyth => id == "eyth";
+
+	public bool IsEhekatl => id == "luck";
+
+	public bool IsOpatos => id == "earth";
+
+	public virtual bool IsMinorGod => false;
+
+	public virtual bool CanJoin => true;
 
 	public virtual SourceElement.Row GetFeat(int i)
 	{
-		return EClass.sources.elements.alias["featGod_" + this.id + i.ToString()];
-	}
-
-	public string Name
-	{
-		get
-		{
-			return this.source.GetName();
-		}
-	}
-
-	public SourceReligion.Row source
-	{
-		get
-		{
-			SourceReligion.Row result;
-			if ((result = this._source) == null)
-			{
-				result = (this._source = EClass.sources.religions.map[this.id]);
-			}
-			return result;
-		}
-	}
-
-	public string NameShort
-	{
-		get
-		{
-			return this.source.GetTextArray("name2")[1];
-		}
-	}
-
-	public string NameDomain
-	{
-		get
-		{
-			return this.source.GetTextArray("name2")[0];
-		}
-	}
-
-	public string TextType
-	{
-		get
-		{
-			return ("sub_" + this.source.type).lang();
-		}
-	}
-
-	public string TextGodGender
-	{
-		get
-		{
-			return this.source.GetText("textType", false);
-		}
-	}
-
-	public string TextMood
-	{
-		get
-		{
-			return this.GetTextTemper(-99999);
-		}
-	}
-
-	public bool IsEyth
-	{
-		get
-		{
-			return this.id == "eyth";
-		}
-	}
-
-	public bool IsEhekatl
-	{
-		get
-		{
-			return this.id == "luck";
-		}
-	}
-
-	public bool IsOpatos
-	{
-		get
-		{
-			return this.id == "earth";
-		}
-	}
-
-	public virtual bool IsMinorGod
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool CanJoin
-	{
-		get
-		{
-			return true;
-		}
+		return EClass.sources.elements.alias["featGod_" + id + i];
 	}
 
 	public void Init()
 	{
-		this.relation = this.source.relation;
+		relation = source.relation;
 	}
 
 	public void OnLoad()
@@ -142,98 +65,97 @@ public class Religion : EClass
 
 	public Sprite GetSprite()
 	{
-		return ResourceCache.Load<Sprite>("Media/Graphics/Image/Faction/" + this.source.id) ?? ResourceCache.Load<Sprite>("Media/Graphics/Image/Faction/eyth");
+		return ResourceCache.Load<Sprite>("Media/Graphics/Image/Faction/" + source.id) ?? ResourceCache.Load<Sprite>("Media/Graphics/Image/Faction/eyth");
 	}
 
 	public void SetTextRelation(UIText text)
 	{
-		if (this.relation > 100)
+		if (relation > 100)
 		{
 			text.SetText("reFriend".lang(), FontColor.Good);
-			return;
 		}
-		if (this.relation < -100)
+		else if (relation < -100)
 		{
 			text.SetText("reEnemy".lang(), FontColor.Bad);
-			return;
 		}
-		text.SetText("reNone".lang(), FontColor.Passive);
+		else
+		{
+			text.SetText("reNone".lang(), FontColor.Passive);
+		}
 	}
 
 	public string GetTextBenefit()
 	{
 		string text = "";
-		for (int i = 0; i < this.source.elements.Length; i += 2)
+		for (int i = 0; i < source.elements.Length; i += 2)
 		{
 			if (i != 0)
 			{
-				text = text + Lang.words.comma.ToString() + Lang.space;
+				text = text + Lang.words.comma + Lang.space;
 			}
-			text += EClass.sources.elements.map[this.source.elements[i]].GetName();
+			text += EClass.sources.elements.map[source.elements[i]].GetName();
 		}
-		return this.source.GetText("textBenefit", false) + (this.IsEyth ? "" : "textBenefit".lang(text, null, null, null, null));
+		return source.GetText("textBenefit") + (IsEyth ? "" : "textBenefit".lang(text));
 	}
 
 	public string GetTextTemper(int _temper = -99999)
 	{
-		if (this.IsEyth)
+		if (IsEyth)
 		{
 			return "-";
 		}
 		if (_temper == -99999)
 		{
-			_temper = this.mood;
+			_temper = mood;
 		}
 		string[] list = Lang.GetList("temper");
 		if (_temper <= -85)
 		{
-			return list[0].ToTitleCase(false).TagColor(FontColor.Bad, null);
+			return list[0].ToTitleCase().TagColor(FontColor.Bad);
 		}
 		if (_temper <= -45)
 		{
-			return list[1].ToTitleCase(false).TagColor(FontColor.Bad, null);
+			return list[1].ToTitleCase().TagColor(FontColor.Bad);
 		}
 		if (_temper <= -15)
 		{
-			return list[2].ToTitleCase(false);
+			return list[2].ToTitleCase();
 		}
 		if (_temper < 15)
 		{
-			return list[3].ToTitleCase(false);
+			return list[3].ToTitleCase();
 		}
 		if (_temper < 45)
 		{
-			return list[4].ToTitleCase(false);
+			return list[4].ToTitleCase();
 		}
 		if (_temper < 85)
 		{
-			return list[5].ToTitleCase(false).TagColor(FontColor.Great, null);
+			return list[5].ToTitleCase().TagColor(FontColor.Great);
 		}
-		return list[6].ToTitleCase(false).TagColor(FontColor.Good, null);
+		return list[6].ToTitleCase().TagColor(FontColor.Good);
 	}
 
 	public void Revelation(string idTalk, int chance = 100)
 	{
-		if (this.IsEyth || EClass.rnd(100) > chance)
+		if (!IsEyth && EClass.rnd(100) <= chance)
 		{
-			return;
+			Talk(idTalk, EClass.pc);
 		}
-		this.Talk(idTalk, EClass.pc, null);
 	}
 
 	public void Talk(string idTalk, Card c = null, Card agent = null)
 	{
-		if (this.IsEyth)
+		if (!IsEyth)
 		{
-			return;
+			Msg.SetColor(Msg.colors.TalkGod);
+			Msg.Say("<i>" + GetGodTalk(idTalk) + " </i>", c ?? EClass.pc);
 		}
-		Msg.SetColor(Msg.colors.TalkGod);
-		Msg.Say("<i>" + this.GetGodTalk(idTalk) + " </i>", c ?? EClass.pc, null, null, null);
 	}
 
 	public string GetGodTalk(string suffix)
 	{
-		return EClass.sources.dataGodTalk.GetText(this.id, suffix).Split(Environment.NewLine.ToCharArray()).RandomItem<string>();
+		return EClass.sources.dataGodTalk.GetText(id, suffix).Split(Environment.NewLine.ToCharArray()).RandomItem();
 	}
 
 	public int GetOfferingValue(Thing t, int num = -1)
@@ -253,12 +175,13 @@ public class Religion : EClass
 		}
 		else
 		{
-			foreach (string text in this.source.cat_offer)
+			string[] cat_offer = source.cat_offer;
+			foreach (string key in cat_offer)
 			{
-				if (t.category.IsChildOf(text))
+				if (t.category.IsChildOf(key))
 				{
 					num2 = Mathf.Clamp(t.SelfWeight / 10, 50, 1000);
-					num2 *= EClass.sources.categories.map[text].offer / 100;
+					num2 *= EClass.sources.categories.map[key].offer / 100;
 					break;
 				}
 			}
@@ -277,31 +200,32 @@ public class Religion : EClass
 
 	public bool TryGetGift()
 	{
-		if (this.IsEyth || this.source.rewards.Length == 0)
+		if (IsEyth || source.rewards.Length == 0)
 		{
 			return false;
 		}
-		Point point = EClass.pc.pos.GetNearestPoint(false, false, false, false) ?? EClass.pc.pos;
+		Point point = EClass.pc.pos.GetNearestPoint(allowBlock: false, allowChara: false, allowInstalled: false) ?? EClass.pc.pos;
 		int num = EClass.pc.Evalue(85);
-		if (this.giftRank == 0 && (num >= 15 || EClass.debug.enable))
+		if (giftRank == 0 && (num >= 15 || EClass.debug.enable))
 		{
-			this.Talk("pet", null, null);
-			Chara chara = CharaGen.Create(this.source.rewards[0], -1);
+			Talk("pet");
+			Chara chara = CharaGen.Create(source.rewards[0]);
 			EClass._zone.AddCard(chara, point);
-			chara.MakeAlly(true);
-			chara.PlayEffect("aura_heaven", true, 0f, default(Vector3));
-			this.giftRank = 1;
+			chara.MakeAlly();
+			chara.PlayEffect("aura_heaven");
+			giftRank = 1;
 			return true;
 		}
-		if (this.source.rewards.Length >= 2 && this.giftRank == 1 && (num >= 30 || EClass.debug.enable))
+		if (source.rewards.Length >= 2 && giftRank == 1 && (num >= 30 || EClass.debug.enable))
 		{
-			this.Talk("gift", null, null);
-			string[] array = this.source.rewards[1].Split('|', StringSplitOptions.None);
-			foreach (string text in array)
+			Talk("gift");
+			string[] array = source.rewards[1].Split('|');
+			string[] array2 = array;
+			foreach (string text in array2)
 			{
-				Religion.Reforge(text, point, text == array[0]);
+				Reforge(text, point, text == array[0]);
 			}
-			this.giftRank = 2;
+			giftRank = 2;
 			return true;
 		}
 		return false;
@@ -309,105 +233,26 @@ public class Religion : EClass
 
 	public bool IsValidArtifact(string id)
 	{
-		if (this.giftRank < 2)
+		if (giftRank < 2)
 		{
 			return false;
 		}
-		uint num = <PrivateImplementationDetails>.ComputeStringHash(id);
-		if (num <= 1934600421U)
+		return id switch
 		{
-			if (num <= 1352297338U)
-			{
-				if (num != 850586461U)
-				{
-					if (num != 968766664U)
-					{
-						if (num == 1352297338U)
-						{
-							if (id == "pole_holy")
-							{
-								return this == EClass.game.religions.Healing;
-							}
-						}
-					}
-					else if (id == "sword_muramasa2")
-					{
-						return this == EClass.game.religions.MoonShadow;
-					}
-				}
-				else if (id == "luckydagger")
-				{
-					return this == EClass.game.religions.Luck;
-				}
-			}
-			else if (num != 1564759233U)
-			{
-				if (num != 1755407712U)
-				{
-					if (num == 1934600421U)
-					{
-						if (id == "warmonger")
-						{
-							return this == EClass.game.religions.Strife;
-						}
-					}
-				}
-				else if (id == "scythe_kumi")
-				{
-					return this == EClass.game.religions.Harvest;
-				}
-			}
-			else if (id == "gun_mani")
-			{
-				return this == EClass.game.religions.Machine;
-			}
-		}
-		else if (num <= 2931008955U)
-		{
-			if (num != 2039965765U)
-			{
-				if (num != 2376119426U)
-				{
-					if (num == 2931008955U)
-					{
-						if (id == "kogitsunemaru")
-						{
-							return this == EClass.game.religions.Trickery;
-						}
-					}
-				}
-				else if (id == "staff_element")
-				{
-					return this == EClass.game.religions.Element;
-				}
-			}
-			else if (id == "windbow")
-			{
-				return this == EClass.game.religions.Wind;
-			}
-		}
-		else if (num != 3457783642U)
-		{
-			if (num != 3896459095U)
-			{
-				if (num == 3950410875U)
-				{
-					if (id == "cloak_mani")
-					{
-						return this == EClass.game.religions.Machine;
-					}
-				}
-			}
-			else if (id == "blunt_earth")
-			{
-				return this == EClass.game.religions.Earth;
-			}
-		}
-		else if (id == "shirt_wind")
-		{
-			return this == EClass.game.religions.Wind;
-		}
-		return false;
+			"gun_mani" => this == EClass.game.religions.Machine, 
+			"cloak_mani" => this == EClass.game.religions.Machine, 
+			"scythe_kumi" => this == EClass.game.religions.Harvest, 
+			"blunt_earth" => this == EClass.game.religions.Earth, 
+			"luckydagger" => this == EClass.game.religions.Luck, 
+			"staff_element" => this == EClass.game.religions.Element, 
+			"windbow" => this == EClass.game.religions.Wind, 
+			"shirt_wind" => this == EClass.game.religions.Wind, 
+			"pole_holy" => this == EClass.game.religions.Healing, 
+			"sword_muramasa2" => this == EClass.game.religions.MoonShadow, 
+			"kogitsunemaru" => this == EClass.game.religions.Trickery, 
+			"warmonger" => this == EClass.game.religions.Strife, 
+			_ => false, 
+		};
 	}
 
 	public static void Reforge(string id, Point pos = null, bool first = true)
@@ -416,153 +261,99 @@ public class Religion : EClass
 		{
 			pos = EClass.pc.pos.Copy();
 		}
-		pos.Set(pos.GetNearestPoint(false, false, false, true) ?? pos);
-		Thing thing = ThingGen.Create(id, -1, -1);
-		foreach (Element element in thing.elements.dict.Values)
+		pos.Set(pos.GetNearestPoint(allowBlock: false, allowChara: false, allowInstalled: false, ignoreCenter: true) ?? pos);
+		Thing thing = ThingGen.Create(id);
+		foreach (Element value in thing.elements.dict.Values)
 		{
-			if (element.id != 66 && element.id != 67 && element.id != 64 && element.id != 65 && element.id != 92)
+			if (value.id == 66 || value.id == 67 || value.id == 64 || value.id == 65 || value.id == 92)
 			{
-				uint num = <PrivateImplementationDetails>.ComputeStringHash(id);
-				if (num <= 1934600421U)
+				continue;
+			}
+			switch (id)
+			{
+			case "gun_mani":
+				thing.c_idDeity = EClass.game.religions.Machine.id;
+				break;
+			case "cloak_mani":
+				if (value.id == 427 || value.id == 957 || value.id == 105 || value.id == 466 || value.id == 664)
 				{
-					if (num <= 1352297338U)
-					{
-						if (num != 850586461U)
-						{
-							if (num != 968766664U)
-							{
-								if (num == 1352297338U)
-								{
-									if (id == "pole_holy")
-									{
-										if (element.id == 60 || element.id == 461 || element.id == 423)
-										{
-											element.vExp = -1;
-										}
-										thing.c_idDeity = EClass.game.religions.Healing.id;
-									}
-								}
-							}
-							else if (id == "sword_muramasa2")
-							{
-								if (element.id == 401 || element.id == 916 || element.id == 661)
-								{
-									element.vExp = -1;
-								}
-								thing.c_idDeity = EClass.game.religions.MoonShadow.id;
-							}
-						}
-						else if (id == "luckydagger")
-						{
-							if (element.id != 426)
-							{
-								element.vExp = -1;
-							}
-							thing.c_idDeity = EClass.game.religions.Luck.id;
-						}
-					}
-					else if (num != 1564759233U)
-					{
-						if (num != 1755407712U)
-						{
-							if (num == 1934600421U)
-							{
-								if (id == "warmonger")
-								{
-									if (element.id == 423 || element.id == 463 || element.id == 460 || element.id == 464 || element.id == 465)
-									{
-										element.vExp = -1;
-									}
-									thing.c_idDeity = EClass.game.religions.Strife.id;
-								}
-							}
-						}
-						else if (id == "scythe_kumi")
-						{
-							if (element.id == 6650 || element.id == 480 || element.id == 959 || element.id == 428 || element.id == 640 || element.id == 665)
-							{
-								element.vExp = -1;
-							}
-							thing.c_idDeity = EClass.game.religions.Harvest.id;
-						}
-					}
-					else if (id == "gun_mani")
-					{
-						thing.c_idDeity = EClass.game.religions.Machine.id;
-					}
+					value.vExp = -1;
 				}
-				else if (num <= 2931008955U)
+				thing.c_idDeity = EClass.game.religions.Machine.id;
+				break;
+			case "scythe_kumi":
+				if (value.id == 6650 || value.id == 480 || value.id == 959 || value.id == 428 || value.id == 640 || value.id == 665)
 				{
-					if (num != 2039965765U)
-					{
-						if (num != 2376119426U)
-						{
-							if (num == 2931008955U)
-							{
-								if (id == "kogitsunemaru")
-								{
-									if (element.id != 656)
-									{
-										element.vExp = -1;
-									}
-									thing.c_idDeity = EClass.game.religions.Trickery.id;
-								}
-							}
-						}
-						else if (id == "staff_element")
-						{
-							if (element.id == 411 || (element is Resistance && element.id != 959))
-							{
-								element.vExp = -1;
-							}
-							thing.c_idDeity = EClass.game.religions.Element.id;
-						}
-					}
-					else if (id == "windbow")
-					{
-						thing.c_idDeity = EClass.game.religions.Wind.id;
-					}
+					value.vExp = -1;
 				}
-				else if (num != 3457783642U)
+				thing.c_idDeity = EClass.game.religions.Harvest.id;
+				break;
+			case "blunt_earth":
+				if (value.id == 70 || value.id == 55 || value.id == 56 || value.id == 954 || value.id == 423 || value.id == 421)
 				{
-					if (num != 3896459095U)
-					{
-						if (num == 3950410875U)
-						{
-							if (id == "cloak_mani")
-							{
-								if (element.id == 427 || element.id == 957 || element.id == 105 || element.id == 466 || element.id == 664)
-								{
-									element.vExp = -1;
-								}
-								thing.c_idDeity = EClass.game.religions.Machine.id;
-							}
-						}
-					}
-					else if (id == "blunt_earth")
-					{
-						if (element.id == 70 || element.id == 55 || element.id == 56 || element.id == 954 || element.id == 423 || element.id == 421)
-						{
-							element.vExp = -1;
-						}
-						thing.c_idDeity = EClass.game.religions.Earth.id;
-					}
+					value.vExp = -1;
 				}
-				else if (id == "shirt_wind")
+				thing.c_idDeity = EClass.game.religions.Earth.id;
+				break;
+			case "luckydagger":
+				if (value.id != 426)
 				{
-					if (!(element is Resistance) && element.id != 226 && element.id != 152 && element.id != 77)
-					{
-						element.vExp = -1;
-					}
-					thing.c_idDeity = EClass.game.religions.Wind.id;
+					value.vExp = -1;
 				}
+				thing.c_idDeity = EClass.game.religions.Luck.id;
+				break;
+			case "staff_element":
+				if (value.id == 411 || (value is Resistance && value.id != 959))
+				{
+					value.vExp = -1;
+				}
+				thing.c_idDeity = EClass.game.religions.Element.id;
+				break;
+			case "windbow":
+				thing.c_idDeity = EClass.game.religions.Wind.id;
+				break;
+			case "shirt_wind":
+				if (!(value is Resistance) && value.id != 226 && value.id != 152 && value.id != 77)
+				{
+					value.vExp = -1;
+				}
+				thing.c_idDeity = EClass.game.religions.Wind.id;
+				break;
+			case "pole_holy":
+				if (value.id == 60 || value.id == 461 || value.id == 423)
+				{
+					value.vExp = -1;
+				}
+				thing.c_idDeity = EClass.game.religions.Healing.id;
+				break;
+			case "sword_muramasa2":
+				if (value.id == 401 || value.id == 916 || value.id == 661)
+				{
+					value.vExp = -1;
+				}
+				thing.c_idDeity = EClass.game.religions.MoonShadow.id;
+				break;
+			case "kogitsunemaru":
+				if (value.id != 656)
+				{
+					value.vExp = -1;
+				}
+				thing.c_idDeity = EClass.game.religions.Trickery.id;
+				break;
+			case "warmonger":
+				if (value.id == 423 || value.id == 463 || value.id == 460 || value.id == 464 || value.id == 465)
+				{
+					value.vExp = -1;
+				}
+				thing.c_idDeity = EClass.game.religions.Strife.id;
+				break;
 			}
 		}
 		EClass._zone.AddCard(thing, pos);
 		pos.PlayEffect("aura_heaven");
 		if (first)
 		{
-			pos.PlaySound("godbless", true, 1f, true);
+			pos.PlaySound("godbless");
 		}
 	}
 
@@ -577,7 +368,7 @@ public class Religion : EClass
 			c.faith = this;
 			c.RefreshFaithElement();
 			EClass.Sound.Play("worship");
-			Msg.Say("changeFaith", c, this.Name, null, null);
+			Msg.Say("changeFaith", c, Name);
 			return;
 		}
 		if (c.faith != this)
@@ -585,25 +376,25 @@ public class Religion : EClass
 			c.faith.LeaveFaith(c);
 		}
 		EClass.pc.c_daysWithGod = 0;
-		Msg.Say("worship", this.Name, null, null, null);
-		this.Talk("worship", c, null);
+		Msg.Say("worship", Name);
+		Talk("worship", c);
 		EClass.Sound.Play("worship");
-		c.PlayEffect("aura_heaven", true, 0f, default(Vector3));
+		c.PlayEffect("aura_heaven");
 		c.faith = this;
-		c.elements.SetBase(85, 0, 0);
-		this.OnJoinFaith();
-		if (this.IsEyth)
+		c.elements.SetBase(85, 0);
+		OnJoinFaith();
+		if (IsEyth)
 		{
-			this.mood = 0;
+			mood = 0;
 		}
 		else
 		{
-			this.mood = 50;
+			mood = 50;
 		}
 		c.RefreshFaithElement();
-		if (!c.HasElement(306, 1))
+		if (!c.HasElement(306))
 		{
-			c.elements.Learn(306, 1);
+			c.elements.Learn(306);
 		}
 		if (c.IsPC)
 		{
@@ -613,26 +404,25 @@ public class Religion : EClass
 
 	public void LeaveFaith(Chara c)
 	{
-		if (this.IsEyth)
+		if (!IsEyth)
 		{
-			return;
+			if (c.IsPC)
+			{
+				Msg.Say("worship2");
+				Punish(c);
+			}
+			if (c.IsPC)
+			{
+				EClass.pc.faction.charaElements.OnLeaveFaith();
+			}
+			OnLeaveFaith();
+			c.RefreshFaithElement();
 		}
-		if (c.IsPC)
-		{
-			Msg.Say("worship2");
-			this.Punish(c);
-		}
-		if (c.IsPC)
-		{
-			EClass.pc.faction.charaElements.OnLeaveFaith();
-		}
-		this.OnLeaveFaith();
-		c.RefreshFaithElement();
 	}
 
 	public void Punish(Chara c)
 	{
-		this.Talk("wrath", null, null);
+		Talk("wrath");
 		if (c.Evalue(1228) > 0)
 		{
 			c.SayNothingHappans();
@@ -643,21 +433,18 @@ public class Religion : EClass
 		c.stamina.value = 1;
 		if (c.HasCondition<ConWrath>())
 		{
-			Religion.recentWrath = this;
-			c.DamageHP(999999, AttackSource.Wrath, null);
-			Religion.recentWrath = null;
+			recentWrath = this;
+			c.DamageHP(999999, AttackSource.Wrath);
+			recentWrath = null;
 			return;
 		}
-		Thing thing = ThingGen.Create("punish_ball", -1, -1);
+		Thing thing = ThingGen.Create("punish_ball");
 		int num = 0;
-		using (List<Religion>.Enumerator enumerator = EClass.game.religions.list.GetEnumerator())
+		foreach (Religion item in EClass.game.religions.list)
 		{
-			while (enumerator.MoveNext())
+			if (item.giftRank > 0)
 			{
-				if (enumerator.Current.giftRank > 0)
-				{
-					num++;
-				}
+				num++;
 			}
 		}
 		if (num >= 4)
@@ -665,13 +452,13 @@ public class Religion : EClass
 			thing.idSkin = 1;
 		}
 		thing.ChangeWeight(EClass.pc.WeightLimit / 4 + 1000);
-		c.AddThing(thing, true, -1, -1);
-		c.AddCondition<ConWrath>(2000 + (c.IsPC ? (EClass.pc.c_daysWithGod * 20) : 0), false);
+		c.AddThing(thing);
+		c.AddCondition<ConWrath>(2000 + (c.IsPC ? (EClass.pc.c_daysWithGod * 20) : 0));
 	}
 
 	public void PunishTakeOver(Chara c)
 	{
-		this.Talk("takeoverFail", null, null);
+		Talk("takeoverFail");
 		if (c.Evalue(1228) > 0)
 		{
 			c.SayNothingHappans();
@@ -688,17 +475,17 @@ public class Religion : EClass
 		}
 		if (c.HasCondition<ConWrath>())
 		{
-			Religion.recentWrath = this;
-			c.DamageHP(999999, AttackSource.Wrath, null);
-			Religion.recentWrath = null;
+			recentWrath = this;
+			c.DamageHP(999999, AttackSource.Wrath);
+			recentWrath = null;
 			return;
 		}
-		Thing thing = ThingGen.Create("punish_ball", -1, -1);
+		Thing thing = ThingGen.Create("punish_ball");
 		thing.c_weight = EClass.pc.WeightLimit / 4 + 1000;
 		thing.isWeightChanged = true;
 		thing.SetDirtyWeight();
-		c.AddThing(thing, true, -1, -1);
-		c.AddCondition<ConWrath>(200, false);
+		c.AddThing(thing);
+		c.AddCondition<ConWrath>(200);
 	}
 
 	public virtual void OnJoinFaith()
@@ -711,24 +498,13 @@ public class Religion : EClass
 
 	public void OnChangeHour()
 	{
-		if (this.IsEyth)
+		if (IsEyth)
 		{
-			this.mood = 0;
-			return;
+			mood = 0;
 		}
-		this.mood = EClass.rnd(200) - 100;
+		else
+		{
+			mood = EClass.rnd(200) - 100;
+		}
 	}
-
-	[JsonProperty]
-	public int relation;
-
-	[JsonProperty]
-	public int giftRank;
-
-	[JsonProperty]
-	public int mood;
-
-	public static Religion recentWrath;
-
-	public SourceReligion.Row _source;
 }

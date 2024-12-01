@@ -1,176 +1,51 @@
-﻿using System;
 using Newtonsoft.Json;
 
 [JsonObject(MemberSerialization.OptIn)]
 public class EClass
 {
-	public static Game game
-	{
-		get
-		{
-			return EClass.core.game;
-		}
-	}
+	public static Core core;
 
-	public static bool AdvMode
-	{
-		get
-		{
-			return ActionMode.IsAdv;
-		}
-	}
+	public static Game game => core.game;
 
-	public static Player player
-	{
-		get
-		{
-			return EClass.core.game.player;
-		}
-	}
+	public static bool AdvMode => ActionMode.IsAdv;
 
-	public static Chara pc
-	{
-		get
-		{
-			return EClass.core.game.player.chara;
-		}
-	}
+	public static Player player => core.game.player;
 
-	public static UI ui
-	{
-		get
-		{
-			return EClass.core.ui;
-		}
-	}
+	public static Chara pc => core.game.player.chara;
 
-	public static Map _map
-	{
-		get
-		{
-			return EClass.core.game.activeZone.map;
-		}
-	}
+	public static UI ui => core.ui;
 
-	public static Zone _zone
-	{
-		get
-		{
-			return EClass.core.game.activeZone;
-		}
-	}
+	public static Map _map => core.game.activeZone.map;
 
-	public static FactionBranch Branch
-	{
-		get
-		{
-			return EClass.core.game.activeZone.branch;
-		}
-	}
+	public static Zone _zone => core.game.activeZone;
 
-	public static FactionBranch BranchOrHomeBranch
-	{
-		get
-		{
-			return EClass.Branch ?? EClass.pc.homeBranch;
-		}
-	}
+	public static FactionBranch Branch => core.game.activeZone.branch;
 
-	public static Faction Home
-	{
-		get
-		{
-			return EClass.core.game.factions.Home;
-		}
-	}
+	public static FactionBranch BranchOrHomeBranch => Branch ?? pc.homeBranch;
 
-	public static Faction Wilds
-	{
-		get
-		{
-			return EClass.core.game.factions.Wilds;
-		}
-	}
+	public static Faction Home => core.game.factions.Home;
 
-	public static Scene scene
-	{
-		get
-		{
-			return EClass.core.scene;
-		}
-	}
+	public static Faction Wilds => core.game.factions.Wilds;
 
-	public static BaseGameScreen screen
-	{
-		get
-		{
-			return EClass.core.screen;
-		}
-	}
+	public static Scene scene => core.scene;
 
-	public static GameSetting setting
-	{
-		get
-		{
-			return EClass.core.gameSetting;
-		}
-	}
+	public static BaseGameScreen screen => core.screen;
 
-	public static GameData gamedata
-	{
-		get
-		{
-			return EClass.core.gamedata;
-		}
-	}
+	public static GameSetting setting => core.gameSetting;
 
-	public static ColorProfile Colors
-	{
-		get
-		{
-			return EClass.core.Colors;
-		}
-	}
+	public static GameData gamedata => core.gamedata;
 
-	public static World world
-	{
-		get
-		{
-			return EClass.core.game.world;
-		}
-	}
+	public static ColorProfile Colors => core.Colors;
 
-	public static SourceManager sources
-	{
-		get
-		{
-			return EClass.core.sources;
-		}
-	}
+	public static World world => core.game.world;
 
-	public static SourceManager editorSources
-	{
-		get
-		{
-			return Core.SetCurrent(null).sources;
-		}
-	}
+	public static SourceManager sources => core.sources;
 
-	public static SoundManager Sound
-	{
-		get
-		{
-			return SoundManager.current;
-		}
-	}
+	public static SourceManager editorSources => Core.SetCurrent().sources;
 
-	public static CoreDebug debug
-	{
-		get
-		{
-			return EClass.core.debug;
-		}
-	}
+	public static SoundManager Sound => SoundManager.current;
+
+	public static CoreDebug debug => core.debug;
 
 	public static int rnd(int a)
 	{
@@ -186,11 +61,12 @@ public class EClass
 		for (int i = 0; i < 10; i++)
 		{
 			int num = start + i * step;
-			if (a <= num)
+			if (a > num)
 			{
-				return a;
+				a = num + (a - num) * rate / 100;
+				continue;
 			}
-			a = num + (a - num) * rate / 100;
+			return a;
 		}
 		return a;
 	}
@@ -237,6 +113,4 @@ public class EClass
 		}
 		return a;
 	}
-
-	public static Core core;
 }

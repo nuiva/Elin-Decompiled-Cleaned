@@ -1,16 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using SFB;
 using UnityEngine;
 
 public class AM_Copy : AM_BaseTileSelect
 {
+	public enum Mode
+	{
+		Copy,
+		Place,
+		Create
+	}
+
+	public string overwritePath;
+
+	public PartialMap partialMap;
+
+	public DirectoryInfo dir;
+
+	public DirectoryInfo dirUser;
+
 	public override BaseTileSelector.SelectType selectType
 	{
 		get
 		{
-			if (this.partialMap != null)
+			if (partialMap != null)
 			{
 				return BaseTileSelector.SelectType.Single;
 			}
@@ -18,51 +31,27 @@ public class AM_Copy : AM_BaseTileSelect
 		}
 	}
 
-	public override bool IsBuildMode
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsBuildMode => true;
 
-	public override BuildMenu.Mode buildMenuMode
-	{
-		get
-		{
-			return BuildMenu.Mode.PartialMap;
-		}
-	}
+	public override BuildMenu.Mode buildMenuMode => BuildMenu.Mode.PartialMap;
 
-	public override bool UseSubMenu
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool UseSubMenu => true;
 
-	public override bool SubMenuAsGroup
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool SubMenuAsGroup => false;
 
-	public virtual AM_Copy.Mode mode
-	{
-		get
-		{
-			return AM_Copy.Mode.Copy;
-		}
-	}
+	public virtual Mode mode => Mode.Copy;
 
-	public PartialMapMenu menu
+	public PartialMapMenu menu => PartialMapMenu.Instance;
+
+	public override int CostMoney
 	{
 		get
 		{
-			return PartialMapMenu.Instance;
+			if (partialMap == null)
+			{
+				return 0;
+			}
+			return partialMap.value;
 		}
 	}
 
@@ -87,58 +76,54 @@ public class AM_Copy : AM_BaseTileSelect
 		{
 			return HitResult.Invalid;
 		}
-		if (this.partialMap == null)
+		if (partialMap == null)
 		{
-			using (List<Thing>.Enumerator enumerator = point.cell.Things.GetEnumerator())
+			foreach (Thing thing in point.cell.Things)
 			{
-				while (enumerator.MoveNext())
+				if (!thing.trait.CanCopyInBlueprint)
 				{
-					if (!enumerator.Current.trait.CanCopyInBlueprint)
-					{
-						return HitResult.Warning;
-					}
+					return HitResult.Warning;
 				}
 			}
-			return HitResult.Valid;
 		}
 		return HitResult.Valid;
 	}
 
 	public override void OnSelectStart(Point point)
 	{
-		this.RefreshMenu(false);
+		RefreshMenu(show: false);
 	}
 
 	public override void OnSelectEnd(bool cancel)
 	{
 		if (cancel)
 		{
-			this.RefreshMenu(true);
+			RefreshMenu(show: true);
 		}
 	}
 
 	public override void OnAfterProcessTiles(Point start, Point end)
 	{
-		if (this.partialMap != null)
+		if (partialMap != null)
 		{
 			EClass.Sound.Play("build_area");
-			this.partialMap.editMode = false;
-			this.partialMap.procedural = true;
+			partialMap.editMode = false;
+			partialMap.procedural = true;
 			if (MapPiece.IsEditor)
 			{
 				if (Input.GetKey(KeyCode.LeftShift))
 				{
-					this.partialMap.procedural = true;
+					partialMap.procedural = true;
 				}
 				else
 				{
-					this.partialMap.editMode = true;
+					partialMap.editMode = true;
 				}
 			}
-			this.partialMap.Apply(end, PartialMap.ApplyMode.Apply);
+			partialMap.Apply(end, PartialMap.ApplyMode.Apply);
 			return;
 		}
-		this.partialMap = new PartialMap
+		partialMap = new PartialMap
 		{
 			allowRotate = Application.isEditor
 		};
@@ -146,27 +131,29 @@ public class AM_Copy : AM_BaseTileSelect
 		int z = Mathf.Min(start.z, end.z);
 		int w = Mathf.Abs(start.x - end.x) + 1;
 		int h = Mathf.Abs(start.z - end.z) + 1;
-		this.partialMap.Save(x, z, w, h);
-		if (!this.overwritePath.IsEmpty())
+		partialMap.Save(x, z, w, h);
+		if (!overwritePath.IsEmpty())
 		{
-			File.Copy(PartialMap.PathTemp, this.overwritePath, true);
+			File.Copy(PartialMap.PathTemp, overwritePath, overwrite: true);
 			SE.Play("camera");
-			this.overwritePath = null;
-			this.partialMap = null;
-			this.RefreshMenu(true);
+			overwritePath = null;
+			partialMap = null;
+			RefreshMenu(show: true);
 			return;
 		}
-		this.partialMap = PartialMap.Load(null);
-		this.partialMap.localOffsetX = ((end.x > start.x) ? (start.x - end.x) : 0);
-		this.partialMap.localOffsetZ = ((end.z > start.z) ? (start.z - end.z) : 0);
-		this.RefreshMenu(false);
-		if (this.mode == AM_Copy.Mode.Create)
+		partialMap = PartialMap.Load();
+		partialMap.localOffsetX = ((end.x > start.x) ? (start.x - end.x) : 0);
+		partialMap.localOffsetZ = ((end.z > start.z) ? (start.z - end.z) : 0);
+		RefreshMenu(show: false);
+		if (mode == Mode.Create)
 		{
-			UIScreenshot.Create().Activate(this.partialMap, this.dir, new Action<PartialMap>(this.OnSave), false);
-			this.Clear();
-			return;
+			UIScreenshot.Create().Activate(partialMap, dir, OnSave);
+			Clear();
 		}
-		SE.Click();
+		else
+		{
+			SE.Click();
+		}
 	}
 
 	public virtual void OnSave(PartialMap _partial)
@@ -174,35 +161,24 @@ public class AM_Copy : AM_BaseTileSelect
 		if (MapPiece.IsEditor)
 		{
 			MapPiece.initialized = false;
-			this.menu.RefreshCategory(null);
+			menu.RefreshCategory();
 		}
-		this.menu.DestorySprites();
-		this.menu.Refresh();
+		menu.DestorySprites();
+		menu.Refresh();
 	}
 
 	public override void OnRenderTile(Point point, HitResult result, int dir)
 	{
-		if (UIScreenshot.Instance)
+		if (!UIScreenshot.Instance)
 		{
-			return;
-		}
-		if (this.partialMap != null)
-		{
-			this.partialMap.Apply(point, PartialMap.ApplyMode.Render);
-			return;
-		}
-		base.OnRenderTile(point, result, dir);
-	}
-
-	public override int CostMoney
-	{
-		get
-		{
-			if (this.partialMap == null)
+			if (partialMap != null)
 			{
-				return 0;
+				partialMap.Apply(point, PartialMap.ApplyMode.Render);
 			}
-			return this.partialMap.value;
+			else
+			{
+				base.OnRenderTile(point, result, dir);
+			}
 		}
 	}
 
@@ -210,151 +186,138 @@ public class AM_Copy : AM_BaseTileSelect
 	{
 		if (Input.GetKeyDown(KeyCode.K))
 		{
-			PartialMap.ExportDialog(null);
+			PartialMap.ExportDialog();
 		}
 		if (Input.GetKeyDown(KeyCode.L))
 		{
-			this.ImportDialog(null);
+			ImportDialog();
 		}
 	}
 
 	public override void RotateUnderMouse()
 	{
-		if (this.partialMap != null && this.partialMap.allowRotate)
+		if (partialMap != null && partialMap.allowRotate)
 		{
-			this.partialMap.Rotate();
-			return;
+			partialMap.Rotate();
 		}
-		base.RotateUnderMouse();
+		else
+		{
+			base.RotateUnderMouse();
+		}
 	}
 
 	public void Clear()
 	{
-		this.partialMap.ClearMarkedCells();
-		this.partialMap = null;
-		this.RefreshMenu(true);
+		partialMap.ClearMarkedCells();
+		partialMap = null;
+		RefreshMenu(show: true);
 	}
 
 	public override void OnCancel()
 	{
-		if (!this.overwritePath.IsEmpty())
+		if (!overwritePath.IsEmpty())
 		{
-			this.overwritePath = null;
+			overwritePath = null;
 			SE.Play("actionMode");
-			this.RefreshMenu(true);
-			return;
+			RefreshMenu(show: true);
 		}
-		if (this.mode == AM_Copy.Mode.Place)
+		else if (mode == Mode.Place)
 		{
-			base.Deactivate();
-			return;
+			Deactivate();
 		}
-		if (UIScreenshot.Instance)
+		else if (!UIScreenshot.Instance)
 		{
-			return;
+			if (partialMap != null)
+			{
+				Clear();
+				SE.Play("actionMode");
+			}
+			else
+			{
+				Deactivate();
+			}
 		}
-		if (this.partialMap != null)
-		{
-			this.Clear();
-			SE.Play("actionMode");
-			return;
-		}
-		base.Deactivate();
 	}
 
 	public void Import(string path)
 	{
-		this.partialMap = PartialMap.Load(path);
-		this.RefreshMenu(false);
+		partialMap = PartialMap.Load(path);
+		RefreshMenu(show: false);
 	}
 
 	public void ImportDialog(string dir = null)
 	{
 		EClass.core.WaitForEndOfFrame(delegate
 		{
-			string[] array = StandaloneFileBrowser.OpenFilePanel("Import Map Piece", dir ?? CorePath.MapPieceSaveUser, "mp", false);
+			string[] array = StandaloneFileBrowser.OpenFilePanel("Import Map Piece", dir ?? CorePath.MapPieceSaveUser, "mp", multiselect: false);
 			if (array.Length != 0)
 			{
-				this.Import(array[0]);
+				Import(array[0]);
 			}
 		});
 	}
 
 	public void RefreshMenu(bool show)
 	{
-		if (this.menu)
+		if (!menu)
 		{
-			this.menu.SetVisible(show);
-			BuildMenu.Instance.terrainMenu.SetActive(!show);
-			this.menu.buttonSave.SetActive(this.partialMap != null && this.partialMap.path.IsEmpty());
-			this.menu.buttonDelete.SetActive(this.partialMap != null && !this.partialMap.path.IsEmpty());
-			this.menu.buttonEdit.SetActive(this.partialMap != null && !this.partialMap.path.IsEmpty());
-			this.menu.buttonSave.SetOnClick(delegate
-			{
-				UIScreenshot.Create().Activate(this.partialMap, this.dir, delegate(PartialMap a)
-				{
-					this.OnSave(a);
-					this.Clear();
-				}, false);
-			});
-			this.menu.buttonDelete.SetOnClick(delegate
-			{
-				Dialog.YesNo("dialog_deleteMapPiece", delegate
-				{
-					SE.Trash();
-					PartialMap.Delete(this.partialMap.path);
-					this.menu.DestorySprites();
-					this.menu.Refresh();
-					this.Clear();
-				}, null, "yes", "no");
-			});
-			this.menu.buttonEdit.SetOnClick(delegate
-			{
-				UIScreenshot.Create().Activate(this.partialMap, this.dir, new Action<PartialMap>(this.OnSave), true);
-				this.Clear();
-			});
+			return;
 		}
+		menu.SetVisible(show);
+		BuildMenu.Instance.terrainMenu.SetActive(!show);
+		menu.buttonSave.SetActive(partialMap != null && partialMap.path.IsEmpty());
+		menu.buttonDelete.SetActive(partialMap != null && !partialMap.path.IsEmpty());
+		menu.buttonEdit.SetActive(partialMap != null && !partialMap.path.IsEmpty());
+		menu.buttonSave.SetOnClick(delegate
+		{
+			UIScreenshot.Create().Activate(partialMap, dir, delegate(PartialMap a)
+			{
+				OnSave(a);
+				Clear();
+			});
+		});
+		menu.buttonDelete.SetOnClick(delegate
+		{
+			Dialog.YesNo("dialog_deleteMapPiece", delegate
+			{
+				SE.Trash();
+				PartialMap.Delete(partialMap.path);
+				menu.DestorySprites();
+				menu.Refresh();
+				Clear();
+			});
+		});
+		menu.buttonEdit.SetOnClick(delegate
+		{
+			UIScreenshot.Create().Activate(partialMap, dir, OnSave, isUpdate: true);
+			Clear();
+		});
 	}
 
 	public override void OnActivate()
 	{
-		this.dir = (this.dirUser = new DirectoryInfo(CorePath.MapPieceSaveUser));
-		if (this.mode == AM_Copy.Mode.Copy)
+		dir = (dirUser = new DirectoryInfo(CorePath.MapPieceSaveUser));
+		if (mode == Mode.Copy)
 		{
 			PartialMapMenu.Activate();
 		}
-		this.RefreshMenu(true);
+		RefreshMenu(show: true);
 	}
 
 	public override void OnDeactivate()
 	{
-		if (this.partialMap != null)
+		if (partialMap != null)
 		{
-			this.partialMap.ClearMarkedCells();
-			this.partialMap = null;
+			partialMap.ClearMarkedCells();
+			partialMap = null;
 		}
-		if (this.menu)
+		if ((bool)menu)
 		{
-			this.menu.Deactivate();
+			menu.Deactivate();
 		}
 		if (Application.isEditor)
 		{
 			MapPiece.initialized = false;
 		}
-	}
-
-	public string overwritePath;
-
-	public PartialMap partialMap;
-
-	public DirectoryInfo dir;
-
-	public DirectoryInfo dirUser;
-
-	public enum Mode
-	{
-		Copy,
-		Place,
-		Create
 	}
 }

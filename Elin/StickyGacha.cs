@@ -1,42 +1,26 @@
-﻿using System;
-
 public class StickyGacha : BaseSticky
 {
-	public override int idIcon
-	{
-		get
-		{
-			return 2;
-		}
-	}
+	public override int idIcon => 2;
 
-	public override string idLang
-	{
-		get
-		{
-			return "sticky_gacha";
-		}
-	}
+	public override string idLang => "sticky_gacha";
 
-	public new WidgetSticky widget
-	{
-		get
-		{
-			return WidgetSticky.Instance;
-		}
-	}
+	public new WidgetSticky widget => WidgetSticky.Instance;
 
 	public override bool ShouldShow
 	{
 		get
 		{
-			return !EClass.ui.GetLayer<LayerGacha>(false) && EClass.player.dailyGacha;
+			if (!EClass.ui.GetLayer<LayerGacha>())
+			{
+				return EClass.player.dailyGacha;
+			}
+			return false;
 		}
 	}
 
 	public override void OnClick()
 	{
 		EClass.ui.AddLayer<LayerGacha>();
-		this.widget.Refresh();
+		widget.Refresh();
 	}
 }

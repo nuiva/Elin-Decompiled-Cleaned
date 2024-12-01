@@ -1,64 +1,55 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class AI_Cook : AIAct
 {
-	public override int LeftHand
-	{
-		get
-		{
-			return 1001;
-		}
-	}
+	public Card factory;
 
-	public override int RightHand
-	{
-		get
-		{
-			return 1002;
-		}
-	}
+	public override int LeftHand => 1001;
+
+	public override int RightHand => 1002;
 
 	public bool IsValidTarget(Card c)
 	{
-		return this.factory != null && this.factory.trait.CanCook(c);
+		if (factory != null)
+		{
+			return factory.trait.CanCook(c);
+		}
+		return false;
 	}
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		this.factory = EClass._map.Installed.traits.GetRandomThing<TraitCooker>();
-		if (!this.IsValidTarget(this.owner.held))
+		factory = EClass._map.Installed.traits.GetRandomThing<TraitCooker>();
+		if (!IsValidTarget(owner.held))
 		{
-			yield return this.Cancel();
+			yield return Cancel();
 		}
-		yield return base.DoGoto(this.factory, null);
-		if (!this.IsValidTarget(this.owner.held))
+		yield return DoGoto(factory);
+		if (!IsValidTarget(owner.held))
 		{
-			yield return this.Cancel();
+			yield return Cancel();
 		}
-		Card target = this.owner.DropHeld(this.factory.pos);
+		Card target = owner.DropHeld(factory.pos);
 		target.TryReserve(this);
-		Progress_Custom progress_Custom = new Progress_Custom();
-		progress_Custom.canProgress = (() => this.factory.ExistsOnMap && target.ExistsOnMap);
-		progress_Custom.onProgress = delegate(Progress_Custom p)
+		Progress_Custom seq = new Progress_Custom
 		{
-			this.owner.LookAt(this.factory);
-			this.factory.trait.CookProgress();
-		};
-		progress_Custom.onProgressComplete = delegate()
+			canProgress = () => factory.ExistsOnMap && target.ExistsOnMap,
+			onProgress = delegate
+			{
+				owner.LookAt(factory);
+				factory.trait.CookProgress();
+			},
+			onProgressComplete = delegate
+			{
+			}
+		}.SetDuration(25, 5);
+		owner.SetTempHand(-1, -1);
+		yield return Do(seq);
+		yield return Status.Running;
+		if (!owner.CanPick(target))
 		{
-		};
-		Progress_Custom seq = progress_Custom.SetDuration(25, 5);
-		this.owner.SetTempHand(-1, -1);
-		yield return base.Do(seq, null);
-		yield return AIAct.Status.Running;
-		if (!this.owner.CanPick(target))
-		{
-			yield return this.Cancel();
+			yield return Cancel();
 		}
-		this.owner.HoldCard(target, -1);
-		yield break;
+		owner.HoldCard(target);
 	}
-
-	public Card factory;
 }

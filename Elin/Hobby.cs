@@ -1,29 +1,28 @@
-﻿using System;
+using System;
 
 public class Hobby : EClass
 {
+	public int id;
+
+	public SourceHobby.Row source => EClass.sources.hobbies.map[id];
+
+	public string Name => source.GetName();
+
 	public AIWork GetAI(Chara c)
 	{
-		string str = "AIWork_" + this.source.ai.IsEmpty(this.source.alias);
-		AIWork aiwork;
-		if (Type.GetType(str + ", Elin") != null)
-		{
-			aiwork = ClassCache.Create<AIWork>(str, "Elin");
-		}
-		else
-		{
-			aiwork = new AIWork();
-		}
-		aiwork.owner = c;
-		aiwork.sourceWork = this.source;
-		return aiwork;
+		AIWork aIWork = null;
+		string text = "AIWork_" + source.ai.IsEmpty(source.alias);
+		aIWork = ((!(Type.GetType(text + ", Elin") != null)) ? new AIWork() : ClassCache.Create<AIWork>(text, "Elin"));
+		aIWork.owner = c;
+		aIWork.sourceWork = source;
+		return aIWork;
 	}
 
 	public int GetLv(Chara c)
 	{
-		if (!this.source.skill.IsEmpty())
+		if (!source.skill.IsEmpty())
 		{
-			return c.Evalue(this.source.skill);
+			return c.Evalue(source.skill);
 		}
 		return c.LV;
 	}
@@ -37,7 +36,7 @@ public class Hobby : EClass
 		}
 		if (c.currentZone == EClass._zone)
 		{
-			if ((!this.source.destTrait.IsEmpty() || !this.source.workTag.IsEmpty()) && !this.GetAI(c).SetDestination())
+			if ((!source.destTrait.IsEmpty() || !source.workTag.IsEmpty()) && !GetAI(c).SetDestination())
 			{
 				return 0;
 			}
@@ -48,32 +47,14 @@ public class Hobby : EClass
 			TraitBed traitBed = c.FindBed();
 			if (traitBed != null)
 			{
-				num += 30 + traitBed.owner.GetTotalQuality(true) + traitBed.owner.Evalue(750);
+				num += 30 + traitBed.owner.GetTotalQuality() + traitBed.owner.Evalue(750);
 			}
 		}
-		if (this.source.alias == "Breeding")
+		if (source.alias == "Breeding")
 		{
 			num = num * c.race.breeder / 100;
 		}
-		num += this.GetLv(c);
+		num += GetLv(c);
 		return num * (100 + c.homeBranch.Evalue(3708) * 10) / 100;
 	}
-
-	public SourceHobby.Row source
-	{
-		get
-		{
-			return EClass.sources.hobbies.map[this.id];
-		}
-	}
-
-	public string Name
-	{
-		get
-		{
-			return this.source.GetName();
-		}
-	}
-
-	public int id;
 }

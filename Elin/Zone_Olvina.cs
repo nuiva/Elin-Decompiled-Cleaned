@@ -1,12 +1,10 @@
-﻿using System;
-
 public class Zone_Olvina : Zone_Town
 {
 	public override string IDPlaylistOverwrite
 	{
 		get
 		{
-			if (!this.IsFestival)
+			if (!IsFestival)
 			{
 				return null;
 			}
@@ -18,7 +16,11 @@ public class Zone_Olvina : Zone_Town
 	{
 		get
 		{
-			return base.lv == 0 && EClass.world.date.month == 3;
+			if (base.lv == 0)
+			{
+				return EClass.world.date.month == 3;
+			}
+			return false;
 		}
 	}
 

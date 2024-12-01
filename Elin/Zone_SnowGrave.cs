@@ -1,38 +1,22 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class Zone_SnowGrave : Zone
 {
-	public override float PrespawnRate
-	{
-		get
-		{
-			return 1f;
-		}
-	}
+	public override float PrespawnRate => 1f;
 
 	public override void OnGenerateMap()
 	{
 		base.OnGenerateMap();
-		Zone_SnowGrave.GenerateGrave();
+		GenerateGrave();
 	}
 
 	public static void GenerateGrave()
 	{
-		List<Dictionary<string, string>> list = new ExcelData("Data/Raw/monument", 1).BuildList("_default");
+		List<Dictionary<string, string>> list = new ExcelData("Data/Raw/monument", 1).BuildList();
 		list.RemoveAt(0);
-		list.Shuffle<Dictionary<string, string>>();
+		list.Shuffle();
 		int num = 200;
-		string[] source = new string[]
-		{
-			"1035",
-			"1036",
-			"1046",
-			"1047",
-			"1048",
-			"1049",
-			"1050"
-		};
+		string[] array = new string[7] { "1035", "1036", "1046", "1047", "1048", "1049", "1050" };
 		MapBounds mapBounds = new MapBounds
 		{
 			x = 50,
@@ -47,33 +31,34 @@ public class Zone_SnowGrave : Zone
 		for (int i = 0; i < list.Count; i++)
 		{
 			Dictionary<string, string> dictionary = list[i];
-			Thing thing = ThingGen.Create(source.RandomItem<string>(), -1, -1);
+			Thing thing = ThingGen.Create(array.RandomItem());
 			for (int j = 0; j < 1000; j++)
 			{
 				bool flag = true;
-				point = mapBounds.GetRandomSurface(false, true, false);
-				if (!point.HasBlock && !point.HasObj && point.Distance(p) >= 5)
+				point = mapBounds.GetRandomSurface();
+				if (point.HasBlock || point.HasObj || point.Distance(p) < 5)
 				{
-					for (int k = point.z - 1; k < point.z + 2; k++)
+					continue;
+				}
+				for (int k = point.z - 1; k < point.z + 2; k++)
+				{
+					for (int l = point.x - 1; l < point.x + 2; l++)
 					{
-						for (int l = point.x - 1; l < point.x + 2; l++)
+						point2.Set(l, k);
+						if (point2.Installed != null)
 						{
-							point2.Set(l, k);
-							if (point2.Installed != null)
-							{
-								flag = false;
-								break;
-							}
-						}
-						if (!flag)
-						{
+							flag = false;
 							break;
 						}
 					}
-					if (flag)
+					if (!flag)
 					{
 						break;
 					}
+				}
+				if (flag)
+				{
+					break;
 				}
 			}
 			EClass._zone.AddCard(thing, point).Install();
@@ -81,15 +66,10 @@ public class Zone_SnowGrave : Zone
 			thing.c_idBacker = dictionary["id"].ToInt();
 			thing.isModified = true;
 		}
-		string[] source2 = new string[]
-		{
-			"1058",
-			"1059",
-			"1064"
-		};
+		string[] array2 = new string[3] { "1058", "1059", "1064" };
 		for (int m = 0; m < 500; m++)
 		{
-			Card card = EClass._zone.AddThing(source2.RandomItem<string>(), EClass._zone.bounds.GetRandomSurface(false, true, false));
+			Card card = EClass._zone.AddThing(array2.RandomItem(), EClass._zone.bounds.GetRandomSurface());
 			card.dir = EClass.rnd(2);
 			card.Install();
 		}

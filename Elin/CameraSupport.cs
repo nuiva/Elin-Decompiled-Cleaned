@@ -1,4 +1,3 @@
-﻿using System;
 using BeautifyEffect;
 using Colorful;
 using UnityEngine;
@@ -6,37 +5,13 @@ using UnityStandardAssets.ImageEffects;
 
 public class CameraSupport : MonoBehaviour
 {
-	public void ResizeCameraToPixelPerfect()
+	public enum Divider
 	{
-		this.cam.orthographicSize = this.GetOrthoSize() / this.Zoom;
-	}
-
-	public void OnChangeResolution()
-	{
-	}
-
-	public float GetOrthoSize()
-	{
-		float result = 0f;
-		switch (this.divier)
-		{
-		case CameraSupport.Divider.None:
-			result = (float)Screen.height * 0.5f * 0.01f;
-			break;
-		case CameraSupport.Divider.Floor:
-			result = (float)Mathf.FloorToInt((float)Screen.height * 0.5f) * 0.01f;
-			break;
-		case CameraSupport.Divider.Round:
-			result = (float)Mathf.RoundToInt((float)Screen.height * 0.5f) * 0.01f;
-			break;
-		case CameraSupport.Divider.Ceil:
-			result = (float)Mathf.CeilToInt((float)Screen.height * 0.5f) * 0.01f;
-			break;
-		case CameraSupport.Divider.Odd:
-			result = (float)Screen.height * 0.5f * 0.01f + 0.005f;
-			break;
-		}
-		return result;
+		None,
+		Floor,
+		Round,
+		Ceil,
+		Odd
 	}
 
 	public Camera cam;
@@ -49,7 +24,7 @@ public class CameraSupport : MonoBehaviour
 
 	public Upscaler upscaler;
 
-	public CameraSupport.Divider divier;
+	public Divider divier;
 
 	public bool snap;
 
@@ -68,12 +43,36 @@ public class CameraSupport : MonoBehaviour
 	[Range(0.1f, 2f)]
 	public float Zoom = 1f;
 
-	public enum Divider
+	public void ResizeCameraToPixelPerfect()
 	{
-		None,
-		Floor,
-		Round,
-		Ceil,
-		Odd
+		cam.orthographicSize = GetOrthoSize() / Zoom;
+	}
+
+	public void OnChangeResolution()
+	{
+	}
+
+	public float GetOrthoSize()
+	{
+		float result = 0f;
+		switch (divier)
+		{
+		case Divider.None:
+			result = (float)Screen.height * 0.5f * 0.01f;
+			break;
+		case Divider.Floor:
+			result = (float)Mathf.FloorToInt((float)Screen.height * 0.5f) * 0.01f;
+			break;
+		case Divider.Round:
+			result = (float)Mathf.RoundToInt((float)Screen.height * 0.5f) * 0.01f;
+			break;
+		case Divider.Ceil:
+			result = (float)Mathf.CeilToInt((float)Screen.height * 0.5f) * 0.01f;
+			break;
+		case Divider.Odd:
+			result = (float)Screen.height * 0.5f * 0.01f + 0.005f;
+			break;
+		}
+		return result;
 	}
 }

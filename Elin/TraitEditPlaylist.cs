@@ -1,5 +1,3 @@
-﻿using System;
-
 public class TraitEditPlaylist : TraitItem
 {
 	public override bool OnUse(Chara c)
@@ -10,7 +8,7 @@ public class TraitEditPlaylist : TraitItem
 			Msg.Say("cantEditPlaylist");
 			return false;
 		}
-		EClass.ui.AddLayer<LayerEditPlaylist>().Activate(LayerEditPlaylist.Mode.Playlist);
+		EClass.ui.AddLayer<LayerEditPlaylist>().Activate();
 		return false;
 	}
 }

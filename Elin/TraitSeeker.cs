@@ -1,36 +1,10 @@
-﻿using System;
-
 public class TraitSeeker : TraitUniqueMerchant
 {
-	public override ShopType ShopType
-	{
-		get
-		{
-			return ShopType.RedBook;
-		}
-	}
+	public override ShopType ShopType => ShopType.RedBook;
 
-	public override string LangBarter
-	{
-		get
-		{
-			return "daBorrowBook";
-		}
-	}
+	public override string LangBarter => "daBorrowBook";
 
-	public override CurrencyType CurrencyType
-	{
-		get
-		{
-			return CurrencyType.None;
-		}
-	}
+	public override CurrencyType CurrencyType => CurrencyType.None;
 
-	public override int RestockDay
-	{
-		get
-		{
-			return 360;
-		}
-	}
+	public override int RestockDay => 360;
 }

@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 
 public class DramaEventWait : DramaEventMethod
 {
-	public DramaEventWait(float _duration, Action method = null) : base(method, _duration, true)
+	public DramaEventWait(float _duration, Action method = null)
+		: base(method, _duration, _halt: true)
 	{
-		this.hideDialog = true;
+		hideDialog = true;
 	}
 }

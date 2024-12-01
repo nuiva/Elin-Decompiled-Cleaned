@@ -1,19 +1,11 @@
-﻿using System;
-
 public class TraitSeesaw : TraitFloorSwitch
 {
-	public override bool UseAltTiles
-	{
-		get
-		{
-			return this.owner.isOn;
-		}
-	}
+	public override bool UseAltTiles => owner.isOn;
 
 	public override void OnActivateTrap(Chara c)
 	{
-		this.owner.isOn = !this.owner.isOn;
-		this.owner.PlaySound("seesaw", 1f, true);
+		owner.isOn = !owner.isOn;
+		owner.PlaySound("seesaw");
 		TraitSwitch.haltMove = false;
 	}
 }

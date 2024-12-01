@@ -1,12 +1,4 @@
-﻿using System;
-
 public class ReligionMachine : Religion
 {
-	public override string id
-	{
-		get
-		{
-			return "machine";
-		}
-	}
+	public override string id => "machine";
 }

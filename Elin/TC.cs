@@ -1,36 +1,21 @@
-﻿using System;
 using UnityEngine;
 
 public class TC : EMono
 {
-	public Card owner
-	{
-		get
-		{
-			return this.render.owner;
-		}
-	}
+	public static GameSetting.RenderSetting.TCSetting _setting;
 
-	public virtual bool isUI
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public CardRenderer render;
 
-	public virtual Vector3 FixPos
-	{
-		get
-		{
-			return Vector3.zero;
-		}
-	}
+	public Card owner => render.owner;
+
+	public virtual bool isUI => false;
+
+	public virtual Vector3 FixPos => Vector3.zero;
 
 	public void SetOwner(CardRenderer r)
 	{
-		this.render = r;
-		this.OnSetOwner();
+		render = r;
+		OnSetOwner();
 	}
 
 	public virtual void OnSetOwner()
@@ -39,21 +24,17 @@ public class TC : EMono
 
 	public virtual void OnDraw(ref Vector3 pos)
 	{
-		base.transform.position = pos + this.FixPos;
+		base.transform.position = pos + FixPos;
 	}
 
 	public void Kill()
 	{
-		this.OnKill();
+		OnKill();
 		PoolManager.Despawn(this);
-		this.render = null;
+		render = null;
 	}
 
 	public virtual void OnKill()
 	{
 	}
-
-	public static GameSetting.RenderSetting.TCSetting _setting;
-
-	public CardRenderer render;
 }

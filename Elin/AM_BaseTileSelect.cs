@@ -1,76 +1,20 @@
-﻿using System;
-
 public class AM_BaseTileSelect : ActionMode
 {
-	public override CursorInfo DefaultCursor
-	{
-		get
-		{
-			return CursorSystem.Select;
-		}
-	}
+	public override CursorInfo DefaultCursor => CursorSystem.Select;
 
-	public override bool enableMouseInfo
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool enableMouseInfo => true;
 
-	public override bool ShowMouseoverTarget
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool ShowMouseoverTarget => false;
 
-	public override bool CanSelectTile
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanSelectTile => true;
 
-	public override AreaHighlightMode AreaHihlight
-	{
-		get
-		{
-			return AreaHighlightMode.Build;
-		}
-	}
+	public override AreaHighlightMode AreaHihlight => AreaHighlightMode.Build;
 
-	public TaskManager.Designations Designations
-	{
-		get
-		{
-			return EClass._map.tasks.designations;
-		}
-	}
+	public TaskManager.Designations Designations => EClass._map.tasks.designations;
 
-	public override string idSound
-	{
-		get
-		{
-			return "actionMode";
-		}
-	}
+	public override string idSound => "actionMode";
 
-	public override bool AllowMiddleClickFunc
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool AllowMiddleClickFunc => true;
 
-	public override bool ShowMaskedThings
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool ShowMaskedThings => true;
 }

@@ -1,129 +1,122 @@
-﻿using System;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class ButtonHotItem : ButtonGridDrag
 {
-	public override float extFixY
-	{
-		get
-		{
-			return 10f;
-		}
-	}
+	[NonSerialized]
+	public new int index;
+
+	public WidgetHotbar widget;
+
+	public override float extFixY => 10f;
 
 	public override void RefreshItem()
 	{
-		HotItem item = this.item as HotItem;
+		HotItem item = base.item as HotItem;
 		bool flag = item != null;
-		this.instantClick = !this.widget.hotbar.IsUserHotbar;
+		instantClick = !widget.hotbar.IsUserHotbar;
 		base.onClick.RemoveAllListeners();
-		this.dragParent = ((flag && this.widget.CanRegisterItem) ? this.widget : null);
-		this.icon.enabled = flag;
-		base.interactable = (flag || this.widget.CanRegisterItem || !this.widget.IsSealed);
+		dragParent = ((flag && widget.CanRegisterItem) ? widget : null);
+		icon.enabled = flag;
+		base.interactable = flag || widget.CanRegisterItem || !widget.IsSealed;
 		if (flag && item.Hidden)
 		{
-			this.icon.enabled = false;
+			icon.enabled = false;
 			base.interactable = false;
 		}
-		this.mainText.SetActive(this.widget.extra.showShortcut);
+		mainText.SetActive(widget.extra.showShortcut);
 		base.image.sprite = Core.Instance.refs.spritesHighlight[0];
-		HotItem item2 = item;
-		base.transition = ((item2 != null) ? item2.Transition : Selectable.Transition.SpriteSwap);
+		base.transition = item?.Transition ?? Transition.SpriteSwap;
 		if (flag)
 		{
 			item.button = this;
-			item.hotbar = this.widget.hotbar;
-			base.onClick.AddListener(delegate()
+			item.hotbar = widget.hotbar;
+			base.onClick.AddListener(delegate
 			{
 				if (EClass.ui.BlockInput)
 				{
 					SE.BeepSmall();
-					return;
 				}
-				if (WidgetHotbar.registering)
+				else if (WidgetHotbar.registering)
 				{
-					this.RegisterHotbar();
-					return;
+					RegisterHotbar();
 				}
-				if (!this.widget.Visible)
+				else
 				{
-					this.widget.ToggleVisible();
+					if (!widget.Visible)
+					{
+						widget.ToggleVisible();
+					}
+					UIButton.buttonPos = base.transform.position;
+					item.OnClick(this, widget.hotbar);
+					EInput.Consume(0);
 				}
-				UIButton.buttonPos = this.transform.position;
-				item.OnClick(this, this.widget.hotbar);
-				EInput.Consume(0);
 			});
-			this.onRightClick = delegate()
+			onRightClick = delegate
 			{
 				item.OnRightClick(this);
 			};
-			this.tooltip.enable = !item.TextTip.IsEmpty();
-			this.tooltip.offset = new Vector3(0f, (float)((this.widget.transform.position.y < 200f) ? 70 : -20), 0f);
-			this.tooltip.onShowTooltip = delegate(UITooltip t)
+			tooltip.enable = !item.TextTip.IsEmpty();
+			tooltip.offset = new Vector3(0f, (widget.transform.position.y < 200f) ? 70 : (-20), 0f);
+			tooltip.onShowTooltip = delegate(UITooltip t)
 			{
 				string textTip = item.TextTip;
 				t.textMain.text = textTip;
 			};
-			this.icon.material = (item.UseUIObjMaterial ? EClass.core.refs.matUIObj : null);
-			item.SetImage(this.icon);
-			this.Refresh();
+			icon.material = (item.UseUIObjMaterial ? EClass.core.refs.matUIObj : null);
+			item.SetImage(icon);
+			Refresh();
 			return;
 		}
-		this.subText.SetActive(false);
-		this.tooltip.enable = false;
-		base.onClick.AddListener(delegate()
+		subText.SetActive(enable: false);
+		tooltip.enable = false;
+		base.onClick.AddListener(delegate
 		{
 			if (EClass.ui.BlockInput)
 			{
 				SE.BeepSmall();
-				return;
 			}
-			if (WidgetHotbar.registering)
+			else if (WidgetHotbar.registering)
 			{
-				this.RegisterHotbar();
-				return;
+				RegisterHotbar();
 			}
-			this.widget.OnClickEmptyItem(this);
+			else
+			{
+				widget.OnClickEmptyItem(this);
+			}
 		});
-		this.onRightClick = null;
+		onRightClick = null;
 	}
 
 	public void Refresh()
 	{
-		if (this.item == null)
+		if (item != null)
 		{
-			return;
-		}
-		HotItem hotItem = this.item as HotItem;
-		if (this.subText)
-		{
-			hotItem.SetSubText(this.subText);
-		}
-		if (hotItem.Thing != null)
-		{
-			this.card = hotItem.Thing;
+			HotItem hotItem = item as HotItem;
+			if ((bool)subText)
+			{
+				hotItem.SetSubText(subText);
+			}
+			if (hotItem.Thing != null)
+			{
+				card = hotItem.Thing;
+			}
 		}
 	}
 
 	public void RegisterHotbar()
 	{
 		SE.SelectHotitem();
-		this.widget.SetItem(this, WidgetHotbar.registeringItem);
+		widget.SetItem(this, WidgetHotbar.registeringItem);
 		Core.Instance.ui.RemoveLayer<LayerRegisterHotbar>();
 	}
 
 	public override void OnHover()
 	{
-		if (WidgetHotbar.registering)
+		if (!WidgetHotbar.registering)
 		{
-			return;
+			base.OnHover();
 		}
-		base.OnHover();
 	}
-
-	[NonSerialized]
-	public new int index;
-
-	public WidgetHotbar widget;
 }

@@ -1,78 +1,8 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine.UI;
 
 public class WidgetPopup : Widget
 {
-	public PopupManager PM
-	{
-		get
-		{
-			return EMono.player.popups;
-		}
-	}
-
-	public List<PopupManager.Item> items
-	{
-		get
-		{
-			return this.PM.items;
-		}
-	}
-
-	public override void OnActivate()
-	{
-		WidgetPopup.Instance = this;
-		if (this.items.Count == 0)
-		{
-			this.PM.Add("null");
-		}
-		this.Show();
-	}
-
-	public void OnAddItem(PopupManager.Item item)
-	{
-		this.Show();
-	}
-
-	public void Show()
-	{
-		this.Show(this.items.LastItem<PopupManager.Item>());
-	}
-
-	public void Show(PopupManager.Item item)
-	{
-		this.textMain.SetText(item.text);
-		this.textPage.text = (this.items.IndexOf(item) + 1).ToString() + " / " + this.items.Count.ToString();
-		this.layout.RebuildLayout(false);
-		this.current = item;
-	}
-
-	public void Next()
-	{
-		this.Show(this.items.NextItem(this.current));
-	}
-
-	public void Prev()
-	{
-		this.Show(this.items.PrevItem(this.current));
-	}
-
-	public void Discard()
-	{
-		this.items.Clear();
-		base.Close();
-	}
-
-	public void AddItem()
-	{
-		this.RebuildLayout(false);
-	}
-
-	public void RemoveItem()
-	{
-	}
-
 	public static WidgetPopup Instance;
 
 	public LayoutGroup layout;
@@ -84,4 +14,61 @@ public class WidgetPopup : Widget
 	public UIImage imageMain;
 
 	public PopupManager.Item current;
+
+	public PopupManager PM => EMono.player.popups;
+
+	public List<PopupManager.Item> items => PM.items;
+
+	public override void OnActivate()
+	{
+		Instance = this;
+		if (items.Count == 0)
+		{
+			PM.Add("null");
+		}
+		Show();
+	}
+
+	public void OnAddItem(PopupManager.Item item)
+	{
+		Show();
+	}
+
+	public void Show()
+	{
+		Show(items.LastItem());
+	}
+
+	public void Show(PopupManager.Item item)
+	{
+		textMain.SetText(item.text);
+		textPage.text = items.IndexOf(item) + 1 + " / " + items.Count;
+		layout.RebuildLayout();
+		current = item;
+	}
+
+	public void Next()
+	{
+		Show(items.NextItem(current));
+	}
+
+	public void Prev()
+	{
+		Show(items.PrevItem(current));
+	}
+
+	public void Discard()
+	{
+		items.Clear();
+		Close();
+	}
+
+	public void AddItem()
+	{
+		this.RebuildLayout();
+	}
+
+	public void RemoveItem()
+	{
+	}
 }

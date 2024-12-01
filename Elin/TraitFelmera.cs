@@ -1,20 +1,6 @@
-﻿using System;
-
 public class TraitFelmera : TraitUniqueMerchant
 {
-	public override int CostRerollShop
-	{
-		get
-		{
-			return 0;
-		}
-	}
+	public override int CostRerollShop => 0;
 
-	public override ShopType ShopType
-	{
-		get
-		{
-			return ShopType.Specific;
-		}
-	}
+	public override ShopType ShopType => ShopType.Specific;
 }

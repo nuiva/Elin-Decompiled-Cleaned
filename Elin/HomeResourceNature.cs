@@ -1,5 +1,3 @@
-﻿using System;
-
 public class HomeResourceNature : HomeResourceRate
 {
 	public override int GetDestValue()

@@ -1,59 +1,45 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class ZoneEventPhone : ZoneEvent
 {
-	public override int hoursToKill
-	{
-		get
-		{
-			return 24;
-		}
-	}
-
-	public TraitPhone Phone
-	{
-		get
-		{
-			Thing thing = EClass._map.things.Find((Thing a) => a.uid == this.uidPhone);
-			return ((thing != null) ? thing.trait : null) as TraitPhone;
-		}
-	}
-
-	public override void OnInit()
-	{
-		this.ring = EClass.rnd(4) + 3;
-	}
-
-	public override void OnTickRound()
-	{
-		TraitPhone phone = this.Phone;
-		if (phone == null)
-		{
-			base.Kill();
-			return;
-		}
-		this.ring--;
-		phone.owner.TalkRaw(Lang.Game.Get("phone_boss"), null, null, false);
-		phone.owner.PlayAnime(AnimeID.Shiver, false);
-		phone.ev = this;
-		if (this.ring < 0)
-		{
-			base.Kill();
-		}
-	}
-
-	public override void OnKill()
-	{
-		if (this.Phone != null)
-		{
-			this.Phone.ev = null;
-		}
-	}
-
 	[JsonProperty]
 	public int uidPhone;
 
 	[JsonProperty]
 	public int ring;
+
+	public override int hoursToKill => 24;
+
+	public TraitPhone Phone => EClass._map.things.Find((Thing a) => a.uid == uidPhone)?.trait as TraitPhone;
+
+	public override void OnInit()
+	{
+		ring = EClass.rnd(4) + 3;
+	}
+
+	public override void OnTickRound()
+	{
+		TraitPhone phone = Phone;
+		if (phone == null)
+		{
+			Kill();
+			return;
+		}
+		ring--;
+		phone.owner.TalkRaw(Lang.Game.Get("phone_boss"));
+		phone.owner.PlayAnime(AnimeID.Shiver);
+		phone.ev = this;
+		if (ring < 0)
+		{
+			Kill();
+		}
+	}
+
+	public override void OnKill()
+	{
+		if (Phone != null)
+		{
+			Phone.ev = null;
+		}
+	}
 }

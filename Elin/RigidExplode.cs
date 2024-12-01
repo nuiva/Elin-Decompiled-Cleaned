@@ -1,73 +1,7 @@
-﻿using System;
 using UnityEngine;
 
 public class RigidExplode : RigidUpdate
 {
-	private void Start()
-	{
-		this.interval = UnityEngine.Random.Range(this.intervalMin, this.intervalMax);
-	}
-
-	public void Explode()
-	{
-		Vector2 position = this.rb.position;
-		if (this.particle)
-		{
-			ParticleSystem p = UnityEngine.Object.Instantiate<ParticleSystem>(this.particle);
-			p.transform.position = position;
-			TweenUtil.Delay(5f, delegate
-			{
-				if (p && p.gameObject)
-				{
-					UnityEngine.Object.DestroyImmediate(p.gameObject);
-				}
-			});
-		}
-		foreach (RaycastHit2D raycastHit2D in Physics2D.CircleCastAll(position, this.radius, Vector3.forward))
-		{
-			Rigidbody2D component = raycastHit2D.collider.GetComponent<Rigidbody2D>();
-			if (component)
-			{
-				Vector2 a = component.position - position;
-				component.AddForce(a * this.force * (1f + component.mass * this.massPower), ForceMode2D.Impulse);
-			}
-		}
-		if (!this.sound.IsEmpty())
-		{
-			EMono.Sound.Play(this.sound, this.rb.position, 1f);
-		}
-	}
-
-	public override void OnFixedUpdate()
-	{
-		this.time += RigidUpdate.delta;
-		if (this.time > this.interval)
-		{
-			if (this.chance >= UnityEngine.Random.Range(0f, 1f))
-			{
-				this.Explode();
-				if (this.destroy)
-				{
-					this.active = false;
-					CollectibleActor component = base.gameObject.GetComponent<CollectibleActor>();
-					if (component)
-					{
-						component.Deactivate();
-						return;
-					}
-					base.gameObject.SetActive(false);
-					return;
-				}
-			}
-			if (this.repeat)
-			{
-				this.time = 0f;
-				return;
-			}
-			this.active = false;
-		}
-	}
-
 	public ParticleSystem particle;
 
 	public float force = 20f;
@@ -91,4 +25,75 @@ public class RigidExplode : RigidUpdate
 	private float time;
 
 	private float interval = 1f;
+
+	private void Start()
+	{
+		interval = Random.Range(intervalMin, intervalMax);
+	}
+
+	public void Explode()
+	{
+		Vector2 position = rb.position;
+		if ((bool)particle)
+		{
+			ParticleSystem p = Object.Instantiate(particle);
+			p.transform.position = position;
+			TweenUtil.Delay(5f, delegate
+			{
+				if ((bool)p && (bool)p.gameObject)
+				{
+					Object.DestroyImmediate(p.gameObject);
+				}
+			});
+		}
+		RaycastHit2D[] array = Physics2D.CircleCastAll(position, radius, Vector3.forward);
+		foreach (RaycastHit2D raycastHit2D in array)
+		{
+			Rigidbody2D component = raycastHit2D.collider.GetComponent<Rigidbody2D>();
+			if ((bool)component)
+			{
+				Vector2 vector = component.position - position;
+				component.AddForce(vector * force * (1f + component.mass * massPower), ForceMode2D.Impulse);
+			}
+		}
+		if (!sound.IsEmpty())
+		{
+			EMono.Sound.Play(sound, rb.position);
+		}
+	}
+
+	public override void OnFixedUpdate()
+	{
+		time += RigidUpdate.delta;
+		if (!(time > interval))
+		{
+			return;
+		}
+		if (chance >= Random.Range(0f, 1f))
+		{
+			Explode();
+			if (destroy)
+			{
+				active = false;
+				CollectibleActor component = base.gameObject.GetComponent<CollectibleActor>();
+				if ((bool)component)
+				{
+					component.Deactivate();
+				}
+				else
+				{
+					base.gameObject.SetActive(value: false);
+				}
+				return;
+			}
+		}
+		if (repeat)
+		{
+			time = 0f;
+		}
+		else
+		{
+			active = false;
+		}
+	}
 }

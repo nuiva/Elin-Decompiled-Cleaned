@@ -1,18 +1,10 @@
-﻿using System;
-
 public class TraitFoodEggFertilized : TraitFoodEgg
 {
-	public override int DecaySpeed
-	{
-		get
-		{
-			return 1;
-		}
-	}
+	public override int DecaySpeed => 1;
 
 	public static Chara Incubate(Thing egg, Point pos, Card incubator = null)
 	{
-		egg.SetSale(false);
+		egg.SetSale(sale: false);
 		string str = "";
 		CardRow refCard = egg.refCard;
 		if (refCard != null)
@@ -27,18 +19,18 @@ public class TraitFoodEggFertilized : TraitFoodEgg
 		{
 			str = "zombie";
 		}
-		Chara chara = CharaGen.Create(str.IsEmpty("chicken"), -1);
-		EClass._zone.AddCard(chara, pos.GetNearestPoint(false, false, true, false) ?? EClass.pc.pos);
+		Chara chara = CharaGen.Create(str.IsEmpty("chicken"));
+		EClass._zone.AddCard(chara, pos.GetNearestPoint(allowBlock: false, allowChara: false) ?? EClass.pc.pos);
 		chara.SetLv(1);
-		chara.SetMainElement(egg.c_idMainElement, 10, true);
-		chara.SetFeat(1232, (incubator != null) ? 3 : 2, true);
-		chara.things.DestroyAll(null);
-		foreach (Element element in chara.elements.dict.Values)
+		chara.SetMainElement(egg.c_idMainElement, 10, elemental: true);
+		chara.SetFeat(1232, (incubator != null) ? 3 : 2, msg: true);
+		chara.things.DestroyAll();
+		foreach (Element value in chara.elements.dict.Values)
 		{
-			if ((!(element.source.category != "attribute") || !(element.source.category != "skill")) && (!(element.source.category == "attribute") || element.source.tag.Contains("primary")) && element.ValueWithoutLink != 0)
+			if ((!(value.source.category != "attribute") || !(value.source.category != "skill")) && (!(value.source.category == "attribute") || value.source.tag.Contains("primary")) && value.ValueWithoutLink != 0)
 			{
-				element.vTempPotential = element.vTempPotential * 2 + 100;
-				element.vPotential += 30;
+				value.vTempPotential = value.vTempPotential * 2 + 100;
+				value.vPotential += 30;
 			}
 		}
 		if (!egg.isNPCProperty)
@@ -54,12 +46,16 @@ public class TraitFoodEggFertilized : TraitFoodEgg
 				}
 			}
 		}
-		Msg.Say("incubate", chara, null, null, null);
+		Msg.Say("incubate", chara);
 		return chara;
 	}
 
 	public override bool CanStackTo(Thing to)
 	{
-		return to.c_idMainElement == this.owner.c_idMainElement && base.CanStackTo(to);
+		if (to.c_idMainElement != owner.c_idMainElement)
+		{
+			return false;
+		}
+		return base.CanStackTo(to);
 	}
 }

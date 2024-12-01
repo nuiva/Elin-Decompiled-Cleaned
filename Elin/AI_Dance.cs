@@ -1,17 +1,13 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class AI_Dance : AIAct
 {
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		int num;
-		for (int i = 0; i < 12; i = num + 1)
+		for (int i = 0; i < 12; i++)
 		{
-			this.owner.Rotate(false);
-			yield return base.DoWait(1);
-			num = i;
+			owner.Rotate();
+			yield return DoWait();
 		}
-		yield break;
 	}
 }

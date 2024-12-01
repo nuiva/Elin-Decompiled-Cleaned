@@ -1,5 +1,3 @@
-﻿using System;
-
 public class ActQuickCraft : Ability
 {
 	public override bool Perform()

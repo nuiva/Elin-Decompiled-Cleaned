@@ -1,7 +1,12 @@
-﻿using System;
+using System;
 
 public class NotificationHome : NotificationGlobal
 {
+	public override Action<UITooltip> onShowTooltip => delegate(UITooltip a)
+	{
+		a.textMain.text = "factionRank".lang() + ": " + EClass.Branch.RankText;
+	};
+
 	public override void OnClick()
 	{
 		EClass.ui.AddLayer<LayerHome>();
@@ -9,17 +14,6 @@ public class NotificationHome : NotificationGlobal
 
 	public override void OnRefresh()
 	{
-		this.text = "1.".TagSize("00", this.item.button.mainText.fontSize - 2);
-	}
-
-	public override Action<UITooltip> onShowTooltip
-	{
-		get
-		{
-			return delegate(UITooltip a)
-			{
-				a.textMain.text = "factionRank".lang() + ": " + EClass.Branch.RankText;
-			};
-		}
+		text = "1.".TagSize("00", item.button.mainText.fontSize - 2);
 	}
 }

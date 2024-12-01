@@ -1,79 +1,47 @@
-﻿using System;
-
 public class TraitRecipe : TraitScroll
 {
-	public override string IdNoRestock
-	{
-		get
-		{
-			return this.owner.id + "_" + this.ID;
-		}
-	}
+	public override string IdNoRestock => owner.id + "_" + ID;
 
-	public string ID
-	{
-		get
-		{
-			return this.owner.GetStr(53, null);
-		}
-	}
+	public string ID => owner.GetStr(53);
 
-	public override bool CanBeShipped
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeShipped => false;
 
-	public override bool CanBeDestroyed
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeDestroyed => false;
 
-	public RecipeSource recipe
-	{
-		get
-		{
-			return RecipeManager.dict.TryGetValue(this.ID, null) ?? RecipeManager.dict.TryGetValue("bait", null);
-		}
-	}
+	public RecipeSource recipe => RecipeManager.dict.TryGetValue(ID) ?? RecipeManager.dict.TryGetValue("bait");
 
 	public override void OnCreate(int lv)
 	{
-		this.owner.SetStr(53, RecipeManager.GetRandomRecipe(lv, null, false));
+		owner.SetStr(53, RecipeManager.GetRandomRecipe(lv));
 	}
 
 	public override void OnRead(Chara c)
 	{
-		EClass.player.recipes.Add(this.recipe.id, true);
-		this.owner.ModNum(-1, true);
+		EClass.player.recipes.Add(recipe.id);
+		owner.ModNum(-1);
 	}
 
 	public override void SetName(ref string s)
 	{
-		int num = EClass.player.recipes.knownRecipes.TryGetValue(this.ID, 0);
-		s = "_recipe".lang(this.recipe.Name.ToTitleCase(false), s, null, null, null) + ((num == 0) ? "" : "recipe_learnt".lang(num.ToString() ?? "", null, null, null, null));
+		int num = EClass.player.recipes.knownRecipes.TryGetValue(ID, 0);
+		s = "_recipe".lang(recipe.Name.ToTitleCase(), s) + ((num == 0) ? "" : "recipe_learnt".lang(num.ToString() ?? ""));
 	}
 
 	public override bool CanStackTo(Thing to)
 	{
-		return this.ID == to.GetStr(53, null);
+		return ID == to.GetStr(53);
 	}
 
 	public override void WriteNote(UINote n, bool identified)
 	{
-		if (this.recipe.NeedFactory)
+		if (recipe.NeedFactory)
 		{
-			n.AddText("isCraftedAt".lang(this.recipe.NameFactory.ToTitleCase(true), null, null, null, null), FontColor.DontChange);
+			n.AddText("isCraftedAt".lang(recipe.NameFactory.ToTitleCase(wholeText: true)));
 		}
 	}
 
 	public override int GetValue()
 	{
-		return this.owner.sourceCard.value * (100 + this.recipe.row.LV * 15) / 100;
+		return owner.sourceCard.value * (100 + recipe.row.LV * 15) / 100;
 	}
 }

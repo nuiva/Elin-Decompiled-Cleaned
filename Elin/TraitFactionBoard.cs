@@ -1,15 +1,8 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class TraitFactionBoard : TraitBoard
 {
-	public override bool IsHomeItem
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsHomeItem => true;
 
 	public override void TrySetAct(ActPlan p)
 	{
@@ -17,23 +10,24 @@ public class TraitFactionBoard : TraitBoard
 		{
 			return;
 		}
-		p.TrySetAct("actChangeFactionName", delegate()
+		p.TrySetAct("actChangeFactionName", delegate
 		{
 			EClass.ui.AddLayer<LayerList>().SetStringList(delegate
 			{
 				List<string> list = new List<string>();
 				for (int i = 0; i < 10; i++)
 				{
-					list.Add(WordGen.GetCombinedName(this.GetAlias(), "faction", false));
+					list.Add(WordGen.GetCombinedName(GetAlias()));
 				}
 				return list;
 			}, delegate(int a, string b)
 			{
 				EClass.Home.name = b;
-			}, true).SetSize(450f, -1f).EnableReroll();
+			}).SetSize()
+				.EnableReroll();
 			return false;
-		}, this.owner, null, 1, false, true, false);
-		p.TrySetAct("actShowSigns", delegate()
+		}, owner);
+		p.TrySetAct("actShowSigns", delegate
 		{
 			SE.Click();
 			foreach (Thing thing in EClass._map.things)
@@ -44,19 +38,19 @@ public class TraitFactionBoard : TraitBoard
 				}
 			}
 			return false;
-		}, this.owner, null, 1, false, true, false);
-		p.TrySetAct("actHideSigns", delegate()
+		}, owner);
+		p.TrySetAct("actHideSigns", delegate
 		{
 			SE.Click();
-			foreach (Thing thing in EClass._map.things)
+			foreach (Thing thing2 in EClass._map.things)
 			{
-				if (thing.IsInstalled && thing.source._origin == "sign")
+				if (thing2.IsInstalled && thing2.source._origin == "sign")
 				{
-					thing.isMasked = true;
+					thing2.isMasked = true;
 				}
 			}
 			return false;
-		}, this.owner, null, 1, false, true, false);
+		}, owner);
 	}
 
 	public string GetAlias()

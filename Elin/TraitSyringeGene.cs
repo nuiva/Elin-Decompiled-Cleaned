@@ -1,47 +1,38 @@
-﻿using System;
-using UnityEngine;
-
 public class TraitSyringeGene : Trait
 {
-	public override bool CanChangeHeight
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanChangeHeight => false;
 
 	public override void TrySetHeldAct(ActPlan p)
 	{
 		p.pos.Charas.ForEach(delegate(Chara c)
 		{
-			p.TrySetAct("actInject".lang("", c.Name, null, null, null), delegate()
+			p.TrySetAct("actInject".lang("", c.Name), delegate
 			{
-				EClass.pc.PlaySound("syringe", 1f, true);
-				EClass.pc.Say("syringe", EClass.pc, this.owner.NameOne, c.Name);
-				c.PlayEffect("blood", true, 0f, default(Vector3)).SetParticleColor(EClass.Colors.matColors[c.material.alias].main).Emit(20);
-				c.AddBlood(2 + EClass.rnd(2), -1);
-				c.AddCondition<ConHallucination>(50, false);
+				EClass.pc.PlaySound("syringe");
+				EClass.pc.Say("syringe", EClass.pc, owner.NameOne, c.Name);
+				c.PlayEffect("blood").SetParticleColor(EClass.Colors.matColors[c.material.alias].main).Emit(20);
+				c.AddBlood(2 + EClass.rnd(2));
+				c.AddCondition<ConHallucination>(50);
 				TraitGeneMachine traitGeneMachine = c.pos.FindThing<TraitGeneMachine>();
 				if (traitGeneMachine != null && traitGeneMachine.GetTarget() == c)
 				{
-					int num = EClass.world.date.GetRemainingHours(c.conSuspend.dateFinish);
-					num = num * 2 / 3 - 10;
-					if (num < 0)
+					int remainingHours = EClass.world.date.GetRemainingHours(c.conSuspend.dateFinish);
+					remainingHours = remainingHours * 2 / 3 - 10;
+					if (remainingHours < 0)
 					{
-						num = 0;
+						remainingHours = 0;
 					}
-					c.conSuspend.dateFinish = EClass.world.date.GetRaw(num);
-					c.PlayEffect("heal_tick", true, 0f, default(Vector3));
-					c.PlaySound("heal_tick", 1f, true);
+					c.conSuspend.dateFinish = EClass.world.date.GetRaw(remainingHours);
+					c.PlayEffect("heal_tick");
+					c.PlaySound("heal_tick");
 				}
 				else
 				{
 					c.ModCorruption(-50);
 				}
-				this.owner.ModNum(-1, true);
+				owner.ModNum(-1);
 				return false;
-			}, null, 1);
+			});
 		});
 	}
 }

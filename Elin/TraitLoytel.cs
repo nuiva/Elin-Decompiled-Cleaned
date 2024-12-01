@@ -1,36 +1,10 @@
-﻿using System;
-
 public class TraitLoytel : TraitUniqueMerchant
 {
-	public override ShopType ShopType
-	{
-		get
-		{
-			return ShopType.Loytel;
-		}
-	}
+	public override ShopType ShopType => ShopType.Loytel;
 
-	public override CurrencyType CurrencyType
-	{
-		get
-		{
-			return CurrencyType.Money2;
-		}
-	}
+	public override CurrencyType CurrencyType => CurrencyType.Money2;
 
-	public override string LangBarter
-	{
-		get
-		{
-			return "daBuyStarter";
-		}
-	}
+	public override string LangBarter => "daBuyStarter";
 
-	public override bool CanBeBanished
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeBanished => false;
 }

@@ -1,4 +1,3 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class ContainerUpgrade : EClass

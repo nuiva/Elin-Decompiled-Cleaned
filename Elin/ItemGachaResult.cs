@@ -1,82 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class ItemGachaResult : EMono
 {
-	public void SetChara(Chara c, LayerGachaResult _layer)
-	{
-		this.layer = _layer;
-		this.chara = c;
-		this.portrait.SetChara(c, null);
-		if (c.IsPCC)
-		{
-			this.portrait.imageChara.transform.localScale = new Vector3(1.4f, 1.4f, 1f);
-			this.portrait.imageChara.rectTransform.anchoredPosition = new Vector2(45f, -120f);
-		}
-		this.textName.text = c.NameBraced;
-		this.textJob.text = c.job.GetName();
-		this.textBio.text = c.bio.TextBio(c);
-		using (List<Element>.Enumerator enumerator = c.elements.ListBestSkills().GetEnumerator())
-		{
-			while (enumerator.MoveNext())
-			{
-				Element e = enumerator.Current;
-				HintIcon hintIcon = Util.Instantiate<HintIcon>("UI/Element/Item/Tag Skill", this.layoutTag);
-				hintIcon.text.SetText(e.Name);
-				hintIcon.text2.SetText(e.Value.ToString() ?? "");
-				hintIcon.tooltip.onShowTooltip = delegate(UITooltip t)
-				{
-					e.WriteNote(t.note, this.chara.elements, null);
-				};
-				hintIcon.RebuildLayout(false);
-			}
-		}
-		this.textResult.SetActive(false);
-		this.buttonGet.onClick.AddListener(delegate()
-		{
-			EMono.Sound.Play("good");
-			this.Confirm(true);
-		});
-		this.buttonDump.tooltip.text = "gachaDump".lang(this.GetMedal().ToString() ?? "", null, null, null, null);
-		this.buttonDump.onClick.AddListener(delegate()
-		{
-			EMono.Sound.Play("pay");
-			this.Confirm(false);
-		});
-		this.textHobby.text = c.GetTextHobby(false);
-		this.textWork.text = c.GetTextWork(false);
-		this.textLifeStyle.text = "lifestyle".lang() + ": " + ("lifestyle_" + c.idTimeTable).lang();
-	}
-
-	public int GetMedal()
-	{
-		return 1;
-	}
-
-	public void Confirm(bool add)
-	{
-		this.textResult.SetActive(true);
-		this.textResult.SetText(add ? "Get!" : "Discarded", add ? FontColor.Good : FontColor.Bad);
-		this.buttonDump.SetActive(false);
-		this.buttonGet.SetActive(false);
-		this.layer.items.Remove(this);
-		if (add)
-		{
-			EMono.Home.AddReserve(this.chara);
-			Msg.Say("gachaAdd", this.chara, null, null, null);
-		}
-		else
-		{
-			EMono.pc.ModCurrency(this.GetMedal(), "medal");
-		}
-		if (this.layer.items.Count == 0)
-		{
-			this.layer.Close();
-		}
-	}
-
 	public UIButton buttonGet;
 
 	public UIButton buttonDump;
@@ -104,4 +30,72 @@ public class ItemGachaResult : EMono
 	public LayerGachaResult layer;
 
 	public LayoutGroup layoutTag;
+
+	public void SetChara(Chara c, LayerGachaResult _layer)
+	{
+		layer = _layer;
+		chara = c;
+		portrait.SetChara(c);
+		if (c.IsPCC)
+		{
+			portrait.imageChara.transform.localScale = new Vector3(1.4f, 1.4f, 1f);
+			portrait.imageChara.rectTransform.anchoredPosition = new Vector2(45f, -120f);
+		}
+		textName.text = c.NameBraced;
+		textJob.text = c.job.GetName();
+		textBio.text = c.bio.TextBio(c);
+		foreach (Element e in c.elements.ListBestSkills())
+		{
+			HintIcon hintIcon = Util.Instantiate<HintIcon>("UI/Element/Item/Tag Skill", layoutTag);
+			hintIcon.text.SetText(e.Name);
+			hintIcon.text2.SetText(e.Value.ToString() ?? "");
+			hintIcon.tooltip.onShowTooltip = delegate(UITooltip t)
+			{
+				e.WriteNote(t.note, chara.elements);
+			};
+			hintIcon.RebuildLayout();
+		}
+		textResult.SetActive(enable: false);
+		buttonGet.onClick.AddListener(delegate
+		{
+			EMono.Sound.Play("good");
+			Confirm(add: true);
+		});
+		buttonDump.tooltip.text = "gachaDump".lang(GetMedal().ToString() ?? "");
+		buttonDump.onClick.AddListener(delegate
+		{
+			EMono.Sound.Play("pay");
+			Confirm(add: false);
+		});
+		textHobby.text = c.GetTextHobby();
+		textWork.text = c.GetTextWork();
+		textLifeStyle.text = "lifestyle".lang() + ": " + ("lifestyle_" + c.idTimeTable).lang();
+	}
+
+	public int GetMedal()
+	{
+		return 1;
+	}
+
+	public void Confirm(bool add)
+	{
+		textResult.SetActive(enable: true);
+		textResult.SetText(add ? "Get!" : "Discarded", add ? FontColor.Good : FontColor.Bad);
+		buttonDump.SetActive(enable: false);
+		buttonGet.SetActive(enable: false);
+		layer.items.Remove(this);
+		if (add)
+		{
+			EMono.Home.AddReserve(chara);
+			Msg.Say("gachaAdd", chara);
+		}
+		else
+		{
+			EMono.pc.ModCurrency(GetMedal(), "medal");
+		}
+		if (layer.items.Count == 0)
+		{
+			layer.Close();
+		}
+	}
 }

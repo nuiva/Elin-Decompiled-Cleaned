@@ -1,12 +1,10 @@
-﻿using System;
-
 public class Zone_Yowyn : Zone_Town
 {
 	public override string IDPlaylistOverwrite
 	{
 		get
 		{
-			if (!this.IsFestival)
+			if (!IsFestival)
 			{
 				return null;
 			}
@@ -18,7 +16,11 @@ public class Zone_Yowyn : Zone_Town
 	{
 		get
 		{
-			return base.lv == 0 && EClass.world.date.month == 9;
+			if (base.lv == 0)
+			{
+				return EClass.world.date.month == 9;
+			}
+			return false;
 		}
 	}
 
@@ -26,7 +28,7 @@ public class Zone_Yowyn : Zone_Town
 	{
 		get
 		{
-			if (!this.IsFestival)
+			if (!IsFestival)
 			{
 				return null;
 			}
@@ -39,7 +41,7 @@ public class Zone_Yowyn : Zone_Town
 		base.OnVisitNewMapOrRegenerate();
 		if (base.lv == -1)
 		{
-			base.ApplyBackerPet(EClass.pc.HasCondition<ConDrawBacker>());
+			ApplyBackerPet(EClass.pc.HasCondition<ConDrawBacker>());
 		}
 	}
 }

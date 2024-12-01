@@ -1,20 +1,6 @@
-﻿using System;
-
 public class TargetTypeChara : TargetType
 {
-	public override TargetRange Range
-	{
-		get
-		{
-			return TargetRange.Chara;
-		}
-	}
+	public override TargetRange Range => TargetRange.Chara;
 
-	public override bool RequireChara
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool RequireChara => true;
 }

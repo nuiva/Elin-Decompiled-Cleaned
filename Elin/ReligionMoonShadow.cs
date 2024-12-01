@@ -1,12 +1,4 @@
-﻿using System;
-
 public class ReligionMoonShadow : ReligionMinor
 {
-	public override string id
-	{
-		get
-		{
-			return "moonshadow";
-		}
-	}
+	public override string id => "moonshadow";
 }

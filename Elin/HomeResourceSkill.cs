@@ -1,36 +1,28 @@
-﻿using System;
-
 public class HomeResourceSkill : BaseHomeResource
 {
-	public override BaseHomeResource.ResourceGroup Group
-	{
-		get
-		{
-			return BaseHomeResource.ResourceGroup.Skill;
-		}
-	}
+	public int exp;
 
-	public override float ExpRatio
-	{
-		get
-		{
-			return (float)this.exp / (float)this.next;
-		}
-	}
+	public int next;
+
+	public new int lastValue;
+
+	public override ResourceGroup Group => ResourceGroup.Skill;
+
+	public override float ExpRatio => (float)exp / (float)next;
 
 	public override void Refresh()
 	{
-		this.lastValue = this.value;
-		this.value = 1;
-		this.next = 100;
-		while (this.exp >= this.next)
+		lastValue = value;
+		value = 1;
+		next = 100;
+		while (exp >= next)
 		{
-			this.exp -= this.next;
-			this.next *= 2;
-			this.value++;
+			exp -= next;
+			next *= 2;
+			value++;
 		}
-		int value = this.value;
-		int num = this.lastValue;
+		_ = value;
+		_ = lastValue;
 	}
 
 	public int ApplyModifier(int a)
@@ -39,7 +31,7 @@ public class HomeResourceSkill : BaseHomeResource
 		{
 			return a;
 		}
-		int num = 100 + this.value * 50;
+		int num = 100 + value * 50;
 		a = a * num / 100;
 		return a;
 	}
@@ -47,15 +39,9 @@ public class HomeResourceSkill : BaseHomeResource
 	public override void WriteNote(UINote n)
 	{
 		n.Clear();
-		n.AddHeader(base.Name, null);
-		n.AddText("vCurrent".lang() + this.value.ToString(), FontColor.DontChange);
-		n.AddText("vExp".lang() + this.exp.ToString() + "/" + this.next.ToString(), FontColor.DontChange);
+		n.AddHeader(base.Name);
+		n.AddText("vCurrent".lang() + value);
+		n.AddText("vExp".lang() + exp + "/" + next);
 		n.Build();
 	}
-
-	public int exp;
-
-	public int next;
-
-	public new int lastValue;
 }

@@ -1,216 +1,199 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+using System;
 using UnityEngine;
 
 public class Msg : EClass
 {
-	public static WidgetMainText mainText
-	{
-		get
-		{
-			return WidgetMainText.Instance;
-		}
-	}
+	public static ThirstPersonInfo thirdPerson1 = new ThirstPersonInfo();
 
-	public static WidgetFeed feed
-	{
-		get
-		{
-			return WidgetFeed.Instance;
-		}
-	}
+	public static ThirstPersonInfo thirdPerson2 = new ThirstPersonInfo();
 
-	public static MsgColors colors
-	{
-		get
-		{
-			return EClass.core.refs.msgColors;
-		}
-	}
+	public static Color currentColor = colors.Default;
+
+	public static bool alwaysVisible;
+
+	public static bool ignoreAll;
+
+	public static WidgetMainText mainText => WidgetMainText.Instance;
+
+	public static WidgetFeed feed => WidgetFeed.Instance;
+
+	public static MsgColors colors => EClass.core.refs.msgColors;
 
 	public static void SetColor()
 	{
-		Msg.currentColor = Msg.colors.Default;
+		currentColor = colors.Default;
 	}
 
 	public static void SetColor(Color color)
 	{
-		Msg.currentColor = color;
+		currentColor = color;
 	}
 
 	public static void SetColor(string id)
 	{
-		Msg.currentColor = Msg.colors.colors[id];
+		currentColor = colors.colors[id];
 	}
 
 	public static string GetRawText(string idLang, string ref1, string ref2 = null, string ref3 = null, string ref4 = null)
 	{
-		Msg.thirdPerson1.Set(ref1);
-		Msg.thirdPerson2.Set(ref2);
-		return GameLang.Parse(Msg.GetGameText(idLang), Msg.IsThirdPerson(ref1), ref1, ref2, ref3, ref4);
+		thirdPerson1.Set(ref1);
+		thirdPerson2.Set(ref2);
+		return GameLang.Parse(GetGameText(idLang), IsThirdPerson(ref1), ref1, ref2, ref3, ref4);
 	}
 
 	public static string GetRawText(string idLang, Card c1, Card c2, string ref1 = null, string ref2 = null)
 	{
-		Msg.thirdPerson1.Set(c1, false);
-		Msg.thirdPerson2.Set(c2, false);
-		return GameLang.Parse(Msg.GetGameText(idLang), Msg.IsThirdPerson(c1), Msg.GetName(c1), Msg.GetName(c2), ref1, ref2);
+		thirdPerson1.Set(c1);
+		thirdPerson2.Set(c2);
+		return GameLang.Parse(GetGameText(idLang), IsThirdPerson(c1), GetName(c1), GetName(c2), ref1, ref2);
 	}
 
 	public static string GetRawText(string idLang, Card c1, string ref1 = null, string ref2 = null, string ref3 = null)
 	{
-		Msg.thirdPerson1.Set(c1, false);
-		Msg.thirdPerson2.Set(ref1);
-		return GameLang.Parse(Msg.GetGameText(idLang), Msg.IsThirdPerson(c1), Msg.GetName(c1), ref1, ref2, ref3);
+		thirdPerson1.Set(c1);
+		thirdPerson2.Set(ref1);
+		return GameLang.Parse(GetGameText(idLang), IsThirdPerson(c1), GetName(c1), ref1, ref2, ref3);
 	}
 
 	public static string Say(string idLang, string ref1, string ref2 = null, string ref3 = null, string ref4 = null)
 	{
-		Msg.thirdPerson1.Set(ref1);
-		Msg.thirdPerson2.Set(ref2);
-		return Msg.SayRaw(GameLang.Parse(Msg.GetGameText(idLang), Msg.IsThirdPerson(ref1), ref1, ref2, ref3, ref4));
+		thirdPerson1.Set(ref1);
+		thirdPerson2.Set(ref2);
+		return SayRaw(GameLang.Parse(GetGameText(idLang), IsThirdPerson(ref1), ref1, ref2, ref3, ref4));
 	}
 
 	public static string Say(string idLang, Card c1, Card c2, string ref1 = null, string ref2 = null)
 	{
-		Msg.thirdPerson1.Set(c1, false);
-		Msg.thirdPerson2.Set(c2, false);
-		return Msg.SayRaw(GameLang.Parse(Msg.GetGameText(idLang), Msg.IsThirdPerson(c1), Msg.GetName(c1), Msg.GetName(c2), ref1, ref2));
+		thirdPerson1.Set(c1);
+		thirdPerson2.Set(c2);
+		return SayRaw(GameLang.Parse(GetGameText(idLang), IsThirdPerson(c1), GetName(c1), GetName(c2), ref1, ref2));
 	}
 
 	public static string Say(string idLang, Card c1, string ref1 = null, string ref2 = null, string ref3 = null)
 	{
-		Msg.thirdPerson1.Set(c1, false);
-		Msg.thirdPerson2.Set(ref1);
-		return Msg.SayRaw(GameLang.Parse(Msg.GetGameText(idLang), Msg.IsThirdPerson(c1), Msg.GetName(c1), ref1, ref2, ref3));
+		thirdPerson1.Set(c1);
+		thirdPerson2.Set(ref1);
+		return SayRaw(GameLang.Parse(GetGameText(idLang), IsThirdPerson(c1), GetName(c1), ref1, ref2, ref3));
 	}
 
 	public static string Say(string idLang, Card c1, int i, string ref1 = null)
 	{
-		Msg.thirdPerson1.Set(c1, false);
-		Msg.thirdPerson2.Set(ref1);
-		return Msg.SayRaw(GameLang.Parse(Msg.GetGameText(idLang), Msg.IsThirdPerson(i), Msg.GetName(c1), i.ToString() ?? "", ref1, null));
+		thirdPerson1.Set(c1);
+		thirdPerson2.Set(ref1);
+		return SayRaw(GameLang.Parse(GetGameText(idLang), IsThirdPerson(i), GetName(c1), i.ToString() ?? "", ref1));
 	}
 
 	public static string Say(string idLang, int i, string ref1 = null, string ref2 = null)
 	{
-		return Msg.SayRaw(GameLang.Parse(Msg.GetGameText(idLang), Msg.IsThirdPerson(i), ref1, ref2, null, null));
+		return SayRaw(GameLang.Parse(GetGameText(idLang), IsThirdPerson(i), ref1, ref2));
 	}
 
 	public static string Say(string idLang)
 	{
-		return Msg.SayRaw(Msg.GetGameText(idLang));
+		return SayRaw(GetGameText(idLang));
 	}
 
 	public static string SayNothingHappen()
 	{
-		return Msg.Say("nothingHappens");
+		return Say("nothingHappens");
 	}
 
 	public static string SayCannotUseHere()
 	{
-		return Msg.Say("cannot_use_here");
+		return Say("cannot_use_here");
 	}
 
 	public static void SayGod(string s, Card owner = null)
 	{
-		Msg.SetColor(Msg.colors.TalkGod);
-		Msg.Say(s.Bracket(0));
-		if (owner != null)
-		{
-			owner.SayRaw("@1" + s, null, null);
-		}
+		SetColor(colors.TalkGod);
+		Say(s.Bracket());
+		owner?.SayRaw("@1" + s);
 	}
 
 	public static string SayRaw(string text)
 	{
-		if (Msg.ignoreAll)
+		if (ignoreAll)
 		{
-			Msg.currentColor = Msg.colors.Default;
+			currentColor = colors.Default;
 			return "";
 		}
-		Msg.ToUpperFirst(text);
-		if (Msg.feed)
+		ToUpperFirst(text);
+		if ((bool)feed)
 		{
-			Msg.feed.System(text);
+			feed.System(text);
 		}
-		if (Msg.mainText)
+		if ((bool)mainText)
 		{
-			Msg.mainText.Append(text, Msg.currentColor, null);
+			mainText.Append(text, currentColor);
 		}
-		Msg.currentColor = Msg.colors.Default;
-		Msg.alwaysVisible = false;
-		EClass.game.log.Add(text, null);
+		currentColor = colors.Default;
+		alwaysVisible = false;
+		EClass.game.log.Add(text);
 		return text;
 	}
 
 	public static void Append(Sprite sprite)
 	{
-		Msg.mainText.Append(sprite);
+		mainText.Append(sprite);
 	}
 
 	public static void AquireItem(string itemName)
 	{
-		Msg.Say("getItem", itemName ?? "", null, null, null);
+		Say("getItem", itemName ?? "");
 	}
 
 	public static void Nerun(string lang, string idPortrait = "UN_nerun")
 	{
 		string text = GameLang.Convert(lang.lang());
-		if (Msg.feed)
+		if ((bool)feed)
 		{
-			Msg.feed.Nerun(text, idPortrait);
-			return;
+			feed.Nerun(text, idPortrait);
 		}
-		if (Msg.mainText)
+		else if ((bool)mainText)
 		{
-			Msg.mainText.Append(text.Bracket(1), Msg.colors.Talk, null);
+			mainText.Append(text.Bracket(1), colors.Talk);
 		}
 	}
 
 	public static void SayHomeMember(string lang)
 	{
 		string text = GameLang.Convert(lang.lang());
-		if (Msg.feed)
+		if ((bool)feed)
 		{
-			Msg.feed.Nerun(text, "UN_nerun");
-			return;
+			feed.Nerun(text);
 		}
-		if (Msg.mainText)
+		else if ((bool)mainText)
 		{
-			Msg.mainText.Append(text.Bracket(1), Msg.colors.Talk, null);
+			mainText.Append(text.Bracket(1), colors.Talk);
 		}
 	}
 
 	public static void SayPic(Card c, string lang)
 	{
-		if (c == null)
+		if (c != null)
 		{
-			return;
-		}
-		string text = GameLang.Convert(lang.lang());
-		if (Msg.feed)
-		{
-			Msg.feed.SayRaw(c, text);
-			return;
-		}
-		if (Msg.mainText)
-		{
-			Msg.mainText.Append(text.Bracket(1), Msg.colors.Talk, null);
+			string text = GameLang.Convert(lang.lang());
+			if ((bool)feed)
+			{
+				feed.SayRaw(c, text);
+			}
+			else if ((bool)mainText)
+			{
+				mainText.Append(text.Bracket(1), colors.Talk);
+			}
 		}
 	}
 
 	public static void SayPic(string idPortrait, string lang, string _idPop = null)
 	{
 		string text = GameLang.Convert(lang.lang());
-		if (Msg.feed)
+		if ((bool)feed)
 		{
-			Msg.feed.SayRaw(idPortrait, text, _idPop);
-			return;
+			feed.SayRaw(idPortrait, text, _idPop);
 		}
-		if (Msg.mainText)
+		else if ((bool)mainText)
 		{
-			Msg.mainText.Append(text.Bracket(1), Msg.colors.Talk, null);
+			mainText.Append(text.Bracket(1), colors.Talk);
 		}
 	}
 
@@ -221,14 +204,14 @@ public class Msg : EClass
 		{
 			return null;
 		}
-		string text = GameLang.Convert(c.GetTalkText(id, true, true));
-		if (Msg.feed && c != null)
+		string text = GameLang.Convert(c.GetTalkText(id, stripPun: true));
+		if ((bool)feed && c != null)
 		{
-			result = Msg.feed.SayRaw(c, text);
+			result = feed.SayRaw(c, text);
 		}
-		else if (Msg.mainText)
+		else if ((bool)mainText)
 		{
-			Msg.mainText.Append(text.Bracket(1), Msg.colors.Talk, null);
+			mainText.Append(text.Bracket(1), colors.Talk);
 		}
 		return result;
 	}
@@ -240,7 +223,7 @@ public class Msg : EClass
 		{
 			for (int i = 0; i < 99; i++)
 			{
-				chara = EClass.Branch.members.RandomItem<Chara>();
+				chara = EClass.Branch.members.RandomItem();
 				if (chara != EClass.pc)
 				{
 					break;
@@ -251,44 +234,41 @@ public class Msg : EClass
 		{
 			chara = EClass.pc;
 		}
-		return Msg.Talk(chara, id);
+		return Talk(chara, id);
 	}
 
 	public static PopItem TalkMaid(string id)
 	{
 		foreach (Chara chara in EClass._map.charas)
 		{
-			int uid = chara.uid;
-			FactionBranch branch = EClass.Branch;
-			int? num = (branch != null) ? new int?(branch.uidMaid) : null;
-			if (uid == num.GetValueOrDefault() & num != null)
+			if (chara.uid == EClass.Branch?.uidMaid)
 			{
-				return Msg.Talk(chara, id);
+				return Talk(chara, id);
 			}
 		}
-		return Msg.TalkHomeMemeber(id);
+		return TalkHomeMemeber(id);
 	}
 
 	public static string GetGameText(string idLang)
 	{
-		LangGame.Row row = EClass.core.sources.langGame.map.TryGetValue(idLang, null);
+		LangGame.Row row = EClass.core.sources.langGame.map.TryGetValue(idLang);
 		if (row == null)
 		{
 			return idLang.lang();
 		}
 		if (!row.effect.IsEmpty() && row.effect == "destroy")
 		{
-			Msg.mainText.Append(Msg.mainText.spriteDestroy);
+			mainText.Append(mainText.spriteDestroy);
 		}
 		if (!row.color.IsEmpty())
 		{
-			Msg.SetColor(Msg.colors.colors[row.color]);
+			SetColor(colors.colors[row.color]);
 		}
 		if (!row.sound.IsEmpty())
 		{
 			EClass.Sound.Play(row.sound);
 		}
-		return row.GetText("text", false).Split(Environment.NewLine.ToCharArray()).RandomItem<string>();
+		return row.GetText("text").Split(Environment.NewLine.ToCharArray()).RandomItem();
 	}
 
 	public static string GetName(Card c)
@@ -301,7 +281,7 @@ public class Msg : EClass
 		{
 			return "you".lang();
 		}
-		if (!Msg.alwaysVisible && (EClass.pc.isBlind || !EClass.pc.CanSee(c)) && c.parent == EClass._zone)
+		if (!alwaysVisible && (EClass.pc.isBlind || !EClass.pc.CanSee(c)) && c.parent == EClass._zone)
 		{
 			return (c.isChara ? "someone" : "something").lang();
 		}
@@ -310,13 +290,24 @@ public class Msg : EClass
 
 	public static bool IsThirdPerson(Card c)
 	{
-		return c != null && !c.IsPC && c.Num <= 1;
+		if (c == null)
+		{
+			return false;
+		}
+		if (c.IsPC || c.Num > 1)
+		{
+			return false;
+		}
+		return true;
 	}
 
 	public static bool IsThirdPerson(string n)
 	{
-		int i;
-		return int.TryParse(n, out i) && Msg.IsThirdPerson(i);
+		if (!int.TryParse(n, out var result))
+		{
+			return false;
+		}
+		return IsThirdPerson(result);
 	}
 
 	public static bool IsThirdPerson(int i)
@@ -326,36 +317,20 @@ public class Msg : EClass
 
 	public static void NewLine()
 	{
-		if (Msg.mainText)
+		if ((bool)mainText)
 		{
-			Msg.mainText.NewLine();
+			mainText.NewLine();
 		}
 	}
 
 	public unsafe static void ToUpperFirst(string str)
 	{
-		if (str == null)
+		if (str != null)
 		{
-			return;
-		}
-		fixed (string text = str)
-		{
-			char* ptr = text;
-			if (ptr != null)
+			fixed (char* ptr = str)
 			{
-				ptr += RuntimeHelpers.OffsetToStringData / 2;
+				*ptr = char.ToUpper(*ptr);
 			}
-			*ptr = char.ToUpper(*ptr);
 		}
 	}
-
-	public static ThirstPersonInfo thirdPerson1 = new ThirstPersonInfo();
-
-	public static ThirstPersonInfo thirdPerson2 = new ThirstPersonInfo();
-
-	public static Color currentColor = Msg.colors.Default;
-
-	public static bool alwaysVisible;
-
-	public static bool ignoreAll;
 }

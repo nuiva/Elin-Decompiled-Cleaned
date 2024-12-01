@@ -1,35 +1,21 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class AM_Deconstruct : AM_BaseTileSelect
 {
-	public override bool IsRoofEditMode(Card c = null)
-	{
-		return Input.GetKey(KeyCode.LeftAlt);
-	}
+	public bool useRange;
 
-	public override bool IsBuildMode
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public bool ignoreInstalled;
 
-	public override BaseTileMap.CardIconMode cardIconMode
-	{
-		get
-		{
-			return BaseTileMap.CardIconMode.Deconstruct;
-		}
-	}
+	public override bool IsBuildMode => true;
+
+	public override BaseTileMap.CardIconMode cardIconMode => BaseTileMap.CardIconMode.Deconstruct;
 
 	public override BaseTileSelector.SelectType selectType
 	{
 		get
 		{
-			if (!this.useRange)
+			if (!useRange)
 			{
 				return BaseTileSelector.SelectType.Single;
 			}
@@ -37,47 +23,34 @@ public class AM_Deconstruct : AM_BaseTileSelect
 		}
 	}
 
-	public override BaseTileSelector.HitType hitType
+	public override BaseTileSelector.HitType hitType => BaseTileSelector.HitType.Default;
+
+	public override bool ShowMouseoverTarget => true;
+
+	public override bool UseSubMenu => true;
+
+	public override bool IsRoofEditMode(Card c = null)
 	{
-		get
-		{
-			return BaseTileSelector.HitType.Default;
-		}
+		return Input.GetKey(KeyCode.LeftAlt);
 	}
 
 	public override MeshPass GetGuidePass(Point point)
 	{
-		if (this.Perform(point, false) <= 0)
+		if (Perform(point) <= 0)
 		{
 			return base.GetGuidePass(point);
 		}
 		return EClass.screen.guide.passGuideBlock;
 	}
 
-	public override bool ShowMouseoverTarget
-	{
-		get
-		{
-			return true;
-		}
-	}
-
 	public override void OnUpdateCursor()
 	{
-		base.SetCursorOnMap(CursorSystem.Select);
-	}
-
-	public override bool UseSubMenu
-	{
-		get
-		{
-			return true;
-		}
+		SetCursorOnMap(CursorSystem.Select);
 	}
 
 	public override HitResult HitTest(Point point, Point start)
 	{
-		if (this.Perform(point, false) > 0)
+		if (Perform(point) > 0)
 		{
 			return HitResult.Valid;
 		}
@@ -86,77 +59,73 @@ public class AM_Deconstruct : AM_BaseTileSelect
 
 	public override void OnProcessTiles(Point point, int dir)
 	{
-		if (this.Perform(point, false) == 0)
+		if (Perform(point) == 0)
 		{
 			SE.Beep();
-			return;
 		}
-		this.Perform(point, true);
+		else
+		{
+			Perform(point, perform: true);
+		}
 	}
 
 	public int Perform(Point point, bool perform = false)
 	{
-		List<Card> list = point.ListCards(false);
+		List<Card> list = point.ListCards();
 		int num = 0;
 		list.Reverse();
-		foreach (Card card in list.Copy<Card>())
+		foreach (Card item in list.Copy())
 		{
-			if ((EClass.debug.ignoreBuildRule || (card.isThing && card.trait.CanPutAway)) && (!this.ignoreInstalled || !card.IsInstalled) && !card.IsPCParty)
+			if ((!EClass.debug.ignoreBuildRule && (!item.isThing || !item.trait.CanPutAway)) || (ignoreInstalled && item.IsInstalled) || item.IsPCParty)
 			{
-				if (perform)
-				{
-					card.PlaySound(card.material.GetSoundDead(card.sourceCard), 1f, true);
-					if (card.isThing)
-					{
-						EClass._map.PutAway(card.Thing);
-					}
-					else
-					{
-						card.Destroy();
-					}
-					BuildMenu.dirtyCat = true;
-				}
-				num++;
+				continue;
 			}
+			if (perform)
+			{
+				item.PlaySound(item.material.GetSoundDead(item.sourceCard));
+				if (item.isThing)
+				{
+					EClass._map.PutAway(item.Thing);
+				}
+				else
+				{
+					item.Destroy();
+				}
+				BuildMenu.dirtyCat = true;
+			}
+			num++;
 		}
 		return num;
 	}
 
 	public override void OnClickSubMenu(int a)
 	{
-		if (a == 0)
+		switch (a)
 		{
-			this.useRange = !this.useRange;
-			return;
+		case 0:
+			useRange = !useRange;
+			break;
+		case 1:
+			ignoreInstalled = !ignoreInstalled;
+			break;
 		}
-		if (a != 1)
-		{
-			return;
-		}
-		this.ignoreInstalled = !this.ignoreInstalled;
 	}
 
 	public override string OnSetSubMenuButton(int a, UIButton b)
 	{
 		if (a < 2)
 		{
-			if (a != 0)
+			switch (a)
 			{
-				if (a == 1)
-				{
-					b.SetCheck(this.ignoreInstalled);
-				}
+			case 0:
+				b.SetCheck(useRange);
+				break;
+			case 1:
+				b.SetCheck(ignoreInstalled);
+				break;
 			}
-			else
-			{
-				b.SetCheck(this.useRange);
-			}
-			return "deconstructMenu" + a.ToString();
+			return "deconstructMenu" + a;
 		}
 		return null;
 	}
-
-	public bool useRange;
-
-	public bool ignoreInstalled;
 }

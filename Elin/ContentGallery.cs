@@ -1,4 +1,3 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -6,69 +5,33 @@ using UnityEngine.UI;
 
 public class ContentGallery : EContent
 {
-	public override void OnSwitchContent(int idTab)
+	public class Page : UIBook.Page
 	{
-		if (!this.first)
+		public class Item
 		{
-			return;
+			public int id;
+
+			public Sprite sprite;
 		}
-		if (EClass.debug.allArt)
+
+		public List<string> ids = new List<string>();
+
+		public override void BuildNote(UINote n, string idTopic)
 		{
-			EClass.player.sketches.Clear();
-			foreach (int item in EClass.core.refs.dictSketches.Keys)
+			foreach (string id in ids)
 			{
-				EClass.player.sketches.Add(item);
+				UIItem uIItem = n.AddItem("ItemGallery");
+				int num = id.ToInt();
+				Sprite sprite = Resources.Load<Sprite>("Media/Gallery/" + CoreRef.GetArtDir(num) + "/" + EClass.core.refs.dictSketches[num]);
+				uIItem.image1.sprite = sprite;
+				uIItem.text1.text = "#" + id;
+				uIItem.button1.SetOnClick(delegate
+				{
+					SE.Play("click_recipe");
+					EClass.ui.AddLayer<LayerImage>().SetImage(sprite);
+				});
 			}
 		}
-		this.Refresh();
-		this.first = false;
-	}
-
-	public void Refresh()
-	{
-		this.book.pages.Clear();
-		GridLayoutGroup[] array = this.grids;
-		for (int i = 0; i < array.Length; i++)
-		{
-			array[i].cellSize = this.gridSize[ContentGallery.listMode ? 1 : 0];
-		}
-		ContentGallery.Page page = new ContentGallery.Page();
-		List<int> list = EClass.player.sketches.ToList<int>();
-		list.Sort((int a, int b) => a - b);
-		foreach (int num in list)
-		{
-			page.ids.Add(num.ToString() ?? "");
-			if (page.ids.Count >= (ContentGallery.listMode ? 8 : 2))
-			{
-				this.book.AddPage(page);
-				page = new ContentGallery.Page();
-			}
-		}
-		if (page.ids.Count > 0)
-		{
-			this.book.AddPage(page);
-		}
-		this.book.currentPage = ContentGallery.lastPage;
-		this.book.Show();
-		this.textCollected.SetText("sketch_collected".lang((list.Count * 100 / EClass.core.refs.dictSketches.Count<KeyValuePair<int, string>>()).ToString() ?? "", null, null, null, null));
-	}
-
-	public void OnClickHelp()
-	{
-		LayerHelp.Toggle("other", "gallery");
-	}
-
-	public void ToggleMode()
-	{
-		ContentGallery.listMode = !ContentGallery.listMode;
-		ContentGallery.lastPage = (ContentGallery.listMode ? (this.book.currentPage / 4) : (this.book.currentPage * 4));
-		SE.Tab();
-		this.Refresh();
-	}
-
-	private void OnDestroy()
-	{
-		ContentGallery.lastPage = this.book.currentPage;
 	}
 
 	public static int lastPage;
@@ -89,32 +52,68 @@ public class ContentGallery : EContent
 
 	private bool first = true;
 
-	public class Page : UIBook.Page
+	public override void OnSwitchContent(int idTab)
 	{
-		public override void BuildNote(UINote n, string idTopic)
+		if (!first)
 		{
-			foreach (string text in this.ids)
+			return;
+		}
+		if (EClass.debug.allArt)
+		{
+			EClass.player.sketches.Clear();
+			foreach (int key in EClass.core.refs.dictSketches.Keys)
 			{
-				UIItem uiitem = n.AddItem("ItemGallery");
-				int num = text.ToInt();
-				Sprite sprite = Resources.Load<Sprite>("Media/Gallery/" + CoreRef.GetArtDir(num) + "/" + EClass.core.refs.dictSketches[num]);
-				uiitem.image1.sprite = sprite;
-				uiitem.text1.text = "#" + text;
-				uiitem.button1.SetOnClick(delegate
-				{
-					SE.Play("click_recipe");
-					EClass.ui.AddLayer<LayerImage>().SetImage(sprite);
-				});
+				EClass.player.sketches.Add(key);
 			}
 		}
+		Refresh();
+		first = false;
+	}
 
-		public List<string> ids = new List<string>();
-
-		public class Item
+	public void Refresh()
+	{
+		book.pages.Clear();
+		GridLayoutGroup[] array = grids;
+		for (int i = 0; i < array.Length; i++)
 		{
-			public int id;
-
-			public Sprite sprite;
+			array[i].cellSize = gridSize[listMode ? 1 : 0];
 		}
+		Page page = new Page();
+		List<int> list = EClass.player.sketches.ToList();
+		list.Sort((int a, int b) => a - b);
+		foreach (int item in list)
+		{
+			page.ids.Add(item.ToString() ?? "");
+			if (page.ids.Count >= (listMode ? 8 : 2))
+			{
+				book.AddPage(page);
+				page = new Page();
+			}
+		}
+		if (page.ids.Count > 0)
+		{
+			book.AddPage(page);
+		}
+		book.currentPage = lastPage;
+		book.Show();
+		textCollected.SetText("sketch_collected".lang((list.Count * 100 / EClass.core.refs.dictSketches.Count()).ToString() ?? ""));
+	}
+
+	public void OnClickHelp()
+	{
+		LayerHelp.Toggle("other", "gallery");
+	}
+
+	public void ToggleMode()
+	{
+		listMode = !listMode;
+		lastPage = (listMode ? (book.currentPage / 4) : (book.currentPage * 4));
+		SE.Tab();
+		Refresh();
+	}
+
+	private void OnDestroy()
+	{
+		lastPage = book.currentPage;
 	}
 }

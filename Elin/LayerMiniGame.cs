@@ -1,48 +1,50 @@
-﻿using System;
 using UnityEngine;
 
 public class LayerMiniGame : ELayer
 {
+	public static LayerMiniGame Instance;
+
+	public MiniGame mini;
+
+	public MiniGame.Type type;
+
 	public override void OnAfterInit()
 	{
-		LayerMiniGame.Instance = this;
+		Instance = this;
 		ELayer.pc.SetNoGoal();
-		EInput.Consume(true, 1);
-		ELayer.ui.layerFloat.SetActive(false);
-		if (WidgetCurrentTool.Instance)
+		EInput.Consume(consumeAxis: true);
+		ELayer.ui.layerFloat.SetActive(enable: false);
+		if ((bool)WidgetCurrentTool.Instance)
 		{
-			WidgetCurrentTool.Instance.SetActive(false);
+			WidgetCurrentTool.Instance.SetActive(enable: false);
 		}
-		if (WidgetEquip.Instance)
+		if ((bool)WidgetEquip.Instance)
 		{
-			WidgetEquip.Instance.SetActive(false);
+			WidgetEquip.Instance.SetActive(enable: false);
 		}
 	}
 
 	public override void OnUpdateInput()
 	{
-		if (this.mini == null && EInput.leftMouse.clicked)
+		if (mini == null && EInput.leftMouse.clicked)
 		{
 			SE.Click();
 			ELayer.pc.stamina.Mod(-10);
-			ELayer.player.EndTurn(true);
+			ELayer.player.EndTurn();
 			Debug.Log(ELayer.ui.IsPauseGame);
-			string str = ELayer.scene.actionMode.ShouldPauseGame.ToString();
-			string str2 = "/";
-			ActionMode actionMode = ELayer.scene.actionMode;
-			Debug.Log(str + str2 + ((actionMode != null) ? actionMode.ToString() : null));
+			Debug.Log(ELayer.scene.actionMode.ShouldPauseGame + "/" + ELayer.scene.actionMode);
 			Debug.Log(ELayer.scene.actionMode.gameSpeed);
 			Debug.Log(ELayer.pc.turn);
 			if (ELayer.pc.isDead || ELayer.pc.IsDisabled)
 			{
-				this.Close();
+				Close();
 			}
 		}
 	}
 
 	public override bool OnBack()
 	{
-		if (this.mini != null && !this.mini.CanExit())
+		if (mini != null && !mini.CanExit())
 		{
 			SE.BeepSmall();
 			return false;
@@ -52,39 +54,32 @@ public class LayerMiniGame : ELayer
 
 	public void Run()
 	{
-		if (this.mini == null)
+		if (mini != null)
 		{
-			return;
-		}
-		this.mini.balance.lastCoin = ELayer.pc.GetCurrency("casino_coin");
-		this.mini.balance.changeCoin = 0;
-		this.mini.OnActivate();
-		if (WidgetSideScreen.Instance)
-		{
-			WidgetSideScreen.Instance.OnChangeResolution();
+			mini.balance.lastCoin = ELayer.pc.GetCurrency("casino_coin");
+			mini.balance.changeCoin = 0;
+			mini.OnActivate();
+			if ((bool)WidgetSideScreen.Instance)
+			{
+				WidgetSideScreen.Instance.OnChangeResolution();
+			}
 		}
 	}
 
 	public override void OnKill()
 	{
-		if (this.mini != null)
+		if (mini != null)
 		{
-			this.mini.Deactivate();
+			mini.Deactivate();
 		}
-		ELayer.ui.layerFloat.SetActive(true);
-		if (WidgetCurrentTool.Instance)
+		ELayer.ui.layerFloat.SetActive(enable: true);
+		if ((bool)WidgetCurrentTool.Instance)
 		{
-			WidgetCurrentTool.Instance.SetActive(true);
+			WidgetCurrentTool.Instance.SetActive(enable: true);
 		}
-		if (WidgetEquip.Instance)
+		if ((bool)WidgetEquip.Instance)
 		{
-			WidgetEquip.Instance.SetActive(true);
+			WidgetEquip.Instance.SetActive(enable: true);
 		}
 	}
-
-	public static LayerMiniGame Instance;
-
-	public MiniGame mini;
-
-	public MiniGame.Type type;
 }

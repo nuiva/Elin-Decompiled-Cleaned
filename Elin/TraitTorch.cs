@@ -1,20 +1,16 @@
-﻿using System;
-
 public class TraitTorch : Trait
 {
 	public override bool UseExtra
 	{
 		get
 		{
-			return this.owner.isOn && !this.owner.Cell.isCurtainClosed;
+			if (owner.isOn)
+			{
+				return !owner.Cell.isCurtainClosed;
+			}
+			return false;
 		}
 	}
 
-	public override ToggleType ToggleType
-	{
-		get
-		{
-			return ToggleType.Fire;
-		}
-	}
+	public override ToggleType ToggleType => ToggleType.Fire;
 }

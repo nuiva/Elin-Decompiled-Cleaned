@@ -1,18 +1,23 @@
-﻿using System;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class HotAction : HotItem
 {
+	[JsonProperty]
+	public int _bgColor;
+
+	[JsonProperty]
+	public string text;
+
 	public Color bgColor
 	{
 		get
 		{
-			return IntColor.FromInt(this._bgColor);
+			return IntColor.FromInt(_bgColor);
 		}
 		set
 		{
-			this._bgColor = IntColor.ToInt(ref value);
+			_bgColor = IntColor.ToInt(ref value);
 		}
 	}
 
@@ -20,62 +25,34 @@ public class HotAction : HotItem
 	{
 		get
 		{
-			if (!this.CanChangeIconColor || this._bgColor == 0)
+			if (!CanChangeIconColor || _bgColor == 0)
 			{
 				return base.SpriteColor;
 			}
-			return this.bgColor;
+			return bgColor;
 		}
 	}
 
-	public virtual string Id
-	{
-		get
-		{
-			return "";
-		}
-	}
+	public virtual string Id => "";
 
-	public virtual bool CanChangeIconColor
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool CanChangeIconColor => false;
 
-	public virtual bool CanName
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public virtual bool CanName => true;
 
-	public override string Name
-	{
-		get
-		{
-			return this.text.IsEmpty(("hotAction" + this.Id).lang());
-		}
-	}
+	public override string Name => text.IsEmpty(("hotAction" + Id).lang());
 
-	public override string pathSprite
-	{
-		get
-		{
-			return "icon_hot" + this.Id;
-		}
-	}
+	public override string pathSprite => "icon_hot" + Id;
 
 	public override void OnClick(ButtonHotItem b, Hotbar h)
 	{
 		if (!EClass.player.CanAcceptInput())
 		{
 			SE.Beep();
-			return;
 		}
-		this.Perform();
+		else
+		{
+			Perform();
+		}
 	}
 
 	public virtual void Perform()
@@ -85,39 +62,34 @@ public class HotAction : HotItem
 	public override void OnShowContextMenu(UIContextMenu m)
 	{
 		base.OnShowContextMenu(m);
-		if (this.CanName)
+		if (CanName)
 		{
-			m.AddButton("changeName", delegate()
+			m.AddButton("changeName", delegate
 			{
-				Dialog.InputName("dialogChangeName", this.text.IsEmpty(""), delegate(bool cancel, string t)
+				Dialog.InputName("dialogChangeName", text.IsEmpty(""), delegate(bool cancel, string t)
 				{
 					if (!cancel)
 					{
-						this.text = t;
+						text = t;
 					}
-				}, Dialog.InputType.Default);
-			}, true);
-		}
-		if (this.CanChangeIconColor)
-		{
-			m.AddButton("actChangeColor", delegate()
-			{
-				if (this._bgColor == 0)
-				{
-					this.bgColor = Color.white;
-				}
-				EClass.ui.AddLayer<LayerColorPicker>().SetColor(this.bgColor, Color.white, delegate(PickerState state, Color _c)
-				{
-					this.bgColor = _c;
-					this.button.icon.color = _c;
 				});
-			}, true);
+			});
 		}
+		if (!CanChangeIconColor)
+		{
+			return;
+		}
+		m.AddButton("actChangeColor", delegate
+		{
+			if (_bgColor == 0)
+			{
+				bgColor = Color.white;
+			}
+			EClass.ui.AddLayer<LayerColorPicker>().SetColor(bgColor, Color.white, delegate(PickerState state, Color _c)
+			{
+				bgColor = _c;
+				button.icon.color = _c;
+			});
+		});
 	}
-
-	[JsonProperty]
-	public int _bgColor;
-
-	[JsonProperty]
-	public string text;
 }

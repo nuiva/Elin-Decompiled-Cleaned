@@ -1,13 +1,25 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
 public class SourceThingV : SourceDataString<SourceThingV.Row>
 {
-	public override SourceThingV.Row CreateRow()
+	[Serializable]
+	public class Row : SourceThing.Row
 	{
-		return new SourceThingV.Row
+		public string[] parse;
+
+		public override bool UseAlias => false;
+
+		public override string GetAlias => "n";
+	}
+
+	public override string[] ImportFields => new string[1] { "unit" };
+
+	public override Row CreateRow()
+	{
+		return new Row
 		{
 			id = SourceData.GetString(0),
 			_origin = SourceData.GetString(1),
@@ -35,36 +47,34 @@ public class SourceThingV : SourceDataString<SourceThingV.Row>
 		};
 	}
 
-	public override void SetRow(SourceThingV.Row r)
+	public override void SetRow(Row r)
 	{
-		this.map[r.id] = r;
+		map[r.id] = r;
 	}
 
 	public override void RestorePref()
 	{
-		foreach (SourceThing.Row row in EClass.sources.things.rows)
+		foreach (SourceThing.Row row2 in EClass.sources.things.rows)
 		{
-			SourceThing.Row row2 = EClass.sources.things._rows.TryGetValue(row.id, null);
-			SourcePref sourcePref = (row2 != null) ? row2.pref : null;
-			if (sourcePref == null && EClass.sources.asset.renames.ContainsKey(row.id))
+			SourcePref sourcePref = EClass.sources.things._rows.TryGetValue(row2.id)?.pref;
+			if (sourcePref == null && EClass.sources.asset.renames.ContainsKey(row2.id))
 			{
-				SourceThing.Row row3 = EClass.sources.things._rows.TryGetValue(EClass.sources.asset.renames[row.id], null);
-				sourcePref = ((row3 != null) ? row3.pref : null);
+				sourcePref = EClass.sources.things._rows.TryGetValue(EClass.sources.asset.renames[row2.id])?.pref;
 			}
-			row.pref = (sourcePref ?? new SourcePref());
+			row2.pref = sourcePref ?? new SourcePref();
 		}
 		Dictionary<string, SourceThing.Row> dictionary = new Dictionary<string, SourceThing.Row>();
+		foreach (SourceThing.Row row3 in EClass.sources.things.rows)
+		{
+			dictionary[row3.id] = row3;
+		}
 		foreach (SourceThing.Row row4 in EClass.sources.things.rows)
 		{
-			dictionary[row4.id] = row4;
-		}
-		foreach (SourceThing.Row row5 in EClass.sources.things.rows)
-		{
-			if (!row5.pref.UsePref && !row5._origin.IsEmpty())
+			if (!row4.pref.UsePref && !row4._origin.IsEmpty())
 			{
-				SourceThing.Row row6 = dictionary[row5._origin];
-				row5.pref = IO.DeepCopy<SourcePref>(row6.pref);
-				row5.pref.flags |= PrefFlag.UsePref;
+				SourceThing.Row row = dictionary[row4._origin];
+				row4.pref = IO.DeepCopy(row.pref);
+				row4.pref.flags |= PrefFlag.UsePref;
 			}
 		}
 	}
@@ -80,288 +90,193 @@ public class SourceThingV : SourceDataString<SourceThingV.Row>
 	public override void OnAfterImportData()
 	{
 		Dictionary<string, SourceThing.Row> dictionary = new Dictionary<string, SourceThing.Row>();
-		foreach (SourceThing.Row row in EClass.sources.things.rows)
+		foreach (SourceThing.Row row2 in EClass.sources.things.rows)
 		{
-			dictionary[row.id] = row;
+			dictionary[row2.id] = row2;
 		}
 		System.Reflection.FieldInfo[] fields = EClass.sources.things.rows[0].GetType().GetFields();
-		foreach (SourceThingV.Row row2 in this.rows)
+		foreach (Row row3 in rows)
 		{
-			SourceThing.Row row3 = new SourceThing.Row();
-			SourceThing.Row o = dictionary[row2._origin];
-			foreach (System.Reflection.FieldInfo fieldInfo in fields)
+			SourceThing.Row row = new SourceThing.Row();
+			SourceThing.Row o = dictionary[row3._origin];
+			System.Reflection.FieldInfo[] array = fields;
+			foreach (System.Reflection.FieldInfo fieldInfo in array)
 			{
 				if (!(fieldInfo.Name == "parse"))
 				{
-					row3.SetField(fieldInfo.Name, o.GetField(fieldInfo.Name));
+					row.SetField(fieldInfo.Name, o.GetField<object>(fieldInfo.Name));
 				}
 			}
-			row3.id = row2.id;
-			row3._origin = row2._origin;
-			if (row2.LV != 0)
+			row.id = row3.id;
+			row._origin = row3._origin;
+			if (row3.LV != 0)
 			{
-				row3.LV = row2.LV;
+				row.LV = row3.LV;
 			}
-			if (row2.chance != -1)
+			if (row3.chance != -1)
 			{
-				row3.chance = row2.chance;
+				row.chance = row3.chance;
 			}
-			if (row2.value != -1)
+			if (row3.value != -1)
 			{
-				row3.value = row2.value;
+				row.value = row3.value;
 			}
 			else
 			{
-				row3.value += EClass.rnd(row3.value / 2);
+				row.value += EClass.rnd(row.value / 2);
 			}
-			if (row2.weight != -1)
+			if (row3.weight != -1)
 			{
-				row3.weight = row2.weight;
+				row.weight = row3.weight;
 			}
-			if (!row2.tiles.IsEmpty())
+			if (!row3.tiles.IsEmpty())
 			{
-				row3.tiles = row2.tiles;
+				row.tiles = row3.tiles;
 			}
-			if (!row2.skins.IsEmpty())
+			if (!row3.skins.IsEmpty())
 			{
-				row3.skins = row2.skins;
+				row.skins = row3.skins;
 			}
-			if (!row2.name.IsEmpty())
+			if (!row3.name.IsEmpty())
 			{
-				row3.name = row2.name;
+				row.name = row3.name;
 			}
-			if (!row2.name_JP.IsEmpty())
+			if (!row3.name_JP.IsEmpty())
 			{
-				row3.name_JP = row2.name_JP;
+				row.name_JP = row3.name_JP;
 			}
-			if (!row2.detail.IsEmpty())
+			if (!row3.detail.IsEmpty())
 			{
-				row3.detail = row2.detail;
+				row.detail = row3.detail;
 			}
-			if (!row2.detail_JP.IsEmpty())
+			if (!row3.detail_JP.IsEmpty())
 			{
-				row3.detail_JP = row2.detail_JP;
+				row.detail_JP = row3.detail_JP;
 			}
-			if (!row2.unit.IsEmpty())
+			if (!row3.unit.IsEmpty())
 			{
-				row3.unit = row2.unit;
+				row.unit = row3.unit;
 			}
-			if (!row2.unit_JP.IsEmpty())
+			if (!row3.unit_JP.IsEmpty())
 			{
-				row3.unit_JP = row2.unit_JP;
+				row.unit_JP = row3.unit_JP;
 			}
-			if (!row2.vals.IsEmpty())
+			if (!row3.vals.IsEmpty())
 			{
-				row3.vals = row2.vals;
+				row.vals = row3.vals;
 			}
-			if (!row2.components.IsEmpty())
+			if (!row3.components.IsEmpty())
 			{
-				row3.components = row2.components;
+				row.components = row3.components;
 			}
-			if (!row2.defMat.IsEmpty())
+			if (!row3.defMat.IsEmpty())
 			{
-				row3.defMat = row2.defMat;
+				row.defMat = row3.defMat;
 			}
-			if (!row2.trait.IsEmpty())
+			if (!row3.trait.IsEmpty())
 			{
-				row3.trait = row2.trait;
+				row.trait = row3.trait;
 			}
-			if (!row2.category.IsEmpty())
+			if (!row3.category.IsEmpty())
 			{
-				row3.category = row2.category;
+				row.category = row3.category;
 			}
-			if (!row2.factory.IsEmpty())
+			if (!row3.factory.IsEmpty())
 			{
-				row3.factory = row2.factory;
+				row.factory = row3.factory;
 			}
-			if (!row2.tag.IsEmpty())
+			if (!row3.tag.IsEmpty())
 			{
-				row3.tag = row2.tag;
+				row.tag = row3.tag;
 			}
-			row3.recipeKey = row2.recipeKey;
-			if (!row2.parse.IsEmpty())
+			row.recipeKey = row3.recipeKey;
+			if (!row3.parse.IsEmpty())
 			{
-				string origin = row2._origin;
-				if (origin == "lamp_ceil2" || origin == "window" || origin == "windowL")
+				switch (row3._origin)
 				{
-					row3.idExtra = row2.parse[0];
-				}
-				else
+				case "lamp_ceil2":
+				case "window":
+				case "windowL":
+					row.idExtra = row3.parse[0];
+					break;
+				default:
 				{
-					string[] parse = row2.parse;
+					string[] parse = row3.parse;
 					for (int i = 0; i < parse.Length; i++)
 					{
-						string[] array2 = parse[i].Split('/', StringSplitOptions.None);
-						string text = array2[0];
-						uint num = <PrivateImplementationDetails>.ComputeStringHash(text);
-						if (num <= 1260025160U)
+						string[] array2 = parse[i].Split('/');
+						switch (array2[0])
 						{
-							if (num <= 455432284U)
+						case "render":
+							row._idRenderData = array2[1];
+							break;
+						case "tiletype":
+							row._tileType = array2[1];
+							break;
+						case "anime":
+							row.anime = ((array2.Length <= 4) ? ((array2.Length <= 3) ? new int[2]
 							{
-								if (num != 235771284U)
-								{
-									if (num == 455432284U)
-									{
-										if (text == "alt")
-										{
-											row3.altTiles = new int[]
-											{
-												array2[1].ToInt()
-											};
-											row3.ignoreAltFix = true;
-										}
-									}
-								}
-								else if (text == "sound")
-								{
-									row3.idSound = array2[1];
-								}
-							}
-							else if (num != 1031692888U)
+								array2[1].ToInt(),
+								array2[2].ToInt()
+							} : new int[3]
 							{
-								if (num != 1035877158U)
-								{
-									if (num == 1260025160U)
-									{
-										if (text == "ex")
-										{
-											row3.idActorEx = array2[1];
-										}
-									}
-								}
-								else if (text == "unique")
-								{
-									row3.quality = 4;
-								}
-							}
-							else if (text == "color")
+								array2[1].ToInt(),
+								array2[2].ToInt(),
+								array2[3].ToInt()
+							}) : new int[4]
 							{
-								row3.colorMod = 100;
-							}
+								array2[1].ToInt(),
+								array2[2].ToInt(),
+								array2[3].ToInt(),
+								array2[4].ToInt()
+							});
+							break;
+						case "alt":
+							row.altTiles = new int[1] { array2[1].ToInt() };
+							row.ignoreAltFix = true;
+							break;
+						case "naming":
+							row.naming = array2[1];
+							break;
+						case "ex":
+							row.idActorEx = array2[1];
+							break;
+						case "sound":
+							row.idSound = array2[1];
+							break;
+						case "color":
+							row.colorMod = 100;
+							break;
+						case "no_color":
+							row.colorMod = 0;
+							break;
+						case "unique":
+							row.quality = 4;
+							break;
+						case "ele":
+						{
+							int[] second = new int[2]
+							{
+								Core.GetCurrent().sources.elements.alias[array2[1]].id,
+								array2[2].ToInt()
+							};
+							row.elements = row.elements.Concat(second).ToArray();
+							break;
 						}
-						else if (num <= 2981401199U)
-						{
-							if (num != 1468549011U)
-							{
-								if (num != 2121067537U)
-								{
-									if (num == 2981401199U)
-									{
-										if (text == "anime")
-										{
-											SourceThing.Row row4 = row3;
-											int[] anime;
-											if (array2.Length <= 4)
-											{
-												if (array2.Length <= 3)
-												{
-													int[] array3 = new int[2];
-													array3[0] = array2[1].ToInt();
-													anime = array3;
-													array3[1] = array2[2].ToInt();
-												}
-												else
-												{
-													int[] array4 = new int[3];
-													array4[0] = array2[1].ToInt();
-													array4[1] = array2[2].ToInt();
-													anime = array4;
-													array4[2] = array2[3].ToInt();
-												}
-											}
-											else
-											{
-												int[] array5 = new int[4];
-												array5[0] = array2[1].ToInt();
-												array5[1] = array2[2].ToInt();
-												array5[2] = array2[3].ToInt();
-												anime = array5;
-												array5[3] = array2[4].ToInt();
-											}
-											row4.anime = anime;
-										}
-									}
-								}
-								else if (text == "naming")
-								{
-									row3.naming = array2[1];
-								}
-							}
-							else if (text == "ele")
-							{
-								int[] second = new int[]
-								{
-									Core.GetCurrent().sources.elements.alias[array2[1]].id,
-									array2[2].ToInt()
-								};
-								row3.elements = row3.elements.Concat(second).ToArray<int>();
-							}
-						}
-						else if (num != 3822567969U)
-						{
-							if (num != 3933629262U)
-							{
-								if (num == 4009327117U)
-								{
-									if (text == "render")
-									{
-										row3._idRenderData = array2[1];
-									}
-								}
-							}
-							else if (text == "no_color")
-							{
-								row3.colorMod = 0;
-							}
-						}
-						else if (text == "tiletype")
-						{
-							row3._tileType = array2[1];
 						}
 					}
+					break;
+				}
 				}
 			}
-			this.OnImportRow(row2, row3);
-			row3.OnImportData(EClass.sources.things);
-			EClass.sources.things.rows.Add(row3);
+			OnImportRow(row3, row);
+			row.OnImportData(EClass.sources.things);
+			EClass.sources.things.rows.Add(row);
 		}
-		this.rows.Clear();
+		rows.Clear();
 	}
 
-	public virtual void OnImportRow(SourceThingV.Row _r, SourceThing.Row c)
+	public virtual void OnImportRow(Row _r, SourceThing.Row c)
 	{
-	}
-
-	public override string[] ImportFields
-	{
-		get
-		{
-			return new string[]
-			{
-				"unit"
-			};
-		}
-	}
-
-	[Serializable]
-	public class Row : SourceThing.Row
-	{
-		public override bool UseAlias
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		public override string GetAlias
-		{
-			get
-			{
-				return "n";
-			}
-		}
-
-		public string[] parse;
 	}
 }

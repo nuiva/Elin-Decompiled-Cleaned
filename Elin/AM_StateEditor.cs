@@ -1,47 +1,21 @@
-﻿using System;
-
 public class AM_StateEditor : AM_BaseTileSelect
 {
-	public override bool IsBuildMode
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsBuildMode => true;
 
-	public override BaseTileMap.CardIconMode cardIconMode
-	{
-		get
-		{
-			return BaseTileMap.CardIconMode.State;
-		}
-	}
+	public override BaseTileMap.CardIconMode cardIconMode => BaseTileMap.CardIconMode.State;
 
-	public override BaseTileSelector.SelectType selectType
-	{
-		get
-		{
-			return BaseTileSelector.SelectType.Single;
-		}
-	}
+	public override BaseTileSelector.SelectType selectType => BaseTileSelector.SelectType.Single;
 
-	public override BaseTileSelector.HitType hitType
-	{
-		get
-		{
-			return BaseTileSelector.HitType.Default;
-		}
-	}
+	public override BaseTileSelector.HitType hitType => BaseTileSelector.HitType.Default;
 
 	public override void OnUpdateCursor()
 	{
-		base.SetCursorOnMap(CursorSystem.Select);
+		SetCursorOnMap(CursorSystem.Select);
 	}
 
 	public override HitResult HitTest(Point point, Point start)
 	{
-		if (this.GetDestState(point) != null)
+		if (GetDestState(point).HasValue)
 		{
 			return HitResult.Valid;
 		}
@@ -50,17 +24,12 @@ public class AM_StateEditor : AM_BaseTileSelect
 
 	public override void OnProcessTiles(Point point, int dir)
 	{
-		PlaceState? destState = this.GetDestState(point);
-		foreach (Card card in point.ListCards(false))
+		PlaceState? destState = GetDestState(point);
+		foreach (Card item in point.ListCards())
 		{
-			if (card.isThing && destState != null)
+			if (item.isThing && destState.HasValue && item.placeState != destState)
 			{
-				PlaceState placeState = card.placeState;
-				PlaceState? placeState2 = destState;
-				if (!(placeState == placeState2.GetValueOrDefault() & placeState2 != null))
-				{
-					card.SetPlaceState(destState.Value, false);
-				}
+				item.SetPlaceState(destState.Value);
 			}
 		}
 		SE.ClickGeneral();
@@ -69,19 +38,19 @@ public class AM_StateEditor : AM_BaseTileSelect
 	public PlaceState? GetDestState(Point point)
 	{
 		PlaceState? result = null;
-		foreach (Card card in point.ListCards(false))
+		foreach (Card item in point.ListCards())
 		{
-			if (card.isThing && !card.isNPCProperty)
+			if (item.isThing && !item.isNPCProperty)
 			{
-				if (card.placeState == PlaceState.installed)
+				if (item.placeState == PlaceState.installed)
 				{
-					result = new PlaceState?(PlaceState.roaming);
+					result = PlaceState.roaming;
 				}
-				else if (card.placeState == PlaceState.roaming)
+				else if (item.placeState == PlaceState.roaming)
 				{
-					result = new PlaceState?(PlaceState.installed);
+					result = PlaceState.installed;
 				}
-				if (result != null)
+				if (result.HasValue)
 				{
 					break;
 				}

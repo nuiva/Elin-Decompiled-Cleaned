@@ -1,20 +1,18 @@
-﻿using System;
-
 public class Tactics : EClass
 {
-	public static ConfigAutoCombat at
-	{
-		get
-		{
-			return EClass.game.config.autoCombat;
-		}
-	}
+	public SourceTactics.Row source;
+
+	public SourceChara.Row sourceChara;
+
+	public Chara owner;
+
+	public static ConfigAutoCombat at => EClass.game.config.autoCombat;
 
 	public int RandomFacotr
 	{
 		get
 		{
-			if (!this.owner.IsPC)
+			if (!owner.IsPC)
 			{
 				return 30;
 			}
@@ -26,15 +24,15 @@ public class Tactics : EClass
 	{
 		get
 		{
-			if (this.owner.IsPC)
+			if (!owner.IsPC)
 			{
-				return 1;
+				if (sourceChara.aiParam.Length < 1)
+				{
+					return source.dist;
+				}
+				return sourceChara.aiParam[0];
 			}
-			if (this.sourceChara.aiParam.Length < 1)
-			{
-				return this.source.dist;
-			}
-			return this.sourceChara.aiParam[0];
+			return 1;
 		}
 	}
 
@@ -42,15 +40,15 @@ public class Tactics : EClass
 	{
 		get
 		{
-			if (this.owner.IsPC)
+			if (!owner.IsPC)
 			{
-				return this.source.movePC;
+				if (sourceChara.aiParam.Length < 2)
+				{
+					return source.move;
+				}
+				return sourceChara.aiParam[1];
 			}
-			if (this.sourceChara.aiParam.Length < 2)
-			{
-				return this.source.move;
-			}
-			return this.sourceChara.aiParam[1];
+			return source.movePC;
 		}
 	}
 
@@ -58,35 +56,29 @@ public class Tactics : EClass
 	{
 		get
 		{
-			if (this.owner.IsPC)
+			if (!owner.IsPC)
 			{
-				return 100;
+				if (sourceChara.aiParam.Length < 3)
+				{
+					return 100;
+				}
+				return sourceChara.aiParam[2];
 			}
-			if (this.sourceChara.aiParam.Length < 3)
-			{
-				return 100;
-			}
-			return this.sourceChara.aiParam[2];
+			return 100;
 		}
 	}
 
-	public int P_Party
-	{
-		get
-		{
-			return this.source.party;
-		}
-	}
+	public int P_Party => source.party;
 
 	public int P_Melee
 	{
 		get
 		{
-			if (!this.owner.IsPC)
+			if (!owner.IsPC)
 			{
 				return 50;
 			}
-			return this.source.melee;
+			return source.melee;
 		}
 	}
 
@@ -94,67 +86,43 @@ public class Tactics : EClass
 	{
 		get
 		{
-			if (!this.owner.IsPC)
+			if (!owner.IsPC)
 			{
 				return 50;
 			}
-			return this.source.range;
+			return source.range;
 		}
 	}
 
-	public int P_Heal
-	{
-		get
-		{
-			return this.source.heal;
-		}
-	}
+	public int P_Heal => source.heal;
 
 	public int P_Spell
 	{
 		get
 		{
-			if (!this.owner.IsPC)
+			if (!owner.IsPC)
 			{
 				return 50;
 			}
-			return this.source.spell;
+			return source.spell;
 		}
 	}
 
-	public int P_Buff
-	{
-		get
-		{
-			return this.source.buff;
-		}
-	}
+	public int P_Buff => source.buff;
 
-	public int P_Debuff
-	{
-		get
-		{
-			return this.source.debuff;
-		}
-	}
+	public int P_Debuff => source.debuff;
 
-	public int P_Summon
-	{
-		get
-		{
-			return this.source.summon;
-		}
-	}
+	public int P_Summon => source.summon;
 
 	public bool CastPartyBuff
 	{
 		get
 		{
-			if (!this.owner.IsPC)
+			if (!owner.IsPC)
 			{
-				return this.source.tag.Contains("pt");
+				return source.tag.Contains("pt");
 			}
-			return Tactics.at.bCastParty;
+			return at.bCastParty;
 		}
 	}
 
@@ -162,15 +130,15 @@ public class Tactics : EClass
 	{
 		get
 		{
-			if (this.owner.IsPC)
+			if (!owner.IsPC)
 			{
-				return 100;
+				if (!owner.IsPCParty)
+				{
+					return 50;
+				}
+				return 80;
 			}
-			if (!this.owner.IsPCParty)
-			{
-				return 50;
-			}
-			return 80;
+			return 100;
 		}
 	}
 
@@ -178,13 +146,13 @@ public class Tactics : EClass
 	{
 		get
 		{
-			if (this.owner.IsPC)
+			if (!owner.IsPC)
 			{
+				if (!owner.IsPCParty)
+				{
+					return 50;
+				}
 				return 100;
-			}
-			if (!this.owner.IsPCParty)
-			{
-				return 50;
 			}
 			return 100;
 		}
@@ -192,57 +160,26 @@ public class Tactics : EClass
 
 	public Tactics(Chara c)
 	{
-		this.owner = c;
+		owner = c;
 		if (c.c_genes != null)
 		{
-			foreach (DNA dna in c.c_genes.items)
+			foreach (DNA item in c.c_genes.items)
 			{
-				if (dna.type == DNA.Type.Brain && !dna.id.IsEmpty())
+				if (item.type == DNA.Type.Brain && !item.id.IsEmpty())
 				{
-					SourceChara.Row row = EClass.sources.charas.map[dna.id];
-					string tactics = row.tactics;
-					SourceTactics.Row row2 = EClass.sources.tactics.map.TryGetValue(row.id, null);
-					string defaultStr;
-					if ((defaultStr = ((row2 != null) ? row2.id : null)) == null)
-					{
-						SourceTactics.Row row3 = EClass.sources.tactics.map.TryGetValue(row.job, null);
-						defaultStr = (((row3 != null) ? row3.id : null) ?? "predator");
-					}
-					string key = tactics.IsEmpty(defaultStr);
-					this.source = EClass.sources.tactics.map[key];
-					this.sourceChara = row;
+					SourceChara.Row row = EClass.sources.charas.map[item.id];
+					string key = row.tactics.IsEmpty(EClass.sources.tactics.map.TryGetValue(row.id)?.id ?? EClass.sources.tactics.map.TryGetValue(row.job)?.id ?? "predator");
+					source = EClass.sources.tactics.map[key];
+					sourceChara = row;
 					break;
 				}
 			}
 		}
-		if (this.source == null)
+		if (source == null)
 		{
-			string text;
-			if (!c.IsPC)
-			{
-				string tactics2 = c.source.tactics;
-				SourceTactics.Row row4 = EClass.sources.tactics.map.TryGetValue(c.id, null);
-				string defaultStr2;
-				if ((defaultStr2 = ((row4 != null) ? row4.id : null)) == null)
-				{
-					SourceTactics.Row row5 = EClass.sources.tactics.map.TryGetValue(c.job.id, null);
-					defaultStr2 = (((row5 != null) ? row5.id : null) ?? "predator");
-				}
-				text = tactics2.IsEmpty(defaultStr2);
-			}
-			else
-			{
-				text = Tactics.at.idType;
-			}
-			string key2 = text;
-			this.source = EClass.sources.tactics.map[key2];
-			this.sourceChara = c.source;
+			string key2 = (c.IsPC ? at.idType : c.source.tactics.IsEmpty(EClass.sources.tactics.map.TryGetValue(c.id)?.id ?? EClass.sources.tactics.map.TryGetValue(c.job.id)?.id ?? "predator"));
+			source = EClass.sources.tactics.map[key2];
+			sourceChara = c.source;
 		}
 	}
-
-	public SourceTactics.Row source;
-
-	public SourceChara.Row sourceChara;
-
-	public Chara owner;
 }

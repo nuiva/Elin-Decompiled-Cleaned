@@ -1,50 +1,18 @@
-﻿using System;
-
 public class AM_EditArea : AM_BaseTileSelect
 {
-	public override BuildMenu.Mode buildMenuMode
-	{
-		get
-		{
-			return BuildMenu.Mode.Area;
-		}
-	}
+	public override BuildMenu.Mode buildMenuMode => BuildMenu.Mode.Area;
 
-	public override bool IsBuildMode
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsBuildMode => true;
 
-	public override bool ShowMouseoverTarget
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool ShowMouseoverTarget => true;
 
-	public override AreaHighlightMode AreaHihlight
-	{
-		get
-		{
-			return AreaHighlightMode.Edit;
-		}
-	}
+	public override AreaHighlightMode AreaHihlight => AreaHighlightMode.Edit;
 
-	public override BaseTileSelector.SelectType selectType
-	{
-		get
-		{
-			return BaseTileSelector.SelectType.Single;
-		}
-	}
+	public override BaseTileSelector.SelectType selectType => BaseTileSelector.SelectType.Single;
 
 	public override void OnUpdateCursor()
 	{
-		base.SetCursorOnMap(CursorSystem.Select);
+		SetCursorOnMap(CursorSystem.Select);
 	}
 
 	public override HitResult HitTest(Point point, Point start)
@@ -61,21 +29,21 @@ public class AM_EditArea : AM_BaseTileSelect
 		if (point.area != null)
 		{
 			Area a = point.area;
-			UIContextMenu uicontextMenu = EClass.ui.CreateContextMenuInteraction();
-			uicontextMenu.AddButton("expandArea", delegate()
+			UIContextMenu uIContextMenu = EClass.ui.CreateContextMenuInteraction();
+			uIContextMenu.AddButton("expandArea", delegate
 			{
-				ActionMode.ExpandArea.Activate(a, false);
-			}, true);
-			uicontextMenu.AddButton("shrinkArea", delegate()
+				ActionMode.ExpandArea.Activate(a);
+			});
+			uIContextMenu.AddButton("shrinkArea", delegate
 			{
-				ActionMode.ExpandArea.Activate(a, true);
-			}, true);
-			uicontextMenu.AddButton("delete", delegate()
+				ActionMode.ExpandArea.Activate(a, _shrink: true);
+			});
+			uIContextMenu.AddButton("delete", delegate
 			{
 				SE.Play("trash");
 				EClass._map.rooms.RemoveArea(a);
-			}, true);
-			uicontextMenu.Show();
+			});
+			uIContextMenu.Show();
 		}
 	}
 }

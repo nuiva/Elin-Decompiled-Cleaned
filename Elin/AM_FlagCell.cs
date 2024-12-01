@@ -1,44 +1,30 @@
-﻿using System;
-
 public class AM_FlagCell : AM_BaseTileSelect
 {
-	public override bool IsBuildMode
+	public enum Mode
 	{
-		get
-		{
-			return true;
-		}
+		flagSnow,
+		flagFloat,
+		flagWallPillar,
+		flagClear,
+		flagShadow,
+		flagWall
 	}
 
-	public override bool UseSubMenu
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public Mode mode;
 
-	public override bool SubMenuAsGroup
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsBuildMode => true;
 
-	public override int SubMenuModeIndex
-	{
-		get
-		{
-			return (int)this.mode;
-		}
-	}
+	public override bool UseSubMenu => true;
+
+	public override bool SubMenuAsGroup => true;
+
+	public override int SubMenuModeIndex => (int)mode;
 
 	public override BaseTileSelector.SelectType selectType
 	{
 		get
 		{
-			if (this.mode != AM_FlagCell.Mode.flagWallPillar)
+			if (mode != Mode.flagWallPillar)
 			{
 				return BaseTileSelector.SelectType.Multiple;
 			}
@@ -48,34 +34,34 @@ public class AM_FlagCell : AM_BaseTileSelect
 
 	public override HitResult HitTest(Point point, Point start)
 	{
-		switch (this.mode)
+		switch (mode)
 		{
-		case AM_FlagCell.Mode.flagSnow:
-			if (start != null && start.cell.isClearSnow != point.cell.isClearSnow)
-			{
-				return HitResult.Default;
-			}
-			break;
-		case AM_FlagCell.Mode.flagFloat:
-			if (start != null && start.cell.isForceFloat != point.cell.isForceFloat)
-			{
-				return HitResult.Default;
-			}
-			break;
-		case AM_FlagCell.Mode.flagWallPillar:
+		case Mode.flagWallPillar:
 			if (!point.cell.HasWall)
 			{
 				return HitResult.Default;
 			}
 			break;
-		case AM_FlagCell.Mode.flagClear:
-			if (start != null && start.cell.isClearArea != point.cell.isClearArea)
+		case Mode.flagShadow:
+			if (point.Things.Count == 0)
 			{
 				return HitResult.Default;
 			}
 			break;
-		case AM_FlagCell.Mode.flagShadow:
-			if (point.Things.Count == 0)
+		case Mode.flagFloat:
+			if (start != null && start.cell.isForceFloat != point.cell.isForceFloat)
+			{
+				return HitResult.Default;
+			}
+			break;
+		case Mode.flagSnow:
+			if (start != null && start.cell.isClearSnow != point.cell.isClearSnow)
+			{
+				return HitResult.Default;
+			}
+			break;
+		case Mode.flagClear:
+			if (start != null && start.cell.isClearArea != point.cell.isClearArea)
 			{
 				return HitResult.Default;
 			}
@@ -86,18 +72,24 @@ public class AM_FlagCell : AM_BaseTileSelect
 
 	public override void OnProcessTiles(Point point, int dir)
 	{
-		switch (this.mode)
+		switch (mode)
 		{
-		case AM_FlagCell.Mode.flagSnow:
-			point.cell.isClearSnow = !point.cell.isClearSnow;
-			break;
-		case AM_FlagCell.Mode.flagFloat:
-			point.cell.isForceFloat = !point.cell.isForceFloat;
-			break;
-		case AM_FlagCell.Mode.flagWallPillar:
+		case Mode.flagWallPillar:
 			point.cell.isToggleWallPillar = !point.cell.isToggleWallPillar;
 			break;
-		case AM_FlagCell.Mode.flagClear:
+		case Mode.flagShadow:
+			point.Things.ForeachReverse(delegate(Thing t)
+			{
+				t.noShadow = !t.noShadow;
+			});
+			break;
+		case Mode.flagFloat:
+			point.cell.isForceFloat = !point.cell.isForceFloat;
+			break;
+		case Mode.flagSnow:
+			point.cell.isClearSnow = !point.cell.isClearSnow;
+			break;
+		case Mode.flagClear:
 			point.cell.isClearArea = !point.cell.isClearArea;
 			if (point.cell.isClearArea)
 			{
@@ -107,19 +99,13 @@ public class AM_FlagCell : AM_BaseTileSelect
 				});
 			}
 			break;
-		case AM_FlagCell.Mode.flagShadow:
-			point.Things.ForeachReverse(delegate(Thing t)
-			{
-				t.noShadow = !t.noShadow;
-			});
-			break;
 		}
 		point.RefreshNeighborTiles();
 	}
 
 	public override void OnClickSubMenu(int a)
 	{
-		this.mode = a.ToEnum<AM_FlagCell.Mode>();
+		mode = a.ToEnum<Mode>();
 		base.tileSelector.start = null;
 	}
 
@@ -131,20 +117,8 @@ public class AM_FlagCell : AM_BaseTileSelect
 		}
 		if (a < 5)
 		{
-			return a.ToEnum<AM_FlagCell.Mode>().ToString();
+			return a.ToEnum<Mode>().ToString();
 		}
 		return null;
-	}
-
-	public AM_FlagCell.Mode mode;
-
-	public enum Mode
-	{
-		flagSnow,
-		flagFloat,
-		flagWallPillar,
-		flagClear,
-		flagShadow,
-		flagWall
 	}
 }

@@ -1,12 +1,4 @@
-﻿using System;
-
 public class TraitPillowEhekatl : TraitPillowGod
 {
-	public override Religion Deity
-	{
-		get
-		{
-			return EClass.game.religions.Luck;
-		}
-	}
+	public override Religion Deity => EClass.game.religions.Luck;
 }

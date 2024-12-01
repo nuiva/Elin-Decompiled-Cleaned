@@ -1,125 +1,98 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 public class TraitSeed : Trait
 {
-	public SourceObj.Row row
-	{
-		get
-		{
-			return EClass.sources.objs.map[this.owner.refVal];
-		}
-	}
+	public static List<SourceObj.Row> listSeeds;
 
-	public override bool CanExtendBuild
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public SourceObj.Row row => EClass.sources.objs.map[owner.refVal];
 
-	public override bool CanChangeHeight
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanExtendBuild => true;
 
-	public override bool CanName
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanChangeHeight => false;
 
-	public override int DefaultStock
-	{
-		get
-		{
-			return 3 + EClass.rnd(10);
-		}
-	}
+	public override bool CanName => true;
+
+	public override int DefaultStock => 3 + EClass.rnd(10);
 
 	public override void OnCreate(int lv)
 	{
-		TraitSeed.ApplySeed(this.owner.Thing, TraitSeed.GetRandomSeedObj().id);
-		this.owner.c_seed = EClass.rnd(10000);
+		ApplySeed(owner.Thing, GetRandomSeedObj().id);
+		owner.c_seed = EClass.rnd(10000);
 	}
 
 	public override void SetName(ref string s)
 	{
-		s = "_of".lang(this.row.GetName(), s, null, null, null);
+		s = "_of".lang(row.GetName(), s);
 	}
 
 	public override void WriteNote(UINote n, bool identified)
 	{
 		base.WriteNote(n, identified);
 		int num = 1;
-		if (!this.row._growth.IsEmpty() && this.row._growth.Length >= 4)
+		if (!row._growth.IsEmpty() && row._growth.Length >= 4)
 		{
-			if (this.row._growth.Length >= 5)
+			if (row._growth.Length >= 5)
 			{
-				num = this.row._growth[4].ToInt();
+				num = row._growth[4].ToInt();
 			}
-			n.AddText("isHarvestCrop".lang(num.ToString() ?? "", null, null, null, null), FontColor.DontChange);
+			n.AddText("isHarvestCrop".lang(num.ToString() ?? ""));
 		}
-		n.AddText("isConsumeFertility".lang((0.1f * (float)this.row.costSoil).ToString() ?? "", null, null, null, null), FontColor.DontChange);
-		if (this.row.tag.Contains("flood"))
+		n.AddText("isConsumeFertility".lang((0.1f * (float)row.costSoil).ToString() ?? ""));
+		if (row.tag.Contains("flood"))
 		{
-			n.AddText("isWaterCrop", FontColor.DontChange);
+			n.AddText("isWaterCrop");
 		}
-		if (this.row.growth != null && this.row.growth.NeedSunlight)
+		if (row.growth != null && row.growth.NeedSunlight)
 		{
-			n.AddText("isNeedSun", FontColor.DontChange);
+			n.AddText("isNeedSun");
 		}
 	}
 
 	public void TrySprout(bool force = false, bool sucker = false, VirtualDate date = null)
 	{
-		Point pos = this.owner.pos;
-		if (!pos.HasObj && pos.cell.CanGrow(this.row, date ?? new VirtualDate(0)))
+		Point pos = owner.pos;
+		if (!pos.HasObj && pos.cell.CanGrow(row, date ?? new VirtualDate()))
 		{
-			pos.SetObj(this.row.id, 1, 0);
-			EClass._map.AddPlant(pos, this.owner.Thing);
+			pos.SetObj(row.id);
+			EClass._map.AddPlant(pos, owner.Thing);
 			if (sucker)
 			{
-				Zone.Suckers.Add(this.owner.Thing);
-				return;
+				Zone.Suckers.Add(owner.Thing);
 			}
-			this.owner.Destroy();
+			else
+			{
+				owner.Destroy();
+			}
 		}
 	}
 
 	public static Thing MakeSeed(SourceObj.Row obj, PlantData plant = null)
 	{
-		Thing thing = (plant != null) ? plant.seed : null;
+		Thing thing = plant?.seed;
 		if (EClass._zone.IsUserZone)
 		{
 			thing = null;
 		}
-		Thing thing2 = ThingGen.Create("seed", -1, -1);
-		TraitSeed.ApplySeed(thing2, obj.id);
+		Thing thing2 = ThingGen.Create("seed");
+		ApplySeed(thing2, obj.id);
 		if (thing != null)
 		{
-			foreach (Element element in thing.elements.dict.Values)
+			foreach (Element value in thing.elements.dict.Values)
 			{
-				if (element.IsFoodTrait)
+				if (value.IsFoodTrait)
 				{
-					thing2.elements.SetTo(element.id, element.Value);
+					thing2.elements.SetTo(value.id, value.Value);
 				}
 			}
 			thing2.SetEncLv(thing.encLV);
-			thing2.elements.SetBase(2, EClass.curve(thing2.encLV, 50, 10, 80), 0);
+			thing2.elements.SetBase(2, EClass.curve(thing2.encLV, 50, 10, 80));
 			thing2.c_refText = thing.c_refText;
 			thing2.c_seed = thing.c_seed;
-			int num = (plant != null) ? plant.water : 0;
-			int num2 = (plant != null) ? plant.fert : 0;
-			int num3 = 220 / (Mathf.Clamp(EClass.pc.Evalue(286) - thing.LV, 0, 50) * 2 + 10 + num * 2 + ((num2 > 0) ? 20 : 0) + (EClass.pc.HasElement(1325, 1) ? 25 : 0));
+			int num = plant?.water ?? 0;
+			int num2 = plant?.fert ?? 0;
+			int num3 = 220 / (Mathf.Clamp(EClass.pc.Evalue(286) - thing.LV, 0, 50) * 2 + 10 + num * 2 + ((num2 > 0) ? 20 : 0) + (EClass.pc.HasElement(1325) ? 25 : 0));
 			if (EClass.player.isAutoFarming)
 			{
 				num3 = 2 + num3 * 2;
@@ -131,17 +104,17 @@ public class TraitSeed : Trait
 				{
 					if (!EClass.player.isAutoFarming)
 					{
-						Msg.Say("seedLvLimit", thing2, null, null, null);
+						Msg.Say("seedLvLimit", thing2);
 					}
 				}
 				else
 				{
 					int num5 = Mathf.Clamp(EClass.rnd(num4) - 5, 1, EClass.player.isAutoFarming ? 3 : 10);
-					TraitSeed.LevelSeed(thing2, obj, num5);
-					EClass.pc.PlaySound("seed_level", 1f, true);
+					LevelSeed(thing2, obj, num5);
+					EClass.pc.PlaySound("seed_level");
 				}
 			}
-			Rand.SetSeed(-1);
+			Rand.SetSeed();
 		}
 		thing2.SetBlessedState(BlessedState.Normal);
 		return thing2;
@@ -169,13 +142,13 @@ public class TraitSeed : Trait
 
 	public static Thing MakeSeed(string idSource)
 	{
-		return TraitSeed.MakeSeed(EClass.sources.objs.alias[idSource]);
+		return MakeSeed(EClass.sources.objs.alias[idSource]);
 	}
 
 	public static Thing ApplySeed(Thing t, int refval)
 	{
 		t.refVal = refval;
-		SourceObj.Row row = EClass.sources.objs.map.TryGetValue(refval, null);
+		SourceObj.Row row = EClass.sources.objs.map.TryGetValue(refval);
 		if (row != null && row.vals.Length != 0)
 		{
 			t.idSkin = row.vals[0].ToInt();
@@ -185,29 +158,25 @@ public class TraitSeed : Trait
 
 	public static Thing MakeSeed(SourceObj.Row obj)
 	{
-		Thing thing = ThingGen.Create("seed", -1, -1);
-		TraitSeed.ApplySeed(thing, obj.id);
+		Thing thing = ThingGen.Create("seed");
+		ApplySeed(thing, obj.id);
 		return thing;
 	}
 
 	public static Thing MakeRandomSeed(bool enc = false)
 	{
 		Thing thing = ThingGen.Create("seed", null);
-		SourceObj.Row randomSeedObj = TraitSeed.GetRandomSeedObj();
-		TraitSeed.ApplySeed(thing, randomSeedObj.id);
+		SourceObj.Row randomSeedObj = GetRandomSeedObj();
+		ApplySeed(thing, randomSeedObj.id);
 		return thing;
 	}
 
 	public static SourceObj.Row GetRandomSeedObj()
 	{
-		if (TraitSeed.listSeeds == null)
+		if (listSeeds == null)
 		{
-			TraitSeed.listSeeds = (from s in EClass.sources.objs.rows
-			where s.HasTag(CTAG.seed) && !s.HasTag(CTAG.rareSeed)
-			select s).ToList<SourceObj.Row>();
+			listSeeds = EClass.sources.objs.rows.Where((SourceObj.Row s) => s.HasTag(CTAG.seed) && !s.HasTag(CTAG.rareSeed)).ToList();
 		}
-		return TraitSeed.listSeeds.RandomItemWeighted((SourceObj.Row a) => (float)a.chance);
+		return listSeeds.RandomItemWeighted((SourceObj.Row a) => a.chance);
 	}
-
-	public static List<SourceObj.Row> listSeeds;
 }

@@ -1,11 +1,19 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class QuestTask : EClass
 {
+	[JsonProperty]
+	public Quest owner;
+
+	public virtual string RefDrama1 => "";
+
+	public virtual string RefDrama2 => "";
+
+	public virtual string RefDrama3 => "";
+
 	public void SetOwner(Quest quest)
 	{
-		this.owner = quest;
+		owner = quest;
 	}
 
 	public virtual bool IsComplete()
@@ -41,31 +49,4 @@ public class QuestTask : EClass
 	public virtual void OnGetDetail(ref string detail, bool onJournal)
 	{
 	}
-
-	public virtual string RefDrama1
-	{
-		get
-		{
-			return "";
-		}
-	}
-
-	public virtual string RefDrama2
-	{
-		get
-		{
-			return "";
-		}
-	}
-
-	public virtual string RefDrama3
-	{
-		get
-		{
-			return "";
-		}
-	}
-
-	[JsonProperty]
-	public Quest owner;
 }

@@ -1,19 +1,28 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class BaseCondition : BaseStats
 {
+	[JsonProperty]
+	public int[] _ints = new int[5];
+
+	public int phase = -1;
+
+	public ElementContainer elements;
+
+	public Chara owner;
+
 	public int value
 	{
 		get
 		{
-			return this._ints[0];
+			return _ints[0];
 		}
 		set
 		{
-			this._ints[0] = value;
+			_ints[0] = value;
 		}
 	}
 
@@ -21,11 +30,11 @@ public class BaseCondition : BaseStats
 	{
 		get
 		{
-			return this._ints[1];
+			return _ints[1];
 		}
 		set
 		{
-			this._ints[1] = value;
+			_ints[1] = value;
 		}
 	}
 
@@ -33,11 +42,11 @@ public class BaseCondition : BaseStats
 	{
 		get
 		{
-			return this._ints[2];
+			return _ints[2];
 		}
 		set
 		{
-			this._ints[2] = value;
+			_ints[2] = value;
 		}
 	}
 
@@ -45,11 +54,11 @@ public class BaseCondition : BaseStats
 	{
 		get
 		{
-			return this._ints[3];
+			return _ints[3];
 		}
 		set
 		{
-			this._ints[3] = value;
+			_ints[3] = value;
 		}
 	}
 
@@ -57,11 +66,11 @@ public class BaseCondition : BaseStats
 	{
 		get
 		{
-			return (this._ints[4] & 2) != 0;
+			return (_ints[4] & 2) != 0;
 		}
 		set
 		{
-			this._ints[4] = (value ? (this._ints[4] | 2) : (this._ints[4] & -3));
+			_ints[4] = (value ? (_ints[4] | 2) : (_ints[4] & -3));
 		}
 	}
 
@@ -69,105 +78,61 @@ public class BaseCondition : BaseStats
 	{
 		get
 		{
-			return (this._ints[4] & 4) != 0;
+			return (_ints[4] & 4) != 0;
 		}
 		set
 		{
-			this._ints[4] = (value ? (this._ints[4] | 4) : (this._ints[4] & -5));
+			_ints[4] = (value ? (_ints[4] | 4) : (_ints[4] & -5));
 		}
 	}
 
-	public override Chara Owner
+	public override Chara Owner => owner;
+
+	public virtual string Name => base.source.GetText();
+
+	public virtual bool IsToggle => false;
+
+	public virtual bool WillOverride => false;
+
+	public virtual bool AllowMultipleInstance => false;
+
+	public virtual bool ConsumeTurn => false;
+
+	public virtual bool PreventRegen => false;
+
+	public virtual bool ShouldRefresh => false;
+
+	public virtual bool CancelAI => ConsumeTurn;
+
+	public virtual bool TimeBased => false;
+
+	public virtual bool SyncRide => false;
+
+	public virtual int GainResistFactor => base.source.gainRes;
+
+	public virtual int P2 => 0;
+
+	public SourceElement.Row sourceElement => EClass.sources.elements.map[refVal];
+
+	public virtual bool IsElemental => false;
+
+	public virtual string RefString1
 	{
 		get
 		{
-			return this.owner;
+			if (!IsElemental)
+			{
+				return "";
+			}
+			return sourceElement.GetName().ToLower();
 		}
 	}
 
-	public virtual string Name
-	{
-		get
-		{
-			return base.source.GetText("name", false);
-		}
-	}
+	public virtual bool CanManualRemove => false;
 
 	public virtual bool CanStack(Condition c)
 	{
 		return true;
-	}
-
-	public virtual bool IsToggle
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool WillOverride
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool AllowMultipleInstance
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool ConsumeTurn
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool PreventRegen
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool ShouldRefresh
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool CancelAI
-	{
-		get
-		{
-			return this.ConsumeTurn;
-		}
-	}
-
-	public virtual bool TimeBased
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool SyncRide
-	{
-		get
-		{
-			return false;
-		}
 	}
 
 	public virtual bool TryMove(Point p)
@@ -175,117 +140,66 @@ public class BaseCondition : BaseStats
 		return true;
 	}
 
-	public virtual int GainResistFactor
-	{
-		get
-		{
-			return base.source.gainRes;
-		}
-	}
-
-	public virtual int P2
-	{
-		get
-		{
-			return 0;
-		}
-	}
-
-	public SourceElement.Row sourceElement
-	{
-		get
-		{
-			return EClass.sources.elements.map[this.refVal];
-		}
-	}
-
-	public virtual bool IsElemental
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual string RefString1
-	{
-		get
-		{
-			if (!this.IsElemental)
-			{
-				return "";
-			}
-			return this.sourceElement.GetName().ToLower();
-		}
-	}
-
 	public void SetElement(int id)
 	{
-		this.refVal = id;
+		refVal = id;
 	}
 
 	public void SetRefVal(int a, int b)
 	{
-		this.refVal = a;
-		this.refVal2 = b;
+		refVal = a;
+		refVal2 = b;
 	}
 
 	public virtual Color GetSpriteColor()
 	{
-		if (!this.IsElemental)
+		if (!IsElemental)
 		{
 			return Color.white;
 		}
-		return EClass.setting.elements[EClass.sources.elements.map[this.refVal].alias].colorSprite;
+		return EClass.setting.elements[EClass.sources.elements.map[refVal].alias].colorSprite;
 	}
 
 	public override string ToString()
 	{
-		return string.Concat(new string[]
-		{
-			this.Name,
-			" ",
-			this.value.ToString(),
-			" ",
-			this.phase.ToString()
-		});
+		return Name + " " + value + " " + phase;
 	}
 
 	public override string GetText()
 	{
-		if (!this.IsNullPhase())
+		if (!IsNullPhase())
 		{
-			return this.GetPhaseStr();
+			return GetPhaseStr();
 		}
 		return "";
 	}
 
 	public override int GetValue()
 	{
-		return this.value;
+		return value;
 	}
 
 	public override Color GetColor(Gradient g)
 	{
-		return g.Evaluate((base.source.phase.LastItem<int>() == 0) ? 0f : ((float)this.phase / (float)base.source.phase.LastItem<int>()));
+		return g.Evaluate((base.source.phase.LastItem() == 0) ? 0f : ((float)phase / (float)base.source.phase.LastItem()));
 	}
 
 	public virtual void SetOwner(Chara _owner, bool onDeserialize = false)
 	{
-		this.owner = _owner;
-		this.phase = this.GetPhase();
-		if (this.EmoIcon > this.owner.emoIcon)
+		owner = _owner;
+		phase = GetPhase();
+		if (EmoIcon > owner.emoIcon)
 		{
-			this.owner.emoIcon = this.EmoIcon;
+			owner.emoIcon = EmoIcon;
 		}
 		if (base.source.elements.Length != 0)
 		{
-			this.elements = new ElementContainer();
+			elements = new ElementContainer();
 			for (int i = 0; i < base.source.elements.Length; i += 2)
 			{
-				this.elements.SetBase(this.GetElementSource(i).id, base.source.elements[i + 1].Calc(this.power, 0, this.P2), 0);
+				elements.SetBase(GetElementSource(i).id, base.source.elements[i + 1].Calc(power, 0, P2));
 			}
-			this.elements.SetParent(this.owner);
+			elements.SetParent(owner);
 		}
 	}
 
@@ -294,31 +208,32 @@ public class BaseCondition : BaseStats
 		string text = base.source.elements[i];
 		if (text == "res")
 		{
-			text = this.sourceElement.aliasRef;
+			text = sourceElement.aliasRef;
 		}
 		else if (text == "ele")
 		{
-			text = this.sourceElement.alias;
+			text = sourceElement.alias;
 		}
 		return EClass.sources.elements.alias[text];
 	}
 
 	public void Start()
 	{
-		this.OnBeforeStart();
-		this.phase = -1;
-		this.SetPhase();
-		this.OnStart();
-		this.OnStartOrStack();
-		this.PlayEffect();
-		if (base.source.nullify.Length != 0)
+		OnBeforeStart();
+		phase = -1;
+		SetPhase();
+		OnStart();
+		OnStartOrStack();
+		PlayEffect();
+		if (base.source.nullify.Length == 0)
 		{
-			for (int i = this.owner.conditions.Count - 1; i >= 0; i--)
+			return;
+		}
+		for (int num = owner.conditions.Count - 1; num >= 0; num--)
+		{
+			if (TryNullify(owner.conditions[num]))
 			{
-				if (this.TryNullify(this.owner.conditions[i]))
-				{
-					this.owner.conditions[i].Kill(false);
-				}
+				owner.conditions[num].Kill();
 			}
 		}
 	}
@@ -329,11 +244,12 @@ public class BaseCondition : BaseStats
 		{
 			return false;
 		}
-		foreach (string b in base.source.nullify)
+		string[] nullify = base.source.nullify;
+		foreach (string text in nullify)
 		{
-			if (c.source.alias == b)
+			if (c.source.alias == text)
 			{
-				this.owner.Say("nullify", this.owner, this.Name.ToLower(), c.Name.ToLower());
+				owner.Say("nullify", owner, Name.ToLower(), c.Name.ToLower());
 				return true;
 			}
 		}
@@ -354,17 +270,13 @@ public class BaseCondition : BaseStats
 
 	public virtual void PlayEffect()
 	{
-		if (Condition.ignoreEffect)
-		{
-			return;
-		}
-		if (base.source.effect.Length != 0)
+		if (!Condition.ignoreEffect && base.source.effect.Length != 0)
 		{
 			if (!base.source.effect[0].IsEmpty())
 			{
-				this.owner.PlayEffect(base.source.effect[0], true, 0f, default(Vector3));
+				owner.PlayEffect(base.source.effect[0]);
 			}
-			this.owner.PlaySound((base.source.effect.Length >= 2) ? base.source.effect[1] : base.source.effect[0], 1f, true);
+			owner.PlaySound((base.source.effect.Length >= 2) ? base.source.effect[1] : base.source.effect[0]);
 		}
 	}
 
@@ -374,9 +286,9 @@ public class BaseCondition : BaseStats
 		{
 			if (!base.source.effect[2].IsEmpty())
 			{
-				this.owner.PlayEffect(base.source.effect[2], true, 0f, default(Vector3));
+				owner.PlayEffect(base.source.effect[2]);
 			}
-			this.owner.PlaySound((base.source.effect.Length >= 4) ? base.source.effect[3] : base.source.effect[2], 1f, true);
+			owner.PlaySound((base.source.effect.Length >= 4) ? base.source.effect[3] : base.source.effect[2]);
 		}
 	}
 
@@ -386,48 +298,51 @@ public class BaseCondition : BaseStats
 
 	public void SetPhase()
 	{
-		int num = this.GetPhase();
-		if (this.phase != num)
+		int num = GetPhase();
+		if (phase != num)
 		{
-			int num2 = this.phase;
-			this.phase = num;
-			this.PhaseMsg(num > num2);
-			this.OnChangePhase(num2, num);
+			int num2 = phase;
+			phase = num;
+			PhaseMsg(num > num2);
+			OnChangePhase(num2, num);
 		}
 	}
 
 	public bool IsNullPhase()
 	{
-		return base.source.strPhase.Length != 0 && base.source.strPhase[this.GetPhase()] == "#";
+		if (base.source.strPhase.Length == 0)
+		{
+			return false;
+		}
+		return base.source.strPhase[GetPhase()] == "#";
 	}
 
 	public override int GetPhase()
 	{
-		return base.source.phase[Mathf.Clamp(this.value, 0, 99) / 10];
+		return base.source.phase[Mathf.Clamp(value, 0, 99) / 10];
 	}
 
 	public void PhaseMsg(bool inc)
 	{
-		bool flag = base.source.invert ? (!inc) : inc;
-		string[] array = (inc ? base.source.GetText("textPhase", false) : base.source.GetText("textPhase2", false)).Split(Environment.NewLine.ToCharArray());
-		if (array.Length <= this.phase || array[this.phase].IsEmpty())
+		bool flag = (base.source.invert ? (!inc) : inc);
+		string[] array = (inc ? base.source.GetText("textPhase") : base.source.GetText("textPhase2")).Split(Environment.NewLine.ToCharArray());
+		if (array.Length > phase && !array[phase].IsEmpty())
 		{
-			return;
+			if (Type == ConditionType.Stance)
+			{
+				Msg.SetColor("ono");
+			}
+			else if (!base.source.invert && flag)
+			{
+				Msg.SetColor("negative");
+			}
+			else if (base.source.invert && !flag)
+			{
+				Msg.SetColor("positive");
+			}
+			PopText();
+			owner.Say(array[phase].Split('|').RandomItem(), owner, RefString1);
 		}
-		if (this.Type == ConditionType.Stance)
-		{
-			Msg.SetColor("ono");
-		}
-		else if (!base.source.invert && flag)
-		{
-			Msg.SetColor("negative");
-		}
-		else if (base.source.invert && !flag)
-		{
-			Msg.SetColor("positive");
-		}
-		base.PopText();
-		this.owner.Say(array[this.phase].Split('|', StringSplitOptions.None).RandomItem<string>(), this.owner, this.RefString1, null);
 	}
 
 	public override string GetPhaseStr()
@@ -435,9 +350,9 @@ public class BaseCondition : BaseStats
 		string[] textArray = base.source.GetTextArray("strPhase");
 		if (textArray.Length == 0)
 		{
-			return this.Name;
+			return Name;
 		}
-		return textArray[this.phase].IsEmpty("");
+		return textArray[phase].IsEmpty("");
 	}
 
 	public virtual void Tick()
@@ -446,17 +361,12 @@ public class BaseCondition : BaseStats
 
 	public void Mod(int a, bool force = false)
 	{
-		if (this.isPerfume && !force)
+		if ((!isPerfume || force) && value != 0)
 		{
-			return;
+			value += a;
+			SetPhase();
+			OnValueChanged();
 		}
-		if (this.value == 0)
-		{
-			return;
-		}
-		this.value += a;
-		this.SetPhase();
-		this.OnValueChanged();
 	}
 
 	public virtual void OnValueChanged()
@@ -471,14 +381,6 @@ public class BaseCondition : BaseStats
 	{
 	}
 
-	public virtual bool CanManualRemove
-	{
-		get
-		{
-			return false;
-		}
-	}
-
 	public virtual int EvaluatePower(int p)
 	{
 		return p;
@@ -486,7 +388,7 @@ public class BaseCondition : BaseStats
 
 	public virtual int EvaluateTurn(int p)
 	{
-		return Mathf.Max(1, base.source.duration.Calc(p, 0, this.P2));
+		return Mathf.Max(1, base.source.duration.Calc(p, 0, P2));
 	}
 
 	public virtual BaseNotification CreateNotification()
@@ -502,7 +404,7 @@ public class BaseCondition : BaseStats
 		}
 		if (c == null)
 		{
-			return Element.Create(base.source.defenseAttb[0], 1);
+			return Element.Create(base.source.defenseAttb[0]);
 		}
 		return c.elements.GetOrCreateElement(base.source.defenseAttb[0]);
 	}
@@ -510,31 +412,33 @@ public class BaseCondition : BaseStats
 	public override void _WriteNote(UINote n, bool asChild = false)
 	{
 		List<string> list = new List<string>();
-		Element defenseAttribute = this.GetDefenseAttribute(null);
+		Element defenseAttribute = GetDefenseAttribute();
 		if (defenseAttribute != null)
 		{
-			list.Add("hintDefenseAttb".lang(defenseAttribute.Name.ToTitleCase(false), null, null, null, null));
+			list.Add("hintDefenseAttb".lang(defenseAttribute.Name.ToTitleCase()));
 		}
-		this.OnWriteNote(list);
-		foreach (string key in base.source.nullify)
+		OnWriteNote(list);
+		string[] nullify = base.source.nullify;
+		foreach (string key in nullify)
 		{
-			list.Add("hintNullify".lang(EClass.sources.stats.alias[key].GetName(), null, null, null, null));
+			list.Add("hintNullify".lang(EClass.sources.stats.alias[key].GetName()));
 		}
 		for (int j = 0; j < base.source.elements.Length; j += 2)
 		{
-			Element element = Element.Create(this.GetElementSource(j).id, base.source.elements[j + 1].Calc(this.power, 0, this.P2));
-			list.Add("modValue".lang(element.Name, ((element.Value < 0) ? "" : "+") + element.Value.ToString(), null, null, null));
+			Element element = Element.Create(GetElementSource(j).id, base.source.elements[j + 1].Calc(power, 0, P2));
+			list.Add("modValue".lang(element.Name, ((element.Value < 0) ? "" : "+") + element.Value));
 		}
-		if (list.Count > 0)
+		if (list.Count <= 0)
 		{
-			if (!asChild)
-			{
-				n.Space(8, 1);
-			}
-			foreach (string str in list)
-			{
-				n.AddText("_bullet".lang() + str, FontColor.DontChange);
-			}
+			return;
+		}
+		if (!asChild)
+		{
+			n.Space(8);
+		}
+		foreach (string item in list)
+		{
+			n.AddText("_bullet".lang() + item);
 		}
 	}
 
@@ -546,13 +450,4 @@ public class BaseCondition : BaseStats
 	{
 		return null;
 	}
-
-	[JsonProperty]
-	public int[] _ints = new int[5];
-
-	public int phase = -1;
-
-	public ElementContainer elements;
-
-	public Chara owner;
 }

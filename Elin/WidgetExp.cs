@@ -1,54 +1,14 @@
-﻿using System;
 using UnityEngine;
 
 public class WidgetExp : Widget
 {
-	public override object CreateExtra()
+	public class Extra
 	{
-		return new WidgetExp.Extra();
-	}
+		public bool lv;
 
-	public WidgetExp.Extra extra
-	{
-		get
-		{
-			return base.config.extra as WidgetExp.Extra;
-		}
-	}
+		public bool knowledge;
 
-	public override void OnActivate()
-	{
-		this.Build();
-		base.InvokeRepeating("Refresh", 0.5f, 0.5f);
-	}
-
-	public void Build()
-	{
-		this.RebuildLayout(false);
-		this.Refresh();
-	}
-
-	public void OnClick()
-	{
-		if (EMono.ui.BlockInput)
-		{
-			SE.BeepSmall();
-			return;
-		}
-		LayerChara layerChara = EMono.ui.ToggleLayer<LayerChara>(null);
-		if (layerChara)
-		{
-			layerChara.SetChara(EMono.pc).windows[0].SwitchContent(2);
-			layerChara.windowChara.ToggleFeatMode();
-		}
-	}
-
-	public void Refresh()
-	{
-		this.goLv.SetActive(EMono.pc.feat > 0);
-		this.textLv.text = (EMono.pc.feat.ToString() ?? "");
-		this.itemExp.text1.text = EMono.pc.exp.ToString() + "/" + EMono.pc.ExpToNext.ToString();
-		this.itemExp.image1.fillAmount = (float)EMono.pc.exp / (float)EMono.pc.ExpToNext + 0.01f;
+		public bool influence;
 	}
 
 	public GameObject goLv;
@@ -61,12 +21,45 @@ public class WidgetExp : Widget
 
 	public UIItem itemInfluence;
 
-	public class Extra
+	public Extra extra => base.config.extra as Extra;
+
+	public override object CreateExtra()
 	{
-		public bool lv;
+		return new Extra();
+	}
 
-		public bool knowledge;
+	public override void OnActivate()
+	{
+		Build();
+		InvokeRepeating("Refresh", 0.5f, 0.5f);
+	}
 
-		public bool influence;
+	public void Build()
+	{
+		this.RebuildLayout();
+		Refresh();
+	}
+
+	public void OnClick()
+	{
+		if (EMono.ui.BlockInput)
+		{
+			SE.BeepSmall();
+			return;
+		}
+		LayerChara layerChara = EMono.ui.ToggleLayer<LayerChara>();
+		if ((bool)layerChara)
+		{
+			layerChara.SetChara(EMono.pc).windows[0].SwitchContent(2);
+			layerChara.windowChara.ToggleFeatMode();
+		}
+	}
+
+	public void Refresh()
+	{
+		goLv.SetActive(EMono.pc.feat > 0);
+		textLv.text = EMono.pc.feat.ToString() ?? "";
+		itemExp.text1.text = EMono.pc.exp + "/" + EMono.pc.ExpToNext;
+		itemExp.image1.fillAmount = (float)EMono.pc.exp / (float)EMono.pc.ExpToNext + 0.01f;
 	}
 }

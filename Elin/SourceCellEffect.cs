@@ -1,10 +1,31 @@
-﻿using System;
+using System;
 
 public class SourceCellEffect : SourceDataInt<SourceCellEffect.Row>
 {
-	public override SourceCellEffect.Row CreateRow()
+	[Serializable]
+	public class Row : TileRow
 	{
-		return new SourceCellEffect.Row
+		public int[] anime;
+
+		public override bool UseAlias => true;
+
+		public override string GetAlias => alias;
+
+		public override string RecipeID => "l" + id;
+
+		public override RenderData defaultRenderData => FallbackRenderData;
+
+		public override int GetTile(SourceMaterial.Row mat, int dir = 0)
+		{
+			return _tiles[0] + 3;
+		}
+	}
+
+	public static RenderData FallbackRenderData;
+
+	public override Row CreateRow()
+	{
+		return new Row
 		{
 			id = SourceData.GetInt(0),
 			alias = SourceData.GetString(1),
@@ -28,15 +49,15 @@ public class SourceCellEffect : SourceDataInt<SourceCellEffect.Row>
 		};
 	}
 
-	public override void SetRow(SourceCellEffect.Row r)
+	public override void SetRow(Row r)
 	{
-		this.map[r.id] = r;
+		map[r.id] = r;
 	}
 
 	public override void OnAfterImportData()
 	{
 		int num = 0;
-		foreach (SourceCellEffect.Row row in this.rows)
+		foreach (Row row in rows)
 		{
 			if (row.sort != 0)
 			{
@@ -45,61 +66,16 @@ public class SourceCellEffect : SourceDataInt<SourceCellEffect.Row>
 			row.sort = num;
 			num++;
 		}
-		this.rows.Sort((SourceCellEffect.Row a, SourceCellEffect.Row b) => a.id - b.id);
+		rows.Sort((Row a, Row b) => a.id - b.id);
 	}
 
 	public override void OnInit()
 	{
-		SourceCellEffect.FallbackRenderData = ResourceCache.Load<RenderData>("Scene/Render/Data/liquid");
-		Cell.effectList = this.rows;
-		foreach (SourceCellEffect.Row row in this.rows)
+		FallbackRenderData = ResourceCache.Load<RenderData>("Scene/Render/Data/liquid");
+		Cell.effectList = rows;
+		foreach (Row row in rows)
 		{
 			row.Init();
 		}
-	}
-
-	public static RenderData FallbackRenderData;
-
-	[Serializable]
-	public class Row : TileRow
-	{
-		public override bool UseAlias
-		{
-			get
-			{
-				return true;
-			}
-		}
-
-		public override string GetAlias
-		{
-			get
-			{
-				return this.alias;
-			}
-		}
-
-		public override string RecipeID
-		{
-			get
-			{
-				return "l" + this.id.ToString();
-			}
-		}
-
-		public override RenderData defaultRenderData
-		{
-			get
-			{
-				return SourceCellEffect.FallbackRenderData;
-			}
-		}
-
-		public override int GetTile(SourceMaterial.Row mat, int dir = 0)
-		{
-			return this._tiles[0] + 3;
-		}
-
-		public int[] anime;
 	}
 }

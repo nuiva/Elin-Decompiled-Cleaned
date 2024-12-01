@@ -1,60 +1,16 @@
-﻿using System;
-
 public class TileTypeSky : TileType
 {
-	public override bool Invisible
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool Invisible => true;
 
-	public override bool IsSkipFloor
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsSkipFloor => true;
 
-	public override bool RepeatBlock
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool RepeatBlock => false;
 
-	public override bool IsBlockPass
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsBlockPass => true;
 
-	public override bool AllowBlood
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool AllowBlood => false;
 
-	public override BaseTileSelector.SelectType SelectType
-	{
-		get
-		{
-			return BaseTileSelector.SelectType.Multiple;
-		}
-	}
+	public override BaseTileSelector.SelectType SelectType => BaseTileSelector.SelectType.Multiple;
 
-	public override BlockRenderMode blockRenderMode
-	{
-		get
-		{
-			return BlockRenderMode.FullBlock;
-		}
-	}
+	public override BlockRenderMode blockRenderMode => BlockRenderMode.FullBlock;
 }

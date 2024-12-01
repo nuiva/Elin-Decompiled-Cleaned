@@ -1,12 +1,10 @@
-﻿using System;
-
 public class ConDrunk : BadCondition
 {
 	public override Emo2 EmoIcon
 	{
 		get
 		{
-			if (!this.owner._IsPC)
+			if (!owner._IsPC)
 			{
 				return Emo2.happy;
 			}
@@ -26,25 +24,25 @@ public class ConDrunk : BadCondition
 	public override void SetOwner(Chara _owner, bool onDeserialize = false)
 	{
 		base.SetOwner(_owner, onDeserialize);
-		this.owner.isDrunk = true;
+		owner.isDrunk = true;
 	}
 
 	public override void OnStart()
 	{
-		this.owner.ShowEmo(Emo.happy, 0f, true);
+		owner.ShowEmo(Emo.happy);
 	}
 
 	public override void Tick()
 	{
-		if (EClass.rnd(200) == 0 && this.GetPhase() >= 1)
+		if (EClass.rnd(200) == 0 && GetPhase() >= 1)
 		{
-			this.owner.Vomit();
+			owner.Vomit();
 		}
-		base.Mod(-1, false);
+		Mod(-1);
 	}
 
 	public override void OnRemoved()
 	{
-		this.owner.isDrunk = false;
+		owner.isDrunk = false;
 	}
 }

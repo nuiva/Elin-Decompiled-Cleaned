@@ -1,34 +1,33 @@
-﻿using System;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class ConChampagne : BaseBuff
 {
+	[JsonProperty]
+	public int count;
+
 	public override void Tick()
 	{
-		this.count--;
-		if (this.count <= 0)
+		count--;
+		if (count <= 0)
 		{
-			this.count += 15;
-			this.owner.Talk("champagne", null, null, false);
-			int num = Mathf.Max(EClass.curve(this.owner.CHA * 10, 400, 100, 75), 100);
-			if (EClass._zone.IsUserZone && !this.owner.IsPCFactionOrMinion && num > 500)
+			count += 15;
+			owner.Talk("champagne");
+			int num = Mathf.Max(EClass.curve(owner.CHA * 10, 400, 100), 100);
+			if (EClass._zone.IsUserZone && !owner.IsPCFactionOrMinion && num > 500)
 			{
 				num = 500;
 			}
 			foreach (Chara chara in EClass._map.charas)
 			{
-				if (chara != this.owner && chara.IsNeutralOrAbove() && this.owner.Dist(chara) <= 10)
+				if (chara != owner && chara.IsNeutralOrAbove() && owner.Dist(chara) <= 10)
 				{
-					chara.AddCondition<ConHero>(num, false);
-					chara.AddCondition<ConEuphoric>(num, false);
-					chara.AddCondition<ConSeeInvisible>(num, false);
+					chara.AddCondition<ConHero>(num);
+					chara.AddCondition<ConEuphoric>(num);
+					chara.AddCondition<ConSeeInvisible>(num);
 				}
 			}
 		}
-		base.Mod(-1, false);
+		Mod(-1);
 	}
-
-	[JsonProperty]
-	public int count;
 }

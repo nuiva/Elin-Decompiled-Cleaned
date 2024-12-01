@@ -1,45 +1,7 @@
-﻿using System;
 using UnityEngine;
 
 public class DropdownRecipe : UIDropdown
 {
-	public void RefreshLabel()
-	{
-		this.textLabel.SetText(this.GetLabel(this.ingredient.thing, this.recipe.source.colorIng == this.recipe.ingredients.IndexOf(this.ingredient)));
-	}
-
-	public string GetLabel(Thing t, bool showColor)
-	{
-		if (t == null)
-		{
-			return string.Concat(new string[]
-			{
-				" <color=",
-				DropdownRecipe.colorCost.ToHex(),
-				">",
-				"noMaterial".lang(),
-				"</color>"
-			});
-		}
-		HitSummary summary = Core.Instance.screen.tileSelector.summary;
-		int num = t.Num;
-		return string.Concat(new string[]
-		{
-			showColor ? ("<color=" + t.material.matColor.ToHex() + ">■</color> ") : "",
-			t.NameSimple,
-			" (",
-			num.ToString(),
-			")"
-		}) + ((summary.countValid == 0) ? "" : string.Concat(new string[]
-		{
-			" <color=",
-			DropdownRecipe.colorCost.ToHex(),
-			"> -",
-			(this.ingredient.req * summary.countValid).ToString(),
-			"</color>"
-		}));
-	}
-
 	public static Color colorCost;
 
 	public static Color colorPredict;
@@ -51,4 +13,20 @@ public class DropdownRecipe : UIDropdown
 	public UIText orgLabel;
 
 	public Recipe.Ingredient ingredient;
+
+	public void RefreshLabel()
+	{
+		textLabel.SetText(GetLabel(ingredient.thing, recipe.source.colorIng == recipe.ingredients.IndexOf(ingredient)));
+	}
+
+	public string GetLabel(Thing t, bool showColor)
+	{
+		if (t == null)
+		{
+			return " <color=" + colorCost.ToHex() + ">" + "noMaterial".lang() + "</color>";
+		}
+		HitSummary summary = Core.Instance.screen.tileSelector.summary;
+		int num = t.Num;
+		return string.Concat((showColor ? ("<color=" + t.material.matColor.ToHex() + ">■</color> ") : "") + t.NameSimple + " (" + num + ")", (summary.countValid == 0) ? "" : (" <color=" + colorCost.ToHex() + "> -" + ingredient.req * summary.countValid + "</color>"));
+	}
 }

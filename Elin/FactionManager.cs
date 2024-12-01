@@ -1,61 +1,9 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class FactionManager : EClass
 {
-	public void AssignUID(Faction s)
-	{
-		Faction faction = this.dictAll.TryGetValue(s.id, null);
-		if (faction != null)
-		{
-			Debug.LogError("exception: Faction id already exists:" + faction.id);
-		}
-		s.uid = s.id;
-		this.dictAll.Add(s.uid, s);
-	}
-
-	public void OnCreateGame()
-	{
-		foreach (SourceFaction.Row r in EClass.sources.factions.rows)
-		{
-			Faction.Create(r);
-		}
-		this.Home = this.Find("home");
-		this.Home.relation.type = FactionRelation.RelationType.Owner;
-		this.Wilds = this.Find("wilds");
-		this.Fighter = this.Find<GuildFighter>("guild_fighter");
-		this.Mage = this.Find<GuildMage>("guild_mage");
-		this.Thief = this.Find<GuildThief>("guild_thief");
-		this.Merchant = this.Find<GuildMerchant>("guild_merchant");
-	}
-
-	public void OnLoad()
-	{
-		foreach (Faction faction in this.dictAll.Values)
-		{
-			faction.OnLoad();
-		}
-	}
-
-	public T Find<T>(string id) where T : Faction
-	{
-		return this.Find(id) as T;
-	}
-
-	public Faction Find(string id)
-	{
-		foreach (Faction faction in this.dictAll.Values)
-		{
-			if (faction.id == id)
-			{
-				return faction;
-			}
-		}
-		return null;
-	}
-
 	[JsonProperty]
 	public Dictionary<string, Faction> dictAll = new Dictionary<string, Faction>();
 
@@ -76,4 +24,55 @@ public class FactionManager : EClass
 
 	[JsonProperty]
 	public GuildMerchant Merchant;
+
+	public void AssignUID(Faction s)
+	{
+		Faction faction = dictAll.TryGetValue(s.id);
+		if (faction != null)
+		{
+			Debug.LogError("exception: Faction id already exists:" + faction.id);
+		}
+		s.uid = s.id;
+		dictAll.Add(s.uid, s);
+	}
+
+	public void OnCreateGame()
+	{
+		foreach (SourceFaction.Row row in EClass.sources.factions.rows)
+		{
+			Faction.Create(row);
+		}
+		Home = Find("home");
+		Home.relation.type = FactionRelation.RelationType.Owner;
+		Wilds = Find("wilds");
+		Fighter = Find<GuildFighter>("guild_fighter");
+		Mage = Find<GuildMage>("guild_mage");
+		Thief = Find<GuildThief>("guild_thief");
+		Merchant = Find<GuildMerchant>("guild_merchant");
+	}
+
+	public void OnLoad()
+	{
+		foreach (Faction value in dictAll.Values)
+		{
+			value.OnLoad();
+		}
+	}
+
+	public T Find<T>(string id) where T : Faction
+	{
+		return Find(id) as T;
+	}
+
+	public Faction Find(string id)
+	{
+		foreach (Faction value in dictAll.Values)
+		{
+			if (value.id == id)
+			{
+				return value;
+			}
+		}
+		return null;
+	}
 }

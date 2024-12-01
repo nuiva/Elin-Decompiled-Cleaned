@@ -1,20 +1,6 @@
-﻿using System;
-
 public class TargetTypeGround : TargetType
 {
-	public override TargetRange Range
-	{
-		get
-		{
-			return TargetRange.Ground;
-		}
-	}
+	public override TargetRange Range => TargetRange.Ground;
 
-	public override bool CanTargetGround
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanTargetGround => true;
 }

@@ -1,20 +1,26 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
 public class WidgetTracker : Widget
 {
-	public override object CreateExtra()
+	public class Extra
 	{
-		return new WidgetTracker.Extra();
+		public bool potential;
 	}
 
-	public WidgetTracker.Extra extra
+	public static WidgetTracker Instance;
+
+	private FastString sb = new FastString();
+
+	private FastString lastSb = new FastString();
+
+	public UIText text;
+
+	public Extra extra => base.config.extra as Extra;
+
+	public override object CreateExtra()
 	{
-		get
-		{
-			return base.config.extra as WidgetTracker.Extra;
-		}
+		return new Extra();
 	}
 
 	public static void Toggle(Element e)
@@ -28,113 +34,99 @@ public class WidgetTracker : Widget
 		if (trackedElements.Contains(e.id))
 		{
 			trackedElements.Remove(e.id);
-			if (trackedElements.Count == 0 && WidgetTracker.Instance)
+			if (trackedElements.Count == 0 && (bool)Instance)
 			{
-				WidgetTracker.Instance.Close();
+				Instance.Close();
 			}
 		}
 		else
 		{
 			trackedElements.Add(e.id);
-			if (!WidgetTracker.Instance)
+			if (!Instance)
 			{
 				EMono.ui.widgets.ActivateWidget("Tracker");
 			}
 		}
 		SE.ClickGeneral();
-		if (WidgetTracker.Instance)
+		if ((bool)Instance)
 		{
-			WidgetTracker.Instance.Refresh();
+			Instance.Refresh();
 		}
 	}
 
 	public override void OnActivate()
 	{
-		WidgetTracker.Instance = this;
-		this.Refresh();
+		Instance = this;
+		Refresh();
 	}
 
 	private void OnEnable()
 	{
-		base.InvokeRepeating("Refresh", 0.5f, 0.5f);
+		InvokeRepeating("Refresh", 0.5f, 0.5f);
 	}
 
 	private void OnDisable()
 	{
-		base.CancelInvoke();
+		CancelInvoke();
 	}
 
 	public void Refresh()
 	{
-		this.sb.Clear();
+		sb.Clear();
 		HashSet<int> trackedElements = EMono.player.trackedElements;
 		if (trackedElements.Count == 0)
 		{
-			this.sb.Append("none".lang());
+			sb.Append("none".lang());
 		}
 		else
 		{
-			int num = trackedElements.Last<int>();
-			foreach (int num2 in trackedElements)
+			int num = trackedElements.Last();
+			foreach (int item in trackedElements)
 			{
-				Element element = EMono.pc.elements.GetElement(num2);
+				Element element = EMono.pc.elements.GetElement(item);
 				if (element != null)
 				{
-					string text = element.Name + "  " + element.Value.ToString();
+					string text = element.Name + "  " + element.Value;
 					if (element.ShowXP)
 					{
 						text = text + "." + (element.vExp / 10).ToString("D2");
 					}
-					if (this.extra.potential)
+					if (extra.potential)
 					{
-						text += (" (" + element.Potential.ToString() + ")").TagSize(13);
+						text += (" (" + element.Potential + ")").TagSize(13);
 					}
-					if (num2 != num)
+					if (item != num)
 					{
 						text += "\n";
 					}
-					this.sb.Append(text);
+					sb.Append(text);
 				}
 			}
 		}
-		if (this.sb.IsEmpty())
+		if (sb.IsEmpty())
 		{
-			this.sb.Append("none".lang());
+			sb.Append("none".lang());
 		}
-		if (this.sb.Equals(this.lastSb))
+		if (!sb.Equals(lastSb))
 		{
-			return;
+			this.text.text = sb.ToString();
+			lastSb.Set(sb);
+			this.RebuildLayout();
 		}
-		this.text.text = this.sb.ToString();
-		this.lastSb.Set(this.sb);
-		this.RebuildLayout(false);
 	}
 
 	public override void OnSetContextMenu(UIContextMenu m)
 	{
-		m.AddToggle("showPotential", this.extra.potential, delegate(bool a)
+		m.AddToggle("showPotential", extra.potential, delegate(bool a)
 		{
-			this.extra.potential = a;
-			this.Refresh();
+			extra.potential = a;
+			Refresh();
 		});
-		m.AddButton("clear", delegate()
+		m.AddButton("clear", delegate
 		{
 			EMono.player.trackedElements.Clear();
 			EMono.ui.widgets.DeactivateWidget(this);
-		}, true);
-		base.SetBaseContextMenu(m);
-	}
-
-	public static WidgetTracker Instance;
-
-	private FastString sb = new FastString(32);
-
-	private FastString lastSb = new FastString(32);
-
-	public UIText text;
-
-	public class Extra
-	{
-		public bool potential;
+		});
+		SetBaseContextMenu(m);
 	}
 }

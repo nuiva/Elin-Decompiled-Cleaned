@@ -1,20 +1,28 @@
-﻿using System;
-
 public class TraitTrolley : TraitFloorSwitch
 {
-	public virtual bool HideChara
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool HideChara => false;
 
 	public override bool CanManucalActivate
 	{
 		get
 		{
-			return EClass.pc.pos.Equals(this.owner.pos) && this.CanActivate(EClass.pc);
+			if (EClass.pc.pos.Equals(owner.pos))
+			{
+				return CanActivate(EClass.pc);
+			}
+			return false;
+		}
+	}
+
+	public virtual float FadeDuration
+	{
+		get
+		{
+			if (owner.idSkin != 7)
+			{
+				return 1f;
+			}
+			return 0.5f;
 		}
 	}
 
@@ -24,7 +32,7 @@ public class TraitTrolley : TraitFloorSwitch
 		{
 			return false;
 		}
-		if (!this.owner.pos.HasRail || !this.owner.IsInstalled)
+		if (!owner.pos.HasRail || !owner.IsInstalled)
 		{
 			return false;
 		}
@@ -34,8 +42,7 @@ public class TraitTrolley : TraitFloorSwitch
 		}
 		foreach (Chara chara in EClass._map.charas)
 		{
-			AI_Trolley ai_Trolley = chara.ai as AI_Trolley;
-			if (ai_Trolley != null && ai_Trolley.IsRunning && ai_Trolley.trolley == this)
+			if (chara.ai is AI_Trolley { IsRunning: not false } aI_Trolley && aI_Trolley.trolley == this)
 			{
 				return false;
 			}
@@ -46,34 +53,21 @@ public class TraitTrolley : TraitFloorSwitch
 	public override void OnActivateTrap(Chara c)
 	{
 		TraitSwitch.haltMove = false;
-		if (!this.CanActivate(c))
+		if (CanActivate(c))
 		{
-			return;
+			c.SetAI(new AI_Trolley
+			{
+				trolley = this
+			});
 		}
-		c.SetAI(new AI_Trolley
-		{
-			trolley = this
-		});
 	}
 
 	public virtual string GetIdSound()
 	{
-		if (this.owner.idSkin != 7)
+		if (owner.idSkin != 7)
 		{
 			return "ride_trolley";
 		}
 		return "ride_bike";
-	}
-
-	public virtual float FadeDuration
-	{
-		get
-		{
-			if (this.owner.idSkin != 7)
-			{
-				return 1f;
-			}
-			return 0.5f;
-		}
 	}
 }

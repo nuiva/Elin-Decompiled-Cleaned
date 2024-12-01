@@ -1,198 +1,9 @@
-﻿using System;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class Person : EClass
 {
-	public SourcePerson.Row source
-	{
-		get
-		{
-			return EClass.sources.persons.map.TryGetValue(this.id.IsEmpty("narrator"), null);
-		}
-	}
-
-	public Chara chara
-	{
-		get
-		{
-			return this._tempChara ?? this.refChara.GetAndCache(this.uidChara);
-		}
-	}
-
-	public bool hasChara
-	{
-		get
-		{
-			return this.chara != null;
-		}
-	}
-
-	public bool HumanSpeak
-	{
-		get
-		{
-			return this.chara == null || this.chara.IsPC || this.chara.IsHumanSpeak;
-		}
-	}
-
-	public string Name
-	{
-		get
-		{
-			string str = this.tempName;
-			string str2 = this.name;
-			Chara chara = this.chara;
-			string defaultStr;
-			if ((defaultStr = ((chara != null) ? chara.Name : null)) == null)
-			{
-				SourcePerson.Row source = this.source;
-				defaultStr = (((source != null) ? source.GetText("name", true) : null) ?? "null");
-			}
-			return str.IsEmpty(str2.IsEmpty(defaultStr)).ToTitleCase(false);
-		}
-	}
-
-	public string NameBraced
-	{
-		get
-		{
-			string str = this.tempName;
-			string str2 = this.name;
-			Chara chara = this.chara;
-			string defaultStr;
-			if ((defaultStr = ((chara != null) ? chara.NameBraced : null)) == null)
-			{
-				SourcePerson.Row source = this.source;
-				defaultStr = (((source != null) ? source.GetText("name", true) : null) ?? "null");
-			}
-			return str.IsEmpty(str2.IsEmpty(defaultStr)).ToTitleCase(false);
-		}
-	}
-
-	public string Aka
-	{
-		get
-		{
-			Chara chara = this.chara;
-			string result;
-			if ((result = ((chara != null) ? chara.Aka : null)) == null)
-			{
-				SourcePerson.Row source = this.source;
-				result = (((source != null) ? source.GetText("aka", true) : null) ?? "");
-			}
-			return result;
-		}
-	}
-
-	public Person()
-	{
-	}
-
-	public Person(string _id, Chara c = null)
-	{
-		this.id = _id;
-		this.SetChara(c);
-	}
-
-	public Person(Religion r)
-	{
-		this.id = r.id;
-		this.name = r.Name;
-		this.idPortrait = "UN_" + r.id;
-		if (!Portrait.modPortraits.dict.ContainsKey(this.idPortrait))
-		{
-			this.idPortrait = "UN_eyth";
-		}
-	}
-
-	public Person(Chara c)
-	{
-		this.SetChara(c);
-	}
-
-	public void SetChara(Chara c)
-	{
-		if (c == null)
-		{
-			return;
-		}
-		this._tempChara = c;
-		this.uidChara = c.uid;
-		this.name = this.chara.Name;
-		this.idPortrait = this.chara.GetIdPortrait();
-		this.gender = this.chara.bio.gender;
-		this.tones = this.chara.c_idTone;
-	}
-
-	public string ApplyTone(string text)
-	{
-		Chara chara = this.chara;
-		return ((chara != null) ? chara.ApplyTone(text, false) : null) ?? text;
-	}
-
-	public string GetDramaTitle()
-	{
-		if (!this.tempName.IsEmpty())
-		{
-			return this.tempName;
-		}
-		if (this.chara != null)
-		{
-			Biography bio = this.chara.bio;
-			string text = (!EClass.debug.showTone || !Lang.setting.useTone || this.chara.c_idTalk.IsEmpty() || this.chara.c_idTone.IsEmpty()) ? "" : string.Concat(new string[]
-			{
-				"  (",
-				this.chara.c_idTone.Split('|', StringSplitOptions.None)[0].TrimEnd('-'),
-				"な",
-				MOD.listTalk.GetTalk(this.chara.c_idTalk, "name", false, true),
-				")"
-			});
-			string dramaText = this.chara.trait.GetDramaText();
-			if (!dramaText.IsEmpty())
-			{
-				text = text + " " + dramaText;
-			}
-			return string.Concat(new string[]
-			{
-				this.chara.Name.ToTitleCase(false),
-				" - ",
-				this.chara.race.GetText("name", false).ToTitleCase(false),
-				" ",
-				Lang.Parse("age", bio.TextAge(this.chara), null, null, null, null),
-				" ",
-				Lang._gender(bio.gender),
-				text
-			});
-		}
-		if (this.Name.IsEmpty())
-		{
-			return this.Aka;
-		}
-		if (this.Aka.IsEmpty())
-		{
-			return "「" + this.Name + "」";
-		}
-		return this.Aka.ToTitleCase(false) + "「" + this.Name + "」";
-	}
-
-	public void SetImage(Image image)
-	{
-		Chara chara = this.chara;
-		Sprite sprite;
-		if ((sprite = ((chara != null) ? chara.GetSprite(0) : null)) == null)
-		{
-			sprite = (Resources.Load<Sprite>("Media/Drama/Actor/" + this.source.idActor) ?? SpriteSheet.Get(this.source.idActor));
-		}
-		Sprite sprite2 = sprite;
-		if (sprite2)
-		{
-			image.sprite = sprite2;
-			image.SetNativeSize();
-		}
-	}
-
 	[JsonProperty]
 	public string name;
 
@@ -219,4 +30,114 @@ public class Person : EClass
 	public Chara _tempChara;
 
 	public string tempName;
+
+	public SourcePerson.Row source => EClass.sources.persons.map.TryGetValue(id.IsEmpty("narrator"));
+
+	public Chara chara => _tempChara ?? refChara.GetAndCache(uidChara);
+
+	public bool hasChara => chara != null;
+
+	public bool HumanSpeak
+	{
+		get
+		{
+			if (chara != null)
+			{
+				if (!chara.IsPC)
+				{
+					return chara.IsHumanSpeak;
+				}
+				return true;
+			}
+			return true;
+		}
+	}
+
+	public string Name => tempName.IsEmpty(name.IsEmpty(chara?.Name ?? source?.GetText("name", returnNull: true) ?? "null")).ToTitleCase();
+
+	public string NameBraced => tempName.IsEmpty(name.IsEmpty(chara?.NameBraced ?? source?.GetText("name", returnNull: true) ?? "null")).ToTitleCase();
+
+	public string Aka => chara?.Aka ?? source?.GetText("aka", returnNull: true) ?? "";
+
+	public Person()
+	{
+	}
+
+	public Person(string _id, Chara c = null)
+	{
+		id = _id;
+		SetChara(c);
+	}
+
+	public Person(Religion r)
+	{
+		id = r.id;
+		name = r.Name;
+		idPortrait = "UN_" + r.id;
+		if (!Portrait.modPortraits.dict.ContainsKey(idPortrait))
+		{
+			idPortrait = "UN_eyth";
+		}
+	}
+
+	public Person(Chara c)
+	{
+		SetChara(c);
+	}
+
+	public void SetChara(Chara c)
+	{
+		if (c != null)
+		{
+			_tempChara = c;
+			uidChara = c.uid;
+			name = chara.Name;
+			idPortrait = chara.GetIdPortrait();
+			gender = chara.bio.gender;
+			tones = chara.c_idTone;
+		}
+	}
+
+	public string ApplyTone(string text)
+	{
+		return chara?.ApplyTone(text) ?? text;
+	}
+
+	public string GetDramaTitle()
+	{
+		if (!tempName.IsEmpty())
+		{
+			return tempName;
+		}
+		if (chara != null)
+		{
+			Biography bio = chara.bio;
+			string text = ((!EClass.debug.showTone || !Lang.setting.useTone || chara.c_idTalk.IsEmpty() || chara.c_idTone.IsEmpty()) ? "" : ("  (" + chara.c_idTone.Split('|')[0].TrimEnd('-') + "な" + MOD.listTalk.GetTalk(chara.c_idTalk, "name") + ")"));
+			string dramaText = chara.trait.GetDramaText();
+			if (!dramaText.IsEmpty())
+			{
+				text = text + " " + dramaText;
+			}
+			return chara.Name.ToTitleCase() + " - " + chara.race.GetText().ToTitleCase() + " " + Lang.Parse("age", bio.TextAge(chara)) + " " + Lang._gender(bio.gender) + text;
+		}
+		if (Name.IsEmpty())
+		{
+			return Aka;
+		}
+		if (Aka.IsEmpty())
+		{
+			return "「" + Name + "」";
+		}
+		return Aka.ToTitleCase() + "「" + Name + "」";
+	}
+
+	public void SetImage(Image image)
+	{
+		Sprite sprite = chara?.GetSprite() ?? Resources.Load<Sprite>("Media/Drama/Actor/" + source.idActor) ?? SpriteSheet.Get(source.idActor);
+		if ((bool)sprite)
+		{
+			image.sprite = sprite;
+			image.SetNativeSize();
+		}
+	}
 }

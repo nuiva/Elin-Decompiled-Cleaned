@@ -1,19 +1,19 @@
-﻿using System;
-
 public class RefChara : EClass
 {
+	public Chara chara;
+
 	public Chara GetAndCache(int uid)
 	{
-		if (this.chara != null && (this.chara.IsGlobal || this.chara.IsAliveInCurrentZone))
+		if (chara != null && (chara.IsGlobal || chara.IsAliveInCurrentZone))
 		{
-			return this.chara;
+			return chara;
 		}
 		if (uid == 0)
 		{
 			return null;
 		}
-		this.chara = Core.Instance.game.cards.globalCharas.TryGetValue(uid, null);
-		if (this.chara == null)
+		chara = Core.Instance.game.cards.globalCharas.TryGetValue(uid);
+		if (chara == null)
 		{
 			foreach (Chara chara in EClass._map.charas)
 			{
@@ -29,14 +29,12 @@ public class RefChara : EClass
 
 	public void Set(ref int val, Chara c)
 	{
-		this.chara = c;
-		val = ((c != null) ? c.uid : 0);
+		chara = c;
+		val = c?.uid ?? 0;
 	}
 
 	public static Chara Get(int uid)
 	{
-		return Core.Instance.game.cards.globalCharas.TryGetValue(uid, null);
+		return Core.Instance.game.cards.globalCharas.TryGetValue(uid);
 	}
-
-	public Chara chara;
 }

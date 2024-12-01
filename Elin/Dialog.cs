@@ -1,62 +1,105 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class Dialog : ELayer
 {
+	public enum InputType
+	{
+		None,
+		Default,
+		Password,
+		Item,
+		DistributionFilter
+	}
+
+	public Text textConfetti;
+
+	public Image image;
+
+	public UIText textDetail;
+
+	public UINote note;
+
+	public UIButtonList list;
+
+	public LayoutGroup layout;
+
+	public ScreenEffect effect;
+
+	public UIList listGrid;
+
+	public Transform spacer;
+
+	public List<GridItem> gridItems = new List<GridItem>();
+
+	public UIInputText input;
+
+	public InputType inputType;
+
+	[NonSerialized]
+	public EInput.KeyMap keymap;
+
+	[NonSerialized]
+	public bool isInputEnter;
+
+	public Action<bool, string> onEnterInput;
+
+	public static bool warned;
+
 	public override void OnAfterInit()
 	{
-		ELayer.ui.hud.textMouseHintRight.transform.parent.SetActive(false);
-		this.textDetail.SetActive(!this.textDetail.text.IsEmpty());
-		this.listGrid.SetActive(this.gridItems.Count > 0);
-		if (this.gridItems.Count >= 8)
+		ELayer.ui.hud.textMouseHintRight.transform.parent.SetActive(enable: false);
+		textDetail.SetActive(!textDetail.text.IsEmpty());
+		listGrid.SetActive(gridItems.Count > 0);
+		if (gridItems.Count >= 8)
 		{
-			GridLayoutGroup gridLayoutGroup = this.listGrid.layoutItems as GridLayoutGroup;
-			gridLayoutGroup.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-			gridLayoutGroup.constraintCount = 8;
+			GridLayoutGroup obj = listGrid.layoutItems as GridLayoutGroup;
+			obj.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+			obj.constraintCount = 8;
 		}
-		if (this.gridItems.Count > 0)
+		if (gridItems.Count > 0)
 		{
-			this.listGrid.Clear();
-			BaseList baseList = this.listGrid;
-			UIList.Callback<GridItem, ButtonGrid> callback = new UIList.Callback<GridItem, ButtonGrid>();
-			callback.onInstantiate = delegate(GridItem a, ButtonGrid b)
+			listGrid.Clear();
+			listGrid.callbacks = new UIList.Callback<GridItem, ButtonGrid>
 			{
-				b.SetItem(a);
+				onInstantiate = delegate(GridItem a, ButtonGrid b)
+				{
+					b.SetItem(a);
+				},
+				onClick = delegate(GridItem a, ButtonGrid b)
+				{
+					a.OnClick(b);
+				}
 			};
-			callback.onClick = delegate(GridItem a, ButtonGrid b)
+			foreach (GridItem gridItem in gridItems)
 			{
-				a.OnClick(b);
-			};
-			baseList.callbacks = callback;
-			foreach (GridItem o in this.gridItems)
-			{
-				this.listGrid.Add(o);
+				listGrid.Add(gridItem);
 			}
-			this.listGrid.Refresh(false);
+			listGrid.Refresh();
 		}
-		this.list.Refresh(false);
-		this.RebuildLayout(true);
-		GraphicRaycaster g = this.windows[0].GetComponent<GraphicRaycaster>();
+		list.Refresh();
+		this.RebuildLayout(recursive: true);
+		GraphicRaycaster g = windows[0].GetComponent<GraphicRaycaster>();
 		g.enabled = false;
 		TweenUtil.Delay(0.3f, delegate
 		{
-			if (g)
+			if ((bool)g)
 			{
 				g.enabled = true;
 			}
 		});
-		if (this.input)
+		if ((bool)input)
 		{
-			this.input.Focus();
+			input.Focus();
 		}
 		EInput.WaitReleaseKey();
 	}
 
 	public void AddButton(string text, Action onClick = null, bool close = true)
 	{
-		this.list.AddButton(null, text, delegate
+		list.AddButton(null, text, delegate
 		{
 			if (onClick != null)
 			{
@@ -64,40 +107,40 @@ public class Dialog : ELayer
 			}
 			if (close)
 			{
-				this.Close();
+				Close();
 			}
-		}, null);
+		});
 	}
 
 	private void Update()
 	{
-		if (this.input && this.option.canClose && Input.GetKeyDown(KeyCode.Escape))
+		if ((bool)input && option.canClose && Input.GetKeyDown(KeyCode.Escape))
 		{
-			this.Close();
+			Close();
 		}
 	}
 
 	public override void OnUpdateInput()
 	{
-		if (this.input && this.option.canClose && Input.GetKeyDown(KeyCode.Return))
+		if ((bool)input && option.canClose && Input.GetKeyDown(KeyCode.Return))
 		{
-			this.isInputEnter = true;
-			this.Close();
+			isInputEnter = true;
+			Close();
 			return;
 		}
-		if (!this.input.gameObject.activeInHierarchy && this.list != null)
+		if (!input.gameObject.activeInHierarchy && this.list != null)
 		{
-			foreach (UIList.ButtonPair buttonPair in this.list.buttons)
+			foreach (UIList.ButtonPair button in this.list.buttons)
 			{
-				UIButton uibutton = buttonPair.component as UIButton;
-				if (uibutton && uibutton.interactable && !EInput.waitReleaseAnyKey && uibutton.keyText && !uibutton.keyText.text.IsEmpty() && uibutton.keyText.text == Input.inputString)
+				UIButton uIButton = button.component as UIButton;
+				if ((bool)uIButton && uIButton.interactable && !EInput.waitReleaseAnyKey && (bool)uIButton.keyText && !uIButton.keyText.text.IsEmpty() && uIButton.keyText.text == Input.inputString)
 				{
-					uibutton.onClick.Invoke();
+					uIButton.onClick.Invoke();
 					return;
 				}
 			}
 		}
-		if (this.keymap != null)
+		if (keymap != null)
 		{
 			List<KeyCode> list = new List<KeyCode>
 			{
@@ -114,36 +157,33 @@ public class Dialog : ELayer
 			};
 			if (Input.GetKeyDown(KeyCode.Delete))
 			{
-				if (this.keymap.required)
+				if (keymap.required)
 				{
 					SE.Beep();
 					return;
 				}
 				SE.Tab();
-				this.keymap.key = KeyCode.None;
-				this.Close();
+				keymap.key = KeyCode.None;
+				Close();
 				return;
 			}
-			else
+			foreach (KeyCode value in Enum.GetValues(typeof(KeyCode)))
 			{
-				foreach (object obj in Enum.GetValues(typeof(KeyCode)))
+				if (list.Contains(value) || !Input.GetKey(value))
 				{
-					KeyCode keyCode = (KeyCode)obj;
-					if (!list.Contains(keyCode) && Input.GetKey(keyCode))
+					continue;
+				}
+				foreach (EInput.KeyMap item in ELayer.core.config.input.keys.List())
+				{
+					if (item.key == value && item.GetGroup() == keymap.GetGroup())
 					{
-						foreach (EInput.KeyMap keyMap in ELayer.core.config.input.keys.List())
-						{
-							if (keyMap.key == keyCode && keyMap.GetGroup() == this.keymap.GetGroup())
-							{
-								keyMap.key = this.keymap.key;
-							}
-						}
-						this.keymap.key = keyCode;
-						SE.Tab();
-						this.Close();
-						return;
+						item.key = keymap.key;
 					}
 				}
+				keymap.key = value;
+				SE.Tab();
+				Close();
+				return;
 			}
 		}
 		base.OnUpdateInput();
@@ -151,20 +191,20 @@ public class Dialog : ELayer
 
 	public void OnEnterInput()
 	{
-		this.isInputEnter = true;
-		this.Close();
+		isInputEnter = true;
+		Close();
 	}
 
 	public override void OnKill()
 	{
-		ELayer.ui.hud.textMouseHintRight.transform.parent.SetActive(true);
-		if (this.input && this.onEnterInput != null)
+		ELayer.ui.hud.textMouseHintRight.transform.parent.SetActive(enable: true);
+		if ((bool)input && onEnterInput != null)
 		{
-			this.onEnterInput(!this.isInputEnter, this.input.Text);
+			onEnterInput(!isInputEnter, input.Text);
 		}
-		if (this.input)
+		if ((bool)input)
 		{
-			this.input.field.DeactivateInputField();
+			input.field.DeactivateInputField();
 		}
 		EInput.WaitReleaseKey();
 	}
@@ -172,7 +212,7 @@ public class Dialog : ELayer
 	public static Dialog CreateNarration(string idImage, string idText)
 	{
 		Dialog dialog = Layer.Create<Dialog>("DialogNarration");
-		dialog.image.SetActive(true);
+		dialog.image.SetActive(enable: true);
 		dialog.image.sprite = Resources.Load<Sprite>("Media/Graphics/Image/Dialog/" + idImage);
 		dialog.image.SetNativeSize();
 		dialog.textDetail.SetText(IO.LoadText(CorePath.CorePackage.TextNarration + idText + ".txt"));
@@ -183,7 +223,7 @@ public class Dialog : ELayer
 	{
 		Dialog dialog = Layer.Create<Dialog>();
 		dialog.textDetail.SetText(langDetail.lang() + " ");
-		dialog.list.AddButton(null, Lang.Get("ok"), new Action(dialog.Close), null);
+		dialog.list.AddButton(null, Lang.Get("ok"), dialog.Close);
 		if (action != null)
 		{
 			dialog.SetOnKill(action);
@@ -212,7 +252,7 @@ public class Dialog : ELayer
 				actionYes();
 			}
 			d.Close();
-		}, null);
+		});
 		d.list.AddButton(null, Lang.Get(langNo), delegate
 		{
 			if (actionNo != null)
@@ -220,7 +260,7 @@ public class Dialog : ELayer
 				actionNo();
 			}
 			d.Close();
-		}, null);
+		});
 		ELayer.ui.AddLayer(d);
 		return d;
 	}
@@ -230,21 +270,17 @@ public class Dialog : ELayer
 		Dialog d = Layer.Create<Dialog>();
 		d.textDetail.SetText(langDetail.lang() + " ");
 		int num = 0;
-		using (IEnumerator<TValue> enumerator = items.GetEnumerator())
+		foreach (TValue item in items)
 		{
-			while (enumerator.MoveNext())
+			int _i = num;
+			d.list.AddButton(null, getString(item).lang(), delegate
 			{
-				TValue item = enumerator.Current;
-				int _i = num;
-				d.list.AddButton(null, getString(item).lang(), delegate
+				if (onSelect(_i, getString(item)))
 				{
-					if (onSelect(_i, getString(item)))
-					{
-						d.Close();
-					}
-				}, null);
-				num++;
-			}
+					d.Close();
+				}
+			});
+			num++;
 		}
 		d.option.canClose = canCancel;
 		ELayer.ui.AddLayer(d);
@@ -265,47 +301,40 @@ public class Dialog : ELayer
 		d.list.AddButton(null, Lang.Get("yes"), delegate
 		{
 			d.Close();
-			base.<TryWarn>g__Commit|0();
-		}, null);
+			Commit();
+		});
 		if (yes)
 		{
 			d.list.AddButton(null, Lang.Get("yes_dontask"), delegate
 			{
-				string lang2 = lang;
-				if (!(lang2 == "warn_crime"))
+				switch (lang)
 				{
-					if (!(lang2 == "warn_mana"))
-					{
-						if (lang2 == "warn_disassemble")
-						{
-							ELayer.core.config.game.ignoreWarnDisassemble = true;
-						}
-					}
-					else
-					{
-						ELayer.core.config.game.ignoreWarnMana = true;
-					}
-				}
-				else
-				{
+				case "warn_crime":
 					ELayer.core.config.game.ignoreWarnCrime = true;
+					break;
+				case "warn_mana":
+					ELayer.core.config.game.ignoreWarnMana = true;
+					break;
+				case "warn_disassemble":
+					ELayer.core.config.game.ignoreWarnDisassemble = true;
+					break;
 				}
 				d.Close();
-				base.<TryWarn>g__Commit|0();
-			}, null);
+				Commit();
+			});
 		}
 		d.list.AddButton(null, Lang.Get("no"), delegate
 		{
 			d.Close();
-		}, null);
+		});
 		if (!yes)
 		{
 			d.list.AddButton(null, Lang.Get("no_dontask"), delegate
 			{
-				string lang2 = lang;
-				if (!(lang2 == "warn_parallels"))
+				string text = lang;
+				if (!(text == "warn_parallels"))
 				{
-					if (lang2 == "warn_linuxMod")
+					if (text == "warn_linuxMod")
 					{
 						ELayer.core.config.ignoreLinuxModWarning = true;
 					}
@@ -315,83 +344,95 @@ public class Dialog : ELayer
 					ELayer.core.config.ignoreParallelsWarning = true;
 				}
 				d.Close();
-			}, null);
+			});
 		}
 		ELayer.ui.AddLayer(d);
+		void Commit()
+		{
+			warned = true;
+			action();
+			warned = false;
+		}
 	}
 
 	public static void TryWarnCrime(Action action)
 	{
 		if (!ELayer.core.config.game.warnCrime || ELayer.core.config.game.ignoreWarnCrime)
 		{
-			Dialog.warned = true;
+			warned = true;
 			action();
-			Dialog.warned = false;
+			warned = false;
 			ActPlan.warning = false;
-			return;
 		}
-		Dialog.TryWarn("warn_crime", action, true);
+		else
+		{
+			TryWarn("warn_crime", action);
+		}
 	}
 
 	public static void TryWarnMana(Action action)
 	{
 		if (!ELayer.core.config.game.warnMana || ELayer.core.config.game.ignoreWarnMana)
 		{
-			Dialog.warned = true;
+			warned = true;
 			action();
-			Dialog.warned = false;
+			warned = false;
 			ActPlan.warning = false;
-			return;
 		}
-		Dialog.TryWarn("warn_mana", action, true);
+		else
+		{
+			TryWarn("warn_mana", action);
+		}
 	}
 
 	public static void TryWarnDisassemble(Action action)
 	{
 		if (!ELayer.core.config.game.warnDisassemble || ELayer.core.config.game.ignoreWarnDisassemble)
 		{
-			Dialog.warned = true;
+			warned = true;
 			action();
-			Dialog.warned = false;
-			return;
+			warned = false;
 		}
-		Dialog.TryWarn("warn_disassemble", action, true);
+		else
+		{
+			TryWarn("warn_disassemble", action);
+		}
 	}
 
 	public static Dialog Gift(string langHeader, bool autoAdd, params Card[] cards)
 	{
-		return Dialog.Gift(langHeader, autoAdd, new List<Card>(cards));
+		return Gift(langHeader, autoAdd, new List<Card>(cards));
 	}
 
 	public static Dialog Gift(string langHeader, bool autoAdd, List<Card> list)
 	{
 		List<GridItem> list2 = new List<GridItem>();
-		foreach (Card c in list)
+		foreach (Card item in list)
 		{
 			list2.Add(new GridItemCard
 			{
-				c = c
+				c = item
 			});
 		}
-		return Dialog.Gift(langHeader, autoAdd, list2);
+		return Gift(langHeader, autoAdd, list2);
 	}
 
 	public static Dialog Gift(string langHeader, bool autoAdd, List<GridItem> list)
 	{
 		Dialog d = Layer.Create<Dialog>();
-		d.spacer.SetActive(false);
-		d.note.AddHeader(langHeader.IsEmpty("headerGift").lang(), null);
+		d.spacer.SetActive(enable: false);
+		d.note.AddHeader(langHeader.IsEmpty("headerGift").lang());
 		d.list.AddButton(null, Lang.Get("ok"), delegate
 		{
 			if (autoAdd)
 			{
-				foreach (GridItem gridItem in list)
+				foreach (GridItem item in list)
 				{
-					gridItem.AutoAdd();
+					item.AutoAdd();
 				}
 			}
 			d.Close();
-		}, null);
+		});
 		d.option.soundActivate = null;
 		d.option.canClose = false;
 		d.gridItems = list;
@@ -403,12 +444,12 @@ public class Dialog : ELayer
 	public static Dialog Recipe(List<RecipeSource> list)
 	{
 		Dialog d = Layer.Create<Dialog>();
-		d.spacer.SetActive(false);
-		d.note.AddHeader("giftRecipe".lang(), null);
+		d.spacer.SetActive(enable: false);
+		d.note.AddHeader("giftRecipe".lang());
 		d.list.AddButton(null, Lang.Get("ok"), delegate
 		{
 			d.Close();
-		}, null);
+		});
 		d.option.soundActivate = null;
 		for (int i = 0; i < list.Count; i++)
 		{
@@ -418,15 +459,15 @@ public class Dialog : ELayer
 			{
 				ELayer.sources.cards.map[ingredients[0].id].GetName();
 			}
-			d.note.AddText("・" + recipeSource.Name.ToTitleCase(false), FontColor.DontChange);
+			d.note.AddText("・" + recipeSource.Name.ToTitleCase());
 			if (i >= 9 && list.Count > 10)
 			{
-				d.note.Space(6, 1);
-				d.note.AddText("moreRecipes".lang((list.Count - 10).ToString() ?? "", null, null, null, null), FontColor.DontChange);
+				d.note.Space(6);
+				d.note.AddText("moreRecipes".lang((list.Count - 10).ToString() ?? ""));
 				break;
 			}
 		}
-		d.SetOnKill(new Action(SE.Click));
+		d.SetOnKill(SE.Click);
 		ELayer.Sound.Play("idea");
 		ELayer.ui.AddLayer(d);
 		return d;
@@ -435,13 +476,13 @@ public class Dialog : ELayer
 	public static Dialog Confetti(string langTitle, string langDetail, string langConfetti = "Grats!")
 	{
 		ELayer.Sound.Play("confetti");
-		return Dialog._Confetti("DialogConfetti", langTitle, langDetail, langConfetti);
+		return _Confetti("DialogConfetti", langTitle, langDetail, langConfetti);
 	}
 
 	public static Dialog ConfettiSimple(string langTitle, string langDetail, string langConfetti = "Grats!")
 	{
 		ELayer.Sound.Play("confettiSimple");
-		return Dialog._Confetti("DialogConfettiSimple", langTitle, langDetail, langConfetti);
+		return _Confetti("DialogConfettiSimple", langTitle, langDetail, langConfetti);
 	}
 
 	public static Dialog _Confetti(string idPrefab, string langTitle, string langDetail, string langConfetti = "Grats!")
@@ -452,7 +493,7 @@ public class Dialog : ELayer
 		d.list.AddButton(null, Lang.Get("ok"), delegate
 		{
 			d.Close();
-		}, null);
+		});
 		ELayer.ui.AddLayer(d);
 		return d;
 	}
@@ -460,87 +501,44 @@ public class Dialog : ELayer
 	public static Dialog Keymap(EInput.KeyMap keymap)
 	{
 		Dialog dialog = Layer.Create<Dialog>("DialogKeymap");
-		dialog.textDetail.SetText("dialog_keymap".lang(("key_" + keymap.action.ToString()).lang(), null, null, null, null));
+		dialog.textDetail.SetText("dialog_keymap".lang(("key_" + keymap.action).lang()));
 		dialog.keymap = keymap;
 		ELayer.ui.AddLayer(dialog);
 		return dialog;
 	}
 
-	public static Dialog InputName(string langDetail, string text, Action<bool, string> onClose, Dialog.InputType inputType = Dialog.InputType.Default)
+	public static Dialog InputName(string langDetail, string text, Action<bool, string> onClose, InputType inputType = InputType.Default)
 	{
 		Dialog d = Layer.Create<Dialog>("DialogInput");
 		d.inputType = inputType;
 		d.langHint = langDetail;
-		d.note.AddText(langDetail.lang(), FontColor.DontChange).text1.alignment = TextAnchor.MiddleCenter;
+		d.note.AddText(langDetail.lang()).text1.alignment = TextAnchor.MiddleCenter;
 		switch (inputType)
 		{
-		case Dialog.InputType.Password:
-			d.input.field.characterLimit = 8;
-			d.input.field.contentType = InputField.ContentType.Alphanumeric;
+		case InputType.DistributionFilter:
+			d.input.field.characterLimit = 100;
 			break;
-		case Dialog.InputType.Item:
+		case InputType.Item:
 			d.input.field.characterLimit = 30;
 			break;
-		case Dialog.InputType.DistributionFilter:
-			d.input.field.characterLimit = 100;
+		case InputType.Password:
+			d.input.field.characterLimit = 8;
+			d.input.field.contentType = InputField.ContentType.Alphanumeric;
 			break;
 		}
 		d.input.Text = text;
 		d.onEnterInput = onClose;
 		d.list.AddButton(null, Lang.Get("ok"), delegate
 		{
-			onClose(false, d.input.Text);
+			onClose(arg1: false, d.input.Text);
 			d.Close();
-		}, null);
+		});
 		d.list.AddButton(null, Lang.Get("cancel"), delegate
 		{
-			onClose(true, "");
+			onClose(arg1: true, "");
 			d.Close();
-		}, null);
+		});
 		ELayer.ui.AddLayer(d);
 		return d;
-	}
-
-	public Text textConfetti;
-
-	public Image image;
-
-	public UIText textDetail;
-
-	public UINote note;
-
-	public UIButtonList list;
-
-	public LayoutGroup layout;
-
-	public ScreenEffect effect;
-
-	public UIList listGrid;
-
-	public Transform spacer;
-
-	public List<GridItem> gridItems = new List<GridItem>();
-
-	public UIInputText input;
-
-	public Dialog.InputType inputType;
-
-	[NonSerialized]
-	public EInput.KeyMap keymap;
-
-	[NonSerialized]
-	public bool isInputEnter;
-
-	public Action<bool, string> onEnterInput;
-
-	public static bool warned;
-
-	public enum InputType
-	{
-		None,
-		Default,
-		Password,
-		Item,
-		DistributionFilter
 	}
 }

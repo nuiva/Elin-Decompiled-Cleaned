@@ -1,182 +1,8 @@
-﻿using System;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class TraitEffect : TraitItem
 {
-	public float Interval
-	{
-		get
-		{
-			if (this.data.interval != 0f)
-			{
-				return this.data.interval;
-			}
-			return 3f;
-		}
-	}
-
-	public int id
-	{
-		get
-		{
-			return this.owner.refVal;
-		}
-		set
-		{
-			this.owner.refVal = value;
-		}
-	}
-
-	public Effect Effect
-	{
-		get
-		{
-			return EClass.core.refs.fireworks[this.id % EClass.core.refs.fireworks.Count];
-		}
-	}
-
-	public virtual string Path
-	{
-		get
-		{
-			return "";
-		}
-	}
-
-	public override bool UseExtra
-	{
-		get
-		{
-			return this.owner.isOn;
-		}
-	}
-
-	public TraitEffect.Data data
-	{
-		get
-		{
-			if (this._data == null)
-			{
-				this._data = this.owner.GetObj<TraitEffect.Data>(7);
-				if (this._data == null)
-				{
-					this._data = new TraitEffect.Data();
-					this.owner.SetObj(7, this._data);
-				}
-			}
-			return this._data;
-		}
-		set
-		{
-			this.owner.SetObj(7, value);
-		}
-	}
-
-	public void Proc(Vector3 v = default(Vector3))
-	{
-		Effect effect = Effect.Get(this.Path);
-		if (this.data.color.Get().a != 0f)
-		{
-			effect.SetParticleColor(this.data.color.Get());
-		}
-		if (this.data.sprite != 0)
-		{
-			Sprite sprite = effect.sprites[this.data.sprite % effect.sprites.Length];
-			ParticleSystem[] componentsInChildren = effect.GetComponentsInChildren<ParticleSystem>();
-			for (int i = 0; i < componentsInChildren.Length; i++)
-			{
-				ParticleSystem.ShapeModule shape = componentsInChildren[i].shape;
-				if (shape.shapeType == ParticleSystemShapeType.Sprite && shape.sprite)
-				{
-					shape.sprite = sprite;
-					shape.texture = sprite.texture;
-				}
-			}
-		}
-		if (effect.dirs.Length != 0)
-		{
-			effect.transform.localEulerAngles = effect.dirs[this.owner.dir % effect.dirs.Length];
-		}
-		effect.Play((v == default(Vector3)) ? ((this.owner.parent == EClass._zone) ? this.owner.renderer.position : EClass.pc.renderer.position) : v);
-	}
-
-	public override void TrySetAct(ActPlan p)
-	{
-		base.TrySetAct(p);
-		if (p.input != ActInput.AllAction)
-		{
-			return;
-		}
-		if (this.Effect.sprites.Length != 0)
-		{
-			p.TrySetAct("actChangeSymbol", delegate()
-			{
-				UIContextMenu uicontextMenu = EClass.ui.CreateContextMenuInteraction();
-				uicontextMenu.AddSlider("adjustment", (float a) => ((int)a).ToString() ?? "", (float)this.data.sprite, delegate(float b)
-				{
-					this.data.sprite = (int)b;
-				}, 0f, (float)(this.Effect.sprites.Length - 1), true, false, false);
-				uicontextMenu.Show();
-				return false;
-			}, this.owner, null, 1, false, true, false);
-		}
-		if (this.Effect.systems.Length != 0)
-		{
-			p.TrySetAct("actChangeColor", delegate()
-			{
-				EClass.ui.AddLayer<LayerColorPicker>().SetColor(this.data.color.Get(), new Color(0f, 0f, 0f, 0f), delegate(PickerState state, Color _c)
-				{
-					this.data.color.Set(_c);
-				});
-				return false;
-			}, this.owner, null, 1, false, true, false);
-		}
-		p.TrySetAct("actChangeInterval", delegate()
-		{
-			UIContextMenu uicontextMenu = EClass.ui.CreateContextMenuInteraction();
-			uicontextMenu.AddSlider("adjustment", (float a) => (0.01f * (float)((int)(a * 10f))).ToString() ?? "", this.data.interval * 10f, delegate(float b)
-			{
-				this.data.interval = b * 0.1f;
-			}, 0f, 200f, true, false, false);
-			uicontextMenu.Show();
-			return false;
-		}, this.owner, null, 1, false, true, false);
-		p.TrySetAct("actChangeDelay", delegate()
-		{
-			UIContextMenu uicontextMenu = EClass.ui.CreateContextMenuInteraction();
-			uicontextMenu.AddSlider("adjustment", (float a) => (0.01f * (float)((int)(a * 10f))).ToString() ?? "", this.data.delay * 10f, delegate(float b)
-			{
-				this.data.delay = b * 0.1f;
-			}, 0f, 200f, true, false, false);
-			uicontextMenu.Show();
-			return false;
-		}, this.owner, null, 1, false, true, false);
-		if (EClass.debug.enable)
-		{
-			p.TrySetAct("actChangeType", delegate()
-			{
-				UIContextMenu uicontextMenu = EClass.ui.CreateContextMenuInteraction();
-				uicontextMenu.AddSlider("adjustment", (float a) => a.ToString() ?? "", (float)this.id, delegate(float b)
-				{
-					this.id = (int)b;
-					this.Proc(default(Vector3));
-				}, 0f, (float)(EClass.core.refs.fireworks.Count - 1), true, false, false);
-				uicontextMenu.Show();
-				return false;
-			}, this.owner, null, 1, false, true, false);
-		}
-	}
-
-	public override int CompareTo(Card b)
-	{
-		return b.refVal - this.owner.refVal;
-	}
-
-	public float timer;
-
-	public TraitEffect.Data _data;
-
 	public class Data
 	{
 		[JsonProperty]
@@ -190,5 +16,161 @@ public class TraitEffect : TraitItem
 
 		[JsonProperty]
 		public SerializableColor color = new SerializableColor(0, 0, 0, 0);
+	}
+
+	public float timer;
+
+	public Data _data;
+
+	public float Interval
+	{
+		get
+		{
+			if (data.interval != 0f)
+			{
+				return data.interval;
+			}
+			return 3f;
+		}
+	}
+
+	public int id
+	{
+		get
+		{
+			return owner.refVal;
+		}
+		set
+		{
+			owner.refVal = value;
+		}
+	}
+
+	public Effect Effect => EClass.core.refs.fireworks[id % EClass.core.refs.fireworks.Count];
+
+	public virtual string Path => "";
+
+	public override bool UseExtra => owner.isOn;
+
+	public Data data
+	{
+		get
+		{
+			if (_data == null)
+			{
+				_data = owner.GetObj<Data>(7);
+				if (_data == null)
+				{
+					_data = new Data();
+					owner.SetObj(7, _data);
+				}
+			}
+			return _data;
+		}
+		set
+		{
+			owner.SetObj(7, value);
+		}
+	}
+
+	public void Proc(Vector3 v = default(Vector3))
+	{
+		Effect effect = Effect.Get(Path);
+		if (data.color.Get().a != 0f)
+		{
+			effect.SetParticleColor(data.color.Get());
+		}
+		if (data.sprite != 0)
+		{
+			Sprite sprite = effect.sprites[data.sprite % effect.sprites.Length];
+			ParticleSystem[] componentsInChildren = effect.GetComponentsInChildren<ParticleSystem>();
+			for (int i = 0; i < componentsInChildren.Length; i++)
+			{
+				ParticleSystem.ShapeModule shape = componentsInChildren[i].shape;
+				if (shape.shapeType == ParticleSystemShapeType.Sprite && (bool)shape.sprite)
+				{
+					shape.sprite = sprite;
+					shape.texture = sprite.texture;
+				}
+			}
+		}
+		if (effect.dirs.Length != 0)
+		{
+			effect.transform.localEulerAngles = effect.dirs[owner.dir % effect.dirs.Length];
+		}
+		effect.Play((!(v == default(Vector3))) ? v : ((owner.parent == EClass._zone) ? owner.renderer.position : EClass.pc.renderer.position));
+	}
+
+	public override void TrySetAct(ActPlan p)
+	{
+		base.TrySetAct(p);
+		if (p.input != ActInput.AllAction)
+		{
+			return;
+		}
+		if (Effect.sprites.Length != 0)
+		{
+			p.TrySetAct("actChangeSymbol", delegate
+			{
+				UIContextMenu uIContextMenu = EClass.ui.CreateContextMenuInteraction();
+				uIContextMenu.AddSlider("adjustment", (float a) => ((int)a).ToString() ?? "", data.sprite, delegate(float b)
+				{
+					data.sprite = (int)b;
+				}, 0f, Effect.sprites.Length - 1, isInt: true, hideOther: false);
+				uIContextMenu.Show();
+				return false;
+			}, owner);
+		}
+		if (Effect.systems.Length != 0)
+		{
+			p.TrySetAct("actChangeColor", delegate
+			{
+				EClass.ui.AddLayer<LayerColorPicker>().SetColor(data.color.Get(), new Color(0f, 0f, 0f, 0f), delegate(PickerState state, Color _c)
+				{
+					data.color.Set(_c);
+				});
+				return false;
+			}, owner);
+		}
+		p.TrySetAct("actChangeInterval", delegate
+		{
+			UIContextMenu uIContextMenu2 = EClass.ui.CreateContextMenuInteraction();
+			uIContextMenu2.AddSlider("adjustment", (float a) => (0.01f * (float)(int)(a * 10f)).ToString() ?? "", data.interval * 10f, delegate(float b)
+			{
+				data.interval = b * 0.1f;
+			}, 0f, 200f, isInt: true, hideOther: false);
+			uIContextMenu2.Show();
+			return false;
+		}, owner);
+		p.TrySetAct("actChangeDelay", delegate
+		{
+			UIContextMenu uIContextMenu3 = EClass.ui.CreateContextMenuInteraction();
+			uIContextMenu3.AddSlider("adjustment", (float a) => (0.01f * (float)(int)(a * 10f)).ToString() ?? "", data.delay * 10f, delegate(float b)
+			{
+				data.delay = b * 0.1f;
+			}, 0f, 200f, isInt: true, hideOther: false);
+			uIContextMenu3.Show();
+			return false;
+		}, owner);
+		if (!EClass.debug.enable)
+		{
+			return;
+		}
+		p.TrySetAct("actChangeType", delegate
+		{
+			UIContextMenu uIContextMenu4 = EClass.ui.CreateContextMenuInteraction();
+			uIContextMenu4.AddSlider("adjustment", (float a) => a.ToString() ?? "", id, delegate(float b)
+			{
+				id = (int)b;
+				Proc();
+			}, 0f, EClass.core.refs.fireworks.Count - 1, isInt: true, hideOther: false);
+			uIContextMenu4.Show();
+			return false;
+		}, owner);
+	}
+
+	public override int CompareTo(Card b)
+	{
+		return b.refVal - owner.refVal;
 	}
 }

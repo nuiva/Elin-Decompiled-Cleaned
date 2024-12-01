@@ -1,20 +1,16 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class AreaTypeFarm : AreaType
 {
-	public override bool IsWork
-	{
-		get
-		{
-			return true;
-		}
-	}
+	[JsonProperty]
+	public int refSeed;
+
+	public override bool IsWork => true;
 
 	public override AIAct GetAI()
 	{
-		Point plowPos = this.GetPlowPos();
+		Point plowPos = GetPlowPos();
 		if (plowPos != null)
 		{
 			if (plowPos.HasObj)
@@ -29,30 +25,27 @@ public class AreaTypeFarm : AreaType
 				pos = plowPos.Copy()
 			};
 		}
-		else
+		if (EClass.rnd(3) == 0)
 		{
-			if (EClass.rnd(3) == 0)
+			return new AI_Farm
 			{
-				return new AI_Farm
-				{
-					pos = this.owner.GetRandomFreePos()
-				};
-			}
-			if (EClass.rnd(3) == 0)
-			{
-				return new AI_Water
-				{
-					pos = this.owner.GetRandomFreePos()
-				};
-			}
-			return base.GetAI();
+				pos = owner.GetRandomFreePos()
+			};
 		}
+		if (EClass.rnd(3) == 0)
+		{
+			return new AI_Water
+			{
+				pos = owner.GetRandomFreePos()
+			};
+		}
+		return base.GetAI();
 	}
 
 	public Point GetPlowPos()
 	{
 		List<Point> list = new List<Point>();
-		foreach (Point point in this.owner.points)
+		foreach (Point point in owner.points)
 		{
 			if ((point.sourceFloor.ContainsTag("grass") || point.sourceFloor.tag.Contains("soil")) && (!point.IsFarmField || point.HasObj))
 			{
@@ -61,11 +54,8 @@ public class AreaTypeFarm : AreaType
 		}
 		if (list.Count > 0)
 		{
-			return list.RandomItem<Point>();
+			return list.RandomItem();
 		}
 		return null;
 	}
-
-	[JsonProperty]
-	public int refSeed;
 }

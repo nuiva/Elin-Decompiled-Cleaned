@@ -1,21 +1,23 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class HotItemLayout : HotAction
 {
-	public override string Id
+	public class Layout
 	{
-		get
-		{
-			return "WindowLayout";
-		}
+		[JsonProperty]
+		public Dictionary<string, Window.SaveData> dataWindow = new Dictionary<string, Window.SaveData>();
 	}
+
+	[JsonProperty]
+	public Layout layout;
+
+	public override string Id => "WindowLayout";
 
 	public HotItemLayout Save()
 	{
-		this.layout = new HotItemLayout.Layout();
-		this.layout.dataWindow = Window.dictData;
+		layout = new Layout();
+		layout.dataWindow = Window.dictData;
 		SE.Equip();
 		return this;
 	}
@@ -23,36 +25,27 @@ public class HotItemLayout : HotAction
 	public override void OnShowContextMenu(UIContextMenu m)
 	{
 		base.OnShowContextMenu(m);
-		m.AddButton("updateLayout", delegate()
+		m.AddButton("updateLayout", delegate
 		{
-			this.Save();
-		}, true);
+			Save();
+		});
 	}
 
 	public override void Perform()
 	{
 		bool isInventoryOpen = EClass.ui.IsInventoryOpen;
 		bool isAbilityOpen = EClass.ui.IsAbilityOpen;
-		Window.dictData = (EClass.player.dataWindow = this.layout.dataWindow);
+		Window.dictData = (EClass.player.dataWindow = layout.dataWindow);
 		EClass.ui.CloseLayers();
 		EClass.ui.layerFloat.CloseLayers();
 		if (isInventoryOpen)
 		{
-			EClass.ui.ToggleInventory(false);
+			EClass.ui.ToggleInventory();
 		}
 		if (isAbilityOpen)
 		{
-			EClass.ui.ToggleAbility(false);
+			EClass.ui.ToggleAbility();
 		}
 		SE.Equip();
-	}
-
-	[JsonProperty]
-	public HotItemLayout.Layout layout;
-
-	public class Layout
-	{
-		[JsonProperty]
-		public Dictionary<string, Window.SaveData> dataWindow = new Dictionary<string, Window.SaveData>();
 	}
 }

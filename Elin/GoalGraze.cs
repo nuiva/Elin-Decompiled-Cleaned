@@ -1,42 +1,36 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class GoalGraze : Goal
 {
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		Point pos = this.GetPos();
+		Point pos = GetPos();
 		if (pos != null)
 		{
-			yield return base.DoGoto(pos, 0, false, null);
+			yield return DoGoto(pos);
 		}
-		yield return base.DoIdle(20);
-		yield break;
+		yield return DoIdle(20);
 	}
 
 	public Point GetPos()
 	{
-		this.owner.ClearBed(null);
+		owner.ClearBed();
 		Thing thing = null;
-		Rand.SetSeed(this.owner.uid);
+		Rand.SetSeed(owner.uid);
 		if (thing == null)
 		{
-			thing = EClass._map.FindThing(typeof(TraitSpotRanch), this.owner);
+			thing = EClass._map.FindThing(typeof(TraitSpotRanch), owner);
 		}
-		Rand.SetSeed(-1);
-		if (thing != null)
-		{
-			return thing.trait.GetRandomPoint(null, null);
-		}
-		return null;
+		Rand.SetSeed();
+		return thing?.trait.GetRandomPoint();
 	}
 
 	public override void OnSimulatePosition()
 	{
-		Point pos = this.GetPos();
+		Point pos = GetPos();
 		if (pos != null)
 		{
-			this.owner.MoveImmediate(pos, true, true);
+			owner.MoveImmediate(pos);
 		}
 	}
 }

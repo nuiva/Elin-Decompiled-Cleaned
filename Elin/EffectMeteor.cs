@@ -1,32 +1,33 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using DG.Tweening;
-using DG.Tweening.Core;
-using DG.Tweening.Plugins.Options;
 using UnityEngine;
 
 public class EffectMeteor : Effect
 {
+	public Animator aniExplosion;
+
+	public Vector3 startPos;
+
+	public float time;
+
 	public override void OnPlay()
 	{
-		this.sr.enabled = true;
-		this.aniExplosion.SetActive(false);
-		this.destV = this.fromV;
-		this.fromV += this.startPos + this.startPos.Random() * 0.2f;
-		base.transform.position = this.fromV;
-		this.moveTween = base.transform.DOMove(this.destV, this.time, false).SetEase(Ease.Linear).SetDelay(this.startDelay).OnComplete(delegate
-		{
-			this.sr.enabled = false;
-			this.aniExplosion.SetActive(true);
-			this.destPos.Animate(AnimeID.Dig, true);
-			Action onComplete = this.onComplete;
-			if (onComplete != null)
+		sr.enabled = true;
+		aniExplosion.SetActive(enable: false);
+		destV = fromV;
+		fromV += startPos + startPos.Random() * 0.2f;
+		base.transform.position = fromV;
+		moveTween = base.transform.DOMove(destV, time).SetEase(Ease.Linear).SetDelay(startDelay)
+			.OnComplete(delegate
 			{
-				onComplete();
-			}
-			EMono.Sound.Play("explode", this.destV, 1f);
-			Shaker.ShakeCam("meteor", 1f);
-		});
+				sr.enabled = false;
+				aniExplosion.SetActive(enable: true);
+				destPos.Animate(AnimeID.Dig, animeBlock: true);
+				onComplete?.Invoke();
+				EMono.Sound.Play("explode", destV);
+				Shaker.ShakeCam("meteor");
+			});
 	}
 
 	public static void Create(Point center, int radius, int count, Action<int, Point> onComplete)
@@ -42,27 +43,21 @@ public class EffectMeteor : Effect
 				int num = 0;
 				if (num < 1000)
 				{
-					Point randomSurface = EMono._map.GetRandomSurface(center.x, center.z, radius, true, false);
-					foreach (Point obj in list)
+					Point randomSurface = EMono._map.GetRandomSurface(center.x, center.z, radius);
+					foreach (Point item in list)
 					{
-						randomSurface.Equals(obj);
+						randomSurface.Equals(item);
 					}
 					p.Set(randomSurface);
 					list.Add(randomSurface);
 				}
 			}
 			int _i = i;
-			effect.onComplete = delegate()
+			effect.onComplete = delegate
 			{
 				onComplete(_i, p);
 			};
-			effect.Play(p, 0f, null, null);
+			effect.Play(p);
 		}
 	}
-
-	public Animator aniExplosion;
-
-	public Vector3 startPos;
-
-	public float time;
 }

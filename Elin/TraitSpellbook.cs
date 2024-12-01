@@ -1,12 +1,4 @@
-﻿using System;
-
 public class TraitSpellbook : TraitBaseSpellbook
 {
-	public override int Difficulty
-	{
-		get
-		{
-			return 10 + this.source.LV;
-		}
-	}
+	public override int Difficulty => 10 + source.LV;
 }

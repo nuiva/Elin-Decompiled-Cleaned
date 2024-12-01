@@ -1,18 +1,10 @@
-﻿using System;
-
 public class QuestIntoDarkness : QuestProgression
 {
-	public override string TitlePrefix
-	{
-		get
-		{
-			return "★";
-		}
-	}
+	public override string TitlePrefix => "★";
 
 	public override void OnStart()
 	{
-		EClass.game.quests.Add("demitas_spellwriter", null).startDate = EClass.world.date.GetRaw(0) + 1440;
+		EClass.game.quests.Add("demitas_spellwriter").startDate = EClass.world.date.GetRaw() + 1440;
 	}
 
 	public override bool CanUpdateOnTalk(Chara c)

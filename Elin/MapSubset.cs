@@ -1,4 +1,3 @@
-﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
@@ -6,16 +5,18 @@ using UnityEngine;
 
 public class MapSubset : EClass
 {
+	[JsonProperty]
+	public string id;
+
+	[JsonProperty]
+	public List<int> listClear = new List<int>();
+
+	[JsonProperty]
+	public SerializedCards serializedCards = new SerializedCards();
+
 	public static bool Exist(string id)
 	{
-		return File.Exists(string.Concat(new string[]
-		{
-			CorePath.ZoneSave,
-			EClass._zone.idExport,
-			"_",
-			id,
-			".s"
-		}));
+		return File.Exists(CorePath.ZoneSave + EClass._zone.idExport + "_" + id + ".s");
 	}
 
 	public static void Save(string id)
@@ -26,71 +27,48 @@ public class MapSubset : EClass
 		}
 		EClass._zone.subset.OnSave(id);
 		EClass._zone.idCurrentSubset = id;
-		GameIO.SaveFile(string.Concat(new string[]
-		{
-			CorePath.ZoneSave,
-			EClass._zone.idExport,
-			"_",
-			id,
-			".s"
-		}), EClass._zone.subset);
+		GameIO.SaveFile(CorePath.ZoneSave + EClass._zone.idExport + "_" + id + ".s", EClass._zone.subset);
 	}
 
 	public static MapSubset Load(string id)
 	{
-		return GameIO.LoadFile<MapSubset>(string.Concat(new string[]
-		{
-			CorePath.ZoneSave,
-			EClass._zone.idExport,
-			"_",
-			id,
-			".s"
-		}));
+		return GameIO.LoadFile<MapSubset>(CorePath.ZoneSave + EClass._zone.idExport + "_" + id + ".s");
 	}
 
 	public void OnSave(string _id)
 	{
-		this.id = _id;
-		this.listClear.Clear();
+		id = _id;
+		listClear.Clear();
 		EClass._map.ForeachCell(delegate(Cell c)
 		{
 			if (c.isClearArea)
 			{
-				this.listClear.Add(c.index);
+				listClear.Add(c.index);
 			}
 		});
-		this.serializedCards.cards.Clear();
+		serializedCards.cards.Clear();
 		foreach (Card card in EClass._map.Cards)
 		{
 			if (card.isSubsetCard)
 			{
-				this.serializedCards.Add(card);
+				serializedCards.Add(card);
 			}
 		}
-		Debug.Log(this.listClear.Count);
+		Debug.Log(listClear.Count);
 	}
 
 	public void Apply()
 	{
-		Debug.Log(this.listClear.Count);
-		foreach (int index in this.listClear)
+		Debug.Log(listClear.Count);
+		foreach (int item in listClear)
 		{
-			Cell cell = EClass._map.GetCell(index);
+			Cell cell = EClass._map.GetCell(item);
 			cell.isClearArea = true;
 			cell.Things.ForeachReverse(delegate(Thing t)
 			{
 				t.Destroy();
 			});
 		}
-		this.serializedCards.Restore(EClass._map, null, true, null);
+		serializedCards.Restore(EClass._map, null, addToZone: true);
 	}
-
-	[JsonProperty]
-	public string id;
-
-	[JsonProperty]
-	public List<int> listClear = new List<int>();
-
-	[JsonProperty]
-	public SerializedCards serializedCards = new SerializedCards();
 }

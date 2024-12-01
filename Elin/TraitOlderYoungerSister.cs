@@ -1,12 +1,4 @@
-﻿using System;
-
 public class TraitOlderYoungerSister : TraitUniqueChara
 {
-	public override bool CanInvite
-	{
-		get
-		{
-			return EClass.player.dialogFlags.TryGetValue("olderyoungersister", 0) >= 1;
-		}
-	}
+	public override bool CanInvite => EClass.player.dialogFlags.TryGetValue("olderyoungersister", 0) >= 1;
 }

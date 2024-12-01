@@ -1,14 +1,16 @@
-﻿using System;
-
 public class QuestPuppy : QuestProgression
 {
 	public override bool CanUpdateOnTalk(Chara c)
 	{
-		return this.phase == 1 && EClass._map.FindChara("poppy") != null;
+		if (phase == 1)
+		{
+			return EClass._map.FindChara("poppy") != null;
+		}
+		return false;
 	}
 
 	public override void OnDropReward()
 	{
-		base.DropReward("coolerbox");
+		DropReward("coolerbox");
 	}
 }

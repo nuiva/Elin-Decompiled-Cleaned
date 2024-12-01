@@ -1,14 +1,6 @@
-﻿using System;
-
 public class BaseDebuff : Condition
 {
-	public override bool WillOverride
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool WillOverride => true;
 
 	public override int GetPhase()
 	{

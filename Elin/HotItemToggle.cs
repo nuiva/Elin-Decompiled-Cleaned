@@ -1,118 +1,8 @@
-﻿using System;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class HotItemToggle : HotItem
 {
-	public override string Name
-	{
-		get
-		{
-			return this.type.ToString().lang();
-		}
-	}
-
-	public override Sprite SpriteHighlight
-	{
-		get
-		{
-			return SpriteSheet.Get(this.pathSprite + "_highlight") ?? EClass.core.refs.spritesHighlight[2];
-		}
-	}
-
-	public override string pathSprite
-	{
-		get
-		{
-			return "icon_" + this.type.ToString();
-		}
-	}
-
-	public override bool Hidden
-	{
-		get
-		{
-			return this.type == HotItemToggle.Type.instaComplete && !EClass.debug.enable;
-		}
-	}
-
-	public override bool ShouldHighlight()
-	{
-		switch (this.type)
-		{
-		case HotItemToggle.Type.ToggleRoof:
-			return EClass.game.config.showRoof;
-		case HotItemToggle.Type.showBalloon:
-			return !EClass.scene.hideBalloon;
-		case HotItemToggle.Type.muteBGM:
-			return EClass.Sound.muteBGM;
-		case HotItemToggle.Type.instaComplete:
-			return EClass.player.instaComplete;
-		case HotItemToggle.Type.ToggleSlope:
-			return EClass.game.config.slope;
-		case HotItemToggle.Type.ToggleWall:
-			return EClass.game.config.showWall;
-		case HotItemToggle.Type.ToggleFreepos:
-			return EClass.game.config.freePos;
-		case HotItemToggle.Type.SnapFreepos:
-			return EClass.game.config.snapFreePos;
-		case HotItemToggle.Type.ToggleBuildLight:
-			return EClass.game.config.buildLight;
-		case HotItemToggle.Type.ToggleNoRoof:
-			return EClass.game.config.noRoof;
-		}
-		return false;
-	}
-
-	public override void OnClick(ButtonHotItem b, Hotbar h)
-	{
-		switch (this.type)
-		{
-		case HotItemToggle.Type.ToggleRoof:
-			EClass.scene.ToggleShowRoof();
-			break;
-		case HotItemToggle.Type.showBalloon:
-			EClass.scene.ToggleBalloon();
-			break;
-		case HotItemToggle.Type.muteBGM:
-			EClass.scene.ToggleMuteBGM();
-			break;
-		case HotItemToggle.Type.instaComplete:
-			EClass.player.instaComplete = !EClass.player.instaComplete;
-			SE.ClickGeneral();
-			if (b)
-			{
-				b.widget.RefreshHighlight();
-			}
-			break;
-		case HotItemToggle.Type.ToggleSlope:
-			EClass.scene.ToggleSlope();
-			break;
-		case HotItemToggle.Type.ToggleWall:
-			EClass.scene.ToggleShowWall();
-			break;
-		case HotItemToggle.Type.ToggleFreepos:
-			EClass.scene.ToggleFreePos();
-			break;
-		case HotItemToggle.Type.SnapFreepos:
-			EClass.scene.ToggleSnapFreePos();
-			break;
-		case HotItemToggle.Type.ToggleBuildLight:
-			EClass.scene.ToggleLight();
-			break;
-		case HotItemToggle.Type.ToggleNoRoof:
-			EClass.scene.ToggleRoof();
-			break;
-		}
-		if (b)
-		{
-			b.widget.RefreshHighlight();
-		}
-	}
-
-	[JsonProperty]
-	public HotItemToggle.Type type;
-
 	public enum Type
 	{
 		ToggleRoof,
@@ -126,5 +16,90 @@ public class HotItemToggle : HotItem
 		ToggleBuildLight,
 		ToggleRoofEdit,
 		ToggleNoRoof
+	}
+
+	[JsonProperty]
+	public Type type;
+
+	public override string Name => type.ToString().lang();
+
+	public override Sprite SpriteHighlight => SpriteSheet.Get(pathSprite + "_highlight") ?? EClass.core.refs.spritesHighlight[2];
+
+	public override string pathSprite => "icon_" + type;
+
+	public override bool Hidden
+	{
+		get
+		{
+			if (type == Type.instaComplete)
+			{
+				return !EClass.debug.enable;
+			}
+			return false;
+		}
+	}
+
+	public override bool ShouldHighlight()
+	{
+		return type switch
+		{
+			Type.ToggleBuildLight => EClass.game.config.buildLight, 
+			Type.SnapFreepos => EClass.game.config.snapFreePos, 
+			Type.ToggleFreepos => EClass.game.config.freePos, 
+			Type.ToggleWall => EClass.game.config.showWall, 
+			Type.ToggleRoof => EClass.game.config.showRoof, 
+			Type.ToggleNoRoof => EClass.game.config.noRoof, 
+			Type.showBalloon => !EClass.scene.hideBalloon, 
+			Type.muteBGM => EClass.Sound.muteBGM, 
+			Type.instaComplete => EClass.player.instaComplete, 
+			Type.ToggleSlope => EClass.game.config.slope, 
+			_ => false, 
+		};
+	}
+
+	public override void OnClick(ButtonHotItem b, Hotbar h)
+	{
+		switch (type)
+		{
+		case Type.ToggleBuildLight:
+			EClass.scene.ToggleLight();
+			break;
+		case Type.SnapFreepos:
+			EClass.scene.ToggleSnapFreePos();
+			break;
+		case Type.ToggleFreepos:
+			EClass.scene.ToggleFreePos();
+			break;
+		case Type.ToggleWall:
+			EClass.scene.ToggleShowWall();
+			break;
+		case Type.ToggleRoof:
+			EClass.scene.ToggleShowRoof();
+			break;
+		case Type.ToggleNoRoof:
+			EClass.scene.ToggleRoof();
+			break;
+		case Type.showBalloon:
+			EClass.scene.ToggleBalloon();
+			break;
+		case Type.muteBGM:
+			EClass.scene.ToggleMuteBGM();
+			break;
+		case Type.instaComplete:
+			EClass.player.instaComplete = !EClass.player.instaComplete;
+			SE.ClickGeneral();
+			if ((bool)b)
+			{
+				b.widget.RefreshHighlight();
+			}
+			break;
+		case Type.ToggleSlope:
+			EClass.scene.ToggleSlope();
+			break;
+		}
+		if ((bool)b)
+		{
+			b.widget.RefreshHighlight();
+		}
 	}
 }

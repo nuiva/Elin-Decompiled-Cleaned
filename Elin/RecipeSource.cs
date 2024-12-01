@@ -1,195 +1,7 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class RecipeSource : EClass
 {
-	public string recipeCat
-	{
-		get
-		{
-			if (!this.isBridge && !this.isBridgePillar)
-			{
-				return this.row.Category.recipeCat;
-			}
-			return "foundation";
-		}
-	}
-
-	public string GetDetail()
-	{
-		return this.row.GetDetail();
-	}
-
-	public string Name
-	{
-		get
-		{
-			return this.row.GetName() + (this.isBridge ? "recipeBridge".lang() : "");
-		}
-	}
-
-	public bool IsQuickCraft
-	{
-		get
-		{
-			return !this.row.factory.IsEmpty() && this.row.factory[0] == "self";
-		}
-	}
-
-	public bool NeedFactory
-	{
-		get
-		{
-			return !this.row.factory.IsEmpty() && this.row.factory[0] != "self" && this.row.factory[0] != "x" && this.row.factory[0] != "none" && this.row.factory[0] != "None";
-		}
-	}
-
-	public string NameFactory
-	{
-		get
-		{
-			return EClass.sources.cards.map[this.idFactory].GetName();
-		}
-	}
-
-	public string idFactory
-	{
-		get
-		{
-			if (this.row.factory.IsEmpty())
-			{
-				return null;
-			}
-			if (this.isBridge)
-			{
-				return "factory_platform";
-			}
-			if (!this.isBridgePillar)
-			{
-				return this.row.factory[0];
-			}
-			return "tool_carving";
-		}
-	}
-
-	public Element GetReqSkill()
-	{
-		return Element.Create((this.NeedFactory ? EClass.sources.cards.GetModelCrafter(this.idFactory) : Trait.SelfFactory).IDReqEle(this), this.row.LV);
-	}
-
-	public List<Recipe.Ingredient> GetIngredients()
-	{
-		if (!this.row.factory.IsEmpty() && this.row.factory[0] == "x")
-		{
-			this.noListing = true;
-		}
-		if (this.row.components.Length == 0)
-		{
-			return RecipeSource.DefaultIngredients;
-		}
-		if (this.row.components[0] == "-")
-		{
-			return RecipeSource.DefaultIngredients;
-		}
-		if (this.row.recipeKey.Length != 0 && this.row.recipeKey[0] == "*")
-		{
-			this.alwaysKnown = true;
-		}
-		string[] components = this.row.components;
-		List<Recipe.Ingredient> list = new List<Recipe.Ingredient>();
-		if (!components.IsEmpty() && components[0] != "-")
-		{
-			int i = 0;
-			while (i < components.Length)
-			{
-				string[] array = components[i].Split('|', StringSplitOptions.None);
-				string[] array2 = array[0].Split('/', StringSplitOptions.None);
-				string[] array3 = array2[0].Split('@', StringSplitOptions.None);
-				bool optional = false;
-				bool useCat = false;
-				for (;;)
-				{
-					char c = array3[0][0];
-					if (c == '#')
-					{
-						goto IL_12E;
-					}
-					if (c == '$')
-					{
-						goto IL_116;
-					}
-					if (c != '+')
-					{
-						break;
-					}
-					optional = true;
-					array3[0] = array3[0].Remove(0, 1);
-				}
-				IL_156:
-				Recipe.Ingredient ingredient = new Recipe.Ingredient
-				{
-					id = array3[0],
-					tag = ((array3.Length > 1) ? array3[1] : null),
-					req = ((array2.Length > 1) ? int.Parse(array2[1]) : 1),
-					optional = optional,
-					useCat = useCat
-				};
-				if (array.Length > 1)
-				{
-					for (int j = 1; j < array.Length; j++)
-					{
-						ingredient.idOther.Add(array[j]);
-					}
-				}
-				list.Add(ingredient);
-				i++;
-				continue;
-				goto IL_156;
-				IL_116:
-				this.colorIng = i;
-				array3[0] = array3[0].Remove(0, 1);
-				goto IL_156;
-				IL_12E:
-				useCat = true;
-				array3[0] = array3[0].Remove(0, 1);
-				goto IL_156;
-			}
-		}
-		return list;
-	}
-
-	public string GetIDIngredient()
-	{
-		string[] components = this.row.components;
-		if (!components.IsEmpty() && components[0] != "-")
-		{
-			int num = 0;
-			if (num < components.Length)
-			{
-				string[] array = components[num].Split('/', StringSplitOptions.None)[0].Split('@', StringSplitOptions.None);
-				char c = array[0][0];
-				if (c == '#' || c == '$' || c == '+')
-				{
-					array[0] = array[0].Remove(0, 1);
-				}
-				return array[0];
-			}
-		}
-		return null;
-	}
-
-	public int GetSPCost(Card factory)
-	{
-		Element reqSkill = this.GetReqSkill();
-		int num = this.row.Category.costSP + reqSkill.Value / 10;
-		int num2 = EClass.pc.Evalue(reqSkill.id);
-		if (num2 < reqSkill.Value)
-		{
-			num += (reqSkill.Value - num2) * 2 / 3;
-		}
-		return num;
-	}
-
 	public RenderRow row;
 
 	public string type;
@@ -218,4 +30,176 @@ public class RecipeSource : EClass
 			req = 1
 		}
 	};
+
+	public string recipeCat
+	{
+		get
+		{
+			if (!isBridge && !isBridgePillar)
+			{
+				return row.Category.recipeCat;
+			}
+			return "foundation";
+		}
+	}
+
+	public string Name => row.GetName() + (isBridge ? "recipeBridge".lang() : "");
+
+	public bool IsQuickCraft
+	{
+		get
+		{
+			if (!row.factory.IsEmpty())
+			{
+				return row.factory[0] == "self";
+			}
+			return false;
+		}
+	}
+
+	public bool NeedFactory
+	{
+		get
+		{
+			if (!row.factory.IsEmpty() && row.factory[0] != "self" && row.factory[0] != "x" && row.factory[0] != "none")
+			{
+				return row.factory[0] != "None";
+			}
+			return false;
+		}
+	}
+
+	public string NameFactory => EClass.sources.cards.map[idFactory].GetName();
+
+	public string idFactory
+	{
+		get
+		{
+			if (!row.factory.IsEmpty())
+			{
+				if (!isBridge)
+				{
+					if (!isBridgePillar)
+					{
+						return row.factory[0];
+					}
+					return "tool_carving";
+				}
+				return "factory_platform";
+			}
+			return null;
+		}
+	}
+
+	public string GetDetail()
+	{
+		return row.GetDetail();
+	}
+
+	public Element GetReqSkill()
+	{
+		return Element.Create((NeedFactory ? EClass.sources.cards.GetModelCrafter(idFactory) : Trait.SelfFactory).IDReqEle(this), row.LV);
+	}
+
+	public List<Recipe.Ingredient> GetIngredients()
+	{
+		if (!row.factory.IsEmpty() && row.factory[0] == "x")
+		{
+			noListing = true;
+		}
+		if (row.components.Length == 0)
+		{
+			return DefaultIngredients;
+		}
+		if (row.components[0] == "-")
+		{
+			return DefaultIngredients;
+		}
+		if (row.recipeKey.Length != 0 && row.recipeKey[0] == "*")
+		{
+			alwaysKnown = true;
+		}
+		string[] components = row.components;
+		List<Recipe.Ingredient> list = new List<Recipe.Ingredient>();
+		if (!components.IsEmpty() && components[0] != "-")
+		{
+			for (int i = 0; i < components.Length; i++)
+			{
+				string[] array = components[i].Split('|');
+				string[] array2 = array[0].Split('/');
+				string[] array3 = array2[0].Split('@');
+				bool optional = false;
+				bool useCat = false;
+				while (true)
+				{
+					switch (array3[0][0])
+					{
+					case '$':
+						colorIng = i;
+						array3[0] = array3[0].Remove(0, 1);
+						break;
+					case '#':
+						useCat = true;
+						array3[0] = array3[0].Remove(0, 1);
+						break;
+					case '+':
+						goto IL_0142;
+					}
+					break;
+					IL_0142:
+					optional = true;
+					array3[0] = array3[0].Remove(0, 1);
+				}
+				Recipe.Ingredient ingredient = new Recipe.Ingredient
+				{
+					id = array3[0],
+					tag = ((array3.Length > 1) ? array3[1] : null),
+					req = ((array2.Length <= 1) ? 1 : int.Parse(array2[1])),
+					optional = optional,
+					useCat = useCat
+				};
+				if (array.Length > 1)
+				{
+					for (int j = 1; j < array.Length; j++)
+					{
+						ingredient.idOther.Add(array[j]);
+					}
+				}
+				list.Add(ingredient);
+			}
+		}
+		return list;
+	}
+
+	public string GetIDIngredient()
+	{
+		string[] components = row.components;
+		if (!components.IsEmpty() && components[0] != "-")
+		{
+			int num = 0;
+			if (num < components.Length)
+			{
+				string[] array = components[num].Split('/')[0].Split('@');
+				char c = array[0][0];
+				if (c == '#' || c == '$' || c == '+')
+				{
+					array[0] = array[0].Remove(0, 1);
+				}
+				return array[0];
+			}
+		}
+		return null;
+	}
+
+	public int GetSPCost(Card factory)
+	{
+		Element reqSkill = GetReqSkill();
+		int num = row.Category.costSP + reqSkill.Value / 10;
+		int num2 = EClass.pc.Evalue(reqSkill.id);
+		if (num2 < reqSkill.Value)
+		{
+			num += (reqSkill.Value - num2) * 2 / 3;
+		}
+		return num;
+	}
 }

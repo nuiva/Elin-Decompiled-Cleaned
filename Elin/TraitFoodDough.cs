@@ -1,12 +1,4 @@
-﻿using System;
-
 public class TraitFoodDough : TraitFood
 {
-	public override int DefaultStock
-	{
-		get
-		{
-			return 2 + EClass.rnd(5);
-		}
-	}
+	public override int DefaultStock => 2 + EClass.rnd(5);
 }

@@ -1,41 +1,22 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
 public class TraitBookSkill : TraitScroll
 {
+	public int idEle => owner.refVal;
+
+	public override SourceElement.Row source => EClass.sources.elements.map[idEle];
+
+	public virtual bool IsPlan => false;
+
 	public override bool CanRead(Chara c)
 	{
 		return !c.isBlind;
 	}
 
-	public int idEle
-	{
-		get
-		{
-			return this.owner.refVal;
-		}
-	}
-
-	public override SourceElement.Row source
-	{
-		get
-		{
-			return EClass.sources.elements.map[this.idEle];
-		}
-	}
-
 	public override int GetActDuration(Chara c)
 	{
 		return 5;
-	}
-
-	public virtual bool IsPlan
-	{
-		get
-		{
-			return false;
-		}
 	}
 
 	public override void OnCreate(int lv)
@@ -50,7 +31,7 @@ public class TraitBookSkill : TraitScroll
 			{
 				return false;
 			}
-			if (this.IsPlan)
+			if (IsPlan)
 			{
 				if (a.category != "policy" && a.category != "tech")
 				{
@@ -67,90 +48,84 @@ public class TraitBookSkill : TraitScroll
 			}
 			return true;
 		});
-		this.owner.refVal = ie.RandomItem<SourceElement.Row>().id;
+		owner.refVal = ie.RandomItem().id;
 	}
 
 	public override void SetName(ref string s)
 	{
-		if (this.idEle == 0)
+		if (idEle != 0)
 		{
-			return;
-		}
-		string str = "";
-		if ((EClass.sources.elements.map.TryGetValue(this.idEle, null) ?? EClass.sources.elements.map[0]).category == "policy")
-		{
-			str = " (" + "policy".lang() + ")";
-		}
-		s = "_of".lang((this.source.GetName() + str).Bracket(1), s, null, null, null);
-		if (this.IsPlan && EClass.pc.homeBranch != null && EClass.pc.homeBranch.elements.HasBase(this.idEle))
-		{
-			s = s + " " + "alreadyLearned".lang();
+			string text = "";
+			if ((EClass.sources.elements.map.TryGetValue(idEle) ?? EClass.sources.elements.map[0]).category == "policy")
+			{
+				text = " (" + "policy".lang() + ")";
+			}
+			s = "_of".lang((source.GetName() + text).Bracket(1), s);
+			if (IsPlan && EClass.pc.homeBranch != null && EClass.pc.homeBranch.elements.HasBase(idEle))
+			{
+				s = s + " " + "alreadyLearned".lang();
+			}
 		}
 	}
 
 	public override void OnRead(Chara c)
 	{
-		if (this.IsPlan && !c.IsPC)
+		if (IsPlan && !c.IsPC)
 		{
 			return;
 		}
-		if (this.IsPlan && !EClass._zone.IsPCFaction)
+		if (IsPlan && !EClass._zone.IsPCFaction)
 		{
-			this.owner.Say("skillbook_invalidZone", null, null);
+			owner.Say("skillbook_invalidZone");
 			return;
 		}
-		if (this.IsPlan && EClass.Branch.elements.HasBase(this.idEle))
+		if (IsPlan && EClass.Branch.elements.HasBase(idEle))
 		{
-			this.owner.Say("skillbook_knownSkill", c, this.source.GetName(), null);
+			owner.Say("skillbook_knownSkill", c, source.GetName());
 			return;
 		}
-		this.owner.Say(this.IsPlan ? "skillbook_learnPlan" : "skillbook_learn", c, this.source.GetName(), null);
-		if (this.IsPlan)
+		owner.Say(IsPlan ? "skillbook_learnPlan" : "skillbook_learn", c, source.GetName());
+		if (IsPlan)
 		{
-			EClass.Branch.elements.Learn(this.idEle, 1);
-			if (this.source.category == "policy" && !EClass.Branch.policies.HasPolicy(this.idEle))
+			EClass.Branch.elements.Learn(idEle);
+			if (source.category == "policy" && !EClass.Branch.policies.HasPolicy(idEle))
 			{
-				EClass.Branch.policies.AddPolicy(this.idEle, true);
+				EClass.Branch.policies.AddPolicy(idEle);
 			}
-			using (List<FactionBranch>.Enumerator enumerator = EClass.pc.faction.GetChildren().GetEnumerator())
+			foreach (FactionBranch child in EClass.pc.faction.GetChildren())
 			{
-				while (enumerator.MoveNext())
-				{
-					FactionBranch factionBranch = enumerator.Current;
-					factionBranch.ValidateUpgradePolicies();
-				}
-				goto IL_1A9;
+				child.ValidateUpgradePolicies();
 			}
 		}
-		if (!c.elements.HasBase(this.idEle))
+		else if (!c.elements.HasBase(idEle))
 		{
-			c.elements.Learn(this.idEle, 1);
+			c.elements.Learn(idEle);
 		}
 		else
 		{
-			c.elements.ModExp(this.idEle, this.owner.IsBlessed ? 1500 : (this.owner.IsCursed ? 500 : 1000), false);
+			c.elements.ModExp(idEle, owner.IsBlessed ? 1500 : (owner.IsCursed ? 500 : 1000));
 		}
-		IL_1A9:
-		c.Say("spellbookCrumble", this.owner.Duplicate(1), null, null);
-		this.owner.ModNum(-1, true);
+		c.Say("spellbookCrumble", owner.Duplicate(1));
+		owner.ModNum(-1);
 	}
 
 	public override int GetValue()
 	{
-		return this.owner.sourceCard.value;
+		return owner.sourceCard.value;
 	}
 
 	public override void WriteNote(UINote n, bool identified)
 	{
 		base.WriteNote(n, identified);
-		if (!this.IsPlan)
+		if (IsPlan)
 		{
-			n.Space(0, 1);
-			foreach (Chara chara in EClass.pc.party.members)
-			{
-				bool flag = chara.elements.HasBase(this.idEle);
-				n.AddText("_bullet".lang() + chara.Name + " " + (flag ? "alreadyLearned" : "notLearned").lang(), flag ? FontColor.Good : FontColor.Warning);
-			}
+			return;
+		}
+		n.Space();
+		foreach (Chara member in EClass.pc.party.members)
+		{
+			bool flag = member.elements.HasBase(idEle);
+			n.AddText("_bullet".lang() + member.Name + " " + (flag ? "alreadyLearned" : "notLearned").lang(), flag ? FontColor.Good : FontColor.Warning);
 		}
 	}
 }

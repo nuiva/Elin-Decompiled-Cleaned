@@ -1,59 +1,46 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class TraitBrewery : TraitContainer
 {
-	public override int DecaySpeedChild
+	public enum Type
 	{
-		get
-		{
-			return 500;
-		}
+		Food,
+		Drink,
+		Fertilizer
 	}
 
-	public virtual string idMsg
-	{
-		get
-		{
-			return "brew";
-		}
-	}
+	public override int DecaySpeedChild => 500;
 
-	public virtual TraitBrewery.Type type
-	{
-		get
-		{
-			return TraitBrewery.Type.Drink;
-		}
-	}
+	public virtual string idMsg => "brew";
 
-	public virtual bool IsFood
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual Type type => Type.Drink;
+
+	public virtual bool IsFood => false;
 
 	public override bool CanChildDecay(Card c)
 	{
-		string id = c.id;
-		return !(id == "48") && !(id == "cheese") && !(id == "jerky") && (c.trait is TraitDrinkMilk || c.material.id == 94);
+		switch (c.id)
+		{
+		case "48":
+		case "cheese":
+		case "jerky":
+			return false;
+		default:
+			if (!(c.trait is TraitDrinkMilk))
+			{
+				return c.material.id == 94;
+			}
+			return true;
+		}
 	}
 
 	public override bool OnChildDecay(Card c, bool firstDecay)
 	{
-		TraitBrewery.Type type = this.type;
-		if (type > TraitBrewery.Type.Drink)
+		switch (type)
 		{
-			if (type != TraitBrewery.Type.Fertilizer && !firstDecay)
-			{
-				return true;
-			}
-		}
-		else
-		{
+		case Type.Food:
+		case Type.Drink:
 			if (!firstDecay)
 			{
 				return true;
@@ -66,58 +53,62 @@ public class TraitBrewery : TraitContainer
 			{
 				return true;
 			}
+			break;
+		default:
+			if (!firstDecay)
+			{
+				return true;
+			}
+			break;
+		case Type.Fertilizer:
+			break;
 		}
-		string productID = this.GetProductID(c);
+		string productID = GetProductID(c);
 		if (productID == null)
 		{
 			return true;
 		}
 		Thing thing = c.Duplicate(c.Num);
 		c.Destroy();
-		type = this.type;
-		if (type != TraitBrewery.Type.Food)
+		switch (type)
 		{
-			if (type != TraitBrewery.Type.Fertilizer)
+		case Type.Food:
+			c = CraftUtil.MixIngredients(productID, new List<Thing> { c.Thing }, CraftUtil.MixType.Food, 0, EClass.pc).SetNum(thing.Num);
+			break;
+		case Type.Fertilizer:
+		{
+			int num = 20 + thing.SelfWeight;
+			if (num > 100)
 			{
-				c = ThingGen.Create(productID, -1, -1).SetNum(thing.Num);
+				num = 100 + (int)Mathf.Sqrt((num - 100) * 10);
 			}
-			else
+			int num2 = 0;
+			for (int i = 0; i < thing.Num; i++)
 			{
-				int num = 20 + thing.SelfWeight;
-				if (num > 100)
-				{
-					num = 100 + (int)Mathf.Sqrt((float)((num - 100) * 10));
-				}
-				int num2 = 0;
-				for (int i = 0; i < thing.Num; i++)
-				{
-					num2 += num / 100 + ((num % 100 > EClass.rnd(100)) ? 1 : 0);
-				}
-				if (num2 <= 0)
-				{
-					return false;
-				}
-				c = ThingGen.Create(productID, -1, -1).SetNum(num2);
+				num2 += num / 100 + ((num % 100 > EClass.rnd(100)) ? 1 : 0);
 			}
-		}
-		else
-		{
-			c = CraftUtil.MixIngredients(productID, new List<Thing>
+			if (num2 <= 0)
 			{
-				c.Thing
-			}, CraftUtil.MixType.Food, 0, EClass.pc).SetNum(thing.Num);
+				return false;
+			}
+			c = ThingGen.Create(productID).SetNum(num2);
+			break;
 		}
-		if (this.type != TraitBrewery.Type.Fertilizer)
+		default:
+			c = ThingGen.Create(productID).SetNum(thing.Num);
+			break;
+		}
+		if (type != Type.Fertilizer)
 		{
-			c.MakeFoodRef(thing, null);
+			c.MakeFoodRef(thing);
 		}
-		if (this.type == TraitBrewery.Type.Drink)
+		if (type == Type.Drink)
 		{
-			c.c_priceAdd = thing.GetValue(false) * 125 / 100;
+			c.c_priceAdd = thing.GetValue() * 125 / 100;
 		}
-		this.OnProduce(c);
-		this.owner.AddThing(c.Thing, false, -1, -1);
-		this.owner.GetRootCard().Say(this.idMsg, thing, c, null, null);
+		OnProduce(c);
+		owner.AddThing(c.Thing, tryStack: false);
+		owner.GetRootCard().Say(idMsg, thing, c);
 		return false;
 	}
 
@@ -137,12 +128,5 @@ public class TraitBrewery : TraitContainer
 
 	public virtual void OnProduce(Card c)
 	{
-	}
-
-	public enum Type
-	{
-		Food,
-		Drink,
-		Fertilizer
 	}
 }

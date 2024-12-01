@@ -1,12 +1,4 @@
-﻿using System;
-
 public class LayerTactics : ELayer
 {
-	public override bool blockWidgetClick
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool blockWidgetClick => false;
 }

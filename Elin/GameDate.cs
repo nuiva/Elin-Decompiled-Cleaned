@@ -1,17 +1,20 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class GameDate : Date
 {
+	[JsonProperty]
+	public bool shaken;
+
+	public const int minPerRound = 5;
+
 	public void AdvanceSec(int a)
 	{
 		base.sec += a;
 		if (base.sec >= 60)
 		{
-			this.AdvanceMin(base.sec / 60);
+			AdvanceMin(base.sec / 60);
 			base.sec %= 60;
 		}
 	}
@@ -26,7 +29,7 @@ public class GameDate : Date
 			while (base.min >= 60)
 			{
 				base.min -= 60;
-				this.AdvanceHour();
+				AdvanceHour();
 			}
 			EClass.screen.RefreshGrading();
 		}
@@ -36,9 +39,9 @@ public class GameDate : Date
 		}
 		if (EClass._map.footmarks.Count > 0)
 		{
-			for (int i = EClass._map.footmarks.Count - 1; i >= 0; i--)
+			for (int num = EClass._map.footmarks.Count - 1; num >= 0; num--)
 			{
-				Footmark footmark = EClass._map.footmarks[i];
+				Footmark footmark = EClass._map.footmarks[num];
 				footmark.remaining--;
 				if (footmark.remaining <= 0)
 				{
@@ -48,7 +51,7 @@ public class GameDate : Date
 						detail.footmark = null;
 						footmark.pos.cell.TryDespawnDetail();
 					}
-					EClass._map.footmarks.RemoveAt(i);
+					EClass._map.footmarks.RemoveAt(num);
 				}
 			}
 		}
@@ -59,33 +62,31 @@ public class GameDate : Date
 			EClass.player.countNewline = 0;
 		}
 		EClass.screen.pcOrbit.OnChangeMin();
-		foreach (ZoneEvent zoneEvent in EClass._zone.events.list)
+		foreach (ZoneEvent item in EClass._zone.events.list)
 		{
-			zoneEvent.minElapsed += a;
+			item.minElapsed += a;
 		}
 	}
 
 	public void AdvanceHour()
 	{
-		new VirtualDate(0)
-		{
-			IsRealTime = true
-		}.SimulateHour();
-		int hour = base.hour;
-		base.hour = hour + 1;
+		VirtualDate virtualDate = new VirtualDate();
+		virtualDate.IsRealTime = true;
+		virtualDate.SimulateHour();
+		base.hour++;
 		if (base.hour >= 24)
 		{
 			base.hour = 0;
-			this.AdvanceDay();
+			AdvanceDay();
 		}
-		if (!this.shaken && EClass.rnd(24) == 0 && !EClass._zone.IsRegion)
+		if (!shaken && EClass.rnd(24) == 0 && !EClass._zone.IsRegion)
 		{
 			Msg.Say("earthquake");
 			if (!EClass.core.config.graphic.disableShake)
 			{
-				Shaker.ShakeCam("earthquake", 1f);
+				Shaker.ShakeCam("earthquake");
 			}
-			this.shaken = true;
+			shaken = true;
 		}
 		EClass.scene.OnChangeHour();
 		EClass.world.weather.OnChangeHour();
@@ -96,83 +97,84 @@ public class GameDate : Date
 		{
 			EClass._zone.Region.CheckRandomSites();
 		}
-		foreach (Chara chara in EClass.game.cards.globalCharas.Values)
+		foreach (Chara value in EClass.game.cards.globalCharas.Values)
 		{
-			if (!chara.IsPCParty && chara.currentZone != EClass.game.activeZone && chara.trait.UseGlobalGoal)
+			if (!value.IsPCParty && value.currentZone != EClass.game.activeZone && value.trait.UseGlobalGoal)
 			{
-				if (chara.global.goal == null && !chara.IsPCFaction)
+				if (value.global.goal == null && !value.IsPCFaction)
 				{
 					GlobalGoalAdv globalGoalAdv = new GlobalGoalAdv();
-					globalGoalAdv.SetOwner(chara);
+					globalGoalAdv.SetOwner(value);
 					globalGoalAdv.Start();
 				}
-				if (chara.global.goal != null)
+				if (value.global.goal != null)
 				{
-					chara.global.goal.AdvanceHour();
+					value.global.goal.AdvanceHour();
 				}
 			}
 		}
 		EClass.pc.RecalculateFOV();
 		if (base.hour == 5)
 		{
-			this.ShipGoods();
-			this.ShipPackages();
-			this.ShipLetter();
+			ShipGoods();
+			ShipPackages();
+			ShipLetter();
 			if (EClass.rnd(30) == 0 && EClass.game.cards.listPackage.Count <= 2)
 			{
-				this.ShipRandomPackages();
+				ShipRandomPackages();
 			}
 			if (base.month == 10)
 			{
-				Tutorial.Reserve("season", null);
+				Tutorial.Reserve("season");
 			}
 			if (base.month == 11)
 			{
-				Tutorial.Reserve("season2", null);
-				return;
+				Tutorial.Reserve("season2");
 			}
-			Tutorial.Remove("season2");
+			else
+			{
+				Tutorial.Remove("season2");
+			}
 		}
 	}
 
 	public void AdvanceDay()
 	{
-		int num = base.day;
-		base.day = num + 1;
+		base.day++;
 		base.min = 0;
 		EClass.player.stats.days++;
 		if (EClass.player.stats.days >= 90)
 		{
-			Tutorial.Reserve("death_penalty", null);
+			Tutorial.Reserve("death_penalty");
 		}
 		if (base.day > 30)
 		{
 			base.day = 1;
-			this.AdvanceMonth();
+			AdvanceMonth();
 		}
 		EClass.world.CreateDayData();
 		EClass.Sound.Play("owl");
 		if (!EClass.player.prayed && EClass.pc.Evalue(1655) > 0)
 		{
-			ActPray.TryPray(EClass.pc, true);
+			ActPray.TryPray(EClass.pc, passive: true);
 		}
 		Msg.Say("endDay");
-		this.shaken = false;
+		shaken = false;
 		EClass.player.OnAdvanceDay();
 		EClass.game.relations.UpdateRelations();
 		EClass.pc.faction.OnAdvanceDay();
-		foreach (Chara chara in EClass.game.cards.listAdv)
+		foreach (Chara item in EClass.game.cards.listAdv)
 		{
-			if (!chara.IsPCFaction && EClass.rnd(10) == 0 && (chara.isDead || chara.currentZone == null || chara.currentZone.id == "somewhere"))
+			if (!item.IsPCFaction && EClass.rnd(10) == 0 && (item.isDead || item.currentZone == null || item.currentZone.id == "somewhere"))
 			{
-				chara.SetHomeZone(EClass.world.region.ListTowns().RandomItem<Zone>());
-				chara.Revive(null, false);
-				chara.MoveZone(chara.homeZone, ZoneTransition.EnterState.Auto);
+				item.SetHomeZone(EClass.world.region.ListTowns().RandomItem());
+				item.Revive();
+				item.MoveZone(item.homeZone);
 			}
 		}
 		if (EClass.pc.homeZone != null && EClass.pc.homeZone.mainFaction == EClass.pc.faction)
 		{
-			WidgetSticky.Add(new StickyHomeReport(), true);
+			WidgetSticky.Add(new StickyHomeReport());
 		}
 		if (EClass.player.stats.days >= 7 && EClass.game.cards.globalCharas.Find("fiama").currentZone == EClass.game.StartZone && EClass.game.quests.GetGlobal("fiama_starter_gift") == null && !EClass.game.quests.IsCompleted("fiama_starter_gift"))
 		{
@@ -180,19 +182,13 @@ public class GameDate : Date
 		}
 		if (EClass.game.quests.IsCompleted("exploration"))
 		{
-			Player.Flags flags = EClass.player.flags;
-			num = flags.daysAfterQuestExploration;
-			flags.daysAfterQuestExploration = num + 1;
+			EClass.player.flags.daysAfterQuestExploration++;
 			if (EClass.player.flags.daysAfterQuestExploration >= 7 && !EClass.player.flags.magicChestSent)
 			{
 				EClass.player.flags.magicChestSent = true;
-				Thing thing = ThingGen.Create("parchment", -1, -1);
+				Thing thing = ThingGen.Create("parchment");
 				thing.SetStr(53, "letter_magic_chest");
-				Thing p = ThingGen.CreateParcel(null, new Thing[]
-				{
-					ThingGen.Create("container_magic", -1, -1),
-					thing
-				});
+				Thing p = ThingGen.CreateParcel(null, ThingGen.Create("container_magic"), thing);
 				EClass.world.SendPackage(p);
 			}
 		}
@@ -200,12 +196,11 @@ public class GameDate : Date
 
 	public void AdvanceMonth()
 	{
-		int month = base.month;
-		base.month = month + 1;
+		base.month++;
 		if (base.month > 12)
 		{
 			base.month = 1;
-			this.AdvanceYear();
+			AdvanceYear();
 		}
 		EClass.player.stats.months++;
 		EClass.player.nums.OnAdvanceMonth();
@@ -226,11 +221,10 @@ public class GameDate : Date
 
 	public void AdvanceYear()
 	{
-		int year = base.year;
-		base.year = year + 1;
+		base.year++;
 		EClass.player.wellWished = false;
 		EClass.player.nums.OnAdvanceYear();
-		EClass.world.SendPackage(ThingGen.Create("gift_newyear", -1, -1));
+		EClass.world.SendPackage(ThingGen.Create("gift_newyear"));
 	}
 
 	public void ShipGoods()
@@ -252,25 +246,25 @@ public class GameDate : Date
 			zone = EClass.pc.homeZone;
 		}
 		ShippingResult shippingResult = new ShippingResult();
-		shippingResult.rawDate = EClass.world.date.GetRaw(0);
+		shippingResult.rawDate = EClass.world.date.GetRaw();
 		shippingResult.uidZone = zone.uid;
 		shippingResult.total = EClass.player.stats.shipMoney;
 		shippingResult.hearthLv = zone.branch.lv;
 		shippingResult.hearthExp = zone.branch.exp;
 		shippingResult.debt = EClass.player.debt;
-		foreach (Thing thing in container_shipping.things)
+		foreach (Thing thing3 in container_shipping.things)
 		{
-			if (thing.trait.CanBeShipped)
+			if (thing3.trait.CanBeShipped)
 			{
-				int price = thing.GetPrice(CurrencyType.Money, true, PriceType.Shipping, null);
-				int num5 = price * thing.Num;
+				int price = thing3.GetPrice(CurrencyType.Money, sell: true, PriceType.Shipping);
+				int num5 = price * thing3.Num;
 				num3 += num5;
-				num += thing.Num;
-				num2 += EClass.rndHalf(thing.Num * Mathf.Min(15 + price, 10000) / 100 + 1);
-				list.Add(thing);
+				num += thing3.Num;
+				num2 += EClass.rndHalf(thing3.Num * Mathf.Min(15 + price, 10000) / 100 + 1);
+				list.Add(thing3);
 				shippingResult.items.Add(new ShippingResult.Item
 				{
-					text = thing.Name,
+					text = thing3.Name,
 					income = num5
 				});
 			}
@@ -279,12 +273,11 @@ public class GameDate : Date
 		{
 			return;
 		}
-		num2 = num2 / 2 + 1;
-		shippingResult.hearthExpGained = num2;
-		EClass.pc.homeBranch.log.Add(Msg.Say("shipped_collect"), null);
-		foreach (string text in list2)
+		num2 = (shippingResult.hearthExpGained = num2 / 2 + 1);
+		EClass.pc.homeBranch.log.Add(Msg.Say("shipped_collect"));
+		foreach (string item in list2)
 		{
-			EClass.pc.homeBranch.log.Add(text, null);
+			EClass.pc.homeBranch.log.Add(item);
 		}
 		int shippingBonus = EClass.player.stats.GetShippingBonus(EClass.player.stats.shipMoney);
 		EClass.player.stats.shipNum += num;
@@ -294,31 +287,31 @@ public class GameDate : Date
 		{
 			num4 = shippingBonus2 - shippingBonus;
 		}
-		foreach (Thing thing2 in list)
+		foreach (Thing item2 in list)
 		{
-			thing2.Destroy();
+			item2.Destroy();
 		}
-		Thing thing3 = null;
-		Thing thing4 = null;
-		string text2 = "";
+		Thing thing = null;
+		Thing thing2 = null;
+		string text = "";
 		if (num3 != 0)
 		{
-			thing3 = ThingGen.Create("money", -1, -1).SetNum(num3);
+			thing = ThingGen.Create("money").SetNum(num3);
 		}
 		if (num4 != 0)
 		{
-			thing4 = ThingGen.Create("money2", -1, -1).SetNum(num4);
+			thing2 = ThingGen.Create("money2").SetNum(num4);
 		}
-		if (thing3 != null && thing4 != null)
+		if (thing != null && thing2 != null)
 		{
-			text2 = "_and".lang(thing3.Name, thing4.Name, null, null, null);
+			text = "_and".lang(thing.Name, thing2.Name);
 			SE.Pay();
 		}
-		else if (thing3 != null || thing4 != null)
+		else if (thing != null || thing2 != null)
 		{
-			text2 = ((thing3 != null) ? thing3 : thing4).Name;
+			text = ((thing != null) ? thing : thing2).Name;
 		}
-		EClass.pc.homeBranch.log.Add(Msg.Say((text2 == "") ? "shipped_none" : "shipped", num.ToString() ?? "", text2, null, null), FontColor.Good);
+		EClass.pc.homeBranch.log.Add(Msg.Say((text == "") ? "shipped_none" : "shipped", num.ToString() ?? "", text), FontColor.Good);
 		EClass.player.shippingResults.Add(shippingResult);
 		EClass.player.showShippingResult = EClass.core.config.game.showShippingResult;
 		for (int i = 0; i < EClass.player.shippingResults.Count - 10; i++)
@@ -327,13 +320,13 @@ public class GameDate : Date
 		}
 		zone.branch.statistics.ship += num3;
 		zone.branch.ModExp(num2);
-		if (thing3 != null)
+		if (thing != null)
 		{
-			EClass.pc.Pick(thing3, true, true);
+			EClass.pc.Pick(thing);
 		}
-		if (thing4 != null)
+		if (thing2 != null)
 		{
-			EClass.pc.Pick(thing4, true, true);
+			EClass.pc.Pick(thing2);
 		}
 	}
 
@@ -351,33 +344,33 @@ public class GameDate : Date
 			if (num > 100)
 			{
 				Debug.Log("too many tries");
-				return;
+				break;
 			}
 			int uidZone = 0;
-			foreach (Thing thing in container_deliver.things)
+			foreach (Thing thing2 in container_deliver.things)
 			{
-				int @int = thing.GetInt(102, null);
+				int @int = thing2.GetInt(102);
 				if (@int != 0)
 				{
 					uidZone = @int;
-					thing.SetInt(102, 0);
+					thing2.SetInt(102);
 					break;
 				}
 			}
 			int num2 = 20;
-			Thing thing2 = ThingGen.CreateCardboardBox(uidZone);
-			for (int i = container_deliver.things.Count - 1; i >= 0; i--)
+			Thing thing = ThingGen.CreateCardboardBox(uidZone);
+			for (int num3 = container_deliver.things.Count - 1; num3 >= 0; num3--)
 			{
-				Thing c = container_deliver.things[i];
-				thing2.AddCard(c);
+				Thing c = container_deliver.things[num3];
+				thing.AddCard(c);
 				num2 += 5;
-				if (thing2.things.IsFull(0))
+				if (thing.things.IsFull())
 				{
 					break;
 				}
 			}
-			EClass.world.SendPackage(thing2);
-			Thing bill = ThingGen.CreateBill(num2, false);
+			EClass.world.SendPackage(thing);
+			Thing bill = ThingGen.CreateBill(num2, tax: false);
 			EClass.pc.faction.TryPayBill(bill);
 		}
 	}
@@ -421,95 +414,85 @@ public class GameDate : Date
 		if (num != -1)
 		{
 			EClass.player.flags.lutz = num;
-			Thing thing = ThingGen.Create("letter", -1, -1);
-			thing.SetStr(53, "lutz_" + num.ToString());
+			Thing thing = ThingGen.Create("letter");
+			thing.SetStr(53, "lutz_" + num);
 			EClass.world.SendPackage(thing);
 		}
 	}
 
 	public void ShipRandomPackages()
 	{
-		GameDate.<>c__DisplayClass11_0 CS$<>8__locals1;
-		CS$<>8__locals1.box = ThingGen.CreateCardboardBox(-1);
-		TraitContainer traitContainer = CS$<>8__locals1.box.trait as TraitContainer;
-		bool flag = EClass.pc.homeBranch.policies.IsActive(2708, -1);
+		Thing box = ThingGen.CreateCardboardBox();
+		TraitContainer traitContainer = box.trait as TraitContainer;
+		bool flag = EClass.pc.homeBranch.policies.IsActive(2708);
 		if (EClass.rnd(EClass.debug.enable ? 1 : 100) == 0 && !EClass.player.flags.statueShipped)
 		{
 			EClass.player.flags.statueShipped = true;
-			GameDate.<ShipRandomPackages>g__Add|11_0("statue_weird", 1, ref CS$<>8__locals1);
+			Add("statue_weird", 1);
 			flag = false;
 		}
 		else if (EClass.rnd(10) == 0)
 		{
-			GameDate.<ShipRandomPackages>g__Add|11_0("234", 1, ref CS$<>8__locals1);
+			Add("234", 1);
 		}
 		else if (EClass.rnd(5) == 0)
 		{
-			GameDate.<ShipRandomPackages>g__AddThing|11_1(ThingGen.CreateFromCategory("junk", -1), 1, ref CS$<>8__locals1);
+			AddThing(ThingGen.CreateFromCategory("junk"), 1);
 		}
 		else if (EClass.rnd(10) == 0)
 		{
-			GameDate.<ShipRandomPackages>g__AddThing|11_1(ThingGen.CreateFromTag("garbage", -1), 1, ref CS$<>8__locals1);
+			AddThing(ThingGen.CreateFromTag("garbage"), 1);
 		}
 		else if (EClass.rnd(8) == 0)
 		{
-			CardRow cardRow = SpawnList.Get("chara", null, null).Select(EClass.pc.LV + 10, -1);
+			CardRow cardRow = SpawnList.Get("chara").Select(EClass.pc.LV + 10);
 			traitContainer.PutChara(cardRow.id);
 			flag = false;
 		}
 		else if (EClass.rnd(8) == 0)
 		{
-			GameDate.<ShipRandomPackages>g__Add|11_0("plat", 1 + EClass.rnd(4), ref CS$<>8__locals1);
+			Add("plat", 1 + EClass.rnd(4));
 			flag = false;
 		}
 		else if (EClass.rnd(8) == 0)
 		{
-			GameDate.<ShipRandomPackages>g__Add|11_0("money2", 1 + EClass.rnd(4), ref CS$<>8__locals1);
+			Add("money2", 1 + EClass.rnd(4));
 			flag = false;
 		}
 		else
 		{
-			string id = "trash2";
+			string id2 = "trash2";
 			if (EClass.rnd(3) == 0)
 			{
-				id = "trash1";
+				id2 = "trash1";
 			}
 			if (EClass.rnd(3) == 0)
 			{
-				id = ((EClass.rnd(3) == 0) ? "529" : "1170");
+				id2 = ((EClass.rnd(3) == 0) ? "529" : "1170");
 			}
 			if (EClass.rnd(5) == 0)
 			{
-				id = "_poop";
+				id2 = "_poop";
 			}
 			if (EClass.rnd(100) == 0)
 			{
-				id = "goodness";
+				id2 = "goodness";
 				flag = false;
 			}
-			GameDate.<ShipRandomPackages>g__Add|11_0(id, 1, ref CS$<>8__locals1);
+			Add(id2, 1);
 		}
 		if (!flag)
 		{
-			EClass.world.SendPackage(CS$<>8__locals1.box);
+			EClass.world.SendPackage(box);
+		}
+		void Add(string id, int num)
+		{
+			AddThing(ThingGen.Create(id), num);
+		}
+		void AddThing(Thing t, int num)
+		{
+			t.SetNum(num);
+			box.AddCard(t);
 		}
 	}
-
-	[CompilerGenerated]
-	internal static void <ShipRandomPackages>g__Add|11_0(string id, int num, ref GameDate.<>c__DisplayClass11_0 A_2)
-	{
-		GameDate.<ShipRandomPackages>g__AddThing|11_1(ThingGen.Create(id, -1, -1), num, ref A_2);
-	}
-
-	[CompilerGenerated]
-	internal static void <ShipRandomPackages>g__AddThing|11_1(Thing t, int num, ref GameDate.<>c__DisplayClass11_0 A_2)
-	{
-		t.SetNum(num);
-		A_2.box.AddCard(t);
-	}
-
-	[JsonProperty]
-	public bool shaken;
-
-	public const int minPerRound = 5;
 }

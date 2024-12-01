@@ -1,20 +1,6 @@
-﻿using System;
-
 public class TraitMerchantGun : TraitMerchant
 {
-	public override ShopType ShopType
-	{
-		get
-		{
-			return ShopType.Gun;
-		}
-	}
+	public override ShopType ShopType => ShopType.Gun;
 
-	public override string IdAmbience
-	{
-		get
-		{
-			return "blacksmith";
-		}
-	}
+	public override string IdAmbience => "blacksmith";
 }

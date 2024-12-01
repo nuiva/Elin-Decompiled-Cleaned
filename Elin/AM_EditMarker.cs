@@ -1,38 +1,27 @@
-﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 public class AM_EditMarker : AM_BaseTileSelect
 {
-	public override BaseTileSelector.SelectType selectType
-	{
-		get
-		{
-			return BaseTileSelector.SelectType.Single;
-		}
-	}
+	public override BaseTileSelector.SelectType selectType => BaseTileSelector.SelectType.Single;
 
-	public override bool IsBuildMode
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsBuildMode => true;
 
 	public override void OnDeactivate()
 	{
 		base.OnDeactivate();
-		foreach (Card card in EClass._map.things.Concat(EClass._map.charas))
+		foreach (Card item in ((IEnumerable<Card>)EClass._map.things).Concat((IEnumerable<Card>)EClass._map.charas))
 		{
-			if (!card.c_editorTags.IsEmpty())
+			if (item.c_editorTags.IsEmpty())
 			{
-				string[] array = card.c_editorTags.Split(',', StringSplitOptions.None);
-				for (int i = 0; i < array.Length; i++)
+				continue;
+			}
+			string[] array = item.c_editorTags.Split(',');
+			for (int i = 0; i < array.Length; i++)
+			{
+				if (array[i].ToEnum<EditorTag>() == EditorTag.Empty)
 				{
-					if (array[i].ToEnum(true) == EditorTag.Empty)
-					{
-						card.RemoveThings();
-					}
+					item.RemoveThings();
 				}
 			}
 		}
@@ -62,7 +51,7 @@ public class AM_EditMarker : AM_BaseTileSelect
 
 	public override HitResult HitTest(Point point, Point start)
 	{
-		Card target = this.GetTarget(point);
+		Card target = GetTarget(point);
 		if (target != null && target.isPlayerCreation)
 		{
 			return HitResult.Valid;
@@ -72,8 +61,8 @@ public class AM_EditMarker : AM_BaseTileSelect
 
 	public override void OnProcessTiles(Point point, int dir)
 	{
-		Card target = this.GetTarget(point);
-		CardInspector.Instance.SetCard(target, true);
+		Card target = GetTarget(point);
+		CardInspector.Instance.SetCard(target);
 	}
 
 	public Card GetTarget(Point point)

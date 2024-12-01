@@ -1,12 +1,4 @@
-﻿using System;
-
 public class TraitCitizen : TraitChara
 {
-	public override bool IsCitizen
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsCitizen => true;
 }

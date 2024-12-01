@@ -1,46 +1,12 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class ZoneInstance : EClass
 {
-	public Zone ReturnZone
+	public enum Status
 	{
-		get
-		{
-			return EClass.game.spatials.Find(this.uidZone);
-		}
-	}
-
-	public virtual ZoneTransition.EnterState ReturnState
-	{
-		get
-		{
-			return ZoneTransition.EnterState.PortalReturn;
-		}
-	}
-
-	public virtual bool WarnExit
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual void OnGenerateMap()
-	{
-	}
-
-	public virtual void OnLeaveZone()
-	{
-	}
-
-	public virtual bool ShowEnemyOnMinimap
-	{
-		get
-		{
-			return false;
-		}
+		Running,
+		Fail,
+		Success
 	}
 
 	[JsonProperty]
@@ -53,12 +19,21 @@ public class ZoneInstance : EClass
 	public int z;
 
 	[JsonProperty]
-	public ZoneInstance.Status status;
+	public Status status;
 
-	public enum Status
+	public Zone ReturnZone => EClass.game.spatials.Find(uidZone);
+
+	public virtual ZoneTransition.EnterState ReturnState => ZoneTransition.EnterState.PortalReturn;
+
+	public virtual bool WarnExit => false;
+
+	public virtual bool ShowEnemyOnMinimap => false;
+
+	public virtual void OnGenerateMap()
 	{
-		Running,
-		Fail,
-		Success
+	}
+
+	public virtual void OnLeaveZone()
+	{
 	}
 }

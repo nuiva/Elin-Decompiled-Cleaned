@@ -1,4 +1,3 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using CreativeSpore.SuperTilemapEditor;
@@ -7,403 +6,82 @@ using UnityEngine;
 
 public class EloMap : EClass
 {
-	public Region region
+	public class Cell
 	{
-		get
+		public Zone zone;
+
+		public int obj;
+
+		public Cell()
 		{
-			return EClass.world.region;
+		}
+
+		public Cell(int i)
+		{
+			obj = i / 10;
+		}
+
+		public int GetInt()
+		{
+			return obj * 10;
 		}
 	}
 
-	public string idMap
+	public class TileInfo
 	{
-		get
-		{
-			return "map_ntyris";
-		}
-	}
+		public Sprite sprite;
 
-	[OnSerializing]
-	internal void OnSerializing(StreamingContext context)
-	{
-		if (this.cells != null)
+		public bool blocked;
+
+		public bool isRoad;
+
+		public bool roadLeft;
+
+		public bool roadRight;
+
+		public bool roadUp;
+
+		public bool roadDown;
+
+		public bool rock;
+
+		public bool sea;
+
+		public bool shore;
+
+		public SourceGlobalTile.Row source;
+
+		public bool IsSnow
 		{
-			this._ints = new int[this.w, this.h];
-			for (int i = 0; i < this.h; i++)
+			get
 			{
-				for (int j = 0; j < this.w; j++)
+				if (!(idSurface == "snow_edge"))
 				{
-					this._ints[j, i] = this.cells[j, i].GetInt();
+					return idSurface == "snow";
 				}
+				return true;
 			}
 		}
-	}
 
-	[OnDeserialized]
-	internal void OnDeserialized(StreamingContext context)
-	{
-		if (this._ints != null && this._ints.GetLength(0) > 0)
+		public string idSurface => source?.alias ?? "";
+
+		public string idZoneProfile => source.zoneProfile;
+
+		public string name => source.GetName();
+
+		public bool CanEmbark => idZoneProfile != null;
+
+		public bool IsBridge => idSurface == "bridge";
+
+		public bool IsNeighborRoad
 		{
-			this.w = this._ints.GetLength(0);
-			this.h = this._ints.GetLength(1);
-			this.cells = new EloMap.Cell[this.w, this.h];
-			for (int i = 0; i < this.h; i++)
+			get
 			{
-				for (int j = 0; j < this.w; j++)
+				if (!roadLeft && !roadRight && !roadUp)
 				{
-					this.cells[j, i] = new EloMap.Cell(this._ints[j, i]);
+					return roadDown;
 				}
-			}
-		}
-	}
-
-	public void Init(EloMapActor _actor)
-	{
-		if (this.initialized)
-		{
-			return;
-		}
-		this.actor = _actor;
-		this.initialized = true;
-		this.group = this.actor.transMap.GetComponentInChildren<TilemapGroup>();
-		this.seaMap = this.group.Tilemaps[0];
-		this.cloudmap = this.group.Tilemaps[7];
-		this.extramap = this.group.Tilemaps[6];
-		this.fogmap = this.group.Tilemaps[5];
-		this.objmap = this.group.Tilemaps[4];
-		this.objScatterMap = this.group.Tilemaps[3];
-		this.w = this.fogmap.GridWidth;
-		this.h = this.fogmap.GridHeight;
-		this.minX = this.fogmap.MinGridX;
-		this.minY = this.fogmap.MinGridY;
-		if (this.cells == null)
-		{
-			this.cells = new EloMap.Cell[this.w, this.h];
-			for (int i = 0; i < this.h; i++)
-			{
-				for (int j = 0; j < this.w; j++)
-				{
-					this.cells[j, i] = new EloMap.Cell();
-				}
-			}
-		}
-		foreach (Spatial spatial in this.region.children)
-		{
-			int x = spatial.x;
-			int y = spatial.y;
-			Zone zone = spatial as Zone;
-			EloMap.Cell cell = this.GetCell(x, y);
-			if (cell == null)
-			{
-				Debug.Log("cell is null:" + x.ToString() + "/" + y.ToString());
-			}
-			else
-			{
-				cell.zone = zone;
-				if (!zone.IsInstance)
-				{
-					cell.obj = zone.icon;
-				}
-			}
-		}
-		for (int k = 0; k < this.h; k++)
-		{
-			for (int l = 0; l < this.w; l++)
-			{
-				EloMap.Cell cell2 = this.cells[l, k];
-				int num = this.minX + l;
-				int num2 = this.minY + k;
-				if (cell2.obj != 0)
-				{
-					this.objmap.SetTile(num, num2, cell2.obj, 0, eTileFlags.None);
-				}
-				if (cell2.zone != null)
-				{
-					if (cell2.zone.UseLight)
-					{
-						this.AddLight(num, num2, "elolight");
-					}
-					if (cell2.zone.IsClosed)
-					{
-						this.extramap.SetTile(num, num2, 333, 0, eTileFlags.None);
-					}
-				}
-			}
-		}
-		this.extramap.UpdateMeshImmediate();
-		this.objmap.UpdateMeshImmediate();
-	}
-
-	public void SetZone(int gx, int gy, Zone z, bool updateMesh = false)
-	{
-		EloMap.Cell cell = this.GetCell(gx, gy);
-		if (cell == null)
-		{
-			Debug.Log("cell is null:" + gx.ToString() + "/" + gy.ToString());
-			return;
-		}
-		if (z != null && cell.obj == z.icon)
-		{
-			return;
-		}
-		cell.obj = ((z != null) ? z.icon : 0);
-		if (z != null && z.source.tag.Contains("iconFlag"))
-		{
-			cell.obj = 306;
-		}
-		if (cell.zone != null && cell.zone.UseLight)
-		{
-			this.RemoveLight(gx, gy);
-		}
-		cell.zone = z;
-		if (cell.obj == 0)
-		{
-			this.objmap.Erase(gx, gy);
-		}
-		else
-		{
-			this.objmap.SetTile(gx, gy, cell.obj, 0, eTileFlags.None);
-		}
-		if (z != null && z.UseLight)
-		{
-			this.AddLight(gx, gy, "elolight");
-		}
-		if (updateMesh)
-		{
-			this.objmap.UpdateMeshImmediate();
-		}
-	}
-
-	public EloMap.Cell GetCell(Point pos)
-	{
-		return this.GetCell(pos.x + this.minX, pos.z + this.minY);
-	}
-
-	public EloMap.Cell GetCell(int gx, int gy)
-	{
-		if (gx < this.minX || gy < this.minY || gx >= this.minX + this.w || gy >= this.minY + this.h)
-		{
-			return null;
-		}
-		return this.cells[gx - this.minX, gy - this.minY];
-	}
-
-	public EloMap.TileInfo GetTileInfo(int gx, int gy)
-	{
-		EloMap.TileInfo t = new EloMap.TileInfo();
-		bool skip = false;
-		this.group.Tilemaps.ForeachReverse(delegate(STETilemap m)
-		{
-			if (m == this.fogmap | skip)
-			{
-				return;
-			}
-			int tileIdFromTileData = Tileset.GetTileIdFromTileData(m.GetTileData(gx, gy));
-			TileData tileData = new TileData(m.GetTileData(gx, gy));
-			int tileId = tileData.tileId;
-			if (tileId >= 22 && tileId <= 25)
-			{
-				bool flipHorizontal = tileData.flipHorizontal;
-				bool flipVertical = tileData.flipVertical;
-				bool rot = tileData.rot90;
-				int num = (flipHorizontal ? 1 : 0) + (flipVertical ? 1 : 0) * 2 + (rot ? 1 : 0) * 4;
-				t.isRoad = true;
-				t.roadLeft = (tileId == 23 || (tileId == 24 && (num == 4 || num == 0)) || (tileId == 25 && num != 6));
-				t.roadRight = (tileId == 23 || (tileId == 24 && (num == 6 || num == 1)) || (tileId == 25 && num != 4));
-				t.roadUp = (tileId == 22 || (tileId == 24 && (num == 4 || num == 6)) || (tileId == 25 && num != 0));
-				t.roadDown = (tileId == 22 || (tileId == 24 && (num == 0 || num == 1)) || (tileId == 25 && num != 2));
-			}
-			SourceGlobalTile.Row row = EClass.sources.globalTiles.tileAlias.TryGetValue(tileIdFromTileData, null);
-			if (row == null)
-			{
-				return;
-			}
-			t.source = row;
-			t.sprite = TilemapUtils.GetOrCreateTileSprite(this.actor.tileset, row.tiles[0], 0f);
-			string alias = row.alias;
-			if (!(alias == "bridge"))
-			{
-				if (!(alias == "wall") && !(alias == "rock"))
-				{
-					if (!(alias == "sea"))
-					{
-						if (alias == "beach")
-						{
-							t.shore = true;
-						}
-					}
-					else
-					{
-						t.sea = true;
-					}
-				}
-				else
-				{
-					t.rock = true;
-				}
-			}
-			if (!row.zoneProfile.IsEmpty())
-			{
-				skip = true;
-				return;
-			}
-			if (row.attribs[0] == 0)
-			{
-				t.blocked = true;
-			}
-		});
-		return t;
-	}
-
-	public List<SourceGlobalTile.Row> GetSources(int gx, int gy)
-	{
-		List<SourceGlobalTile.Row> list = new List<SourceGlobalTile.Row>();
-		foreach (STETilemap stetilemap in this.group.Tilemaps)
-		{
-			if (!(stetilemap == this.fogmap))
-			{
-				int tileIdFromTileData = Tileset.GetTileIdFromTileData(stetilemap.GetTileData(gx, gy));
-				if (EClass.sources.globalTiles.tileAlias.ContainsKey(tileIdFromTileData))
-				{
-					list.Add(EClass.sources.globalTiles.tileAlias.TryGetValue(tileIdFromTileData, null));
-				}
-			}
-		}
-		return list;
-	}
-
-	public bool CanBuildSite(int gx, int gy, int radius = 0, ElomapSiteType type = ElomapSiteType.Nefia)
-	{
-		if (radius != 0)
-		{
-			for (int i = gy - radius; i < gy + radius + 1; i++)
-			{
-				for (int j = gx - radius; j < gx + radius + 1; j++)
-				{
-					if (!this.CanBuildSite(j, i, 0, ElomapSiteType.Nefia))
-					{
-						return false;
-					}
-				}
-			}
-			return true;
-		}
-		EloMap.Cell cell = this.GetCell(gx, gy);
-		if (cell == null || cell.zone != null || this.cloudmap.GetTileData(gx, gy) != 4294967295U)
-		{
-			return false;
-		}
-		SourceGlobalTile.Row row = this.GetSources(gx, gy).LastItem<SourceGlobalTile.Row>();
-		if (type == ElomapSiteType.Mob)
-		{
-			if (row.id == 4 && EClass.rnd(5) == 0)
-			{
-				return false;
-			}
-			if (row.id == 7 && EClass.rnd(2) == 0)
-			{
-				return false;
-			}
-		}
-		else
-		{
-			if (row == null || !row.tag.Contains("site"))
-			{
-				return false;
-			}
-			if (row.id == 7 && EClass.rnd(5) == 0)
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-
-	public bool IsSnow(int gx, int gy)
-	{
-		if (this.GetCell(gx, gy) == null)
-		{
-			return false;
-		}
-		SourceGlobalTile.Row row = this.GetSources(gx, gy).LastItem<SourceGlobalTile.Row>();
-		return row != null && row.id == 7;
-	}
-
-	public Zone GetZone(Point p)
-	{
-		return this.GetZone(p.x + this.minX, p.z + this.minY);
-	}
-
-	public Zone GetZone(int gx, int gy)
-	{
-		Zone zone = null;
-		foreach (Spatial spatial in this.region.children)
-		{
-			if (spatial.x == gx && spatial.y == gy)
-			{
-				Zone zone2 = spatial as Zone;
-				if (((zone2 != null) ? zone2.instance : null) == null && (zone == null || zone is Zone_Field))
-				{
-					zone = (spatial as Zone);
-				}
-			}
-		}
-		return zone;
-	}
-
-	public int GetRoadDist(int gx, int gy)
-	{
-		if (!this.initialized)
-		{
-			EClass.scene.elomapActor.Initialize(EClass.world.region.elomap);
-		}
-		for (int i = 0; i < 100; i++)
-		{
-			for (int j = gy - i; j < gy + i + 1; j++)
-			{
-				for (int k = gx - i; k < gx + i + 1; k++)
-				{
-					if (j == gy - i || j == gy + i || k == gx - i || k == gx + i)
-					{
-						uint tileData = this.objScatterMap.GetTileData(k, j);
-						if (((tileData != 4294967295U) ? ((tileData & 268369920U) >> 16) : 0U) == 3U)
-						{
-							return i;
-						}
-						tileData = this.seaMap.GetTileData(k, j);
-						if (((tileData != 4294967295U) ? ((tileData & 268369920U) >> 16) : 0U) == 3U)
-						{
-							return i;
-						}
-					}
-				}
-			}
-		}
-		return 100;
-	}
-
-	public void AddLight(int gx, int gy, string id = "elolight")
-	{
-		SpriteRenderer spriteRenderer = Util.Instantiate<SpriteRenderer>(id, this.actor.transLight);
-		EloMapLight item = new EloMapLight
-		{
-			sr = spriteRenderer,
-			gx = gx,
-			gy = gy
-		};
-		this.actor.lights.Add(item);
-		spriteRenderer.transform.position = TilemapUtils.GetGridWorldPos(this.fogmap, gx, gy);
-	}
-
-	public void RemoveLight(int gx, int gy)
-	{
-		foreach (EloMapLight eloMapLight in this.actor.lights)
-		{
-			if (eloMapLight.gx == gx && eloMapLight.gy == gy)
-			{
-				UnityEngine.Object.DestroyImmediate(eloMapLight.sr.gameObject);
-				this.actor.lights.Remove(eloMapLight);
-				break;
+				return true;
 			}
 		}
 	}
@@ -411,7 +89,7 @@ public class EloMap : EClass
 	[JsonProperty]
 	public int[,] _ints;
 
-	public EloMap.Cell[,] cells;
+	public Cell[,] cells;
 
 	public TilemapGroup group;
 
@@ -439,106 +117,378 @@ public class EloMap : EClass
 
 	public EloMapActor actor;
 
-	public class Cell
+	public Region region => EClass.world.region;
+
+	public string idMap => "map_ntyris";
+
+	[OnSerializing]
+	internal void OnSerializing(StreamingContext context)
 	{
-		public Cell()
+		if (cells == null)
 		{
+			return;
 		}
-
-		public Cell(int i)
+		_ints = new int[w, h];
+		for (int i = 0; i < h; i++)
 		{
-			this.obj = i / 10;
+			for (int j = 0; j < w; j++)
+			{
+				_ints[j, i] = cells[j, i].GetInt();
+			}
 		}
-
-		public int GetInt()
-		{
-			return this.obj * 10;
-		}
-
-		public Zone zone;
-
-		public int obj;
 	}
 
-	public class TileInfo
+	[OnDeserialized]
+	internal void OnDeserialized(StreamingContext context)
 	{
-		public bool IsSnow
+		if (_ints == null || _ints.GetLength(0) <= 0)
 		{
-			get
+			return;
+		}
+		w = _ints.GetLength(0);
+		h = _ints.GetLength(1);
+		cells = new Cell[w, h];
+		for (int i = 0; i < h; i++)
+		{
+			for (int j = 0; j < w; j++)
 			{
-				return this.idSurface == "snow_edge" || this.idSurface == "snow";
+				cells[j, i] = new Cell(_ints[j, i]);
 			}
 		}
+	}
 
-		public string idSurface
+	public void Init(EloMapActor _actor)
+	{
+		if (initialized)
 		{
-			get
+			return;
+		}
+		actor = _actor;
+		initialized = true;
+		group = actor.transMap.GetComponentInChildren<TilemapGroup>();
+		seaMap = group.Tilemaps[0];
+		cloudmap = group.Tilemaps[7];
+		extramap = group.Tilemaps[6];
+		fogmap = group.Tilemaps[5];
+		objmap = group.Tilemaps[4];
+		objScatterMap = group.Tilemaps[3];
+		w = fogmap.GridWidth;
+		h = fogmap.GridHeight;
+		minX = fogmap.MinGridX;
+		minY = fogmap.MinGridY;
+		if (cells == null)
+		{
+			cells = new Cell[w, h];
+			for (int i = 0; i < h; i++)
 			{
-				SourceGlobalTile.Row row = this.source;
-				return ((row != null) ? row.alias : null) ?? "";
+				for (int j = 0; j < w; j++)
+				{
+					cells[j, i] = new Cell();
+				}
 			}
 		}
-
-		public string idZoneProfile
+		foreach (Spatial child in region.children)
 		{
-			get
+			int x = child.x;
+			int y = child.y;
+			Zone zone = child as Zone;
+			Cell cell = GetCell(x, y);
+			if (cell == null)
 			{
-				return this.source.zoneProfile;
+				Debug.Log("cell is null:" + x + "/" + y);
+				continue;
+			}
+			cell.zone = zone;
+			if (!zone.IsInstance)
+			{
+				cell.obj = zone.icon;
 			}
 		}
-
-		public string name
+		for (int k = 0; k < h; k++)
 		{
-			get
+			for (int l = 0; l < w; l++)
 			{
-				return this.source.GetName();
+				Cell cell2 = cells[l, k];
+				int num = minX + l;
+				int num2 = minY + k;
+				if (cell2.obj != 0)
+				{
+					objmap.SetTile(num, num2, cell2.obj);
+				}
+				if (cell2.zone != null)
+				{
+					if (cell2.zone.UseLight)
+					{
+						AddLight(num, num2);
+					}
+					if (cell2.zone.IsClosed)
+					{
+						extramap.SetTile(num, num2, 333);
+					}
+				}
 			}
 		}
+		extramap.UpdateMeshImmediate();
+		objmap.UpdateMeshImmediate();
+	}
 
-		public bool CanEmbark
+	public void SetZone(int gx, int gy, Zone z, bool updateMesh = false)
+	{
+		Cell cell = GetCell(gx, gy);
+		if (cell == null)
 		{
-			get
+			Debug.Log("cell is null:" + gx + "/" + gy);
+		}
+		else if (z == null || cell.obj != z.icon)
+		{
+			cell.obj = z?.icon ?? 0;
+			if (z != null && z.source.tag.Contains("iconFlag"))
 			{
-				return this.idZoneProfile != null;
+				cell.obj = 306;
+			}
+			if (cell.zone != null && cell.zone.UseLight)
+			{
+				RemoveLight(gx, gy);
+			}
+			cell.zone = z;
+			if (cell.obj == 0)
+			{
+				objmap.Erase(gx, gy);
+			}
+			else
+			{
+				objmap.SetTile(gx, gy, cell.obj);
+			}
+			if (z != null && z.UseLight)
+			{
+				AddLight(gx, gy);
+			}
+			if (updateMesh)
+			{
+				objmap.UpdateMeshImmediate();
 			}
 		}
+	}
 
-		public bool IsBridge
+	public Cell GetCell(Point pos)
+	{
+		return GetCell(pos.x + minX, pos.z + minY);
+	}
+
+	public Cell GetCell(int gx, int gy)
+	{
+		if (gx < minX || gy < minY || gx >= minX + w || gy >= minY + h)
 		{
-			get
+			return null;
+		}
+		return cells[gx - minX, gy - minY];
+	}
+
+	public TileInfo GetTileInfo(int gx, int gy)
+	{
+		TileInfo t = new TileInfo();
+		bool skip = false;
+		group.Tilemaps.ForeachReverse(delegate(STETilemap m)
+		{
+			if (!(m == fogmap || skip))
 			{
-				return this.idSurface == "bridge";
+				int tileIdFromTileData = Tileset.GetTileIdFromTileData(m.GetTileData(gx, gy));
+				TileData tileData = new TileData(m.GetTileData(gx, gy));
+				int tileId = tileData.tileId;
+				if (tileId >= 22 && tileId <= 25)
+				{
+					bool flipHorizontal = tileData.flipHorizontal;
+					bool flipVertical = tileData.flipVertical;
+					bool rot = tileData.rot90;
+					int num = (flipHorizontal ? 1 : 0) + (flipVertical ? 1 : 0) * 2 + (rot ? 1 : 0) * 4;
+					t.isRoad = true;
+					t.roadLeft = tileId == 23 || (tileId == 24 && (num == 4 || num == 0)) || (tileId == 25 && num != 6);
+					t.roadRight = tileId == 23 || (tileId == 24 && (num == 6 || num == 1)) || (tileId == 25 && num != 4);
+					t.roadUp = tileId == 22 || (tileId == 24 && (num == 4 || num == 6)) || (tileId == 25 && num != 0);
+					t.roadDown = tileId == 22 || (tileId == 24 && (num == 0 || num == 1)) || (tileId == 25 && num != 2);
+				}
+				SourceGlobalTile.Row row = EClass.sources.globalTiles.tileAlias.TryGetValue(tileIdFromTileData);
+				if (row != null)
+				{
+					t.source = row;
+					t.sprite = TilemapUtils.GetOrCreateTileSprite(actor.tileset, row.tiles[0]);
+					switch (row.alias)
+					{
+					case "wall":
+					case "rock":
+						t.rock = true;
+						break;
+					case "sea":
+						t.sea = true;
+						break;
+					case "beach":
+						t.shore = true;
+						break;
+					}
+					if (!row.zoneProfile.IsEmpty())
+					{
+						skip = true;
+					}
+					else if (row.attribs[0] == 0)
+					{
+						t.blocked = true;
+					}
+				}
+			}
+		});
+		return t;
+	}
+
+	public List<SourceGlobalTile.Row> GetSources(int gx, int gy)
+	{
+		List<SourceGlobalTile.Row> list = new List<SourceGlobalTile.Row>();
+		foreach (STETilemap tilemap in group.Tilemaps)
+		{
+			if (!(tilemap == fogmap))
+			{
+				int tileIdFromTileData = Tileset.GetTileIdFromTileData(tilemap.GetTileData(gx, gy));
+				if (EClass.sources.globalTiles.tileAlias.ContainsKey(tileIdFromTileData))
+				{
+					list.Add(EClass.sources.globalTiles.tileAlias.TryGetValue(tileIdFromTileData));
+				}
 			}
 		}
+		return list;
+	}
 
-		public bool IsNeighborRoad
+	public bool CanBuildSite(int gx, int gy, int radius = 0, ElomapSiteType type = ElomapSiteType.Nefia)
+	{
+		if (radius != 0)
 		{
-			get
+			for (int i = gy - radius; i < gy + radius + 1; i++)
 			{
-				return this.roadLeft || this.roadRight || this.roadUp || this.roadDown;
+				for (int j = gx - radius; j < gx + radius + 1; j++)
+				{
+					if (!CanBuildSite(j, i))
+					{
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+		Cell cell = GetCell(gx, gy);
+		if (cell == null || cell.zone != null || cloudmap.GetTileData(gx, gy) != uint.MaxValue)
+		{
+			return false;
+		}
+		SourceGlobalTile.Row row = GetSources(gx, gy).LastItem();
+		if (type == ElomapSiteType.Mob)
+		{
+			if (row.id == 4 && EClass.rnd(5) == 0)
+			{
+				return false;
+			}
+			if (row.id == 7 && EClass.rnd(2) == 0)
+			{
+				return false;
 			}
 		}
+		else
+		{
+			if (row == null || !row.tag.Contains("site"))
+			{
+				return false;
+			}
+			if (row.id == 7 && EClass.rnd(5) == 0)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
 
-		public Sprite sprite;
+	public bool IsSnow(int gx, int gy)
+	{
+		if (GetCell(gx, gy) == null)
+		{
+			return false;
+		}
+		SourceGlobalTile.Row row = GetSources(gx, gy).LastItem();
+		if (row != null)
+		{
+			return row.id == 7;
+		}
+		return false;
+	}
 
-		public bool blocked;
+	public Zone GetZone(Point p)
+	{
+		return GetZone(p.x + minX, p.z + minY);
+	}
 
-		public bool isRoad;
+	public Zone GetZone(int gx, int gy)
+	{
+		Zone zone = null;
+		foreach (Spatial child in region.children)
+		{
+			if (child.x == gx && child.y == gy && (child as Zone)?.instance == null && (zone == null || zone is Zone_Field))
+			{
+				zone = child as Zone;
+			}
+		}
+		return zone;
+	}
 
-		public bool roadLeft;
+	public int GetRoadDist(int gx, int gy)
+	{
+		if (!initialized)
+		{
+			EClass.scene.elomapActor.Initialize(EClass.world.region.elomap);
+		}
+		for (int i = 0; i < 100; i++)
+		{
+			for (int j = gy - i; j < gy + i + 1; j++)
+			{
+				for (int k = gx - i; k < gx + i + 1; k++)
+				{
+					if (j == gy - i || j == gy + i || k == gx - i || k == gx + i)
+					{
+						uint tileData = objScatterMap.GetTileData(k, j);
+						if (((tileData != uint.MaxValue) ? ((tileData & 0xFFF0000) >> 16) : 0) == 3)
+						{
+							return i;
+						}
+						tileData = seaMap.GetTileData(k, j);
+						if (((tileData != uint.MaxValue) ? ((tileData & 0xFFF0000) >> 16) : 0) == 3)
+						{
+							return i;
+						}
+					}
+				}
+			}
+		}
+		return 100;
+	}
 
-		public bool roadRight;
+	public void AddLight(int gx, int gy, string id = "elolight")
+	{
+		SpriteRenderer spriteRenderer = Util.Instantiate<SpriteRenderer>(id, actor.transLight);
+		EloMapLight item = new EloMapLight
+		{
+			sr = spriteRenderer,
+			gx = gx,
+			gy = gy
+		};
+		actor.lights.Add(item);
+		spriteRenderer.transform.position = TilemapUtils.GetGridWorldPos(fogmap, gx, gy);
+	}
 
-		public bool roadUp;
-
-		public bool roadDown;
-
-		public bool rock;
-
-		public bool sea;
-
-		public bool shore;
-
-		public SourceGlobalTile.Row source;
+	public void RemoveLight(int gx, int gy)
+	{
+		foreach (EloMapLight light in actor.lights)
+		{
+			if (light.gx == gx && light.gy == gy)
+			{
+				Object.DestroyImmediate(light.sr.gameObject);
+				actor.lights.Remove(light);
+				break;
+			}
+		}
 	}
 }

@@ -1,14 +1,40 @@
-﻿using System;
-
 public class SpawnSetting
 {
+	public int filterLv = -1;
+
+	public int fixedLv = -1;
+
+	public int tries = 100;
+
+	public int levelRange = -1;
+
+	public bool isBoss;
+
+	public bool isEvolved;
+
+	public string idSpawnList;
+
+	public string id;
+
+	public Rarity rarity = Rarity.Random;
+
+	public SpawnHostility hostility = SpawnHostility.Enemy;
+
+	public Hostility? forcedHostility;
+
+	public SpawnPosition position;
+
+	public static SpawnSetting Default = new SpawnSetting();
+
+	public static SpawnSetting Debug = new SpawnSetting();
+
 	public static SpawnSetting Evolved(int fixedLv = -1)
 	{
 		return new SpawnSetting
 		{
 			fixedLv = fixedLv,
 			rarity = Rarity.Legendary,
-			forcedHostility = new Hostility?(Hostility.Neutral),
+			forcedHostility = Hostility.Neutral,
 			isEvolved = true,
 			tries = 10000
 		};
@@ -24,7 +50,7 @@ public class SpawnSetting
 			isBoss = true,
 			tries = 10000,
 			levelRange = 5,
-			forcedHostility = new Hostility?(Hostility.Enemy)
+			forcedHostility = Hostility.Enemy
 		};
 	}
 
@@ -90,32 +116,4 @@ public class SpawnSetting
 			rarity = Rarity.Normal
 		};
 	}
-
-	public int filterLv = -1;
-
-	public int fixedLv = -1;
-
-	public int tries = 100;
-
-	public int levelRange = -1;
-
-	public bool isBoss;
-
-	public bool isEvolved;
-
-	public string idSpawnList;
-
-	public string id;
-
-	public Rarity rarity = Rarity.Random;
-
-	public SpawnHostility hostility = SpawnHostility.Enemy;
-
-	public Hostility? forcedHostility;
-
-	public SpawnPosition position;
-
-	public static SpawnSetting Default = new SpawnSetting();
-
-	public static SpawnSetting Debug = new SpawnSetting();
 }

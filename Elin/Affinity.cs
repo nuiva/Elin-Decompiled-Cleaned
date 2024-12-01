@@ -1,96 +1,99 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
 public class Affinity : EClass
 {
-	public static List<Affinity> list
-	{
-		get
-		{
-			return EClass.gamedata.affinities;
-		}
-	}
+	public static Chara CC;
 
-	public string Name
-	{
-		get
-		{
-			return Lang.GetList("affinity")[Affinity.list.IndexOf(this)];
-		}
-	}
+	public int value;
+
+	public int difficulty;
+
+	public static List<Affinity> list => EClass.gamedata.affinities;
+
+	public string Name => Lang.GetList("affinity")[list.IndexOf(this)];
 
 	public static Affinity Get(Chara c)
 	{
-		Affinity.CC = c;
-		foreach (Affinity affinity in Affinity.list)
+		CC = c;
+		foreach (Affinity item in list)
 		{
-			if (c._affinity < affinity.value)
+			if (c._affinity < item.value)
 			{
-				return affinity;
+				return item;
 			}
 		}
-		return Affinity.list.LastItem<Affinity>();
+		return list.LastItem();
 	}
 
 	public bool CanForceTradeEquip()
 	{
-		return Affinity.list.IndexOf(this) >= 6;
+		return list.IndexOf(this) >= 6;
 	}
 
 	public bool CanInvite()
 	{
-		return EClass.debug.inviteAnytime || Affinity.list.IndexOf(this) >= 6;
+		if (!EClass.debug.inviteAnytime)
+		{
+			return list.IndexOf(this) >= 6;
+		}
+		return true;
 	}
 
 	public bool CanMarry()
 	{
-		return EClass.debug.marryAnytime || Affinity.list.IndexOf(this) >= 7;
+		if (!EClass.debug.marryAnytime)
+		{
+			return list.IndexOf(this) >= 7;
+		}
+		return true;
 	}
 
 	public Thing OnGift(Thing t)
 	{
-		Thing result = Affinity.CC.AddThing(t.Thing, true, -1, -1);
-		EClass.pc.PlaySound("build_resource", 1f, true);
-		bool flag = t.HasTag(CTAG.gift);
-		bool flag2 = t.category.IsChildOf(Affinity.CC.GetFavCat());
-		bool flag3 = t.id == Affinity.CC.GetFavFood().id;
+		Thing result = CC.AddThing(t.Thing);
+		EClass.pc.PlaySound("build_resource");
+		int num = 0;
+		bool num2 = t.HasTag(CTAG.gift);
+		bool flag = t.category.IsChildOf(CC.GetFavCat());
+		bool flag2 = t.id == CC.GetFavFood().id;
 		if (EClass.debug.alwaysFavFood && t.trait is TraitFood)
 		{
-			flag3 = true;
+			flag2 = true;
 		}
-		int num = Mathf.Clamp(t.GetPrice(CurrencyType.Money, false, PriceType.Default, null) / (flag3 ? 10 : (flag2 ? 20 : 200)), 0, 50) + (flag3 ? 20 : (flag2 ? 5 : 0));
-		num = num * 100 / (100 + Affinity.CC.LV * 10);
-		if (flag)
+		num = Mathf.Clamp(t.GetPrice() / (flag2 ? 10 : (flag ? 20 : 200)), 0, 50) + (flag2 ? 20 : (flag ? 5 : 0));
+		num = num * 100 / (100 + CC.LV * 10);
+		if (num2)
 		{
 			num += 100;
-			Affinity.CC.Say("give_ring", Affinity.CC, null, null);
-			Affinity.CC.Talk("thanks3", null, null, false);
+			CC.Say("give_ring", CC);
+			CC.Talk("thanks3");
 		}
-		else if (flag3 || num > 20)
+		else if (flag2 || num > 20)
 		{
-			Affinity.CC.Talk("thanks3", null, null, false);
+			CC.Talk("thanks3");
 		}
-		else if (flag2 || num > 10)
+		else if (flag || num > 10)
 		{
-			Affinity.CC.Talk("thanks", null, null, false);
+			CC.Talk("thanks");
 		}
 		else
 		{
-			Affinity.CC.Talk("thanks2", null, null, false);
+			CC.Talk("thanks2");
 		}
-		Affinity.CC.ModAffinity(EClass.pc, num, true);
+		CC.ModAffinity(EClass.pc, num);
 		return result;
 	}
 
 	public void OnTalkRumor()
 	{
-		bool flag = EClass.rnd(60 + EClass.pc.CHA * 2 + EClass.pc.Evalue(291) * 3) > 50 + this.difficulty + EClass.rnd(Affinity.CC.CHA + 1);
-		Affinity.CC.ModAffinity(EClass.pc, flag ? (EClass.rnd(4) + 1) : (-EClass.rnd(4) - 1), false);
+		bool flag = EClass.rnd(60 + EClass.pc.CHA * 2 + EClass.pc.Evalue(291) * 3) > 50 + difficulty + EClass.rnd(CC.CHA + 1);
+		CC.ModAffinity(EClass.pc, flag ? (EClass.rnd(4) + 1) : (-EClass.rnd(4) - 1), show: false);
 		if (!EClass.debug.unlimitedInterest)
 		{
-			Affinity.CC.interest -= 10 + EClass.rnd(10);
+			CC.interest -= 10 + EClass.rnd(10);
 		}
 		EClass.pc.ModExp(291, 20);
 	}
@@ -99,27 +102,19 @@ public class Affinity : EClass
 	{
 		if (a < 0)
 		{
-			Affinity.CC._affinity += a;
+			CC._affinity += a;
 			return a;
 		}
 		int num = 0;
 		for (int i = 0; i < a; i++)
 		{
-			Affinity affinity = Affinity.Get(Affinity.CC);
+			Affinity affinity = Get(CC);
 			if (EClass.rnd(100 + affinity.difficulty) < 100)
 			{
-				Chara cc = Affinity.CC;
-				int affinity2 = cc._affinity;
-				cc._affinity = affinity2 + 1;
+				CC._affinity++;
 				num++;
 			}
 		}
 		return num;
 	}
-
-	public static Chara CC;
-
-	public int value;
-
-	public int difficulty;
 }

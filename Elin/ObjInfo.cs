@@ -1,73 +1,42 @@
-﻿using System;
+using System;
 
 public class ObjInfo : BaseInspectPos
 {
-	public static ObjInfo GetTemp(Point _pos)
-	{
-		if (!ObjInfo.Temp.pos.Equals(_pos))
-		{
-			ObjInfo.TempDate = new VirtualDate(0);
-		}
-		ObjInfo.Temp.pos.Set(_pos);
-		return ObjInfo.Temp;
-	}
+	public static ObjInfo Temp = new ObjInfo();
 
-	public static ObjInfo GetTempList(Point _pos)
-	{
-		if (!ObjInfo.TempList.pos.Equals(_pos))
-		{
-			ObjInfo.TempList = new ObjInfo();
-		}
-		ObjInfo.TempList.pos.Set(_pos);
-		return ObjInfo.TempList;
-	}
+	public static ObjInfo TempList = new ObjInfo();
 
-	public SourceObj.Row source
-	{
-		get
-		{
-			return this.pos.sourceObj;
-		}
-	}
+	public static VirtualDate TempDate = new VirtualDate();
 
-	public static bool _CanInspect(Point pos)
-	{
-		return pos.HasObj && (!pos.cell.HasFullBlock || pos.sourceObj.tileType.IsBlockMount);
-	}
+	public SourceObj.Row source => pos.sourceObj;
 
-	public override bool CanInspect
-	{
-		get
-		{
-			return ObjInfo._CanInspect(this.pos);
-		}
-	}
+	public override bool CanInspect => _CanInspect(pos);
 
 	public override string InspectName
 	{
 		get
 		{
-			string text = this.pos.cell.GetObjName() + (EClass.debug.showExtra ? (" " + this.pos.cell.matObj.alias) : "");
-			if (this.pos.growth != null)
+			string text = pos.cell.GetObjName() + (EClass.debug.showExtra ? (" " + pos.cell.matObj.alias) : "");
+			if (pos.growth != null)
 			{
-				if (this.pos.growth.CanHarvest())
+				if (pos.growth.CanHarvest())
 				{
-					text = "growth_harvest".lang(text, null, null, null, null);
+					text = "growth_harvest".lang(text);
 				}
-				else if (this.pos.growth.IsWithered())
+				else if (pos.growth.IsWithered())
 				{
-					text = "growth_withered".lang(text, null, null, null, null);
+					text = "growth_withered".lang(text);
 				}
-				else if (this.pos.growth.IsMature)
+				else if (pos.growth.IsMature)
 				{
-					text = "growth_mature".lang(text, null, null, null, null);
+					text = "growth_mature".lang(text);
 				}
-				if ((EClass._zone.IsPCFaction || EClass._zone is Zone_Tent) && this.pos.growth.NeedSunlight && !this.pos.growth.CanGrow(ObjInfo.TempDate))
+				if ((EClass._zone.IsPCFaction || EClass._zone is Zone_Tent) && pos.growth.NeedSunlight && !pos.growth.CanGrow(TempDate))
 				{
-					text = "growth_nosun".lang(text, null, null, null, null);
-					if (this.pos.cell.HasRoof)
+					text = "growth_nosun".lang(text);
+					if (pos.cell.HasRoof)
 					{
-						text = "growth_roof".lang(text, null, null, null, null);
+						text = "growth_roof".lang(text);
 					}
 				}
 			}
@@ -75,18 +44,45 @@ public class ObjInfo : BaseInspectPos
 		}
 	}
 
+	public static ObjInfo GetTemp(Point _pos)
+	{
+		if (!Temp.pos.Equals(_pos))
+		{
+			TempDate = new VirtualDate();
+		}
+		Temp.pos.Set(_pos);
+		return Temp;
+	}
+
+	public static ObjInfo GetTempList(Point _pos)
+	{
+		if (!TempList.pos.Equals(_pos))
+		{
+			TempList = new ObjInfo();
+		}
+		TempList.pos.Set(_pos);
+		return TempList;
+	}
+
+	public static bool _CanInspect(Point pos)
+	{
+		if (pos.HasObj)
+		{
+			if (pos.cell.HasFullBlock)
+			{
+				return pos.sourceObj.tileType.IsBlockMount;
+			}
+			return true;
+		}
+		return false;
+	}
+
 	public override void WriteNote(UINote n, Action<UINote> onWriteNote = null, IInspect.NoteMode mode = IInspect.NoteMode.Default, Recipe recipe = null)
 	{
 		n.Clear();
-		UIItem uiitem = n.AddHeaderCard(this.source.GetName(), null);
-		this.source.SetImage(uiitem.image2, null, this.source.GetColorInt(this.pos.cell.matObj), true, 0, 0);
-		n.AddText("isMadeOf".lang(this.source.GetText("name", false), null, null, null, null), FontColor.DontChange);
+		UIItem uIItem = n.AddHeaderCard(source.GetName());
+		source.SetImage(uIItem.image2, null, source.GetColorInt(pos.cell.matObj));
+		n.AddText("isMadeOf".lang(source.GetText()));
 		n.Build();
 	}
-
-	public static ObjInfo Temp = new ObjInfo();
-
-	public static ObjInfo TempList = new ObjInfo();
-
-	public static VirtualDate TempDate = new VirtualDate(0);
 }

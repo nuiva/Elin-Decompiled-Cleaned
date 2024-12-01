@@ -1,15 +1,13 @@
-﻿using System;
-
 public class SpatialGen : EClass
 {
 	public static Spatial CreateRecursive(string id, Spatial parent = null)
 	{
-		Spatial spatial = SpatialGen.Create(id, parent, true, -99999, -99999, 0);
+		Spatial spatial = Create(id, parent, register: true);
 		foreach (SourceZone.Row row in EClass.sources.zones.rows)
 		{
 			if ((!row.tag.Contains("debug") || EClass.debug.enable) && row.parent == id)
 			{
-				SpatialGen.CreateRecursive(row.id, spatial);
+				CreateRecursive(row.id, spatial);
 			}
 		}
 		return spatial;
@@ -21,8 +19,8 @@ public class SpatialGen : EClass
 		Spatial spatial = ClassCache.Create<Spatial>(row.type, "Elin");
 		if (x == -99999)
 		{
-			x = ((row.pos.Length != 0) ? row.pos[0] : -1000);
-			y = ((row.pos.Length != 0) ? row.pos[1] : -1000);
+			x = ((row.pos.Length != 0) ? row.pos[0] : (-1000));
+			y = ((row.pos.Length != 0) ? row.pos[1] : (-1000));
 		}
 		if (icon == 0 && row.pos.Length != 0)
 		{
@@ -33,10 +31,7 @@ public class SpatialGen : EClass
 		{
 			spatial.Register();
 		}
-		if (parent != null)
-		{
-			parent.AddChild(spatial);
-		}
+		parent?.AddChild(spatial);
 		spatial.OnAfterCreate();
 		return spatial;
 	}
@@ -44,12 +39,12 @@ public class SpatialGen : EClass
 	public static Zone CreateInstance(string id, ZoneInstance instance)
 	{
 		Zone topZone = EClass._zone.GetTopZone();
-		Zone zone = SpatialGen.Create(id, EClass._zone.Region, true, topZone.x, topZone.y, 0) as Zone;
-		zone.instance = instance;
+		Zone obj = Create(id, EClass._zone.Region, register: true, topZone.x, topZone.y) as Zone;
+		obj.instance = instance;
 		instance.x = EClass.pc.pos.x;
 		instance.z = EClass.pc.pos.z;
 		instance.uidZone = EClass._zone.uid;
-		zone.dateExpire = EClass.world.date.GetRaw(0) + 1440;
-		return zone;
+		obj.dateExpire = EClass.world.date.GetRaw() + 1440;
+		return obj;
 	}
 }

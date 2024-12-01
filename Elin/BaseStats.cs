@@ -1,30 +1,28 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class BaseStats : EClass
 {
-	public SourceStat.Row source
-	{
-		get
-		{
-			SourceStat.Row result;
-			if ((result = this._source) == null)
-			{
-				result = (this._source = EClass.sources.stats.map[this.id]);
-			}
-			return result;
-		}
-	}
+	public static Chara CC;
 
-	public virtual Emo2 EmoIcon
-	{
-		get
-		{
-			return Emo2.none;
-		}
-	}
+	[JsonProperty]
+	public int id;
+
+	public SourceStat.Row _source;
+
+	public SourceStat.Row source => _source ?? (_source = EClass.sources.stats.map[id]);
+
+	public virtual Emo2 EmoIcon => Emo2.none;
+
+	public virtual ConditionType Type => source.group.ToEnum<ConditionType>();
+
+	public virtual string idSprite => source.element.IsEmpty(source.alias);
+
+	public virtual bool ShowInWidget => true;
+
+	public virtual Chara Owner => CC;
 
 	public virtual Color GetColor(Gradient gradient)
 	{
@@ -33,20 +31,12 @@ public class BaseStats : EClass
 
 	public virtual Color GetColor(SkinColorProfile c)
 	{
-		return this.GetColor(c.gradients[this.source.colors.IsEmpty("default")]);
+		return GetColor(c.gradients[source.colors.IsEmpty("default")]);
 	}
 
 	public Color GetColor()
 	{
-		return this.GetColor(SkinManager.CurrentColors);
-	}
-
-	public virtual ConditionType Type
-	{
-		get
-		{
-			return this.source.group.ToEnum(true);
-		}
+		return GetColor(SkinManager.CurrentColors);
 	}
 
 	public virtual string GetText()
@@ -56,7 +46,7 @@ public class BaseStats : EClass
 
 	public virtual string GetPhaseStr()
 	{
-		return this.GetText();
+		return GetText();
 	}
 
 	public virtual int GetValue()
@@ -64,17 +54,9 @@ public class BaseStats : EClass
 		return 0;
 	}
 
-	public virtual string idSprite
-	{
-		get
-		{
-			return this.source.element.IsEmpty(this.source.alias);
-		}
-	}
-
 	public virtual Sprite GetSprite()
 	{
-		return SpriteSheet.Get("Media/Graphics/Icon/Element/icon_elements", this.idSprite) ?? EClass.core.refs.spriteDefaultCondition;
+		return SpriteSheet.Get("Media/Graphics/Icon/Element/icon_elements", idSprite) ?? EClass.core.refs.spriteDefaultCondition;
 	}
 
 	public virtual void SetText(UIText t, SkinColorProfile cols = null)
@@ -83,15 +65,7 @@ public class BaseStats : EClass
 		{
 			cols = EClass.ui.skins.currentSkin.colors._default;
 		}
-		t.SetText(this.GetText(), this.GetColor(cols));
-	}
-
-	public virtual bool ShowInWidget
-	{
-		get
-		{
-			return true;
-		}
+		t.SetText(GetText(), GetColor(cols));
 	}
 
 	public virtual int GetPhase()
@@ -99,66 +73,51 @@ public class BaseStats : EClass
 		return 0;
 	}
 
-	public virtual Chara Owner
-	{
-		get
-		{
-			return BaseStats.CC;
-		}
-	}
-
 	public void PopText()
 	{
-		if (!EClass.core.IsGameStarted || !this.Owner.ShouldShowMsg)
+		if (EClass.core.IsGameStarted && Owner.ShouldShowMsg)
 		{
-			return;
+			string phaseStr = GetPhaseStr();
+			if (!phaseStr.IsEmpty() && !(phaseStr == "#"))
+			{
+				Popper popper = EClass.scene.popper.Pop(Owner.renderer.PositionCenter(), "Condition");
+				Color c = GetColor() * 1.3f;
+				c.r += 0.3f;
+				c.g += 0.3f;
+				c.b += 0.3f;
+				popper.SetText(phaseStr, c);
+			}
 		}
-		string phaseStr = this.GetPhaseStr();
-		if (phaseStr.IsEmpty() || phaseStr == "#")
-		{
-			return;
-		}
-		Popper popper = EClass.scene.popper.Pop(this.Owner.renderer.PositionCenter(), "Condition");
-		Color c = this.GetColor() * 1.3f;
-		c.r += 0.3f;
-		c.g += 0.3f;
-		c.b += 0.3f;
-		popper.SetText(phaseStr, c);
 	}
 
 	public virtual void WriteNote(UINote n, Action<UINote> onWriteNote = null)
 	{
 		n.Clear();
-		n.AddHeader(this.source.GetName(), null);
-		n.AddText("NoteText_flavor_element", this.source.GetDetail(), FontColor.DontChange);
-		this._WriteNote(n, false);
+		n.AddHeader(source.GetName());
+		n.AddText("NoteText_flavor_element", source.GetDetail());
+		_WriteNote(n);
 		n.Build();
 	}
 
 	public virtual void _WriteNote(UINote n, bool asChild = false)
 	{
 		List<string> list = new List<string>();
-		foreach (string key in this.source.nullify)
+		string[] nullify = source.nullify;
+		foreach (string key in nullify)
 		{
-			list.Add("hintNullify".lang(EClass.sources.stats.alias[key].GetName(), null, null, null, null));
+			list.Add("hintNullify".lang(EClass.sources.stats.alias[key].GetName()));
 		}
-		if (list.Count > 0)
+		if (list.Count <= 0)
 		{
-			if (!asChild)
-			{
-				n.Space(8, 1);
-			}
-			foreach (string str in list)
-			{
-				n.AddText("_bullet".lang() + str, FontColor.DontChange);
-			}
+			return;
+		}
+		if (!asChild)
+		{
+			n.Space(8);
+		}
+		foreach (string item in list)
+		{
+			n.AddText("_bullet".lang() + item);
 		}
 	}
-
-	public static Chara CC;
-
-	[JsonProperty]
-	public int id;
-
-	public SourceStat.Row _source;
 }

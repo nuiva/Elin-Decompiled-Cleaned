@@ -1,92 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 public class SourceHobby : SourceDataInt<SourceHobby.Row>
 {
-	public override SourceHobby.Row CreateRow()
-	{
-		return new SourceHobby.Row
-		{
-			id = SourceData.GetInt(0),
-			alias = SourceData.GetString(1),
-			type = SourceData.GetString(2),
-			name_JP = SourceData.GetString(3),
-			name = SourceData.GetString(4),
-			ai = SourceData.GetString(5),
-			talk = SourceData.GetString(6),
-			area = SourceData.GetString(7),
-			destTrait = SourceData.GetString(8),
-			workTag = SourceData.GetString(9),
-			expedition = SourceData.GetString(10),
-			resources = SourceData.GetIntArray(11),
-			randomRange = SourceData.GetInt(12),
-			modifiers = SourceData.GetStringArray(13),
-			tax = SourceData.GetInt(14),
-			things = SourceData.GetStringArray(15),
-			elements = Core.ParseElements(SourceData.GetStr(16, false)),
-			skill = SourceData.GetString(17),
-			detail_JP = SourceData.GetString(18),
-			detail = SourceData.GetString(19)
-		};
-	}
-
-	public override void SetRow(SourceHobby.Row r)
-	{
-		this.map[r.id] = r;
-	}
-
-	public override void OnInit()
-	{
-		foreach (SourceHobby.Row row in this.rows)
-		{
-			string type = row.type;
-			if (!(type == "Hobby"))
-			{
-				if (!(type == "Work"))
-				{
-					if (type == "Both")
-					{
-						this.listHobbies.Add(row);
-						this.listWorks.Add(row);
-					}
-				}
-				else
-				{
-					this.listWorks.Add(row);
-				}
-			}
-			else
-			{
-				this.listHobbies.Add(row);
-			}
-		}
-	}
-
-	[NonSerialized]
-	public List<SourceHobby.Row> listHobbies = new List<SourceHobby.Row>();
-
-	[NonSerialized]
-	public List<SourceHobby.Row> listWorks = new List<SourceHobby.Row>();
-
 	[Serializable]
-	public class Row : SourceData.BaseRow
+	public class Row : BaseRow
 	{
-		public override bool UseAlias
-		{
-			get
-			{
-				return true;
-			}
-		}
-
-		public override string GetAlias
-		{
-			get
-			{
-				return this.alias;
-			}
-		}
-
 		public int id;
 
 		public string alias;
@@ -130,5 +49,67 @@ public class SourceHobby : SourceDataInt<SourceHobby.Row>
 		public string name_L;
 
 		public string detail_L;
+
+		public override bool UseAlias => true;
+
+		public override string GetAlias => alias;
+	}
+
+	[NonSerialized]
+	public List<Row> listHobbies = new List<Row>();
+
+	[NonSerialized]
+	public List<Row> listWorks = new List<Row>();
+
+	public override Row CreateRow()
+	{
+		return new Row
+		{
+			id = SourceData.GetInt(0),
+			alias = SourceData.GetString(1),
+			type = SourceData.GetString(2),
+			name_JP = SourceData.GetString(3),
+			name = SourceData.GetString(4),
+			ai = SourceData.GetString(5),
+			talk = SourceData.GetString(6),
+			area = SourceData.GetString(7),
+			destTrait = SourceData.GetString(8),
+			workTag = SourceData.GetString(9),
+			expedition = SourceData.GetString(10),
+			resources = SourceData.GetIntArray(11),
+			randomRange = SourceData.GetInt(12),
+			modifiers = SourceData.GetStringArray(13),
+			tax = SourceData.GetInt(14),
+			things = SourceData.GetStringArray(15),
+			elements = Core.ParseElements(SourceData.GetStr(16)),
+			skill = SourceData.GetString(17),
+			detail_JP = SourceData.GetString(18),
+			detail = SourceData.GetString(19)
+		};
+	}
+
+	public override void SetRow(Row r)
+	{
+		map[r.id] = r;
+	}
+
+	public override void OnInit()
+	{
+		foreach (Row row in rows)
+		{
+			switch (row.type)
+			{
+			case "Hobby":
+				listHobbies.Add(row);
+				break;
+			case "Work":
+				listWorks.Add(row);
+				break;
+			case "Both":
+				listHobbies.Add(row);
+				listWorks.Add(row);
+				break;
+			}
+		}
 	}
 }

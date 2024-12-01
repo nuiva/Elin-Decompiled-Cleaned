@@ -1,246 +1,233 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class TraitBaseSpellbook : TraitScroll
 {
-	public virtual TraitBaseSpellbook.Type BookType
+	public enum Type
 	{
-		get
-		{
-			return TraitBaseSpellbook.Type.Spell;
-		}
+		Ancient,
+		Spell,
+		RandomSpell,
+		Ero,
+		Dojin
 	}
 
-	public virtual int Difficulty
+	public static ElementSelecter selecter = new ElementSelecter
 	{
-		get
-		{
-			return 10 + this.owner.LV;
-		}
-	}
+		type = "B",
+		useDomain = true
+	};
+
+	public virtual Type BookType => Type.Spell;
+
+	public virtual int Difficulty => 10 + owner.LV;
+
+	public override bool CanStack => false;
+
+	public override bool HasCharges => true;
+
+	public override float MTPValue => 10f;
 
 	public override bool CanRead(Chara c)
 	{
 		return !c.isBlind;
 	}
 
-	public override bool CanStack
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public override bool HasCharges
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public override float MTPValue
-	{
-		get
-		{
-			return 10f;
-		}
-	}
-
 	public override int GetActDuration(Chara c)
 	{
-		return Mathf.Max(this.Difficulty, 100) * Mathf.Max(100 - (int)Mathf.Sqrt((float)c.Evalue(285)) * 7, 10) / 400;
+		return Mathf.Max(Difficulty, 100) * Mathf.Max(100 - (int)Mathf.Sqrt(c.Evalue(285)) * 7, 10) / 400;
 	}
 
 	public override void OnCreate(int lv)
 	{
-		this.owner.c_charges = 1 + EClass.rnd(4) + EClass.rnd(EClass.rnd(4) + 1);
-		switch (this.BookType)
+		owner.c_charges = 1 + EClass.rnd(4) + EClass.rnd(EClass.rnd(4) + 1);
+		switch (BookType)
 		{
-		case TraitBaseSpellbook.Type.Ancient:
+		case Type.RandomSpell:
+			owner.refVal = selecter.Select(lv);
+			break;
+		case Type.Ancient:
 		{
 			int max = Lang.GetList("ancientbook").Length;
-			this.owner.refVal = EClass.rnd(Mathf.Clamp(EClass.rnd(lv / 5 + 5), 1, max));
-			return;
-		}
-		case TraitBaseSpellbook.Type.Spell:
+			owner.refVal = EClass.rnd(Mathf.Clamp(EClass.rnd(lv / 5 + 5), 1, max));
 			break;
-		case TraitBaseSpellbook.Type.RandomSpell:
-			this.owner.refVal = TraitBaseSpellbook.selecter.Select(lv);
-			return;
-		case TraitBaseSpellbook.Type.Ero:
+		}
+		case Type.Ero:
 		{
-			IEnumerable<SourceChara.Row> ie = from a in EClass.sources.charas.rows
-			where !a.name.IsEmpty() && a.name.Length > 2 && a.name[0] != '<' && a.race != "god"
-			select a;
-			this.owner.c_idRefName = ie.RandomItem<SourceChara.Row>().id;
-			return;
-		}
-		case TraitBaseSpellbook.Type.Dojin:
-			this.owner.c_idRefName = EClass.game.religions.dictAll.RandomItem<string, Religion>().id;
+			IEnumerable<SourceChara.Row> ie = EClass.sources.charas.rows.Where((SourceChara.Row a) => !a.name.IsEmpty() && a.name.Length > 2 && a.name[0] != '<' && a.race != "god");
+			owner.c_idRefName = ie.RandomItem().id;
 			break;
-		default:
-			return;
+		}
+		case Type.Dojin:
+			owner.c_idRefName = EClass.game.religions.dictAll.RandomItem().id;
+			break;
+		case Type.Spell:
+			break;
 		}
 	}
 
 	public override bool TryProgress(AIProgress p)
 	{
-		TraitBaseSpellbook.<>c__DisplayClass15_0 CS$<>8__locals1;
-		CS$<>8__locals1.c = p.owner;
-		if (this.BookType == TraitBaseSpellbook.Type.Ancient && this.owner.isOn)
+		Chara c = p.owner;
+		if (BookType == Type.Ancient && owner.isOn)
 		{
-			if (CS$<>8__locals1.c.IsPC)
+			if (c.IsPC)
 			{
-				CS$<>8__locals1.c.Say("alreadyDecoded", null, null);
+				c.Say("alreadyDecoded");
 			}
 			return false;
 		}
-		if (CS$<>8__locals1.c.isBlind)
+		if (c.isBlind)
 		{
-			CS$<>8__locals1.c.Say("blinded", CS$<>8__locals1.c, null, null);
+			c.Say("blinded", c);
 			return false;
 		}
-		CS$<>8__locals1.diff = Mathf.Max(1, this.Difficulty * ((this.owner.blessedState >= BlessedState.Blessed) ? 75 : ((this.owner.blessedState <= BlessedState.Cursed) ? 300 : 100)) / 100);
-		CS$<>8__locals1.check = Mathf.Max(1, CS$<>8__locals1.c.Evalue(this.eleParent) * (100 + CS$<>8__locals1.c.Evalue(285) * 10) / 100);
-		if (TraitBaseSpellbook.<TryProgress>g__ReadCheck|15_0(ref CS$<>8__locals1) || EClass.debug.godMode || this.owner.HasEditorTag(EditorTag.NoReadFail))
+		int diff = Mathf.Max(1, Difficulty * ((owner.blessedState >= BlessedState.Blessed) ? 75 : ((owner.blessedState <= BlessedState.Cursed) ? 300 : 100)) / 100);
+		int check = Mathf.Max(1, c.Evalue(eleParent) * (100 + c.Evalue(285) * 10) / 100);
+		if (ReadCheck() || EClass.debug.godMode || owner.HasEditorTag(EditorTag.NoReadFail))
 		{
 			return true;
 		}
-		TraitBaseSpellbook.ReadFailEffect(CS$<>8__locals1.c);
-		this.ModCharge(CS$<>8__locals1.c, -1);
+		ReadFailEffect(c);
+		ModCharge(c);
 		return false;
+		bool ReadCheck()
+		{
+			if (EClass.rnd(4) != 0 && (c.isConfused || c.HasCondition<ConDim>()))
+			{
+				return false;
+			}
+			if (check > diff * 3)
+			{
+				return true;
+			}
+			if (EClass.rnd(check * 30) < diff)
+			{
+				return false;
+			}
+			return true;
+		}
 	}
 
 	public static void ReadFailEffect(Chara c)
 	{
 		if (EClass.rnd(2) == 0)
 		{
-			c.Say("spell_fail_mana", c, null, null);
+			c.Say("spell_fail_mana", c);
 			c.mana.Mod(-c.mana.max / (c.IsPC ? 2 : 5));
-			return;
 		}
-		if (EClass.rnd(3) == 0)
+		else if (EClass.rnd(3) == 0)
 		{
-			c.Say("spell_fail_confuse", c, null, null);
-			c.AddCondition<ConConfuse>(100, false);
-			return;
+			c.Say("spell_fail_confuse", c);
+			c.AddCondition<ConConfuse>();
 		}
-		if (EClass.rnd(3) == 0)
+		else if (EClass.rnd(3) == 0)
 		{
-			c.Say("spell_fail_monster", c, null, null);
-			c.PlaySound("spell_funnel", 1f, true);
+			c.Say("spell_fail_monster", c);
+			c.PlaySound("spell_funnel");
 			for (int i = 0; i < 1 + EClass._zone.DangerLv / 15 + EClass.rnd(3 + EClass._zone.DangerLv / 15); i++)
 			{
-				Chara chara = CharaGen.CreateFromFilter("c_readFail", EClass._zone.DangerLv, -1);
-				EClass._zone.AddCard(chara, c.pos.GetNearestPoint(false, false, true, false));
+				Chara chara = CharaGen.CreateFromFilter("c_readFail", EClass._zone.DangerLv);
+				EClass._zone.AddCard(chara, c.pos.GetNearestPoint(allowBlock: false, allowChara: false));
 				chara.pos.PlayEffect("teleport");
 			}
-			return;
 		}
-		c.Say("spell_fail_teleport", c, null, null);
-		if (c.IsPCFaction && !c.IsPC)
+		else
 		{
-			c.SayNothingHappans();
-			return;
+			c.Say("spell_fail_teleport", c);
+			if (c.IsPCFaction && !c.IsPC)
+			{
+				c.SayNothingHappans();
+			}
+			else
+			{
+				ActEffect.Proc(EffectId.Teleport, c);
+			}
 		}
-		ActEffect.Proc(EffectId.Teleport, c, null, 100, default(ActRef));
 	}
 
 	public override void OnRead(Chara c)
 	{
-		bool flag = this.BookType == TraitBaseSpellbook.Type.Spell || this.BookType == TraitBaseSpellbook.Type.RandomSpell;
+		bool flag = BookType == Type.Spell || BookType == Type.RandomSpell;
 		int a = -1;
-		string name = this.owner.Name;
+		string name = owner.Name;
 		if (c.IsPCParty)
 		{
-			Thing thing = this.owner.Thing;
-			if (thing != null)
-			{
-				thing.Identify(true, IDTSource.SuperiorIdentify);
-			}
-			this.owner.isOn = true;
+			owner.Thing?.Identify(show: true, IDTSource.SuperiorIdentify);
+			owner.isOn = true;
 		}
-		switch (this.BookType)
+		switch (BookType)
 		{
-		case TraitBaseSpellbook.Type.Ancient:
-			c.Say("book_decode", c, name, null);
+		case Type.Ancient:
+			c.Say("book_decode", c, name);
 			if (!c.IsPC)
 			{
-				this.ModCharge(c, -this.owner.c_charges);
+				ModCharge(c, -owner.c_charges);
 			}
 			if (c.IsPC)
 			{
-				Guild.Mage.AddContribution(5 + this.owner.refVal * 2);
+				Guild.Mage.AddContribution(5 + owner.refVal * 2);
 			}
 			break;
-		case TraitBaseSpellbook.Type.Spell:
-		case TraitBaseSpellbook.Type.RandomSpell:
+		case Type.Spell:
+		case Type.RandomSpell:
 			if (c.IsPC)
 			{
-				c.GainAbility(this.source.id, 100);
+				c.GainAbility(source.id);
 			}
-			this.ModCharge(c, -1);
+			ModCharge(c);
 			break;
-		case TraitBaseSpellbook.Type.Ero:
-		case TraitBaseSpellbook.Type.Dojin:
-		{
-			c.PlaySound("wow", 1f, true);
-			c.Say("book_decode", c, this.owner, null, null);
+		case Type.Ero:
+		case Type.Dojin:
+			c.PlaySound("wow");
+			c.Say("book_decode", c, owner);
 			if (!c.IsPC)
 			{
-				c.Talk("wow", null, null, false);
+				c.Talk("wow");
 			}
-			TraitBaseSpellbook.Type bookType = this.BookType;
-			if (bookType != TraitBaseSpellbook.Type.Ero)
+			switch (BookType)
 			{
-				if (bookType == TraitBaseSpellbook.Type.Dojin)
-				{
-					Religion religion = EClass.game.religions.dictAll.TryGetValue(this.owner.c_idRefName, null) ?? EClass.game.religions.Eyth;
-					if (c.IsPC)
-					{
-						EClass.player.ModKarma(-1);
-					}
-					c.AddCondition<ConInsane>(500, false);
-					c.AddCondition<ConFaint>(100, false);
-					if (!c.IsPC && c.faith != religion)
-					{
-						if (!c.source.faith.IsEmpty())
-						{
-							c.Say("faith_stands", c, null, null);
-						}
-						else
-						{
-							religion.JoinFaith(c);
-							a = -this.owner.c_charges;
-						}
-					}
-				}
-			}
-			else
-			{
+			case Type.Ero:
 				if (c.IsPC)
 				{
 					EClass.pc.SAN.Mod(-(EClass.rnd(5) + 1));
 				}
-				if (!this.owner.c_idRefName.IsEmpty())
+				if (!owner.c_idRefName.IsEmpty())
 				{
-					CardRow cardRow = EClass.sources.cards.map[this.owner.c_idRefName];
-					c.Say("learn_weakspot", c, cardRow.GetName(), null);
+					CardRow cardRow = EClass.sources.cards.map[owner.c_idRefName];
+					c.Say("learn_weakspot", c, cardRow.GetName());
 					if (c.IsPC)
 					{
 						EClass.player.codex.AddWeakspot(cardRow.id);
 					}
 				}
-				ActEffect.Proc(EffectId.Sleep, c, null, 100, default(ActRef));
+				ActEffect.Proc(EffectId.Sleep, c);
+				break;
+			case Type.Dojin:
+			{
+				Religion religion = EClass.game.religions.dictAll.TryGetValue(owner.c_idRefName) ?? EClass.game.religions.Eyth;
+				if (c.IsPC)
+				{
+					EClass.player.ModKarma(-1);
+				}
+				c.AddCondition<ConInsane>(500);
+				c.AddCondition<ConFaint>();
+				if (!c.IsPC && c.faith != religion)
+				{
+					if (!c.source.faith.IsEmpty())
+					{
+						c.Say("faith_stands", c);
+						break;
+					}
+					religion.JoinFaith(c);
+					a = -owner.c_charges;
+				}
+				break;
 			}
-			this.ModCharge(c, a);
+			}
+			ModCharge(c, a);
 			break;
-		}
 		}
 		c.ModExp(285, 180);
 		if (flag)
@@ -255,65 +242,41 @@ public class TraitBaseSpellbook : TraitScroll
 
 	public void ModCharge(Chara c, int a = -1)
 	{
-		this.owner.ModCharge(a, false);
-		LayerInventory.SetDirtyAll(false);
-		if (this.owner.c_charges <= 0)
+		owner.ModCharge(a);
+		LayerInventory.SetDirtyAll();
+		if (owner.c_charges <= 0)
 		{
-			c.Say("spellbookCrumble", this.owner, null, null);
-			this.owner.ModNum(-1, true);
+			c.Say("spellbookCrumble", owner);
+			owner.ModNum(-1);
 		}
 	}
 
 	public override void SetName(ref string s)
 	{
-		if (!this.owner.IsIdentified)
+		if (!owner.IsIdentified)
 		{
 			return;
 		}
-		TraitBaseSpellbook.Type bookType = this.BookType;
-		if (bookType != TraitBaseSpellbook.Type.Ancient)
+		switch (BookType)
 		{
-			if (bookType - TraitBaseSpellbook.Type.Ero > 1)
+		case Type.Ancient:
+			s = "_titled".lang(Lang.GetList("ancientbook")[owner.refVal], s);
+			if (owner.isOn)
 			{
-				return;
+				s = "_deciphered ".lang(s);
 			}
-			string c_idRefName = this.owner.c_idRefName;
-			if (c_idRefName.IsEmpty())
-			{
-				return;
-			}
-			string @ref = (this.BookType == TraitBaseSpellbook.Type.Dojin) ? EClass.game.religions.dictAll[c_idRefName].Name : EClass.sources.charas.map[c_idRefName].GetName();
-			s = "_'s".lang(@ref, s, null, null, null);
-		}
-		else
+			break;
+		case Type.Ero:
+		case Type.Dojin:
 		{
-			s = "_titled".lang(Lang.GetList("ancientbook")[this.owner.refVal], s, null, null, null);
-			if (this.owner.isOn)
+			string c_idRefName = owner.c_idRefName;
+			if (!c_idRefName.IsEmpty())
 			{
-				s = "_deciphered ".lang(s, null, null, null, null);
-				return;
+				string @ref = ((BookType == Type.Dojin) ? EClass.game.religions.dictAll[c_idRefName].Name : EClass.sources.charas.map[c_idRefName].GetName());
+				s = "_'s".lang(@ref, s);
 			}
+			break;
 		}
-	}
-
-	[CompilerGenerated]
-	internal static bool <TryProgress>g__ReadCheck|15_0(ref TraitBaseSpellbook.<>c__DisplayClass15_0 A_0)
-	{
-		return (EClass.rnd(4) == 0 || (!A_0.c.isConfused && !A_0.c.HasCondition<ConDim>())) && (A_0.check > A_0.diff * 3 || EClass.rnd(A_0.check * 30) >= A_0.diff);
-	}
-
-	public static ElementSelecter selecter = new ElementSelecter
-	{
-		type = "B",
-		useDomain = true
-	};
-
-	public enum Type
-	{
-		Ancient,
-		Spell,
-		RandomSpell,
-		Ero,
-		Dojin
+		}
 	}
 }

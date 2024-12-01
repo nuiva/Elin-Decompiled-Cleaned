@@ -1,14 +1,8 @@
-﻿using System;
-
 public class ActRush : ActMelee
 {
-	public override bool ShowMapHighlight
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool ShowMapHighlight => true;
+
+	public override int PerformDistance => 6;
 
 	public override void OnMarkMapHighlights()
 	{
@@ -19,12 +13,11 @@ public class ActRush : ActMelee
 		Point dest = EClass.scene.mouseTarget.pos;
 		Los.IsVisible(EClass.pc.pos, dest, delegate(Point p, bool blocked)
 		{
-			if (p.Equals(EClass.pc.pos))
+			if (!p.Equals(EClass.pc.pos))
 			{
-				return;
+				p.cell.highlight = (byte)((blocked || p.IsBlocked || (!p.Equals(dest) && p.HasChara)) ? 4u : ((p.Distance(EClass.pc.pos) <= 2) ? 2u : 8u));
+				EClass.player.lastMarkedHighlights.Add(p.Copy());
 			}
-			p.cell.highlight = ((blocked || p.IsBlocked || (!p.Equals(dest) && p.HasChara)) ? 4 : ((p.Distance(EClass.pc.pos) <= 2) ? 2 : 8));
-			EClass.player.lastMarkedHighlights.Add(p.Copy());
 		});
 	}
 
@@ -40,15 +33,19 @@ public class ActRush : ActMelee
 			return false;
 		}
 		Act.TP.Set(flag ? EClass.scene.mouseTarget.pos : Act.TC.pos);
-		return !Act.CC.isRestrained && Act.CC.host == null && Act.CC.Dist(Act.TP) > 2 && Los.GetRushPoint(Act.CC.pos, Act.TP) != null && base.CanPerform();
-	}
-
-	public override int PerformDistance
-	{
-		get
+		if (Act.CC.isRestrained)
 		{
-			return 6;
+			return false;
 		}
+		if (Act.CC.host != null || Act.CC.Dist(Act.TP) <= 2)
+		{
+			return false;
+		}
+		if (Los.GetRushPoint(Act.CC.pos, Act.TP) == null)
+		{
+			return false;
+		}
+		return base.CanPerform();
 	}
 
 	public override bool Perform()
@@ -66,10 +63,10 @@ public class ActRush : ActMelee
 		int num = Act.CC.Dist(Act.TP);
 		Point rushPoint = Los.GetRushPoint(Act.CC.pos, Act.TP);
 		Act.CC.pos.PlayEffect("vanish");
-		Act.CC.MoveImmediate(rushPoint, true, false);
-		Act.CC.Say("rush", Act.CC, Act.TC, null, null);
-		Act.CC.PlaySound("rush", 1f, true);
+		Act.CC.MoveImmediate(rushPoint, focus: true, cancelAI: false);
+		Act.CC.Say("rush", Act.CC, Act.TC);
+		Act.CC.PlaySound("rush");
 		Act.CC.pos.PlayEffect("vanish");
-		return base.Attack(1f + 0.1f * (float)num, true);
+		return Attack(1f + 0.1f * (float)num, maxRoll: true);
 	}
 }

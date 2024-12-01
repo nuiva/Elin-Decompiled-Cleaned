@@ -1,4 +1,3 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -7,107 +6,110 @@ using UnityEngine;
 
 public class Hoard : EClass
 {
-	[OnDeserialized]
-	private void OnDeserialized(StreamingContext context)
+	public enum Mode
 	{
-		foreach (Hoard.Item item in this.list)
-		{
-			this.items.Add(item.id, item);
-		}
+		all,
+		lux,
+		junk
 	}
 
-	public Hoard.Item AddRandom(int r, bool msg = true)
+	public class Item : EClass
 	{
-		IEnumerable<SourceCollectible.Row> ie = from a in EClass.sources.collectibles.rows
-		where a.rarity == r
-		select a;
-		return this.Add(ie.RandomItem<SourceCollectible.Row>().id, 1, msg);
-	}
+		[JsonProperty]
+		public string id;
 
-	public Hoard.Item AddRandom(bool msg = true)
-	{
-		string id = EClass.sources.collectibles.rows.RandomItem<SourceCollectible.Row>().id;
-		return this.Add(id, 1, msg);
-	}
+		[JsonProperty]
+		public int[] ints = new int[5];
 
-	public Hoard.Item Add(string id)
-	{
-		SourceCollectible.Row row = EClass.sources.collectibles.map[id];
-		int num = (row.num == 0) ? 10 : row.num;
-		if (num != 1)
-		{
-			num *= 2;
-		}
-		Hoard.Item item = this.Add(row.id, num, false);
-		item.random = true;
-		return item;
-	}
+		public BitArray32 bits;
 
-	public Hoard.Item Add(string id, int num, bool msg = false)
-	{
-		if (num == 0)
+		public int num
 		{
-			return this.items.TryGetValue(id, null);
-		}
-		Hoard.Item item = null;
-		if (!this.items.TryGetValue(id, out item))
-		{
-			item = new Hoard.Item
+			get
 			{
-				id = id
-			};
-			this.list.Add(item);
-			this.items[id] = item;
+				return ints[1];
+			}
+			set
+			{
+				ints[1] = value;
+			}
 		}
-		if (item.num == item.show)
+
+		public int show
 		{
-			item.show += num;
+			get
+			{
+				return ints[2];
+			}
+			set
+			{
+				ints[2] = value;
+			}
 		}
-		item.num += num;
-		if (item.IsUnique && item.show > 1)
+
+		public bool random
 		{
-			item.show = 1;
+			get
+			{
+				return bits[0];
+			}
+			set
+			{
+				bits[0] = value;
+			}
 		}
-		if (msg)
+
+		public bool floating
 		{
-			Msg.SetColor(EClass.Colors.GetRarityColor(item.Source.rarity, true));
-			Msg.AquireItem(item.Name(num));
+			get
+			{
+				return bits[1];
+			}
+			set
+			{
+				bits[1] = value;
+			}
 		}
-		if (this.hentai)
+
+		public SourceCollectible.Row Source
 		{
-			item.show = item.num;
+			get
+			{
+				if (!EClass.sources.collectibles.initialized)
+				{
+					EClass.sources.collectibles.Init();
+				}
+				return EClass.sources.collectibles.map[id];
+			}
 		}
-		return item;
+
+		public bool IsUnique => Source.tag.Contains("unique");
+
+		[OnSerializing]
+		internal void OnSerializing(StreamingContext context)
+		{
+			ints[0] = (int)bits.Bits;
+		}
+
+		[OnDeserialized]
+		internal void _OnDeserialized(StreamingContext context)
+		{
+			bits.Bits = (uint)ints[0];
+		}
+
+		public string Name(int n)
+		{
+			return "(" + "collectible".lang() + ") [" + Lang._rarity(Source.rarity) + "] " + Source.GetName() + " x " + n;
+		}
 	}
 
-	public Sprite GetSprite(string id)
-	{
-		SpriteSheet.Add("UI/Layer/Hoard/Molds/_sprites_hoard");
-		return SpriteSheet.Get("_sprites_hoard_" + id);
-	}
-
-	public GameObject GetActor(string id)
-	{
-		EClass.sources.collectibles.Init();
-		SourceCollectible.Row row = EClass.sources.collectibles.map[id];
-		SpriteRenderer spriteRenderer = UnityEngine.Object.Instantiate<SpriteRenderer>(ResourceCache.Load<SpriteRenderer>("UI/Layer/Hoard/Molds/" + row.prefab.IsEmpty("default")));
-		spriteRenderer.sprite = this.GetSprite(id);
-		return spriteRenderer.gameObject;
-	}
-
-	public void Clear()
-	{
-		this.items.Clear();
-		this.list.Clear();
-	}
-
-	public Dictionary<string, Hoard.Item> items = new Dictionary<string, Hoard.Item>();
+	public Dictionary<string, Item> items = new Dictionary<string, Item>();
 
 	[JsonProperty]
-	public List<Hoard.Item> list = new List<Hoard.Item>();
+	public List<Item> list = new List<Item>();
 
 	[JsonProperty]
-	public Hoard.Mode mode;
+	public Mode mode;
 
 	[JsonProperty]
 	public int bg;
@@ -135,116 +137,95 @@ public class Hoard : EClass
 
 	public bool hentai;
 
-	public enum Mode
+	[OnDeserialized]
+	private void OnDeserialized(StreamingContext context)
 	{
-		all,
-		lux,
-		junk
+		foreach (Item item in list)
+		{
+			items.Add(item.id, item);
+		}
 	}
 
-	public class Item : EClass
+	public Item AddRandom(int r, bool msg = true)
 	{
-		public int num
+		IEnumerable<SourceCollectible.Row> ie = EClass.sources.collectibles.rows.Where((SourceCollectible.Row a) => a.rarity == r);
+		return Add(ie.RandomItem().id, 1, msg);
+	}
+
+	public Item AddRandom(bool msg = true)
+	{
+		string id = EClass.sources.collectibles.rows.RandomItem().id;
+		return Add(id, 1, msg);
+	}
+
+	public Item Add(string id)
+	{
+		SourceCollectible.Row row = EClass.sources.collectibles.map[id];
+		int num = ((row.num == 0) ? 10 : row.num);
+		if (num != 1)
 		{
-			get
-			{
-				return this.ints[1];
-			}
-			set
-			{
-				this.ints[1] = value;
-			}
+			num *= 2;
 		}
+		Item item = Add(row.id, num);
+		item.random = true;
+		return item;
+	}
 
-		public int show
+	public Item Add(string id, int num, bool msg = false)
+	{
+		if (num == 0)
 		{
-			get
-			{
-				return this.ints[2];
-			}
-			set
-			{
-				this.ints[2] = value;
-			}
+			return items.TryGetValue(id);
 		}
-
-		public bool random
+		Item value = null;
+		if (!items.TryGetValue(id, out value))
 		{
-			get
+			value = new Item
 			{
-				return this.bits[0];
-			}
-			set
-			{
-				this.bits[0] = value;
-			}
+				id = id
+			};
+			list.Add(value);
+			items[id] = value;
 		}
-
-		public bool floating
+		if (value.num == value.show)
 		{
-			get
-			{
-				return this.bits[1];
-			}
-			set
-			{
-				this.bits[1] = value;
-			}
+			value.show += num;
 		}
-
-		public SourceCollectible.Row Source
+		value.num += num;
+		if (value.IsUnique && value.show > 1)
 		{
-			get
-			{
-				if (!EClass.sources.collectibles.initialized)
-				{
-					EClass.sources.collectibles.Init();
-				}
-				return EClass.sources.collectibles.map[this.id];
-			}
+			value.show = 1;
 		}
-
-		public bool IsUnique
+		if (msg)
 		{
-			get
-			{
-				return this.Source.tag.Contains("unique");
-			}
+			Msg.SetColor(EClass.Colors.GetRarityColor(value.Source.rarity, light: true));
+			Msg.AquireItem(value.Name(num));
 		}
-
-		[OnSerializing]
-		internal void OnSerializing(StreamingContext context)
+		if (hentai)
 		{
-			this.ints[0] = (int)this.bits.Bits;
+			value.show = value.num;
 		}
+		return value;
+	}
 
-		[OnDeserialized]
-		internal void _OnDeserialized(StreamingContext context)
-		{
-			this.bits.Bits = (uint)this.ints[0];
-		}
+	public Sprite GetSprite(string id)
+	{
+		SpriteSheet.Add("UI/Layer/Hoard/Molds/_sprites_hoard");
+		return SpriteSheet.Get("_sprites_hoard_" + id);
+	}
 
-		public string Name(int n)
-		{
-			return string.Concat(new string[]
-			{
-				"(",
-				"collectible".lang(),
-				") [",
-				Lang._rarity(this.Source.rarity),
-				"] ",
-				this.Source.GetName(),
-				" x ",
-				n.ToString()
-			});
-		}
+	public GameObject GetActor(string id)
+	{
+		EClass.sources.collectibles.Init();
+		SourceCollectible.Row row = EClass.sources.collectibles.map[id];
+		SpriteRenderer spriteRenderer = Object.Instantiate(ResourceCache.Load<SpriteRenderer>("UI/Layer/Hoard/Molds/" + row.prefab.IsEmpty("default")));
+		spriteRenderer.sprite = GetSprite(id);
+		return spriteRenderer.gameObject;
+	}
 
-		[JsonProperty]
-		public string id;
-
-		[JsonProperty]
-		public int[] ints = new int[5];
-
-		public BitArray32 bits;
+	public void Clear()
+	{
+		items.Clear();
+		list.Clear();
 	}
 }

@@ -1,66 +1,41 @@
-﻿using System;
 using UnityEngine;
 
 public class TraitAbility : TraitCatalyst
 {
-	public override bool CanBeHeldAsFurniture
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeHeldAsFurniture => false;
 
-	public override bool CanBeDestroyed
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeDestroyed => false;
 
-	public override bool IsRod
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool IsRod => false;
+
+	public override bool CanAutofire => base.act.CanAutofire;
 
 	public override Act CreateAct()
 	{
-		return ACT.Create(EClass.sources.elements.alias.TryGetValue(this.owner.c_idAbility ?? "AI_SelfHarm", null));
-	}
-
-	public override bool CanAutofire
-	{
-		get
-		{
-			return base.act.CanAutofire;
-		}
+		return ACT.Create(EClass.sources.elements.alias.TryGetValue(owner.c_idAbility ?? "AI_SelfHarm"));
 	}
 
 	public override void SetName(ref string s)
 	{
-		if (this.owner.c_idAbility.IsEmpty())
+		if (!owner.c_idAbility.IsEmpty())
 		{
-			return;
+			s = EClass.sources.elements.alias.TryGetValue(owner.c_idAbility)?.GetName() ?? "???";
 		}
-		SourceElement.Row row = EClass.sources.elements.alias.TryGetValue(this.owner.c_idAbility, null);
-		s = (((row != null) ? row.GetName() : null) ?? "???");
 	}
 
 	public override void SetMainText(UIText t, bool hotitem)
 	{
-		Element element = EClass.pc.elements.GetElement(this.owner.c_idAbility);
+		Element element = EClass.pc.elements.GetElement(owner.c_idAbility);
 		if (element == null)
 		{
-			Debug.Log("[bug] " + this.owner.c_idAbility);
-			t.SetActive(false);
-			return;
+			Debug.Log("[bug] " + owner.c_idAbility);
+			t.SetActive(enable: false);
 		}
-		string text = element.vPotential.ToString() ?? "";
-		t.SetText(text ?? "", FontColor.Charge);
-		t.SetActive(element is Spell);
+		else
+		{
+			string text = element.vPotential.ToString() ?? "";
+			t.SetText(text ?? "", FontColor.Charge);
+			t.SetActive(element is Spell);
+		}
 	}
 }

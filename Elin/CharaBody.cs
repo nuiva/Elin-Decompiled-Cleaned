@@ -1,65 +1,65 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class CharaBody : EClass
 {
-	public int[] rawSlots
-	{
-		get
-		{
-			return this.owner.rawSlots;
-		}
-	}
+	public Chara owner;
+
+	public List<BodySlot> slots = new List<BodySlot>();
+
+	public BodySlot slotMainHand;
+
+	public BodySlot slotOffHand;
+
+	public BodySlot slotRange;
+
+	public int[] rawSlots => owner.rawSlots;
 
 	public void SetOwner(Chara chara, bool deserialized = false)
 	{
-		this.owner = chara;
-		if (deserialized)
+		owner = chara;
+		if (!deserialized)
 		{
-			if (this.rawSlots != null)
+			return;
+		}
+		if (rawSlots != null)
+		{
+			for (int i = 0; i < rawSlots.Length; i++)
 			{
-				for (int i = 0; i < this.rawSlots.Length; i++)
-				{
-					this.AddBodyPart(this.rawSlots[i], null);
-				}
+				AddBodyPart(rawSlots[i]);
 			}
-			foreach (Thing thing in this.owner.things)
+		}
+		foreach (Thing thing in owner.things)
+		{
+			if (thing.isEquipped)
 			{
-				if (thing.isEquipped)
+				int num = thing.c_equippedSlot - 1;
+				if (num < 0 || num >= slots.Count)
 				{
-					int num = thing.c_equippedSlot - 1;
-					if (num < 0 || num >= this.slots.Count)
-					{
-						thing.c_equippedSlot = 0;
-					}
-					else
-					{
-						this.slots[num].thing = thing;
-						thing.elements.SetParent(this.owner);
-					}
+					thing.c_equippedSlot = 0;
+					continue;
 				}
+				slots[num].thing = thing;
+				thing.elements.SetParent(owner);
 			}
 		}
 	}
 
 	public void Unequip(Thing thing, bool refresh = true)
 	{
-		if (!thing.isEquipped)
+		if (thing.isEquipped)
 		{
-			return;
+			Unequip(slots[thing.c_equippedSlot - 1], refresh);
 		}
-		this.Unequip(this.slots[thing.c_equippedSlot - 1], refresh);
 	}
 
 	public void UnequipAll(int idSlot)
 	{
-		foreach (BodySlot bodySlot in this.slots)
+		foreach (BodySlot slot in slots)
 		{
-			if (bodySlot.elementId == idSlot)
+			if (slot.elementId == idSlot)
 			{
-				this.Unequip(bodySlot, true);
+				Unequip(slot);
 			}
 		}
 	}
@@ -73,12 +73,12 @@ public class CharaBody : EClass
 		Thing thing = slot.thing;
 		if (EClass.pc != null)
 		{
-			EClass.pc.faction.charaElements.OnUnequip(this.owner, thing);
+			EClass.pc.faction.charaElements.OnUnequip(owner, thing);
 		}
-		thing.elements.SetParent(null);
+		thing.elements.SetParent();
 		thing.c_equippedSlot = 0;
 		slot.thing = null;
-		if (this.owner.IsPC)
+		if (owner.IsPC)
 		{
 			LayerChara.Refresh();
 			LayerInventory.SetDirty(thing);
@@ -86,111 +86,103 @@ public class CharaBody : EClass
 		}
 		if (slot.elementId == 45 && EClass.core.IsGameStarted)
 		{
-			this.owner.RecalculateFOV();
+			owner.RecalculateFOV();
 		}
-		if (refresh && this.owner.isCreated && EClass.core.IsGameStarted)
+		if (refresh && owner.isCreated && EClass.core.IsGameStarted)
 		{
-			this.owner.Refresh(false);
-			if (slot.elementId == 37 && this.owner.HasElement(1209, 1))
+			owner.Refresh();
+			if (slot.elementId == 37 && owner.HasElement(1209))
 			{
-				this.owner.Say("tail_free", this.owner, null, null);
+				owner.Say("tail_free", owner);
 			}
 		}
 	}
 
 	public bool IsEquippable(Thing thing, BodySlot slot, bool text = true)
 	{
-		CharaBody.<>c__DisplayClass11_0 CS$<>8__locals1;
-		CS$<>8__locals1.text = text;
-		CS$<>8__locals1.slot = slot;
-		if (CS$<>8__locals1.slot == null)
+		if (slot == null)
 		{
 			return false;
 		}
-		int elementId = CS$<>8__locals1.slot.elementId;
-		if (elementId != 31)
+		switch (slot.elementId)
 		{
-			if (elementId != 33)
+		case 31:
+			if (owner.HasElement(1555))
 			{
-				if (elementId == 39)
-				{
-					if (this.owner.HasElement(1552, 1))
-					{
-						return CharaBody.<IsEquippable>g__CannotEquip|11_0(ref CS$<>8__locals1);
-					}
-				}
+				return CannotEquip();
 			}
-			else if (this.owner.HasElement(1554, 1))
+			break;
+		case 33:
+			if (owner.HasElement(1554))
 			{
-				return CharaBody.<IsEquippable>g__CannotEquip|11_0(ref CS$<>8__locals1);
+				return CannotEquip();
 			}
-		}
-		else if (this.owner.HasElement(1555, 1))
-		{
-			return CharaBody.<IsEquippable>g__CannotEquip|11_0(ref CS$<>8__locals1);
-		}
-		if (this.IsTooHeavyToEquip(thing))
-		{
-			if (EClass.core.IsGameStarted && this.owner.IsPC && CS$<>8__locals1.text)
+			break;
+		case 39:
+			if (owner.HasElement(1552))
 			{
-				Msg.Say("tooHeavyToEquip", thing, null, null, null);
+				return CannotEquip();
+			}
+			break;
+		}
+		if (IsTooHeavyToEquip(thing))
+		{
+			if (EClass.core.IsGameStarted && owner.IsPC && text)
+			{
+				Msg.Say("tooHeavyToEquip", thing);
 			}
 			return false;
 		}
 		return true;
+		bool CannotEquip()
+		{
+			if (text)
+			{
+				Msg.Say("cannnotEquip", slot.element.GetName().ToLower());
+			}
+			return false;
+		}
 	}
 
 	public bool IsTooHeavyToEquip(Thing thing)
 	{
-		return this.owner.HasElement(1204, 1) && thing.ChildrenAndSelfWeight > 1000 && thing.category.slot != 44;
+		if (owner.HasElement(1204) && thing.ChildrenAndSelfWeight > 1000)
+		{
+			return thing.category.slot != 44;
+		}
+		return false;
 	}
 
 	public void UnqeuipIfTooHeavy(Thing t)
 	{
 		if (t.isEquipped)
 		{
-			BodySlot bodySlot = this.slots[t.c_equippedSlot - 1];
-			if (this.IsTooHeavyToEquip(t))
+			_ = slots[t.c_equippedSlot - 1];
+			if (IsTooHeavyToEquip(t))
 			{
-				this.owner.Say("tooHeavyToEquip", t, null, null);
-				this.Unequip(t, true);
+				owner.Say("tooHeavyToEquip", t);
+				Unequip(t);
 			}
 		}
-		if (!this.owner.IsPC && !t.isEquipped)
+		if (!owner.IsPC && !t.isEquipped)
 		{
-			this.owner.TryEquip(t, false);
+			owner.TryEquip(t);
 		}
 	}
 
 	public bool Equip(Thing thing, BodySlot slot = null, bool msg = true)
 	{
-		BodySlot bodySlot;
-		if ((bodySlot = slot) == null)
+		slot = slot ?? GetSlot(thing.category.slot) ?? GetSlot(thing.category.slot, onlyEmpty: false);
+		if (slot == slotMainHand || slot == slotOffHand)
 		{
-			bodySlot = (this.GetSlot(thing.category.slot, true, false) ?? this.GetSlot(thing.category.slot, false, false));
-		}
-		slot = bodySlot;
-		if (slot == this.slotMainHand || slot == this.slotOffHand)
-		{
-			this.owner.combatCount = 10;
+			owner.combatCount = 10;
 		}
 		if (slot == null || slot.elementId != thing.category.slot)
 		{
-			string[] array = new string[6];
-			array[0] = "could not equip:";
-			array[1] = ((thing != null) ? thing.ToString() : null);
-			array[2] = "/";
-			int num = 3;
-			BodySlot bodySlot2 = slot;
-			array[num] = ((bodySlot2 != null) ? bodySlot2.ToString() : null);
-			array[4] = "/";
-			int num2 = 5;
-			Chara chara = this.owner;
-			array[num2] = ((chara != null) ? chara.ToString() : null);
-			Debug.LogWarning(string.Concat(array));
+			Debug.LogWarning("could not equip:" + thing?.ToString() + "/" + slot?.ToString() + "/" + owner);
 			return false;
 		}
-		if (!this.IsEquippable(thing, slot, true))
+		if (!IsEquippable(thing, slot))
 		{
 			return false;
 		}
@@ -198,29 +190,29 @@ public class CharaBody : EClass
 		{
 			if (slot.thing == thing)
 			{
-				this.Unequip(slot, true);
+				Unequip(slot);
 				return false;
 			}
-			this.Unequip(slot, false);
+			Unequip(slot, refresh: false);
 		}
-		this.Unequip(thing, false);
-		if (thing.parent != this.owner)
+		Unequip(thing, refresh: false);
+		if (thing.parent != owner)
 		{
-			if (msg && this.owner.IsPC && thing.parent is Thing)
+			if (msg && owner.IsPC && thing.parent is Thing)
 			{
-				Msg.Say("movedToEquip", thing, thing.parent as Thing, null, null);
+				Msg.Say("movedToEquip", thing, thing.parent as Thing);
 			}
-			this.owner.AddCard(thing);
+			owner.AddCard(thing);
 		}
 		slot.thing = thing;
 		thing.c_equippedSlot = slot.index + 1;
-		thing.elements.SetParent(this.owner);
+		thing.elements.SetParent(owner);
 		if (EClass.pc != null)
 		{
-			EClass.pc.faction.charaElements.OnEquip(this.owner, thing);
+			EClass.pc.faction.charaElements.OnEquip(owner, thing);
 		}
-		this.owner.SetTempHand(0, 0);
-		if (this.owner.IsPC)
+		owner.SetTempHand();
+		if (owner.IsPC)
 		{
 			LayerChara.Refresh();
 			LayerInventory.SetDirty(thing);
@@ -228,13 +220,13 @@ public class CharaBody : EClass
 		}
 		if (slot.elementId == 45 && EClass.core.IsGameStarted)
 		{
-			this.owner.RecalculateFOV();
+			owner.RecalculateFOV();
 		}
-		if (this.owner.isCreated && EClass.core.IsGameStarted)
+		if (owner.isCreated && EClass.core.IsGameStarted)
 		{
-			this.owner.Refresh(false);
+			owner.Refresh();
 		}
-		if (this.owner.isCreated)
+		if (owner.isCreated)
 		{
 			if (thing.Evalue(656) > 0)
 			{
@@ -242,13 +234,13 @@ public class CharaBody : EClass
 			}
 			if (thing.blessedState <= BlessedState.Cursed)
 			{
-				this.owner.Say("equipCursed", this.owner, null, null);
-				this.owner.PlaySound("curse3", 1f, true);
+				owner.Say("equipCursed", owner);
+				owner.PlaySound("curse3");
 			}
 		}
-		if (slot.elementId == 37 && this.owner.HasElement(1209, 1))
+		if (slot.elementId == 37 && owner.HasElement(1209))
 		{
-			this.owner.Say("tail_covered", this.owner, null, null);
+			owner.Say("tail_covered", owner);
 		}
 		return true;
 	}
@@ -259,85 +251,85 @@ public class CharaBody : EClass
 		{
 			elementId = ele,
 			thing = thing,
-			index = this.slots.Count
+			index = slots.Count
 		};
 		if (ele == 35)
 		{
-			if (this.slotMainHand == null)
+			if (slotMainHand == null)
 			{
-				this.slotMainHand = item;
+				slotMainHand = item;
 			}
-			else if (this.slotOffHand == null)
+			else if (slotOffHand == null)
 			{
-				this.slotOffHand = item;
+				slotOffHand = item;
 			}
 		}
 		if (ele == 41)
 		{
-			this.slotRange = item;
+			slotRange = item;
 		}
-		this.slots.Add(item);
+		slots.Add(item);
 	}
 
 	public void RefreshBodyParts()
 	{
-		foreach (BodySlot bodySlot in this.slots)
+		foreach (BodySlot slot in slots)
 		{
-			int elementId = bodySlot.elementId;
+			int elementId = slot.elementId;
 			if (elementId == 35)
 			{
-				if (this.slotMainHand == null)
+				if (slotMainHand == null)
 				{
-					this.slotMainHand = bodySlot;
+					slotMainHand = slot;
 				}
-				else if (this.slotOffHand == null)
+				else if (slotOffHand == null)
 				{
-					this.slotOffHand = bodySlot;
+					slotOffHand = slot;
 				}
 			}
 			if (elementId == 41)
 			{
-				this.slotRange = bodySlot;
+				slotRange = slot;
 			}
 		}
 	}
 
 	public void RemoveBodyPart(int ele)
 	{
-		int num = this.slots.FindIndex((BodySlot a) => a.elementId == ele);
+		int num = slots.FindIndex((BodySlot a) => a.elementId == ele);
 		if (num != -1)
 		{
-			BodySlot bodySlot = this.slots[num];
+			BodySlot bodySlot = slots[num];
 			if (bodySlot.thing != null)
 			{
-				this.Unequip(bodySlot, true);
+				Unequip(bodySlot);
 			}
-			if (this.slotMainHand == bodySlot)
+			if (slotMainHand == bodySlot)
 			{
-				this.slotMainHand = null;
+				slotMainHand = null;
 			}
-			if (this.slotOffHand == bodySlot)
+			if (slotOffHand == bodySlot)
 			{
-				this.slotOffHand = null;
+				slotOffHand = null;
 			}
-			if (this.slotRange == bodySlot)
+			if (slotRange == bodySlot)
 			{
-				this.slotRange = null;
+				slotRange = null;
 			}
-			this.slots.RemoveAt(num);
+			slots.RemoveAt(num);
 		}
 	}
 
 	public BodySlot GetSlot(Thing t, bool onlyEmpty = false, bool secondSlot = false)
 	{
-		BodySlot slot = this.GetSlot(t.category.slot, true, secondSlot);
+		BodySlot slot = GetSlot(t.category.slot, onlyEmpty: true, secondSlot);
 		if (slot != null)
 		{
 			return slot;
 		}
 		if (!onlyEmpty)
 		{
-			return this.GetSlot(t.category.slot, false, secondSlot);
+			return GetSlot(t.category.slot, onlyEmpty: false, secondSlot);
 		}
 		return null;
 	}
@@ -345,13 +337,13 @@ public class CharaBody : EClass
 	public BodySlot GetSlot(int elementId, bool onlyEmpty = true, bool secondSlot = false)
 	{
 		bool flag = true;
-		foreach (BodySlot bodySlot in this.slots)
+		foreach (BodySlot slot in slots)
 		{
-			if (elementId == bodySlot.elementId && (!onlyEmpty || bodySlot.thing == null))
+			if (elementId == slot.elementId && (!onlyEmpty || slot.thing == null))
 			{
-				if (!secondSlot || !flag)
+				if (!(secondSlot && flag))
 				{
-					return bodySlot;
+					return slot;
 				}
 				flag = false;
 			}
@@ -361,11 +353,11 @@ public class CharaBody : EClass
 
 	public Thing GetEquippedThing(int elementId)
 	{
-		foreach (BodySlot bodySlot in this.slots)
+		foreach (BodySlot slot in slots)
 		{
-			if (bodySlot.elementId == elementId && bodySlot.thing != null)
+			if (slot.elementId == elementId && slot.thing != null)
 			{
-				return bodySlot.thing;
+				return slot.thing;
 			}
 		}
 		return null;
@@ -374,11 +366,11 @@ public class CharaBody : EClass
 	public int GetWeight(bool armorOnly = false)
 	{
 		int num = 0;
-		foreach (BodySlot bodySlot in this.slots)
+		foreach (BodySlot slot in slots)
 		{
-			if (bodySlot.thing != null && (!armorOnly || (bodySlot.elementId != 44 && bodySlot.elementId != 45)))
+			if (slot.thing != null && (!armorOnly || (slot.elementId != 44 && slot.elementId != 45)))
 			{
-				num += bodySlot.thing.ChildrenAndSelfWeight;
+				num += slot.thing.ChildrenAndSelfWeight;
 			}
 		}
 		return num;
@@ -387,11 +379,11 @@ public class CharaBody : EClass
 	public int GetAttackIndex(Thing t)
 	{
 		int num = 0;
-		foreach (BodySlot bodySlot in this.slots)
+		foreach (BodySlot slot in slots)
 		{
-			if (bodySlot.thing != null && bodySlot.elementId == 35 && bodySlot.thing.source.offense.Length >= 2)
+			if (slot.thing != null && slot.elementId == 35 && slot.thing.source.offense.Length >= 2)
 			{
-				if (bodySlot.thing == t)
+				if (slot.thing == t)
 				{
 					return num;
 				}
@@ -403,17 +395,16 @@ public class CharaBody : EClass
 
 	public int GetMeleeDistance()
 	{
-		int num = this.owner.Evalue(666);
-		if (num == 0)
+		if (owner.Evalue(666) == 0)
 		{
 			return 1;
 		}
-		num = 0;
-		foreach (BodySlot bodySlot in this.slots)
+		int num = 0;
+		foreach (BodySlot slot in slots)
 		{
-			if (bodySlot.elementId == 35 && bodySlot.thing != null && bodySlot.thing.Evalue(666) > num)
+			if (slot.elementId == 35 && slot.thing != null && slot.thing.Evalue(666) > num)
 			{
-				num = bodySlot.thing.Evalue(666);
+				num = slot.thing.Evalue(666);
 			}
 		}
 		return 1 + num;
@@ -423,11 +414,11 @@ public class CharaBody : EClass
 	{
 		bool flag = false;
 		int num = 0;
-		foreach (BodySlot bodySlot in this.slots)
+		foreach (BodySlot slot in slots)
 		{
-			if (bodySlot.elementId == 35 && bodySlot.thing != null)
+			if (slot.elementId == 35 && slot.thing != null)
 			{
-				if (bodySlot.thing.IsMeleeWeapon)
+				if (slot.thing.IsMeleeWeapon)
 				{
 					num++;
 				}
@@ -454,15 +445,12 @@ public class CharaBody : EClass
 
 	public int GetAttackStyleElement(AttackStyle style)
 	{
-		if (style == AttackStyle.TwoHand)
+		return style switch
 		{
-			return 130;
-		}
-		if (style != AttackStyle.TwoWield)
-		{
-			return 0;
-		}
-		return 131;
+			AttackStyle.TwoHand => 130, 
+			AttackStyle.TwoWield => 131, 
+			_ => 0, 
+		};
 	}
 
 	public int GetSortVal(BodySlot slot)
@@ -470,7 +458,7 @@ public class CharaBody : EClass
 		int num = slot.element.sort * 10;
 		if (slot.elementId == 35)
 		{
-			num += this.owner.body.slots.IndexOf(slot);
+			num += owner.body.slots.IndexOf(slot);
 		}
 		return -num;
 	}
@@ -486,13 +474,13 @@ public class CharaBody : EClass
 			if (b.indexHnd == 0)
 			{
 				int num = 0;
-				foreach (BodySlot bodySlot in this.slots)
+				foreach (BodySlot slot in slots)
 				{
-					if (bodySlot.elementId == 35)
+					if (slot.elementId == 35)
 					{
 						num++;
 					}
-					if (b == bodySlot)
+					if (b == slot)
 					{
 						break;
 					}
@@ -500,29 +488,11 @@ public class CharaBody : EClass
 				b.indexHnd = num;
 			}
 			t.SetText(b.indexHnd.ToString() ?? "");
-			t.SetActive(true);
-			return;
+			t.SetActive(enable: true);
 		}
-		t.SetActive(false);
-	}
-
-	[CompilerGenerated]
-	internal static bool <IsEquippable>g__CannotEquip|11_0(ref CharaBody.<>c__DisplayClass11_0 A_0)
-	{
-		if (A_0.text)
+		else
 		{
-			Msg.Say("cannnotEquip", A_0.slot.element.GetName().ToLower(), null, null, null);
+			t.SetActive(enable: false);
 		}
-		return false;
 	}
-
-	public Chara owner;
-
-	public List<BodySlot> slots = new List<BodySlot>();
-
-	public BodySlot slotMainHand;
-
-	public BodySlot slotOffHand;
-
-	public BodySlot slotRange;
 }

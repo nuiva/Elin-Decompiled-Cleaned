@@ -1,5 +1,3 @@
-﻿using System;
-
 public class TraitToolSickle : TraitTool
 {
 	public override void TrySetHeldAct(ActPlan p)
@@ -7,6 +5,6 @@ public class TraitToolSickle : TraitTool
 		p.TrySetAct(new TaskCullLife
 		{
 			dest = p.pos
-		}, this.owner);
+		}, owner);
 	}
 }

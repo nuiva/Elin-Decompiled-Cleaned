@@ -1,44 +1,12 @@
-﻿using System;
-
 public class TraitPunishBall : Trait
 {
-	public override bool CanBeDropped
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeDropped => false;
 
-	public override bool CanStack
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanStack => false;
 
-	public override bool CanBeStolen
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeStolen => false;
 
-	public override bool CanBeDestroyed
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeDestroyed => false;
 
-	public override bool CanBeHeld
-	{
-		get
-		{
-			return EClass.debug.enable;
-		}
-	}
+	public override bool CanBeHeld => EClass.debug.enable;
 }

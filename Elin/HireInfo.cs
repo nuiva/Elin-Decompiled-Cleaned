@@ -1,36 +1,7 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class HireInfo : EClass
 {
-	public bool IsExpired
-	{
-		get
-		{
-			return this.deadline > 0 && this.Hours < 0;
-		}
-	}
-
-	public int Hours
-	{
-		get
-		{
-			return EClass.world.date.GetRemainingHours(this.deadline);
-		}
-	}
-
-	public int Days
-	{
-		get
-		{
-			if (this.deadline != 0)
-			{
-				return this.Hours / 24;
-			}
-			return -1;
-		}
-	}
-
 	[JsonProperty]
 	public Chara chara;
 
@@ -39,4 +10,30 @@ public class HireInfo : EClass
 
 	[JsonProperty]
 	public int deadline;
+
+	public bool IsExpired
+	{
+		get
+		{
+			if (deadline > 0)
+			{
+				return Hours < 0;
+			}
+			return false;
+		}
+	}
+
+	public int Hours => EClass.world.date.GetRemainingHours(deadline);
+
+	public int Days
+	{
+		get
+		{
+			if (deadline != 0)
+			{
+				return Hours / 24;
+			}
+			return -1;
+		}
+	}
 }

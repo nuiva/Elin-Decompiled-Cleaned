@@ -1,17 +1,11 @@
-﻿using System;
+using System;
 
 public class Goal : AIAct
 {
-	public override bool InformCancel
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool InformCancel => false;
 
 	public Goal Duplicate()
 	{
-		return Activator.CreateInstance(base.GetType()) as Goal;
+		return Activator.CreateInstance(GetType()) as Goal;
 	}
 }

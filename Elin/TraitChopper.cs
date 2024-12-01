@@ -1,22 +1,8 @@
-﻿using System;
-
 public class TraitChopper : TraitCooker
 {
-	public override AnimeID IdAnimeProgress
-	{
-		get
-		{
-			return AnimeID.Shiver;
-		}
-	}
+	public override AnimeID IdAnimeProgress => AnimeID.Shiver;
 
-	public override string idSoundProgress
-	{
-		get
-		{
-			return "cook_cut";
-		}
-	}
+	public override string idSoundProgress => "cook_cut";
 
 	public override bool IdleUse(Chara c, int dist)
 	{
@@ -24,7 +10,7 @@ public class TraitChopper : TraitCooker
 		{
 			return false;
 		}
-		this.owner.PlaySound("idle_cook", 1f, true);
+		owner.PlaySound("idle_cook");
 		return true;
 	}
 }

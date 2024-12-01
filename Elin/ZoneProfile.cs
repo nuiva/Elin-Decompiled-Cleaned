@@ -1,46 +1,34 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public class ZoneProfile : EScriptable
 {
-	public static ZoneProfile Load(string id)
+	public enum GenType
 	{
-		return Resources.Load<ZoneProfile>("World/Zone/Profile/" + id.IsEmpty("Default"));
+		Default,
+		Sky,
+		Underground
 	}
 
-	public void Generate()
+	[Serializable]
+	public class Seeds
 	{
-		ZoneBlueprint zoneBlueprint = new ZoneBlueprint();
-		zoneBlueprint.Create();
-		zoneBlueprint.map = EClass._map;
-		zoneBlueprint.zoneProfile = this;
-		zoneBlueprint.GenerateMap(EClass._zone);
-		EClass._map.RevealAll(true);
-	}
+		public int height;
 
-	public void RerollBiome()
-	{
-		this.seeds.biome++;
-		this.Generate();
-	}
+		public int poi;
 
-	public void RerollBiomeSub()
-	{
-		this.seeds.biomeSub++;
-		this.Generate();
-	}
+		public int biome;
 
-	public void RerollBush()
-	{
-		this.seeds.bush++;
-		this.Generate();
+		public int biomeSub;
+
+		public int bush;
 	}
 
 	public MapGenVariation variation;
 
 	public MapHeight height;
 
-	public ZoneProfile.Seeds seeds;
+	public Seeds seeds;
 
 	public int size = 200;
 
@@ -78,28 +66,40 @@ public class ZoneProfile : EScriptable
 
 	public string idSceneProfile;
 
-	public ZoneProfile.GenType genType;
+	public GenType genType;
 
 	public MapBG mapBG;
 
-	public enum GenType
+	public static ZoneProfile Load(string id)
 	{
-		Default,
-		Sky,
-		Underground
+		return Resources.Load<ZoneProfile>("World/Zone/Profile/" + id.IsEmpty("Default"));
 	}
 
-	[Serializable]
-	public class Seeds
+	public void Generate()
 	{
-		public int height;
+		ZoneBlueprint zoneBlueprint = new ZoneBlueprint();
+		zoneBlueprint.Create();
+		zoneBlueprint.map = EClass._map;
+		zoneBlueprint.zoneProfile = this;
+		zoneBlueprint.GenerateMap(EClass._zone);
+		EClass._map.RevealAll();
+	}
 
-		public int poi;
+	public void RerollBiome()
+	{
+		seeds.biome++;
+		Generate();
+	}
 
-		public int biome;
+	public void RerollBiomeSub()
+	{
+		seeds.biomeSub++;
+		Generate();
+	}
 
-		public int biomeSub;
-
-		public int bush;
+	public void RerollBush()
+	{
+		seeds.bush++;
+		Generate();
 	}
 }

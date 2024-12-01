@@ -1,87 +1,66 @@
-﻿using System;
-
 public class InvOwnerCraft : InvOwnerDraglet
 {
-	public override bool ShowFuel
-	{
-		get
-		{
-			return this.crafter.IsRequireFuel;
-		}
-	}
+	public TraitCrafter crafter;
 
-	public override string langTransfer
-	{
-		get
-		{
-			return this.crafter.CrafterTitle;
-		}
-	}
+	public override bool ShowFuel => crafter.IsRequireFuel;
 
-	public override int numDragGrid
-	{
-		get
-		{
-			return this.crafter.numIng;
-		}
-	}
+	public override string langTransfer => crafter.CrafterTitle;
 
-	public override bool DenyImportant
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override int numDragGrid => crafter.numIng;
+
+	public override bool DenyImportant => false;
 
 	public override bool AllowStockIngredients
 	{
 		get
 		{
-			return EClass._zone.IsPCFaction || EClass._zone is Zone_Tent;
+			if (!EClass._zone.IsPCFaction)
+			{
+				return EClass._zone is Zone_Tent;
+			}
+			return true;
 		}
 	}
 
-	public InvOwnerCraft(Card owner = null, Card container = null, CurrencyType _currency = CurrencyType.None) : base(owner, container, _currency)
+	public InvOwnerCraft(Card owner = null, Card container = null, CurrencyType _currency = CurrencyType.None)
+		: base(owner, container, _currency)
 	{
 	}
 
 	public override bool ShouldShowGuide(Thing t)
 	{
-		return this.crafter.IsCraftIngredient(t, base.dragGrid.currentIndex);
+		return crafter.IsCraftIngredient(t, base.dragGrid.currentIndex);
 	}
 
 	public override void _OnProcess(Thing t)
 	{
-		t.PlaySoundDrop(false);
-		this.TryStartCraft();
+		t.PlaySoundDrop(spatial: false);
+		TryStartCraft();
 	}
 
 	public override void OnAfterRefuel()
 	{
-		this.TryStartCraft();
+		TryStartCraft();
 	}
 
 	public void TryStartCraft()
 	{
-		for (int i = 0; i < this.numDragGrid; i++)
+		for (int i = 0; i < numDragGrid; i++)
 		{
 			if (base.dragGrid.buttons[i].Card == null)
 			{
 				return;
 			}
 		}
-		if (!this.owner.trait.IsFuelEnough(1, base.dragGrid.GetTargets(), true))
+		if (!owner.trait.IsFuelEnough(1, base.dragGrid.GetTargets()))
 		{
 			Msg.Say("notEnoughFuel");
 			return;
 		}
 		EClass.pc.SetAI(new AI_UseCrafter
 		{
-			crafter = this.crafter,
+			crafter = crafter,
 			layer = base.dragGrid
 		});
 	}
-
-	public TraitCrafter crafter;
 }

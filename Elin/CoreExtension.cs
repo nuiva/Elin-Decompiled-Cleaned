@@ -1,38 +1,24 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public static class CoreExtension
 {
 	public static Color GetFixedColor(Color c, bool dark)
 	{
+		float num = 0.5f;
 		SkinColorProfile @default = (dark ? SkinManager.Instance.skinDark.colors : SkinManager.CurrentSkin.colors)._default;
-		float num = 1f + @default.contrast;
-		float num2;
-		if (c.r + c.g + c.b > 1.5f)
-		{
-			num2 = 0.5f + @default.strength;
-		}
-		else
-		{
-			num2 = 0.5f - @default.strength;
-		}
-		c.r = Mathf.Clamp((c.r - 0.5f) * num + num2, 0f, 1f);
-		c.g = Mathf.Clamp((c.g - 0.5f) * num + num2, 0f, 1f);
-		c.b = Mathf.Clamp((c.b - 0.5f) * num + num2, 0f, 1f);
+		float num2 = 1f + @default.contrast;
+		num = ((!(c.r + c.g + c.b > 1.5f)) ? (0.5f - @default.strength) : (0.5f + @default.strength));
+		c.r = Mathf.Clamp((c.r - 0.5f) * num2 + num, 0f, 1f);
+		c.g = Mathf.Clamp((c.g - 0.5f) * num2 + num, 0f, 1f);
+		c.b = Mathf.Clamp((c.b - 0.5f) * num2 + num, 0f, 1f);
 		return c;
 	}
 
 	public static string TagColorGoodBad(this string s, Func<bool> funcGood, bool dark = false)
 	{
 		SkinColorProfile @default = (dark ? SkinManager.Instance.skinDark.colors : SkinManager.CurrentSkin.colors)._default;
-		return string.Concat(new string[]
-		{
-			"<color=",
-			CoreExtension.GetFixedColor(funcGood() ? @default.textGood : @default.textBad, dark).ToHex(),
-			">",
-			s,
-			"</color>"
-		});
+		return "<color=" + GetFixedColor(funcGood() ? @default.textGood : @default.textBad, dark).ToHex() + ">" + s + "</color>";
 	}
 
 	public static string TagColorGoodBad(this string s, Func<bool> funcGood, Func<bool> funcBad, bool dark = false)
@@ -44,14 +30,7 @@ public static class CoreExtension
 		{
 			return s;
 		}
-		return string.Concat(new string[]
-		{
-			"<color=",
-			CoreExtension.GetFixedColor(flag ? @default.textGood : @default.textBad, dark).ToHex(),
-			">",
-			s,
-			"</color>"
-		});
+		return "<color=" + GetFixedColor(flag ? @default.textGood : @default.textBad, dark).ToHex() + ">" + s + "</color>";
 	}
 
 	public static UICurrency AttachCurrency(this Window window)

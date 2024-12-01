@@ -1,31 +1,8 @@
-﻿using System;
-
 public class TraitTrainer : TraitCitizen
 {
-	public override int GuidePriotiy
-	{
-		get
-		{
-			return 50;
-		}
-	}
+	public static string[] ids = new string[7] { "combat", "weapon", "general", "craft", "labor", "mind", "stealth" };
 
-	public override string IDTrainer
-	{
-		get
-		{
-			return base.GetParam(1, null).IsEmpty(TraitTrainer.ids[base.owner.uid % TraitTrainer.ids.Length]);
-		}
-	}
+	public override int GuidePriotiy => 50;
 
-	public static string[] ids = new string[]
-	{
-		"combat",
-		"weapon",
-		"general",
-		"craft",
-		"labor",
-		"mind",
-		"stealth"
-	};
+	public override string IDTrainer => GetParam(1).IsEmpty(ids[base.owner.uid % ids.Length]);
 }

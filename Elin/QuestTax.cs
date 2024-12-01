@@ -1,20 +1,18 @@
-﻿using System;
-
 public class QuestTax : QuestProgression
 {
 	public override bool CanUpdateOnTalk(Chara c)
 	{
-		int phase = this.phase;
-		if (phase != 0)
+		return phase switch
 		{
-			return phase == 1 && EClass.player.stats.taxBillsPaid > 0;
-		}
-		return EClass.player.stats.taxBills > 0;
+			0 => EClass.player.stats.taxBills > 0, 
+			1 => EClass.player.stats.taxBillsPaid > 0, 
+			_ => false, 
+		};
 	}
 
 	public override void OnDropReward()
 	{
-		base.DropReward("mailpost");
+		DropReward("mailpost");
 	}
 
 	public override void OnComplete()

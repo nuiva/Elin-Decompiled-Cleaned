@@ -1,5 +1,3 @@
-﻿using System;
-
 public class InvOwnerToolbelt : InvOwner
 {
 	public override bool AllowHold(Thing t)
@@ -12,7 +10,8 @@ public class InvOwnerToolbelt : InvOwner
 		SE.Beep();
 	}
 
-	public InvOwnerToolbelt(Card owner, Card container = null, CurrencyType _currency = CurrencyType.None) : base(owner, container, _currency, PriceType.Default)
+	public InvOwnerToolbelt(Card owner, Card container = null, CurrencyType _currency = CurrencyType.None)
+		: base(owner, container, _currency)
 	{
 	}
 }

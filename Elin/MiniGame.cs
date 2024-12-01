@@ -1,29 +1,58 @@
-﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
 public class MiniGame
 {
+	public class Balance
+	{
+		public int lastCoin;
+
+		public int changeCoin;
+	}
+
+	public enum Type
+	{
+		Slot,
+		Blackjack,
+		Scratch,
+		Basket,
+		CoinDrop
+	}
+
+	public static Dictionary<string, MiniGame> minigames = new Dictionary<string, MiniGame>();
+
+	public Balance balance = new Balance();
+
+	public GameObject go;
+
+	public AssetBundle asset;
+
+	public string path;
+
+	public bool isActive;
+
+	public virtual string id => "";
+
 	public static void RegisterMiniGame(string id, MiniGame g, string _path)
 	{
 		g.path = new FileInfo(_path).DirectoryName;
-		MiniGame.minigames[id] = g;
-		Debug.Log("Registered:" + ((g != null) ? g.ToString() : null) + " at " + g.path);
+		minigames[id] = g;
+		Debug.Log("Registered:" + g?.ToString() + " at " + g.path);
 	}
 
-	public static void Activate(MiniGame.Type type)
+	public static void Activate(Type type)
 	{
-		if (!MiniGame.minigames.ContainsKey("Basket"))
+		if (!minigames.ContainsKey("Basket"))
 		{
-			MiniGame.minigames.Add("Basket", new MiniGame_Basket());
+			minigames.Add("Basket", new MiniGame_Basket());
 		}
-		if (!MiniGame.minigames.ContainsKey("Blackjack"))
+		if (!minigames.ContainsKey("Blackjack"))
 		{
-			MiniGame.minigames.Add("Blackjack", new MiniGame_Blackjack());
+			minigames.Add("Blackjack", new MiniGame_Blackjack());
 		}
-		Debug.Log("Activating:" + type.ToString());
-		MiniGame miniGame = MiniGame.minigames.TryGetValue(type.ToString(), null);
+		Debug.Log("Activating:" + type);
+		MiniGame miniGame = minigames.TryGetValue(type.ToString());
 		if (miniGame == null)
 		{
 			Msg.Say("minigame_notSupported");
@@ -33,19 +62,11 @@ public class MiniGame
 		LayerMiniGame layerMiniGame = EClass.ui.AddLayer<LayerMiniGame>();
 		Debug.Log(layerMiniGame);
 		Debug.Log(miniGame);
-		miniGame.balance = new MiniGame.Balance();
+		miniGame.balance = new Balance();
 		layerMiniGame.mini = miniGame;
 		layerMiniGame.type = type;
 		Debug.Log("aaa");
 		layerMiniGame.Run();
-	}
-
-	public virtual string id
-	{
-		get
-		{
-			return "";
-		}
 	}
 
 	public virtual void OnActivate()
@@ -62,14 +83,14 @@ public class MiniGame
 
 	public void Deactivate()
 	{
-		this.OnDeactivate();
-		Debug.Log(this.balance.lastCoin);
-		Debug.Log(this.balance.changeCoin);
-		if (this.balance.changeCoin != 0)
+		OnDeactivate();
+		Debug.Log(balance.lastCoin);
+		Debug.Log(balance.changeCoin);
+		if (balance.changeCoin != 0)
 		{
-			EClass.pc.ModCurrency(this.balance.changeCoin, "casino_coin");
+			EClass.pc.ModCurrency(balance.changeCoin, "casino_coin");
 		}
-		LayerMiniGame layer = EClass.ui.GetLayer<LayerMiniGame>(false);
+		LayerMiniGame layer = EClass.ui.GetLayer<LayerMiniGame>();
 		if (layer != null)
 		{
 			layer.mini = null;
@@ -98,81 +119,44 @@ public class MiniGame
 
 	public void Exit()
 	{
-		LayerMiniGame layer = EClass.ui.GetLayer<LayerMiniGame>(false);
-		if (layer == null)
-		{
-			return;
-		}
-		layer.Close();
+		EClass.ui.GetLayer<LayerMiniGame>()?.Close();
 	}
 
 	public bool OnPlay(int a)
 	{
-		LayerMiniGame layer = EClass.ui.GetLayer<LayerMiniGame>(false);
-		if (layer)
+		LayerMiniGame layer = EClass.ui.GetLayer<LayerMiniGame>();
+		if ((bool)layer)
 		{
 			switch (layer.type)
 			{
-			case MiniGame.Type.Slot:
-				EClass.pc.ModExp(134, 10);
+			case Type.Basket:
+				EClass.pc.ModExp(108, 15);
 				break;
-			case MiniGame.Type.Blackjack:
+			case Type.Blackjack:
 				EClass.pc.ModExp(135, 10);
 				break;
-			case MiniGame.Type.Basket:
-				EClass.pc.ModExp(108, 15);
+			case Type.Slot:
+				EClass.pc.ModExp(134, 10);
 				break;
 			}
 		}
 		EClass.pc.stamina.Mod(-a);
-		EClass.player.EndTurn(true);
-		return !EClass.pc.isDead && !EClass.pc.IsDisabled;
+		EClass.player.EndTurn();
+		if (EClass.pc.isDead || EClass.pc.IsDisabled)
+		{
+			return false;
+		}
+		return true;
 	}
 
 	public void GetSlotReward(string id, int pay = 1, int bet = 1)
 	{
 		if (id == null)
 		{
-			id = new string[]
-			{
-				"ehe",
-				"wild",
-				"cat",
-				"larnneire",
-				"lomias",
-				"bread"
-			}.RandomItem<string>();
+			id = new string[6] { "ehe", "wild", "cat", "larnneire", "lomias", "bread" }.RandomItem();
 			Debug.Log(id);
 		}
-		Thing c = ThingGen.Create("casino_coin", -1, -1).SetNum(pay * bet);
-		Msg.Say("slot_win", c, null, null, null);
-	}
-
-	public static Dictionary<string, MiniGame> minigames = new Dictionary<string, MiniGame>();
-
-	public MiniGame.Balance balance = new MiniGame.Balance();
-
-	public GameObject go;
-
-	public AssetBundle asset;
-
-	public string path;
-
-	public bool isActive;
-
-	public class Balance
-	{
-		public int lastCoin;
-
-		public int changeCoin;
-	}
-
-	public enum Type
-	{
-		Slot,
-		Blackjack,
-		Scratch,
-		Basket,
-		CoinDrop
+		Thing c = ThingGen.Create("casino_coin").SetNum(pay * bet);
+		Msg.Say("slot_win", c);
 	}
 }

@@ -1,172 +1,51 @@
-﻿using System;
 using UnityEngine;
 
 public class EMono : MonoBehaviour
 {
-	public static Game game
-	{
-		get
-		{
-			return EMono.core.game;
-		}
-	}
+	public static Core core;
 
-	public static bool AdvMode
-	{
-		get
-		{
-			return ActionMode.IsAdv;
-		}
-	}
+	public static Game game => core.game;
 
-	public static Player player
-	{
-		get
-		{
-			return EMono.core.game.player;
-		}
-	}
+	public static bool AdvMode => ActionMode.IsAdv;
 
-	public static Chara pc
-	{
-		get
-		{
-			return EMono.core.game.player.chara;
-		}
-	}
+	public static Player player => core.game.player;
 
-	public static UI ui
-	{
-		get
-		{
-			return EMono.core.ui;
-		}
-	}
+	public static Chara pc => core.game.player.chara;
 
-	public static Map _map
-	{
-		get
-		{
-			return EMono.core.game.activeZone.map;
-		}
-	}
+	public static UI ui => core.ui;
 
-	public static Zone _zone
-	{
-		get
-		{
-			return EMono.core.game.activeZone;
-		}
-	}
+	public static Map _map => core.game.activeZone.map;
 
-	public static FactionBranch Branch
-	{
-		get
-		{
-			return EMono.core.game.activeZone.branch;
-		}
-	}
+	public static Zone _zone => core.game.activeZone;
 
-	public static FactionBranch BranchOrHomeBranch
-	{
-		get
-		{
-			return EMono.Branch ?? EMono.pc.homeBranch;
-		}
-	}
+	public static FactionBranch Branch => core.game.activeZone.branch;
 
-	public static Faction Home
-	{
-		get
-		{
-			return EMono.core.game.factions.Home;
-		}
-	}
+	public static FactionBranch BranchOrHomeBranch => Branch ?? pc.homeBranch;
 
-	public static Scene scene
-	{
-		get
-		{
-			return EMono.core.scene;
-		}
-	}
+	public static Faction Home => core.game.factions.Home;
 
-	public static BaseGameScreen screen
-	{
-		get
-		{
-			return EMono.core.screen;
-		}
-	}
+	public static Scene scene => core.scene;
 
-	public static GameSetting setting
-	{
-		get
-		{
-			return EMono.core.gameSetting;
-		}
-	}
+	public static BaseGameScreen screen => core.screen;
 
-	public static GameData gamedata
-	{
-		get
-		{
-			return EMono.core.gamedata;
-		}
-	}
+	public static GameSetting setting => core.gameSetting;
 
-	public static ColorProfile Colors
-	{
-		get
-		{
-			return EMono.core.Colors;
-		}
-	}
+	public static GameData gamedata => core.gamedata;
 
-	public static World world
-	{
-		get
-		{
-			return EMono.core.game.world;
-		}
-	}
+	public static ColorProfile Colors => core.Colors;
 
-	public static SoundManager Sound
-	{
-		get
-		{
-			return SoundManager.current;
-		}
-	}
+	public static World world => core.game.world;
 
-	public static SourceManager sources
-	{
-		get
-		{
-			return EMono.core.sources;
-		}
-	}
+	public static SoundManager Sound => SoundManager.current;
 
-	public static SourceManager editorSources
-	{
-		get
-		{
-			return Core.SetCurrent(null).sources;
-		}
-	}
+	public static SourceManager sources => core.sources;
 
-	public static CoreDebug debug
-	{
-		get
-		{
-			return EMono.core.debug;
-		}
-	}
+	public static SourceManager editorSources => Core.SetCurrent().sources;
+
+	public static CoreDebug debug => core.debug;
 
 	public static int rnd(int a)
 	{
 		return Rand.rnd(a);
 	}
-
-	public static Core core;
 }

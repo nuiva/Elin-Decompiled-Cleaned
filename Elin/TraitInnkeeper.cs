@@ -1,12 +1,4 @@
-﻿using System;
-
 public class TraitInnkeeper : TraitMerchantFood
 {
-	public override bool CanServeFood
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanServeFood => true;
 }

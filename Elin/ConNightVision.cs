@@ -1,10 +1,8 @@
-﻿using System;
-
 public class ConNightVision : BaseBuff
 {
 	public override void OnStartOrStack()
 	{
-		this.owner.RecalculateFOV();
+		owner.RecalculateFOV();
 	}
 
 	public override void OnCalculateFov(Fov fov, ref int radius, ref float power)
@@ -22,6 +20,6 @@ public class ConNightVision : BaseBuff
 
 	public override void OnRemoved()
 	{
-		this.owner.RecalculateFOV();
+		owner.RecalculateFOV();
 	}
 }

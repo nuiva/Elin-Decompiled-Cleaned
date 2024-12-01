@@ -1,32 +1,15 @@
-﻿using System;
-
 public class InvOwnerGive : InvOwnerDraglet
 {
-	public override string langTransfer
-	{
-		get
-		{
-			return "invGive";
-		}
-	}
+	public Chara chara;
 
-	public override InvOwnerDraglet.ProcessType processType
-	{
-		get
-		{
-			return InvOwnerDraglet.ProcessType.Consume;
-		}
-	}
+	public override string langTransfer => "invGive";
 
-	public override bool DenyImportant
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override ProcessType processType => ProcessType.Consume;
 
-	public InvOwnerGive(Card owner = null, Card container = null, CurrencyType _currency = CurrencyType.Money) : base(owner, container, _currency)
+	public override bool DenyImportant => true;
+
+	public InvOwnerGive(Card owner = null, Card container = null, CurrencyType _currency = CurrencyType.Money)
+		: base(owner, container, _currency)
 	{
 	}
 
@@ -39,6 +22,4 @@ public class InvOwnerGive : InvOwnerDraglet
 	{
 		SE.Play("offering");
 	}
-
-	public Chara chara;
 }

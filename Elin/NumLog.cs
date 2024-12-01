@@ -1,42 +1,29 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class NumLog : EClass
 {
-	public int maxMonth
-	{
-		get
-		{
-			return 8;
-		}
-	}
+	[JsonProperty]
+	public List<int> list = new List<int>();
 
-	public virtual Gross gross
-	{
-		get
-		{
-			return null;
-		}
-	}
+	[JsonProperty]
+	public int lastDay;
 
-	public virtual string Name
-	{
-		get
-		{
-			return "";
-		}
-	}
+	public int maxMonth => 8;
+
+	public virtual Gross gross => null;
+
+	public virtual string Name => "";
 
 	public virtual int Value
 	{
 		get
 		{
-			if (this.gross == null)
+			if (gross == null)
 			{
 				return 0;
 			}
-			return this.gross.Refresh();
+			return gross.Refresh();
 		}
 	}
 
@@ -44,11 +31,11 @@ public class NumLog : EClass
 	{
 		get
 		{
-			if (this.list.Count <= 0)
+			if (list.Count <= 0)
 			{
 				return 0;
 			}
-			return this.list[0];
+			return list[0];
 		}
 	}
 
@@ -56,31 +43,25 @@ public class NumLog : EClass
 	{
 		get
 		{
-			if (this.list.Count <= 3)
+			if (list.Count <= 3)
 			{
 				return 0;
 			}
-			return this.list[3];
+			return list[3];
 		}
 	}
 
 	public void LogDay()
 	{
-		this.lastDay = this.Value;
+		lastDay = Value;
 	}
 
 	public void LogMonth()
 	{
-		this.list.Insert(0, this.Value);
-		if (this.list.Count >= this.maxMonth)
+		list.Insert(0, Value);
+		if (list.Count >= maxMonth)
 		{
-			this.list.RemoveAt(this.list.Count - 1);
+			list.RemoveAt(list.Count - 1);
 		}
 	}
-
-	[JsonProperty]
-	public List<int> list = new List<int>();
-
-	[JsonProperty]
-	public int lastDay;
 }

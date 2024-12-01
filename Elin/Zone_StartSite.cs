@@ -1,28 +1,8 @@
-﻿using System;
-
 public class Zone_StartSite : Zone
 {
-	public override bool UseFog
-	{
-		get
-		{
-			return base.lv < 0;
-		}
-	}
+	public override bool UseFog => base.lv < 0;
 
-	public override bool isClaimable
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool isClaimable => true;
 
-	public override string IDBaseLandFeat
-	{
-		get
-		{
-			return "bfPlain,bfFertile,bfStart";
-		}
-	}
+	public override string IDBaseLandFeat => "bfPlain,bfFertile,bfStart";
 }

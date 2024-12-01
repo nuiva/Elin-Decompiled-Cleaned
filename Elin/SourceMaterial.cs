@@ -1,373 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class SourceMaterial : SourceDataInt<SourceMaterial.Row>
 {
-	public override SourceMaterial.Row CreateRow()
-	{
-		return new SourceMaterial.Row
-		{
-			id = SourceData.GetInt(0),
-			alias = SourceData.GetString(1),
-			name_JP = SourceData.GetString(2),
-			name = SourceData.GetString(3),
-			category = SourceData.GetString(4),
-			tag = SourceData.GetStringArray(5),
-			thing = SourceData.GetString(6),
-			goods = SourceData.GetStringArray(7),
-			minerals = SourceData.GetStringArray(8),
-			decal = SourceData.GetInt(9),
-			decay = SourceData.GetInt(10),
-			grass = SourceData.GetInt(11),
-			defFloor = SourceData.GetInt(12),
-			defBlock = SourceData.GetInt(13),
-			edge = SourceData.GetInt(14),
-			ramp = SourceData.GetInt(15),
-			idSound = SourceData.GetString(16),
-			soundFoot = SourceData.GetString(17),
-			hardness = SourceData.GetInt(18),
-			groups = SourceData.GetStringArray(19),
-			tier = SourceData.GetInt(20),
-			chance = SourceData.GetInt(21),
-			weight = SourceData.GetInt(22),
-			value = SourceData.GetInt(23),
-			quality = SourceData.GetInt(24),
-			atk = SourceData.GetInt(25),
-			dmg = SourceData.GetInt(26),
-			dv = SourceData.GetInt(27),
-			pv = SourceData.GetInt(28),
-			dice = SourceData.GetInt(29),
-			bits = SourceData.GetStringArray(30),
-			elements = Core.ParseElements(SourceData.GetStr(31, false)),
-			altName = SourceData.GetStringArray(32),
-			altName_JP = SourceData.GetStringArray(33)
-		};
-	}
-
-	public override void SetRow(SourceMaterial.Row r)
-	{
-		this.map[r.id] = r;
-	}
-
-	public override void OnInit()
-	{
-		Cell.matList = this.rows;
-		SourceMaterial.tierMap.Clear();
-		SourceMaterial.tierMap.Add("gem", new SourceMaterial.TierList());
-		SourceMaterial.tierMap.Add("ore", new SourceMaterial.TierList());
-		foreach (SourceMaterial.Row row in this.rows)
-		{
-			row.Init();
-			row.elementMap = Element.GetElementMap(row.elements);
-			if (!row.groups.IsEmpty())
-			{
-				foreach (string key in row.groups)
-				{
-					SourceMaterial.TierList tierList = SourceMaterial.tierMap.TryGetValue(key, null);
-					if (tierList == null)
-					{
-						tierList = new SourceMaterial.TierList();
-						SourceMaterial.tierMap[key] = tierList;
-					}
-					SourceMaterial.Tier tier = tierList.tiers[row.tier];
-					tier.list.Add(row);
-					tier.sum += row.chance;
-				}
-			}
-			string category = row.category;
-			if (!(category == "gem"))
-			{
-				if (category == "ore")
-				{
-					SourceMaterial.Tier tier2 = SourceMaterial.tierMap["ore"].tiers[row.tier];
-					tier2.list.Add(row);
-					tier2.sum += row.chance;
-				}
-			}
-			else
-			{
-				SourceMaterial.Tier tier3 = SourceMaterial.tierMap["gem"].tiers[row.tier];
-				tier3.list.Add(row);
-				tier3.sum += row.chance;
-			}
-		}
-	}
-
-	public override void OnAfterImportData()
-	{
-		this.rows.Sort((SourceMaterial.Row a, SourceMaterial.Row b) => a.id - b.id);
-	}
-
-	public void OnImportRow(SourceMaterial.Row r)
-	{
-		SourceMaterial.<>c__DisplayClass8_0 CS$<>8__locals1;
-		CS$<>8__locals1.list = new List<int>(r.elements);
-		for (int i = 0; i < r.elements.Length; i += 2)
-		{
-			SourceMaterial.<OnImportRow>g__Add|8_0(r.elements[i], r.elements[i + 1], ref CS$<>8__locals1);
-		}
-		SourceMaterial.<OnImportRow>g__Add|8_0(13, r.hardness, ref CS$<>8__locals1);
-		r.elements = CS$<>8__locals1.list.ToArray();
-	}
-
-	public override string[] ImportFields
-	{
-		get
-		{
-			return new string[]
-			{
-				"altName"
-			};
-		}
-	}
-
-	[CompilerGenerated]
-	internal static void <OnImportRow>g__Add|8_0(int ele, int a, ref SourceMaterial.<>c__DisplayClass8_0 A_2)
-	{
-		A_2.list.Add(ele);
-		A_2.list.Add(a);
-	}
-
-	public static Dictionary<string, SourceMaterial.TierList> tierMap = new Dictionary<string, SourceMaterial.TierList>();
-
 	[Serializable]
-	public class Row : SourceData.BaseRow
+	public class Row : BaseRow
 	{
-		public override bool UseAlias
-		{
-			get
-			{
-				return true;
-			}
-		}
-
-		public override string GetAlias
-		{
-			get
-			{
-				return this.alias;
-			}
-		}
-
-		public override void OnImportData(SourceData data)
-		{
-			base.OnImportData(data);
-			this.SetTiles();
-		}
-
-		public void Init()
-		{
-			MatColors matColors = Core.Instance.Colors.matColors.TryGetValue(this.alias, null);
-			this.matColor = matColors.main;
-			this.altColor = matColors.alt;
-			this.SetTiles();
-		}
-
-		public void SetTiles()
-		{
-		}
-
-		public void AddBlood(Point p, int a = 1)
-		{
-			if (this.decal == 0)
-			{
-				return;
-			}
-			if (p.cell.IsSnowTile && this != MATERIAL.sourceSnow)
-			{
-				MATERIAL.sourceSnow.AddBlood(p, a);
-				return;
-			}
-			for (int i = 0; i < a; i++)
-			{
-				EClass._map.AddDecal(p.x + ((EClass.rnd(2) == 0) ? 0 : (EClass.rnd(3) - 1)), p.z + ((EClass.rnd(2) == 0) ? 0 : (EClass.rnd(3) - 1)), this.decal, 1, true);
-			}
-		}
-
-		public void PlayHitEffect(Point p)
-		{
-			Effect.Get("mine2").Play(p, 0f, null, null).SetParticleColor(this.GetColor()).Emit(2 + EClass.rnd(4));
-		}
-
-		public Color GetColor()
-		{
-			return Core.Instance.Colors.matColors[this.alias].main;
-		}
-
-		public string TryGetSound(string suffx, RenderRow c = null)
-		{
-			string soundImpact = this.GetSoundImpact(c);
-			if (EClass.Sound.Exist(soundImpact + "_" + suffx))
-			{
-				return soundImpact + "_" + suffx;
-			}
-			return soundImpact;
-		}
-
-		public string GetSoundDead(RenderRow c = null)
-		{
-			return this.TryGetSound("dead", c);
-		}
-
-		public string GetSoundDrop(RenderRow c = null)
-		{
-			return this.TryGetSound("drop", c);
-		}
-
-		public string GetSoundCraft(RenderRow c = null)
-		{
-			if (this.category == "wood")
-			{
-				return "build_progress";
-			}
-			return this.TryGetSound("craft", c);
-		}
-
-		public string GetSoundImpact(RenderRow c = null)
-		{
-			if (c != null && !c.idSound.IsEmpty())
-			{
-				return "Material/" + c.idSound;
-			}
-			return "Material/" + this.idSound;
-		}
-
-		public void CreateByProduct(Thing container, int num)
-		{
-			SourceMaterial.Row.<>c__DisplayClass52_0 CS$<>8__locals1;
-			CS$<>8__locals1.<>4__this = this;
-			CS$<>8__locals1.num = num;
-			CS$<>8__locals1.container = container;
-			Thing thing = ThingGen.CreateRawMaterial(this);
-			thing.ModNum(CS$<>8__locals1.num, true);
-			CS$<>8__locals1.container.AddThing(thing, true, -1, -1);
-			this.<CreateByProduct>g__C|52_0("dye", ref CS$<>8__locals1);
-			string text = this.category;
-			uint num2 = <PrivateImplementationDetails>.ComputeStringHash(text);
-			if (num2 <= 1167392201U)
-			{
-				if (num2 <= 270655681U)
-				{
-					if (num2 != 174734082U)
-					{
-						if (num2 == 270655681U)
-						{
-							if (text == "fiber")
-							{
-								this.<CreateByProduct>g__C|52_0("thread", ref CS$<>8__locals1);
-								this.<CreateByProduct>g__C|52_0("texture", ref CS$<>8__locals1);
-								this.<CreateByProduct>g__C|52_0("string", ref CS$<>8__locals1);
-							}
-						}
-					}
-					else if (text == "soil")
-					{
-						this.<CreateByProduct>g__C|52_0("glass", ref CS$<>8__locals1);
-						this.<CreateByProduct>g__C|52_0("clay", ref CS$<>8__locals1);
-						this.<CreateByProduct>g__C|52_0("brick", ref CS$<>8__locals1);
-					}
-				}
-				else if (num2 != 862676408U)
-				{
-					if (num2 != 974867124U)
-					{
-						if (num2 == 1167392201U)
-						{
-							if (text == "crystal")
-							{
-								this.<CreateByProduct>g__C|52_0("glass", ref CS$<>8__locals1);
-								this.<CreateByProduct>g__C|52_0("gem", ref CS$<>8__locals1);
-							}
-						}
-					}
-					else if (text == "rock")
-					{
-						this.<CreateByProduct>g__C|52_0("rock", ref CS$<>8__locals1);
-						this.<CreateByProduct>g__C|52_0("pebble", ref CS$<>8__locals1);
-						this.<CreateByProduct>g__C|52_0("cutstone", ref CS$<>8__locals1);
-					}
-				}
-				else if (text == "skin")
-				{
-					this.<CreateByProduct>g__C|52_0("texture", ref CS$<>8__locals1);
-				}
-			}
-			else if (num2 <= 1527558748U)
-			{
-				if (num2 != 1237752336U)
-				{
-					if (num2 == 1527558748U)
-					{
-						if (text == "gem")
-						{
-							this.<CreateByProduct>g__C|52_0("cutstone", ref CS$<>8__locals1);
-							this.<CreateByProduct>g__C|52_0("ingot", ref CS$<>8__locals1);
-							this.<CreateByProduct>g__C|52_0("gem", ref CS$<>8__locals1);
-						}
-					}
-				}
-				else if (!(text == "water"))
-				{
-				}
-			}
-			else if (num2 != 2226448744U)
-			{
-				if (num2 != 2585652531U)
-				{
-					if (num2 == 3683705231U)
-					{
-						if (text == "bone")
-						{
-							this.<CreateByProduct>g__C|52_0("glass", ref CS$<>8__locals1);
-							this.<CreateByProduct>g__C|52_0("stick", ref CS$<>8__locals1);
-						}
-					}
-				}
-				else if (text == "ore")
-				{
-					this.<CreateByProduct>g__C|52_0("cutstone", ref CS$<>8__locals1);
-					this.<CreateByProduct>g__C|52_0("ingot", ref CS$<>8__locals1);
-				}
-			}
-			else if (text == "wood")
-			{
-				this.<CreateByProduct>g__C|52_0("plank", ref CS$<>8__locals1);
-				this.<CreateByProduct>g__C|52_0("stick", ref CS$<>8__locals1);
-				this.<CreateByProduct>g__C|52_0("bark", ref CS$<>8__locals1);
-			}
-			foreach (string text2 in this.goods)
-			{
-				this.<CreateByProduct>g__C|52_0(text2, ref CS$<>8__locals1);
-			}
-		}
-
-		public bool UsePick
-		{
-			get
-			{
-				return SourceMaterial.Row.IDPick.Contains(this.category);
-			}
-		}
-
-		public bool UseAxe
-		{
-			get
-			{
-				return SourceMaterial.Row.IDAxe.Contains(this.category);
-			}
-		}
-
-		[CompilerGenerated]
-		private void <CreateByProduct>g__C|52_0(string _id, ref SourceMaterial.Row.<>c__DisplayClass52_0 A_2)
-		{
-			Thing thing = ThingGen.Create(_id, -1, -1);
-			thing.ChangeMaterial(this.id);
-			thing.ModNum(A_2.num, true);
-			A_2.container.AddThing(thing, true, -1, -1);
-		}
-
 		public int id;
 
 		public string alias;
@@ -444,60 +83,321 @@ public class SourceMaterial : SourceDataInt<SourceMaterial.Row>
 
 		public Dictionary<int, int> elementMap;
 
-		public static string[] IDPick = new string[]
-		{
-			"rock",
-			"ore",
-			"gem",
-			"crystal",
-			"bone"
-		};
+		public static string[] IDPick = new string[5] { "rock", "ore", "gem", "crystal", "bone" };
 
-		public static string[] IDAxe = new string[]
-		{
-			"wood"
-		};
+		public static string[] IDAxe = new string[1] { "wood" };
 
 		public string name_L;
 
 		public string detail_L;
 
 		public string[] altName_L;
+
+		public override bool UseAlias => true;
+
+		public override string GetAlias => alias;
+
+		public bool UsePick => IDPick.Contains(category);
+
+		public bool UseAxe => IDAxe.Contains(category);
+
+		public override void OnImportData(SourceData data)
+		{
+			base.OnImportData(data);
+			SetTiles();
+		}
+
+		public void Init()
+		{
+			MatColors matColors = Core.Instance.Colors.matColors.TryGetValue(alias);
+			matColor = matColors.main;
+			altColor = matColors.alt;
+			SetTiles();
+		}
+
+		public void SetTiles()
+		{
+		}
+
+		public void AddBlood(Point p, int a = 1)
+		{
+			if (decal == 0)
+			{
+				return;
+			}
+			if (p.cell.IsSnowTile && this != MATERIAL.sourceSnow)
+			{
+				MATERIAL.sourceSnow.AddBlood(p, a);
+				return;
+			}
+			for (int i = 0; i < a; i++)
+			{
+				EClass._map.AddDecal(p.x + ((EClass.rnd(2) != 0) ? (EClass.rnd(3) - 1) : 0), p.z + ((EClass.rnd(2) != 0) ? (EClass.rnd(3) - 1) : 0), decal);
+			}
+		}
+
+		public void PlayHitEffect(Point p)
+		{
+			Effect.Get("mine2").Play(p).SetParticleColor(GetColor())
+				.Emit(2 + EClass.rnd(4));
+		}
+
+		public Color GetColor()
+		{
+			return Core.Instance.Colors.matColors[alias].main;
+		}
+
+		public string TryGetSound(string suffx, RenderRow c = null)
+		{
+			string soundImpact = GetSoundImpact(c);
+			if (EClass.Sound.Exist(soundImpact + "_" + suffx))
+			{
+				return soundImpact + "_" + suffx;
+			}
+			return soundImpact;
+		}
+
+		public string GetSoundDead(RenderRow c = null)
+		{
+			return TryGetSound("dead", c);
+		}
+
+		public string GetSoundDrop(RenderRow c = null)
+		{
+			return TryGetSound("drop", c);
+		}
+
+		public string GetSoundCraft(RenderRow c = null)
+		{
+			if (category == "wood")
+			{
+				return "build_progress";
+			}
+			return TryGetSound("craft", c);
+		}
+
+		public string GetSoundImpact(RenderRow c = null)
+		{
+			if (c != null && !c.idSound.IsEmpty())
+			{
+				return "Material/" + c.idSound;
+			}
+			return "Material/" + idSound;
+		}
+
+		public void CreateByProduct(Thing container, int num)
+		{
+			Thing thing = ThingGen.CreateRawMaterial(this);
+			thing.ModNum(num);
+			container.AddThing(thing);
+			C("dye");
+			switch (category)
+			{
+			case "bone":
+				C("glass");
+				C("stick");
+				break;
+			case "crystal":
+				C("glass");
+				C("gem");
+				break;
+			case "ore":
+				C("cutstone");
+				C("ingot");
+				break;
+			case "rock":
+				C("rock");
+				C("pebble");
+				C("cutstone");
+				break;
+			case "soil":
+				C("glass");
+				C("clay");
+				C("brick");
+				break;
+			case "gem":
+				C("cutstone");
+				C("ingot");
+				C("gem");
+				break;
+			case "wood":
+				C("plank");
+				C("stick");
+				C("bark");
+				break;
+			case "fiber":
+				C("thread");
+				C("texture");
+				C("string");
+				break;
+			case "skin":
+				C("texture");
+				break;
+			}
+			string[] array = goods;
+			foreach (string text in array)
+			{
+				C(text);
+			}
+			void C(string _id)
+			{
+				Thing thing2 = ThingGen.Create(_id);
+				thing2.ChangeMaterial(id);
+				thing2.ModNum(num);
+				container.AddThing(thing2);
+			}
+		}
 	}
 
 	public class TierList
 	{
+		public Tier[] tiers;
+
 		public TierList()
 		{
-			this.tiers = new SourceMaterial.Tier[5];
+			tiers = new Tier[5];
 			for (int i = 0; i < 5; i++)
 			{
-				this.tiers[i] = new SourceMaterial.Tier();
+				tiers[i] = new Tier();
 			}
 		}
-
-		public SourceMaterial.Tier[] tiers;
 	}
 
 	public class Tier
 	{
-		public SourceMaterial.Row Select()
-		{
-			int num = 0;
-			int num2 = EClass.rnd(this.sum);
-			foreach (SourceMaterial.Row row in this.list)
-			{
-				num += row.chance;
-				if (num2 < num)
-				{
-					return row;
-				}
-			}
-			return this.list.RandomItem<SourceMaterial.Row>();
-		}
-
 		public int sum;
 
-		public List<SourceMaterial.Row> list = new List<SourceMaterial.Row>();
+		public List<Row> list = new List<Row>();
+
+		public Row Select()
+		{
+			int num = 0;
+			int num2 = EClass.rnd(sum);
+			foreach (Row item in list)
+			{
+				num += item.chance;
+				if (num2 < num)
+				{
+					return item;
+				}
+			}
+			return list.RandomItem();
+		}
+	}
+
+	public static Dictionary<string, TierList> tierMap = new Dictionary<string, TierList>();
+
+	public override string[] ImportFields => new string[1] { "altName" };
+
+	public override Row CreateRow()
+	{
+		return new Row
+		{
+			id = SourceData.GetInt(0),
+			alias = SourceData.GetString(1),
+			name_JP = SourceData.GetString(2),
+			name = SourceData.GetString(3),
+			category = SourceData.GetString(4),
+			tag = SourceData.GetStringArray(5),
+			thing = SourceData.GetString(6),
+			goods = SourceData.GetStringArray(7),
+			minerals = SourceData.GetStringArray(8),
+			decal = SourceData.GetInt(9),
+			decay = SourceData.GetInt(10),
+			grass = SourceData.GetInt(11),
+			defFloor = SourceData.GetInt(12),
+			defBlock = SourceData.GetInt(13),
+			edge = SourceData.GetInt(14),
+			ramp = SourceData.GetInt(15),
+			idSound = SourceData.GetString(16),
+			soundFoot = SourceData.GetString(17),
+			hardness = SourceData.GetInt(18),
+			groups = SourceData.GetStringArray(19),
+			tier = SourceData.GetInt(20),
+			chance = SourceData.GetInt(21),
+			weight = SourceData.GetInt(22),
+			value = SourceData.GetInt(23),
+			quality = SourceData.GetInt(24),
+			atk = SourceData.GetInt(25),
+			dmg = SourceData.GetInt(26),
+			dv = SourceData.GetInt(27),
+			pv = SourceData.GetInt(28),
+			dice = SourceData.GetInt(29),
+			bits = SourceData.GetStringArray(30),
+			elements = Core.ParseElements(SourceData.GetStr(31)),
+			altName = SourceData.GetStringArray(32),
+			altName_JP = SourceData.GetStringArray(33)
+		};
+	}
+
+	public override void SetRow(Row r)
+	{
+		map[r.id] = r;
+	}
+
+	public override void OnInit()
+	{
+		Cell.matList = rows;
+		tierMap.Clear();
+		tierMap.Add("gem", new TierList());
+		tierMap.Add("ore", new TierList());
+		foreach (Row row in rows)
+		{
+			row.Init();
+			row.elementMap = Element.GetElementMap(row.elements);
+			if (!row.groups.IsEmpty())
+			{
+				string[] groups = row.groups;
+				foreach (string key in groups)
+				{
+					TierList tierList = tierMap.TryGetValue(key);
+					if (tierList == null)
+					{
+						tierList = new TierList();
+						tierMap[key] = tierList;
+					}
+					Tier obj = tierList.tiers[row.tier];
+					obj.list.Add(row);
+					obj.sum += row.chance;
+				}
+			}
+			string category = row.category;
+			if (!(category == "gem"))
+			{
+				if (category == "ore")
+				{
+					Tier obj2 = tierMap["ore"].tiers[row.tier];
+					obj2.list.Add(row);
+					obj2.sum += row.chance;
+				}
+			}
+			else
+			{
+				Tier obj3 = tierMap["gem"].tiers[row.tier];
+				obj3.list.Add(row);
+				obj3.sum += row.chance;
+			}
+		}
+	}
+
+	public override void OnAfterImportData()
+	{
+		rows.Sort((Row a, Row b) => a.id - b.id);
+	}
+
+	public void OnImportRow(Row r)
+	{
+		List<int> list = new List<int>(r.elements);
+		for (int i = 0; i < r.elements.Length; i += 2)
+		{
+			Add(r.elements[i], r.elements[i + 1]);
+		}
+		Add(13, r.hardness);
+		r.elements = list.ToArray();
+		void Add(int ele, int a)
+		{
+			list.Add(ele);
+			list.Add(a);
+		}
 	}
 }

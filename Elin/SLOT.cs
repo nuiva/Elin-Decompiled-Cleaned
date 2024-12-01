@@ -1,5 +1,3 @@
-﻿using System;
-
 public class SLOT
 {
 	public const int back = 33;
@@ -34,23 +32,9 @@ public class SLOT
 
 	public const int lightsource = 45;
 
-	public static readonly int[] IDS = new int[]
+	public static readonly int[] IDS = new int[16]
 	{
-		33,
-		34,
-		35,
-		36,
-		37,
-		39,
-		44,
-		43,
-		40,
-		42,
-		32,
-		38,
-		31,
-		41,
-		30,
-		45
+		33, 34, 35, 36, 37, 39, 44, 43, 40, 42,
+		32, 38, 31, 41, 30, 45
 	};
 }

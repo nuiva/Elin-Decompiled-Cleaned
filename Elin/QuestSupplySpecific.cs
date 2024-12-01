@@ -1,40 +1,21 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class QuestSupplySpecific : QuestSupply
 {
-	public virtual string idCat
-	{
-		get
-		{
-			return "meal";
-		}
-	}
+	public virtual string idCat => "meal";
 
-	public virtual bool UseWeight
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public virtual bool UseWeight => true;
 
-	public override string RewardSuffix
-	{
-		get
-		{
-			return "Supply";
-		}
-	}
+	public override string RewardSuffix => "Supply";
 
 	public override int GetExtraMoney()
 	{
-		return (int)((float)(base.sourceThing.value * this.num) * 0.1f) + 5 * this.num;
+		return (int)((float)(base.sourceThing.value * num) * 0.1f) + 5 * num;
 	}
 
 	public override int GetBonus(Thing t)
 	{
-		int num = (int)((float)t.GetPrice(CurrencyType.Money, true, PriceType.Shipping, EClass.pc) * 1.2f) * this.num - this.rewardMoney;
+		int num = (int)((float)t.GetPrice(CurrencyType.Money, sell: true, PriceType.Shipping, EClass.pc) * 1.2f) * base.num - rewardMoney;
 		if (num <= 0)
 		{
 			return 0;
@@ -50,7 +31,7 @@ public class QuestSupplySpecific : QuestSupply
 		{
 			foreach (SourceThing.Row row in EClass.sources.things.rows)
 			{
-				if ((i != 0 || !(this is QuestMeal) || row.LV <= num || EClass.rnd(4) == 0) && row.category == this.idCat && !row.isOrigin)
+				if ((i != 0 || !(this is QuestMeal) || row.LV <= num || EClass.rnd(4) == 0) && row.category == idCat && !row.isOrigin)
 				{
 					list.Add(row);
 				}
@@ -60,19 +41,10 @@ public class QuestSupplySpecific : QuestSupply
 				break;
 			}
 		}
-		string id;
-		if (!this.UseWeight)
+		idThing = (UseWeight ? list.RandomItemWeighted((SourceThing.Row a) => a.chance).id : list.RandomItem().id);
+		if (difficultyType == DifficultyType.Meal)
 		{
-			id = list.RandomItem<SourceThing.Row>().id;
-		}
-		else
-		{
-			id = list.RandomItemWeighted((SourceThing.Row a) => (float)a.chance).id;
-		}
-		this.idThing = id;
-		if (this.difficultyType == Quest.DifficultyType.Meal)
-		{
-			this.difficulty = base.sourceThing.LV / 10 + 1;
+			difficulty = base.sourceThing.LV / 10 + 1;
 		}
 	}
 }

@@ -1,28 +1,8 @@
-﻿using System;
-
 public class TraitMerchantJunk : TraitMerchant
 {
-	public override ShopType ShopType
-	{
-		get
-		{
-			return ShopType.Junk;
-		}
-	}
+	public override ShopType ShopType => ShopType.Junk;
 
-	public override bool CanSellStolenGoods
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanSellStolenGoods => true;
 
-	public override string IdAmbience
-	{
-		get
-		{
-			return "carpenter";
-		}
-	}
+	public override string IdAmbience => "carpenter";
 }

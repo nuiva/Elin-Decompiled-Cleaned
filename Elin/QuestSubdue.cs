@@ -1,30 +1,10 @@
-﻿using System;
-
 public class QuestSubdue : QuestInstance
 {
-	public override string IdZone
-	{
-		get
-		{
-			return "instance_arena2";
-		}
-	}
+	public override string IdZone => "instance_arena2";
 
-	public override bool FameContent
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool FameContent => true;
 
-	public override int BaseMoney
-	{
-		get
-		{
-			return base.source.money + EClass.curve(this.DangerLv, 20, 15, 75) * 10;
-		}
-	}
+	public override int BaseMoney => base.source.money + EClass.curve(DangerLv, 20, 15) * 10;
 
 	public override ZoneEventQuest CreateEvent()
 	{
@@ -43,6 +23,6 @@ public class QuestSubdue : QuestInstance
 		{
 			return "";
 		}
-		return "progressHunt".lang((@event.max - @event.enemies.Count).ToString() ?? "", @event.max.ToString() ?? "", null, null, null);
+		return "progressHunt".lang((@event.max - @event.enemies.Count).ToString() ?? "", @event.max.ToString() ?? "");
 	}
 }

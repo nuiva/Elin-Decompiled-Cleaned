@@ -1,5 +1,3 @@
-﻿using System;
-
 public class TraitLetterOfWill : Trait
 {
 	public override void WriteNote(UINote n, bool identified)

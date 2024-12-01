@@ -1,32 +1,78 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class DragItemCard : DragItem
 {
-	public DragItemCard(ButtonGrid _button, bool setDragImage = true)
+	public class DragInfo
 	{
-		this.button = _button;
-		this.from = new DragItemCard.DragInfo(this.button);
-		if (setDragImage)
+		public ButtonGrid button;
+
+		public BodySlot equippedSlot;
+
+		public int invX;
+
+		public int invY;
+
+		public Thing thing;
+
+		public List<Thing> grid => container.things.grid;
+
+		public InvOwner invOwner => button.invOwner;
+
+		public Card container => invOwner.Container;
+
+		public BaseList list => button.GetComponentInParent<BaseList>();
+
+		public ContainerType ContainerType => container.trait.ContainerType;
+
+		public DragInfo(ButtonGrid b)
 		{
-			EClass.ui.hud.SetDragImage(this.button.icon, null, this.button.mainText);
+			button = b;
+			if (!b || b.invOwner == null)
+			{
+				return;
+			}
+			if (b.card != null)
+			{
+				thing = b.card.Thing;
+				invX = thing.invX;
+				invY = thing.invY;
+				if (thing.isEquipped && thing.GetRootCard() == invOwner.owner)
+				{
+					equippedSlot = invOwner.owner.Chara.body.slots[thing.c_equippedSlot - 1];
+				}
+			}
+			else
+			{
+				invX = b.index;
+				invY = b.invOwner.destInvY;
+			}
 		}
 	}
 
-	public override UIButton Button
+	public ButtonGrid button;
+
+	public DragInfo from;
+
+	public DragInfo to;
+
+	public override UIButton Button => button;
+
+	public DragItemCard(ButtonGrid _button, bool setDragImage = true)
 	{
-		get
+		button = _button;
+		from = new DragInfo(button);
+		if (setDragImage)
 		{
-			return this.button;
+			EClass.ui.hud.SetDragImage(button.icon, null, button.mainText);
 		}
 	}
 
 	public override void OnStartDrag()
 	{
-		this.from.invOwner.OnStartDrag(this.from);
-		if (LayerDragGrid.Instance && LayerDragGrid.Instance.owner.ShouldShowGuide(this.from.thing))
+		from.invOwner.OnStartDrag(from);
+		if ((bool)LayerDragGrid.Instance && LayerDragGrid.Instance.owner.ShouldShowGuide(from.thing))
 		{
-			LayerDragGrid.Instance.CurrentButton.Attach("guide", false);
+			LayerDragGrid.Instance.CurrentButton.Attach("guide", rightAttach: false);
 		}
 	}
 
@@ -34,7 +80,7 @@ public class DragItemCard : DragItem
 	{
 		WidgetEquip.dragEquip = null;
 		WidgetEquip.Redraw();
-		if (LayerDragGrid.Instance)
+		if ((bool)LayerDragGrid.Instance)
 		{
 			LayerDragGrid.Instance.CurrentButton.Dettach("guide");
 		}
@@ -42,19 +88,19 @@ public class DragItemCard : DragItem
 
 	public override bool OnDragSpecial()
 	{
-		DragItemCard.DragInfo dragInfo = new DragItemCard.DragInfo(InputModuleEX.GetComponentOf<ButtonGrid>());
-		if (dragInfo != null && dragInfo.button && dragInfo.button.interactable && !(dragInfo.invOwner is InvOwnerHotbar) && dragInfo.invOwner.owner == this.from.invOwner.owner && dragInfo.invOwner.owner.IsPC && this.from.thing.Num > 1 && (dragInfo.thing == null || dragInfo.thing.CanStackTo(this.from.thing)))
+		DragInfo dragInfo = new DragInfo(InputModuleEX.GetComponentOf<ButtonGrid>());
+		if (dragInfo != null && (bool)dragInfo.button && dragInfo.button.interactable && !(dragInfo.invOwner is InvOwnerHotbar) && dragInfo.invOwner.owner == from.invOwner.owner && dragInfo.invOwner.owner.IsPC && from.thing.Num > 1 && (dragInfo.thing == null || dragInfo.thing.CanStackTo(from.thing)))
 		{
-			bool flag = dragInfo.thing != null;
-			Thing thing = this.from.thing.Split(1);
+			bool num = dragInfo.thing != null;
+			Thing thing = from.thing.Split(1);
 			SE.Play(thing.material.GetSoundDrop(thing.sourceCard));
-			if (flag)
+			if (num)
 			{
-				dragInfo.thing.ModNum(1, true);
+				dragInfo.thing.ModNum(1);
 			}
 			else
 			{
-				dragInfo.invOwner.Container.AddThing(thing, false, -1, -1);
+				dragInfo.invOwner.Container.AddThing(thing, tryStack: false);
 				thing.invX = dragInfo.invX;
 				thing.invY = dragInfo.invY;
 			}
@@ -65,95 +111,12 @@ public class DragItemCard : DragItem
 
 	public override bool OnDrag(bool execute, bool cancel = false)
 	{
-		DragItemCard.DragInfo dragInfo = new DragItemCard.DragInfo(InputModuleEX.GetComponentOf<ButtonGrid>());
-		bool flag = this.from.invOwner.OnDrag(this.from, dragInfo, execute, cancel);
-		if (flag && EClass.core.config.game.doubleClickToHold && EClass.ui.dragDuration < 0.35f && dragInfo.button == this.from.button && this.from.thing != null)
+		DragInfo dragInfo = new DragInfo(InputModuleEX.GetComponentOf<ButtonGrid>());
+		bool num = from.invOwner.OnDrag(from, dragInfo, execute, cancel);
+		if (num && EClass.core.config.game.doubleClickToHold && EClass.ui.dragDuration < 0.35f && dragInfo.button == from.button && from.thing != null)
 		{
-			dragInfo.button.invOwner.TryHold(this.from.thing);
+			dragInfo.button.invOwner.TryHold(from.thing);
 		}
-		return flag;
-	}
-
-	public ButtonGrid button;
-
-	public DragItemCard.DragInfo from;
-
-	public DragItemCard.DragInfo to;
-
-	public class DragInfo
-	{
-		public DragInfo(ButtonGrid b)
-		{
-			this.button = b;
-			if (b && b.invOwner != null)
-			{
-				if (b.card != null)
-				{
-					this.thing = b.card.Thing;
-					this.invX = this.thing.invX;
-					this.invY = this.thing.invY;
-					if (this.thing.isEquipped && this.thing.GetRootCard() == this.invOwner.owner)
-					{
-						this.equippedSlot = this.invOwner.owner.Chara.body.slots[this.thing.c_equippedSlot - 1];
-						return;
-					}
-				}
-				else
-				{
-					this.invX = b.index;
-					this.invY = b.invOwner.destInvY;
-				}
-			}
-		}
-
-		public List<Thing> grid
-		{
-			get
-			{
-				return this.container.things.grid;
-			}
-		}
-
-		public InvOwner invOwner
-		{
-			get
-			{
-				return this.button.invOwner;
-			}
-		}
-
-		public Card container
-		{
-			get
-			{
-				return this.invOwner.Container;
-			}
-		}
-
-		public BaseList list
-		{
-			get
-			{
-				return this.button.GetComponentInParent<BaseList>();
-			}
-		}
-
-		public ContainerType ContainerType
-		{
-			get
-			{
-				return this.container.trait.ContainerType;
-			}
-		}
-
-		public ButtonGrid button;
-
-		public BodySlot equippedSlot;
-
-		public int invX;
-
-		public int invY;
-
-		public Thing thing;
+		return num;
 	}
 }

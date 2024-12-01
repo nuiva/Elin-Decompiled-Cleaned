@@ -1,60 +1,42 @@
-﻿using System;
-
 public class Zone_Nymelle : Zone_Dungeon
 {
 	public override string idExport
 	{
 		get
 		{
-			if (base.lv == this.LvBoss)
+			if (base.lv != LvBoss)
 			{
-				return "nymelle_boss";
+				if (base.lv != LvCrystal)
+				{
+					return base.source.id;
+				}
+				return "nymelle_crystal";
 			}
-			if (base.lv != this.LvCrystal)
-			{
-				return base.source.id;
-			}
-			return "nymelle_crystal";
+			return "nymelle_boss";
 		}
 	}
 
-	public int LvBoss
-	{
-		get
-		{
-			return -5;
-		}
-	}
+	public int LvBoss => -5;
 
-	public int LvCrystal
-	{
-		get
-		{
-			return -6;
-		}
-	}
+	public int LvCrystal => -6;
 
-	public bool IsBossLv
-	{
-		get
-		{
-			return base.lv == this.LvBoss;
-		}
-	}
+	public bool IsBossLv => base.lv == LvBoss;
 
-	public bool IsCrystalLv
-	{
-		get
-		{
-			return base.lv == this.LvCrystal;
-		}
-	}
+	public bool IsCrystalLv => base.lv == LvCrystal;
 
 	public override bool LockExit
 	{
 		get
 		{
-			return (base.lv == -2 && EClass.game.quests.GetPhase<QuestExploration>() < 1) || (base.lv == this.LvBoss + 1 && EClass.game.quests.GetPhase<QuestExploration>() < 2) || (base.lv == this.LvBoss && EClass.game.quests.GetPhase<QuestExploration>() < 3);
+			if ((base.lv != -2 || EClass.game.quests.GetPhase<QuestExploration>() >= 1) && (base.lv != LvBoss + 1 || EClass.game.quests.GetPhase<QuestExploration>() >= 2))
+			{
+				if (base.lv == LvBoss)
+				{
+					return EClass.game.quests.GetPhase<QuestExploration>() < 3;
+				}
+				return false;
+			}
+			return true;
 		}
 	}
 
@@ -62,7 +44,11 @@ public class Zone_Nymelle : Zone_Dungeon
 	{
 		get
 		{
-			return !this.IsBossLv && !this.IsCrystalLv;
+			if (!IsBossLv)
+			{
+				return !IsCrystalLv;
+			}
+			return false;
 		}
 	}
 
@@ -70,7 +56,11 @@ public class Zone_Nymelle : Zone_Dungeon
 	{
 		get
 		{
-			return this.IsBossLv || this.IsCrystalLv;
+			if (!IsBossLv)
+			{
+				return IsCrystalLv;
+			}
+			return true;
 		}
 	}
 
@@ -78,7 +68,7 @@ public class Zone_Nymelle : Zone_Dungeon
 	{
 		get
 		{
-			if (!this.IsBossLv && !this.IsCrystalLv)
+			if (!IsBossLv && !IsCrystalLv)
 			{
 				return base.PrespawnRate;
 			}
@@ -88,11 +78,11 @@ public class Zone_Nymelle : Zone_Dungeon
 
 	public override string GetNewZoneID(int level)
 	{
-		if (level == this.LvBoss)
+		if (level == LvBoss)
 		{
 			return "nymelle_boss";
 		}
-		if (level == this.LvCrystal)
+		if (level == LvCrystal)
 		{
 			return "nymelle_crystal";
 		}
@@ -101,24 +91,28 @@ public class Zone_Nymelle : Zone_Dungeon
 
 	public override void OnBeforeSimulate()
 	{
-		if (base.visitCount == 0)
+		if (base.visitCount != 0)
 		{
-			if (this.IsBossLv)
+			return;
+		}
+		if (IsBossLv)
+		{
+			EClass._zone.AddChara("isygarad", 40, 37);
+			SoundManager.ForceBGM();
+			LayerDrama.ActivateMain("mono", "nymelle_boss");
+		}
+		if (IsCrystalLv)
+		{
+			Chara chara = EClass.game.cards.globalCharas.Find("fiama");
+			chara.MoveHome(EClass._zone, 43, 67);
+			chara.AddEditorTag(EditorTag.AINoMove);
+		}
+		else if (base.lv == -2)
+		{
+			Chara chara2 = EClass.game.cards.globalCharas.Find("farris");
+			if (chara2 == null)
 			{
-				EClass._zone.AddChara("isygarad", 40, 37);
-				SoundManager.ForceBGM();
-				LayerDrama.ActivateMain("mono", "nymelle_boss", null, null, "");
-			}
-			if (this.IsCrystalLv)
-			{
-				Chara chara = EClass.game.cards.globalCharas.Find("fiama");
-				chara.MoveHome(EClass._zone, 43, 67);
-				chara.AddEditorTag(EditorTag.AINoMove);
-				return;
-			}
-			if (base.lv == -2 && EClass.game.cards.globalCharas.Find("farris") == null)
-			{
-				Chara chara2 = CharaGen.Create("farris", -1);
+				chara2 = CharaGen.Create("farris");
 				chara2.SetGlobal();
 				Thing thing = EClass._map.props.installed.Find<TraitStairsLocked>();
 				EClass._zone.AddCard(chara2, thing.pos.x, thing.pos.z);

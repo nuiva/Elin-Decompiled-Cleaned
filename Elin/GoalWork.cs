@@ -1,76 +1,62 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class GoalWork : Goal
 {
-	public virtual bool IsHobby
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool IsHobby => false;
 
 	public virtual List<Hobby> GetWorks()
 	{
-		return this.owner.ListWorks(true);
+		return owner.ListWorks();
 	}
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		if (this.FindWork(this.owner, true))
+		if (FindWork(owner))
 		{
-			yield return base.Success(null);
+			yield return Success();
 		}
-		yield return base.DoIdle(3);
-		yield break;
+		yield return DoIdle();
 	}
 
 	public void ValidateHobby(Chara c)
 	{
-		this.owner = c;
-		WorkSummary workSummary = this.owner.GetWorkSummary();
-		List<Hobby> list = this.owner.ListHobbies(true);
+		owner = c;
+		WorkSummary workSummary = owner.GetWorkSummary();
+		List<Hobby> list = owner.ListHobbies();
 		workSummary.hobbies.Clear();
-		Room room = this.owner.FindRoom();
-		int i = 0;
-		while (i < list.Count)
+		Room room = owner.FindRoom();
+		for (int i = 0; i < list.Count; i++)
 		{
-			if (room == null)
+			if (room != null)
 			{
-				goto IL_BE;
-			}
-			Lot lot = room.lot;
-			if (!this.TryWork(room, list[i], false))
-			{
-				bool flag = false;
-				foreach (Room room2 in EClass._map.rooms.listRoom)
+				Lot lot = room.lot;
+				if (TryWork(room, list[i], setAI: false))
 				{
-					if (room2.lot == lot && room2 != room && this.TryWork(room2, list[i], false))
+					continue;
+				}
+				bool flag = false;
+				foreach (Room item in EClass._map.rooms.listRoom)
+				{
+					if (item.lot == lot && item != room && TryWork(item, list[i], setAI: false))
 					{
 						flag = true;
 						break;
 					}
 				}
-				if (!flag)
+				if (flag)
 				{
-					goto IL_BE;
+					continue;
 				}
 			}
-			IL_CE:
-			i++;
-			continue;
-			IL_BE:
-			this.TryWork(null, list[i], false);
-			goto IL_CE;
+			TryWork(null, list[i], setAI: false);
 		}
 	}
 
 	public bool FindWork(Chara c, bool setAI = true)
 	{
-		this.owner = c;
-		WorkSummary workSummary = this.owner.GetWorkSummary();
-		if (this.IsHobby)
+		owner = c;
+		WorkSummary workSummary = owner.GetWorkSummary();
+		if (IsHobby)
 		{
 			workSummary.hobbies.Clear();
 		}
@@ -78,36 +64,44 @@ public class GoalWork : Goal
 		{
 			workSummary.work = null;
 		}
-		Room room = this.owner.FindRoom();
+		Room room = owner.FindRoom();
 		if (room != null)
 		{
-			if (this.TryWork(room, setAI))
+			if (TryWork(room, setAI))
 			{
 				return true;
 			}
 			Lot lot = room.lot;
-			foreach (Room room2 in EClass._map.rooms.listRoom)
+			foreach (Room item in EClass._map.rooms.listRoom)
 			{
-				if (room2.lot == lot && room2 != room && !room2.IsPrivate && this.TryWork(room2, setAI))
+				if (item.lot == lot && item != room && !item.IsPrivate && TryWork(item, setAI))
 				{
 					return true;
 				}
 			}
 		}
-		return this.TryWork(null, setAI);
+		if (TryWork(null, setAI))
+		{
+			return true;
+		}
+		return false;
 	}
 
 	public bool TryWork(BaseArea destArea, bool setAI = true)
 	{
-		List<Hobby> works = this.GetWorks();
-		if (this.IsHobby)
+		List<Hobby> works = GetWorks();
+		if (IsHobby)
 		{
-			Hobby h = works.RandomItem<Hobby>();
-			return this.TryWork(destArea, h, setAI);
+			Hobby h = works.RandomItem();
+			if (TryWork(destArea, h, setAI))
+			{
+				return true;
+			}
+			return false;
 		}
-		foreach (Hobby h2 in works)
+		foreach (Hobby item in works)
 		{
-			if (this.TryWork(destArea, h2, setAI))
+			if (TryWork(destArea, item, setAI))
 			{
 				return true;
 			}
@@ -117,22 +111,22 @@ public class GoalWork : Goal
 
 	public bool TryWork(BaseArea destArea, Hobby h, bool setAI)
 	{
-		AIWork ai = h.GetAI(this.owner);
-		ai.destArea = destArea;
-		if (ai.SetDestination())
+		AIWork aI = h.GetAI(owner);
+		aI.destArea = destArea;
+		if (aI.SetDestination())
 		{
-			WorkSummary workSummary = this.owner.GetWorkSummary();
-			if (this.IsHobby)
+			WorkSummary workSummary = owner.GetWorkSummary();
+			if (IsHobby)
 			{
-				workSummary.hobbies.Add(ai.GetSession());
+				workSummary.hobbies.Add(aI.GetSession());
 			}
 			else
 			{
-				workSummary.work = ai.GetSession();
+				workSummary.work = aI.GetSession();
 			}
 			if (setAI)
 			{
-				this.owner.SetAI(ai);
+				owner.SetAI(aI);
 			}
 			return true;
 		}
@@ -141,10 +135,10 @@ public class GoalWork : Goal
 
 	public override void OnSimulatePosition()
 	{
-		Room room = this.owner.FindRoom();
+		Room room = owner.FindRoom();
 		if (room != null)
 		{
-			this.owner.MoveImmediate(room.GetRandomFreePos(), true, true);
+			owner.MoveImmediate(room.GetRandomFreePos());
 		}
 	}
 }

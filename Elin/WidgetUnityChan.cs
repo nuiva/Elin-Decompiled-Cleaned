@@ -1,36 +1,7 @@
-﻿using System;
 using UnityEngine;
 
 public class WidgetUnityChan : Widget
 {
-	public override void OnActivate()
-	{
-		WidgetUnityChan.Instance = this;
-		this.goWorld = UnityEngine.Object.Instantiate<GameObject>(this.prefabWorld);
-		this.animator = this.goWorld.GetComponentInChildren<Animator>();
-		this.cam = this.goWorld.GetComponentInChildren<Camera>();
-	}
-
-	public void OnDestroy()
-	{
-		UnityEngine.Object.DestroyImmediate(this.goWorld);
-	}
-
-	public void Refresh(float angle)
-	{
-		this.animator.transform.localEulerAngles = new Vector3(0f, angle + this.angleFix, 0f);
-		this.cam.fieldOfView = (this.up ? 6f : 12f);
-	}
-
-	public override void OnSetContextMenu(UIContextMenu m)
-	{
-		m.AddChild("setting").AddToggle("Up", this.up, delegate(bool a)
-		{
-			this.up = a;
-		});
-		base.SetBaseContextMenu(m);
-	}
-
 	public static WidgetUnityChan Instance;
 
 	public float angleFix;
@@ -46,4 +17,32 @@ public class WidgetUnityChan : Widget
 	public Camera cam;
 
 	public Vector3 scroll;
+
+	public override void OnActivate()
+	{
+		Instance = this;
+		goWorld = Object.Instantiate(prefabWorld);
+		animator = goWorld.GetComponentInChildren<Animator>();
+		cam = goWorld.GetComponentInChildren<Camera>();
+	}
+
+	public void OnDestroy()
+	{
+		Object.DestroyImmediate(goWorld);
+	}
+
+	public void Refresh(float angle)
+	{
+		animator.transform.localEulerAngles = new Vector3(0f, angle + angleFix, 0f);
+		cam.fieldOfView = (up ? 6f : 12f);
+	}
+
+	public override void OnSetContextMenu(UIContextMenu m)
+	{
+		m.AddChild("setting").AddToggle("Up", up, delegate(bool a)
+		{
+			up = a;
+		});
+		SetBaseContextMenu(m);
+	}
 }

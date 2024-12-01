@@ -1,28 +1,8 @@
-﻿using System;
-
 public class Zone_Civilized : Zone
 {
-	public override bool ShouldRegenerate
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool ShouldRegenerate => true;
 
-	public override bool HasLaw
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool HasLaw => true;
 
-	public override bool AllowCriminal
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool AllowCriminal => true;
 }

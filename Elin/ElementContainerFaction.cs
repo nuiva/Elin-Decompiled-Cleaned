@@ -1,133 +1,133 @@
-﻿using System;
-
 public class ElementContainerFaction : ElementContainer
 {
+	public bool isDirty;
+
 	public bool IsEffective(Thing t)
 	{
-		return t.c_idDeity.IsEmpty() || t.c_idDeity == EClass.pc.idFaith;
+		if (t.c_idDeity.IsEmpty())
+		{
+			return true;
+		}
+		return t.c_idDeity == EClass.pc.idFaith;
 	}
 
 	public void OnEquip(Chara c, Thing t)
 	{
-		if (!c.IsPCFaction)
+		if (c.IsPCFaction)
 		{
-			return;
+			OnEquip(t);
 		}
-		this.OnEquip(t);
 	}
 
 	public void OnUnequip(Chara c, Thing t)
 	{
-		if (!c.IsPCFaction)
+		if (c.IsPCFaction)
 		{
-			return;
+			OnUnequip(t);
 		}
-		this.OnUnequip(t);
 	}
 
 	public void OnEquip(Thing t)
 	{
-		if (!this.IsEffective(t))
+		if (!IsEffective(t))
 		{
 			return;
 		}
-		foreach (Element element in t.elements.dict.Values)
+		foreach (Element value in t.elements.dict.Values)
 		{
-			if (element.IsGlobalElement)
+			if (value.IsGlobalElement)
 			{
-				base.ModBase(element.id, element.Value).vExp = element.vExp;
-				this.isDirty = true;
+				ModBase(value.id, value.Value).vExp = value.vExp;
+				isDirty = true;
 			}
 		}
-		this.CheckDirty();
+		CheckDirty();
 	}
 
 	public void OnUnequip(Thing t)
 	{
-		if (!this.IsEffective(t))
+		if (!IsEffective(t))
 		{
 			return;
 		}
-		foreach (Element element in t.elements.dict.Values)
+		foreach (Element value in t.elements.dict.Values)
 		{
-			if (element.IsGlobalElement)
+			if (value.IsGlobalElement)
 			{
-				base.ModBase(element.id, -element.Value);
-				this.isDirty = true;
+				ModBase(value.id, -value.Value);
+				isDirty = true;
 			}
 		}
-		this.CheckDirty();
+		CheckDirty();
 	}
 
 	public void CheckDirty()
 	{
-		if (!this.isDirty)
+		if (!isDirty)
 		{
 			return;
 		}
-		foreach (Chara chara in EClass.game.cards.globalCharas.Values)
+		foreach (Chara value in EClass.game.cards.globalCharas.Values)
 		{
-			if (chara.IsPCFaction)
+			if (value.IsPCFaction)
 			{
-				chara.Refresh(false);
+				value.Refresh();
 			}
 		}
 		if (EClass.core.IsGameStarted)
 		{
-			foreach (Chara chara2 in EClass._map.charas)
+			foreach (Chara chara in EClass._map.charas)
 			{
-				if (chara2.IsPCFactionMinion)
+				if (chara.IsPCFactionMinion)
 				{
-					chara2.Refresh(false);
+					chara.Refresh();
 				}
 			}
 		}
-		this.isDirty = false;
+		isDirty = false;
 	}
 
 	public void OnLeaveFaith()
 	{
-		foreach (Chara chara in EClass.game.cards.globalCharas.Values)
+		foreach (Chara value in EClass.game.cards.globalCharas.Values)
 		{
-			if (chara.IsPCFaction)
+			if (value.IsPCFaction)
 			{
-				this.OnRemoveMember(chara);
+				OnRemoveMember(value);
 			}
 		}
 	}
 
 	public void OnJoinFaith()
 	{
-		foreach (Chara chara in EClass.game.cards.globalCharas.Values)
+		foreach (Chara value in EClass.game.cards.globalCharas.Values)
 		{
-			if (chara.IsPCFaction)
+			if (value.IsPCFaction)
 			{
-				this.OnAddMemeber(chara);
+				OnAddMemeber(value);
 			}
 		}
 	}
 
 	public void OnAddMemeber(Chara c)
 	{
-		foreach (BodySlot bodySlot in c.body.slots)
+		foreach (BodySlot slot in c.body.slots)
 		{
-			if (bodySlot.thing != null)
+			if (slot.thing != null)
 			{
-				this.OnEquip(bodySlot.thing);
+				OnEquip(slot.thing);
 			}
 		}
 	}
 
 	public void OnRemoveMember(Chara c)
 	{
-		foreach (BodySlot bodySlot in c.body.slots)
+		foreach (BodySlot slot in c.body.slots)
 		{
-			if (bodySlot.thing != null)
+			if (slot.thing != null)
 			{
-				this.OnUnequip(bodySlot.thing);
+				OnUnequip(slot.thing);
 			}
 		}
 	}
-
-	public bool isDirty;
 }

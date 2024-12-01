@@ -1,216 +1,208 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class TraitBed : Trait
 {
-	public override bool CanStack
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanStack => false;
 
 	public int MaxHolders
 	{
 		get
 		{
-			if (this.owner.c_bedType != BedType.residentOne)
+			if (owner.c_bedType != BedType.residentOne)
 			{
-				return ((base.GetParam(1, null) == null) ? 1 : base.GetParam(1, null).ToInt()) + this.owner.c_containerSize;
+				return ((GetParam(1) == null) ? 1 : GetParam(1).ToInt()) + owner.c_containerSize;
 			}
 			return 1;
 		}
 	}
 
-	public override bool IsChangeFloorHeight
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsChangeFloorHeight => true;
 
 	public override void TrySetAct(ActPlan p)
 	{
 		p.TrySetAct(new AI_Sleep
 		{
-			target = this.owner.Thing
-		}, this.owner);
+			target = owner.Thing
+		}, owner);
 		p.TrySetAct(new AI_PassTime
 		{
-			target = this.owner.Thing
-		}, this.owner);
-		if (EClass._zone.IsPCFaction)
+			target = owner.Thing
+		}, owner);
+		if (!EClass._zone.IsPCFaction)
 		{
-			p.TrySetAct("bedConfig", delegate()
-			{
-				UIContextMenu uicontextMenu = EClass.ui.CreateContextMenuInteraction();
-				if (this.HasHolder())
-				{
-					uicontextMenu.AddButton("unassignBed", delegate()
-					{
-						this.ClearHolders();
-						SE.Trash();
-					}, true);
-				}
-				else if (this.owner.c_bedType == BedType.resident || this.owner.c_bedType == BedType.residentOne)
-				{
-					uicontextMenu.AddButton("claimBed", delegate()
-					{
-						this.ClearHolders();
-						this.AddHolder(EClass.pc);
-						Msg.Say("claimBed", EClass.pc, null, null, null);
-						SE.Play("jingle_embark");
-					}, true);
-				}
-				if (this.owner.c_bedType == BedType.resident || this.owner.c_bedType == BedType.residentOne)
-				{
-					uicontextMenu.AddButton("assignBed", delegate()
-					{
-						LayerPeople.CreateBed(this);
-					}, true);
-				}
-				using (List<BedType>.Enumerator enumerator = new List<BedType>
-				{
-					BedType.resident,
-					BedType.residentOne,
-					BedType.guest
-				}.GetEnumerator())
-				{
-					while (enumerator.MoveNext())
-					{
-						BedType t = enumerator.Current;
-						if (t != BedType.livestock && t != BedType.patient)
-						{
-							uicontextMenu.AddButton(((t == this.owner.c_bedType) ? "context_checker".lang() : "") + ("bed_" + t.ToString()).lang(), delegate()
-							{
-								this.SetBedType(t);
-								SE.ClickOk();
-							}, true);
-						}
-					}
-				}
-				CursorSystem.ignoreCount = 5;
-				uicontextMenu.Show();
-				return false;
-			}, this.owner, null, 1, false, true, false);
+			return;
 		}
+		p.TrySetAct("bedConfig", delegate
+		{
+			UIContextMenu uIContextMenu = EClass.ui.CreateContextMenuInteraction();
+			if (HasHolder())
+			{
+				uIContextMenu.AddButton("unassignBed", delegate
+				{
+					ClearHolders();
+					SE.Trash();
+				});
+			}
+			else if (owner.c_bedType == BedType.resident || owner.c_bedType == BedType.residentOne)
+			{
+				uIContextMenu.AddButton("claimBed", delegate
+				{
+					ClearHolders();
+					AddHolder(EClass.pc);
+					Msg.Say("claimBed", EClass.pc);
+					SE.Play("jingle_embark");
+				});
+			}
+			if (owner.c_bedType == BedType.resident || owner.c_bedType == BedType.residentOne)
+			{
+				uIContextMenu.AddButton("assignBed", delegate
+				{
+					LayerPeople.CreateBed(this);
+				});
+			}
+			foreach (BedType t in new List<BedType>
+			{
+				BedType.resident,
+				BedType.residentOne,
+				BedType.guest
+			})
+			{
+				if (t != BedType.livestock && t != BedType.patient)
+				{
+					uIContextMenu.AddButton(((t == owner.c_bedType) ? "context_checker".lang() : "") + ("bed_" + t).lang(), delegate
+					{
+						SetBedType(t);
+						SE.ClickOk();
+					});
+				}
+			}
+			CursorSystem.ignoreCount = 5;
+			uIContextMenu.Show();
+			return false;
+		}, owner);
 	}
 
 	public void AddHolder(Chara c)
 	{
-		CharaList charaList = this.owner.c_charaList;
+		CharaList charaList = owner.c_charaList;
 		if (charaList == null)
 		{
-			charaList = (this.owner.c_charaList = new CharaList());
+			charaList = (owner.c_charaList = new CharaList());
 		}
 		charaList.Add(c);
 	}
 
 	public void RemoveHolder(Chara c)
 	{
-		CharaList c_charaList = this.owner.c_charaList;
-		if (c_charaList == null)
+		CharaList c_charaList = owner.c_charaList;
+		if (c_charaList != null)
 		{
-			return;
-		}
-		c_charaList.Remove(c);
-		if (c_charaList.list.Count == 0)
-		{
-			this.owner.c_charaList = null;
+			c_charaList.Remove(c);
+			if (c_charaList.list.Count == 0)
+			{
+				owner.c_charaList = null;
+			}
 		}
 	}
 
 	public void ClearHolders()
 	{
-		CharaList c_charaList = this.owner.c_charaList;
-		if (c_charaList != null)
-		{
-			c_charaList.list.Clear();
-		}
+		owner.c_charaList?.list.Clear();
 	}
 
 	public bool IsHolder(Chara c)
 	{
-		CharaList c_charaList = this.owner.c_charaList;
-		return c_charaList != null && c_charaList.list.Contains(c.uid);
+		return owner.c_charaList?.list.Contains(c.uid) ?? false;
 	}
 
 	public bool IsFull()
 	{
-		CharaList c_charaList = this.owner.c_charaList;
-		return c_charaList != null && c_charaList.list.Count >= this.MaxHolders;
+		CharaList c_charaList = owner.c_charaList;
+		if (c_charaList != null)
+		{
+			return c_charaList.list.Count >= MaxHolders;
+		}
+		return false;
 	}
 
 	public bool HasHolder()
 	{
-		CharaList c_charaList = this.owner.c_charaList;
-		return c_charaList != null && c_charaList.list.Count > 0;
+		CharaList c_charaList = owner.c_charaList;
+		if (c_charaList == null)
+		{
+			return false;
+		}
+		return c_charaList.list.Count > 0;
 	}
 
 	public bool CanAssign(Chara c)
 	{
-		CharaList c_charaList = this.owner.c_charaList;
-		if (c_charaList != null && c_charaList.list.Count >= this.MaxHolders)
+		CharaList c_charaList = owner.c_charaList;
+		if (c_charaList != null && c_charaList.list.Count >= MaxHolders)
 		{
 			return false;
 		}
-		BedType c_bedType = this.owner.c_bedType;
+		BedType c_bedType = owner.c_bedType;
 		FactionMemberType memberType = c.memberType;
-		return (memberType == FactionMemberType.Default && (c_bedType == BedType.resident || c_bedType == BedType.residentOne)) || (memberType == FactionMemberType.Livestock && c_bedType == BedType.livestock) || (memberType == FactionMemberType.Guest && c_bedType == BedType.guest);
+		if ((memberType != 0 || (c_bedType != 0 && c_bedType != BedType.residentOne)) && (memberType != FactionMemberType.Livestock || c_bedType != BedType.livestock))
+		{
+			if (memberType == FactionMemberType.Guest)
+			{
+				return c_bedType == BedType.guest;
+			}
+			return false;
+		}
+		return true;
 	}
 
 	public void SetBedType(BedType bedType)
 	{
-		if (bedType == this.owner.c_bedType)
+		if (bedType != owner.c_bedType)
 		{
-			return;
+			owner.c_bedType = bedType;
+			ClearHolders();
 		}
-		this.owner.c_bedType = bedType;
-		this.ClearHolders();
 	}
 
 	public override void SetName(ref string s)
 	{
-		CharaList c_charaList = this.owner.c_charaList;
+		CharaList c_charaList = owner.c_charaList;
 		if (c_charaList != null)
 		{
 			List<Chara> list = c_charaList.Get();
 			if (list.Count == 1)
 			{
-				s = "_bed".lang(list[0].NameSimple, s, null, null, null);
+				s = "_bed".lang(list[0].NameSimple, s);
 				return;
 			}
 			if (list.Count == 2)
 			{
-				s = "_bed".lang("_and".lang(list[0].NameSimple, list[1].NameSimple, null, null, null), s, null, null, null);
+				s = "_bed".lang("_and".lang(list[0].NameSimple, list[1].NameSimple), s);
 				return;
 			}
 		}
-		if (this.owner.c_bedType == BedType.resident)
+		if (owner.c_bedType != 0)
 		{
-			return;
+			string @ref = ("bed_" + owner.c_bedType).lang().ToLower();
+			s = "_of4".lang(@ref, s);
 		}
-		string @ref = ("bed_" + this.owner.c_bedType.ToString()).lang().ToLower();
-		s = "_of4".lang(@ref, s, null, null, null);
 	}
 
 	public override string GetHoverText()
 	{
-		CharaList c_charaList = this.owner.c_charaList;
+		CharaList c_charaList = owner.c_charaList;
 		if (c_charaList == null || c_charaList.Get().Count < 3)
 		{
 			return null;
 		}
 		string text = "";
-		foreach (Chara chara in c_charaList.Get())
+		foreach (Chara item in c_charaList.Get())
 		{
 			if (text != "")
 			{
 				text += ", ";
 			}
-			text += chara.NameSimple;
+			text += item.NameSimple;
 		}
 		return "(" + text + ")";
 	}

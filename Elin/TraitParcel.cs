@@ -1,32 +1,13 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
 public class TraitParcel : TraitItem
 {
-	public override bool CanUseInUserZone
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanUseInUserZone => false;
 
-	public override bool CanStack
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanStack => false;
 
-	public override string LangUse
-	{
-		get
-		{
-			return "actOpen";
-		}
-	}
+	public override string LangUse => "actOpen";
 
 	public override bool OnUse(Chara c)
 	{
@@ -35,25 +16,25 @@ public class TraitParcel : TraitItem
 			Msg.SayCannotUseHere();
 			return false;
 		}
-		EClass.pc.Say("openDoor", EClass.pc, this.owner, null, null);
-		List<Thing> list = this.owner.things.ToList<Thing>();
+		EClass.pc.Say("openDoor", EClass.pc, owner);
+		List<Thing> list = owner.things.ToList();
 		if (list.Count > 0)
 		{
 			SE.Play("dropReward");
-			foreach (Thing t in list)
+			foreach (Thing item in list)
 			{
-				EClass.pc.Pick(t, true, true);
+				EClass.pc.Pick(item);
 			}
 		}
-		this.owner.ModNum(-1, true);
+		owner.ModNum(-1);
 		return base.OnUse(c);
 	}
 
 	public override void SetName(ref string s)
 	{
-		if (!this.owner.c_idRefName.IsEmpty() && this.owner.c_altName.IsEmpty())
+		if (!owner.c_idRefName.IsEmpty() && owner.c_altName.IsEmpty())
 		{
-			s = "_written".lang(this.owner.c_idRefName, s, null, null, null);
+			s = "_written".lang(owner.c_idRefName, s);
 		}
 	}
 }

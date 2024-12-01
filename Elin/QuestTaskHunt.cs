@@ -1,41 +1,54 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 
 public class QuestTaskHunt : QuestTask
 {
-	public SourceRace.Row Race
+	public enum Type
 	{
-		get
-		{
-			return EClass.sources.races.map[this.idRace];
-		}
+		Default,
+		Race
 	}
+
+	public enum Setup
+	{
+		Random,
+		FighterGuild
+	}
+
+	[JsonProperty]
+	public int numHunted;
+
+	[JsonProperty]
+	public int numRequired;
+
+	[JsonProperty]
+	public string idRace;
+
+	[JsonProperty]
+	public Type type;
+
+	public Setup setup;
+
+	public SourceRace.Row Race => EClass.sources.races.map[idRace];
 
 	public override string RefDrama2
 	{
 		get
 		{
-			if (this.type != QuestTaskHunt.Type.Race)
+			if (type != Type.Race)
 			{
 				return "";
 			}
-			return this.Race.GetName();
+			return Race.GetName();
 		}
 	}
 
-	public override string RefDrama3
-	{
-		get
-		{
-			return this.numRequired.ToString() ?? "";
-		}
-	}
+	public override string RefDrama3 => numRequired.ToString() ?? "";
 
 	public override bool IsComplete()
 	{
-		return this.numHunted >= this.numRequired;
+		return numHunted >= numRequired;
 	}
 
 	public static List<SourceChara.Row> ListTargets(string idRace)
@@ -53,134 +66,88 @@ public class QuestTaskHunt : QuestTask
 
 	public override void OnInit()
 	{
-		if (this.setup == QuestTaskHunt.Setup.FighterGuild)
+		if (setup == Setup.FighterGuild)
 		{
-			this.numRequired = 20;
-			this.idRace = "yeek";
-			this.type = QuestTaskHunt.Type.Race;
-			return;
+			numRequired = 20;
+			idRace = "yeek";
+			type = Type.Race;
 		}
-		if (this.type == QuestTaskHunt.Type.Race)
+		else if (type == Type.Race)
 		{
 			for (int i = 0; i < 100; i++)
 			{
-				SourceRace.Row row = EClass.sources.races.rows.RandomItem<SourceRace.Row>();
-				if (QuestTaskHunt.ListTargets(row.id).Count != 0)
+				SourceRace.Row row = EClass.sources.races.rows.RandomItem();
+				if (ListTargets(row.id).Count != 0)
 				{
-					this.idRace = row.id;
+					idRace = row.id;
 				}
 			}
-			this.numRequired = 3 + this.owner.difficulty * 2 + EClass.rnd(5);
-			return;
+			numRequired = 3 + owner.difficulty * 2 + EClass.rnd(5);
 		}
-		this.numRequired = 10 + this.owner.difficulty * 3 + EClass.rnd(5);
+		else
+		{
+			numRequired = 10 + owner.difficulty * 3 + EClass.rnd(5);
+		}
 	}
 
 	public override void OnKillChara(Chara c)
 	{
-		QuestTaskHunt.<>c__DisplayClass16_0 CS$<>8__locals1;
-		CS$<>8__locals1.<>4__this = this;
-		CS$<>8__locals1.c = c;
-		if (CS$<>8__locals1.c.IsPCFaction)
+		if (c.IsPCFaction)
 		{
 			return;
 		}
-		if (this.type == QuestTaskHunt.Type.Race)
+		if (type == Type.Race)
 		{
-			if (CS$<>8__locals1.c.race.id == this.idRace)
+			if (c.race.id == idRace)
 			{
-				this.<OnKillChara>g__CountKill|16_0(ref CS$<>8__locals1);
-				return;
+				CountKill();
 			}
 		}
-		else if (CS$<>8__locals1.c.OriginalHostility <= Hostility.Enemy)
+		else if (c.OriginalHostility <= Hostility.Enemy)
 		{
-			this.<OnKillChara>g__CountKill|16_0(ref CS$<>8__locals1);
+			CountKill();
+		}
+		void CountKill()
+		{
+			numHunted++;
+			if (numHunted > numRequired)
+			{
+				numHunted = numRequired;
+			}
+			else
+			{
+				owner.bonusMoney += EClass.curve(3 + c.LV, 50, 10) * ((type != Type.Race) ? 1 : 2);
+			}
 		}
 	}
 
 	public override string GetTextProgress()
 	{
-		if (this.type == QuestTaskHunt.Type.Race)
+		if (type == Type.Race)
 		{
-			return "progressHuntRace".lang(this.numHunted.ToString() ?? "", this.numRequired.ToString() ?? "", this.Race.GetName(), null, null);
+			return "progressHuntRace".lang(numHunted.ToString() ?? "", numRequired.ToString() ?? "", Race.GetName());
 		}
-		return "progressHunt".lang(this.numHunted.ToString() ?? "", this.numRequired.ToString() ?? "", null, null, null);
+		return "progressHunt".lang(numHunted.ToString() ?? "", numRequired.ToString() ?? "");
 	}
 
 	public override void OnGetDetail(ref string detail, bool onJournal)
 	{
-		if (this.type == QuestTaskHunt.Type.Race)
+		if (type != Type.Race || !onJournal)
 		{
-			if (!onJournal)
-			{
-				return;
-			}
-			List<SourceChara.Row> list = QuestTaskHunt.ListTargets(this.idRace);
-			int num = 0;
-			detail = string.Concat(new string[]
-			{
-				detail,
-				Environment.NewLine,
-				Environment.NewLine,
-				"target_huntRace".lang(),
-				Environment.NewLine
-			});
-			foreach (SourceChara.Row row in list)
-			{
-				detail = string.Concat(new string[]
-				{
-					detail,
-					row.GetName().ToTitleCase(true),
-					" (",
-					EClass.sources.races.map[this.idRace].GetName(),
-					")"
-				});
-				num++;
-				if (num > 5)
-				{
-					break;
-				}
-				detail += Environment.NewLine;
-			}
-		}
-	}
-
-	[CompilerGenerated]
-	private void <OnKillChara>g__CountKill|16_0(ref QuestTaskHunt.<>c__DisplayClass16_0 A_1)
-	{
-		this.numHunted++;
-		if (this.numHunted > this.numRequired)
-		{
-			this.numHunted = this.numRequired;
 			return;
 		}
-		this.owner.bonusMoney += EClass.curve(3 + A_1.c.LV, 50, 10, 75) * ((this.type == QuestTaskHunt.Type.Race) ? 2 : 1);
-	}
-
-	[JsonProperty]
-	public int numHunted;
-
-	[JsonProperty]
-	public int numRequired;
-
-	[JsonProperty]
-	public string idRace;
-
-	[JsonProperty]
-	public QuestTaskHunt.Type type;
-
-	public QuestTaskHunt.Setup setup;
-
-	public enum Type
-	{
-		Default,
-		Race
-	}
-
-	public enum Setup
-	{
-		Random,
-		FighterGuild
+		List<SourceChara.Row> list = ListTargets(idRace);
+		int num = 0;
+		detail = detail + Environment.NewLine + Environment.NewLine + "target_huntRace".lang() + Environment.NewLine;
+		foreach (SourceChara.Row item in list)
+		{
+			detail = detail + item.GetName().ToTitleCase(wholeText: true) + " (" + EClass.sources.races.map[idRace].GetName() + ")";
+			num++;
+			if (num > 5)
+			{
+				break;
+			}
+			detail += Environment.NewLine;
+		}
 	}
 }

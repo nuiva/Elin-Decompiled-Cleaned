@@ -1,28 +1,8 @@
-﻿using System;
-
 public class TraitBitch : TraitCitizen
 {
-	public override string IDRumor
-	{
-		get
-		{
-			return "bitch";
-		}
-	}
+	public override string IDRumor => "bitch";
 
-	public override bool CanWhore
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanWhore => true;
 
-	public override bool CanGuide
-	{
-		get
-		{
-			return EClass._zone.id == "derphy";
-		}
-	}
+	public override bool CanGuide => EClass._zone.id == "derphy";
 }

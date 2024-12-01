@@ -1,41 +1,35 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 
 public class AI_PlayMusic : AIAct
 {
-	public static void CancelKeepPlaying()
-	{
-		if (AI_PlayMusic.keepPlaying)
-		{
-			SE.CancelAction();
-			AI_PlayMusic.keepPlaying = false;
-			AI_PlayMusic.playingTool = null;
-		}
-	}
+	public static bool keepPlaying;
 
-	public override bool ShowProgress
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public static Thing playingTool;
 
-	public override bool CancelWhenDamaged
-	{
-		get
-		{
-			return !AI_PlayMusic.ignoreDamage;
-		}
-	}
+	public Thing tool;
+
+	public static bool ignoreDamage;
+
+	public PlayingSong playing;
+
+	public int score;
+
+	public int gold;
+
+	public int toolLv;
+
+	public override bool ShowProgress => false;
+
+	public override bool CancelWhenDamaged => !ignoreDamage;
 
 	public override TargetType TargetType
 	{
 		get
 		{
-			if (this.tool != null && this.tool != EClass.pc.Tool)
+			if (tool != null && tool != EClass.pc.Tool)
 			{
 				return TargetType.Any;
 			}
@@ -43,280 +37,136 @@ public class AI_PlayMusic : AIAct
 		}
 	}
 
-	public override IEnumerable<AIAct.Status> Run()
+	public static void CancelKeepPlaying()
 	{
-		if (this.tool == null)
+		if (keepPlaying)
 		{
-			this.tool = (this.owner.IsPC ? this.owner.Tool : this.owner.things.Find<TraitToolMusic>());
+			SE.CancelAction();
+			keepPlaying = false;
+			playingTool = null;
 		}
-		if (this.tool == null && !this.owner.IsPCFaction && EClass.rnd(20) == 0)
+	}
+
+	public override IEnumerable<Status> Run()
+	{
+		if (tool == null)
 		{
-			this.tool = this.owner.AddThing(ThingGen.Create("lute", -1, -1), true, -1, -1);
+			tool = (owner.IsPC ? owner.Tool : owner.things.Find<TraitToolMusic>());
 		}
-		if (this.tool == null)
+		if (tool == null && !owner.IsPCFaction && EClass.rnd(20) == 0)
 		{
-			yield return this.Cancel();
+			tool = owner.AddThing(ThingGen.Create("lute"));
 		}
-		if (this.tool.parent is Zone)
+		if (tool == null)
 		{
-			yield return base.DoGoto(this.tool.pos, this.tool.pos.IsBlocked ? 1 : 0, false, null);
+			yield return Cancel();
 		}
-		if (this.owner.IsPCC && EClass.game.config.preference.keepPlayingMusic)
+		if (tool.parent is Zone)
 		{
-			AI_PlayMusic.keepPlaying = true;
-			AI_PlayMusic.playingTool = this.tool;
-			EInput.Consume(true, 10);
+			yield return DoGoto(tool.pos, tool.pos.IsBlocked ? 1 : 0);
 		}
-		this.toolLv = 1;
+		if (owner.IsPCC && EClass.game.config.preference.keepPlayingMusic)
+		{
+			keepPlaying = true;
+			playingTool = tool;
+			EInput.Consume(consumeAxis: true, 10);
+		}
+		toolLv = 1;
 		string idSong = null;
 		KnownSong song = null;
-		this.playing = null;
-		this.score = 40;
-		this.gold = 0;
-		if (this.owner.IsPC && EClass.player.playingSong != null && EClass.player.playingSong.idTool == this.tool.id)
+		playing = null;
+		score = 40;
+		gold = 0;
+		if (owner.IsPC && EClass.player.playingSong != null && EClass.player.playingSong.idTool == tool.id)
 		{
-			this.playing = EClass.player.playingSong;
+			playing = EClass.player.playingSong;
 			idSong = EClass.player.playingSong.id;
 			song = EClass.player.knownSongs[EClass.player.playingSong.id];
 		}
-		if (this.playing == null)
+		if (playing == null)
 		{
-			string id = this.tool.id;
-			uint num = <PrivateImplementationDetails>.ComputeStringHash(id);
-			if (num <= 3078472054U)
+			switch (tool.id)
 			{
-				if (num <= 1172811742U)
-				{
-					if (num <= 390330866U)
-					{
-						if (num != 63985367U)
-						{
-							if (num != 390330866U)
-							{
-								goto IL_627;
-							}
-							if (!(id == "harpsichord"))
-							{
-								goto IL_627;
-							}
-							idSong = "harpsichord_goldberg";
-							goto IL_637;
-						}
-						else
-						{
-							if (!(id == "taiko"))
-							{
-								goto IL_627;
-							}
-							idSong = "taiko";
-							goto IL_637;
-						}
-					}
-					else if (num != 773192040U)
-					{
-						if (num != 1172811742U)
-						{
-							goto IL_627;
-						}
-						if (!(id == "piano"))
-						{
-							goto IL_627;
-						}
-						idSong = "piano_kanon";
-						goto IL_637;
-					}
-					else
-					{
-						if (!(id == "guitar_ash"))
-						{
-							goto IL_627;
-						}
-						idSong = "guitar_caccini";
-						goto IL_637;
-					}
-				}
-				else if (num <= 2565162886U)
-				{
-					if (num != 2166422584U)
-					{
-						if (num != 2565162886U)
-						{
-							goto IL_627;
-						}
-						if (!(id == "trumpet"))
-						{
-							goto IL_627;
-						}
-						idSong = "trumpet_practice";
-						goto IL_637;
-					}
-					else if (!(id == "instrument_violin"))
-					{
-						goto IL_627;
-					}
-				}
-				else if (num != 2938588943U)
-				{
-					if (num != 3078472054U)
-					{
-						goto IL_627;
-					}
-					if (!(id == "guitar_efrond"))
-					{
-						goto IL_627;
-					}
-					idSong = "guitar_dusk";
-					goto IL_637;
-				}
-				else
-				{
-					if (!(id == "guitar"))
-					{
-						goto IL_627;
-					}
-					idSong = "guitar_air";
-					goto IL_637;
-				}
-			}
-			else if (num <= 3559073827U)
-			{
-				if (num <= 3438029316U)
-				{
-					if (num != 3163500768U)
-					{
-						if (num != 3438029316U)
-						{
-							goto IL_627;
-						}
-						if (!(id == "piano_gould"))
-						{
-							goto IL_627;
-						}
-						idSong = "piano_gould";
-						goto IL_637;
-					}
-					else
-					{
-						if (!(id == "mic"))
-						{
-							goto IL_627;
-						}
-						idSong = "mic_rachmaninoff";
-						goto IL_637;
-					}
-				}
-				else if (num != 3502455904U)
-				{
-					if (num != 3559073827U)
-					{
-						goto IL_627;
-					}
-					if (!(id == "panty"))
-					{
-						goto IL_627;
-					}
-				}
-				else
-				{
-					if (!(id == "harp"))
-					{
-						goto IL_627;
-					}
-					idSong = "harp_komori";
-					goto IL_637;
-				}
-			}
-			else if (num <= 3841196189U)
-			{
-				if (num != 3758837070U)
-				{
-					if (num != 3841196189U)
-					{
-						goto IL_627;
-					}
-					if (!(id == "lute"))
-					{
-						goto IL_627;
-					}
-					idSong = "guitar_sad";
-					goto IL_637;
-				}
-				else
-				{
-					if (!(id == "mokugyo"))
-					{
-						goto IL_627;
-					}
-					idSong = "mokugyo";
-					goto IL_637;
-				}
-			}
-			else if (num != 3981110062U)
-			{
-				if (num != 4124199536U)
-				{
-					if (num != 4156158084U)
-					{
-						goto IL_627;
-					}
-					if (!(id == "piano2"))
-					{
-						goto IL_627;
-					}
-					idSong = "piano_neko";
-					goto IL_637;
-				}
-				else
-				{
-					if (!(id == "stradivarius"))
-					{
-						goto IL_627;
-					}
-					idSong = "violin_furusato";
-					goto IL_637;
-				}
-			}
-			else
-			{
-				if (!(id == "cello"))
-				{
-					goto IL_627;
-				}
+			case "trumpet":
+				idSong = "trumpet_practice";
+				break;
+			case "piano_gould":
+				idSong = "piano_gould";
+				break;
+			case "piano2":
+				idSong = "piano_neko";
+				break;
+			case "piano":
+				idSong = "piano_kanon";
+				break;
+			case "harpsichord":
+				idSong = "harpsichord_goldberg";
+				break;
+			case "guitar_ash":
+				idSong = "guitar_caccini";
+				break;
+			case "guitar_efrond":
+				idSong = "guitar_dusk";
+				break;
+			case "guitar":
+				idSong = "guitar_air";
+				break;
+			case "harp":
+				idSong = "harp_komori";
+				break;
+			case "lute":
+				idSong = "guitar_sad";
+				break;
+			case "taiko":
+				idSong = "taiko";
+				break;
+			case "mokugyo":
+				idSong = "mokugyo";
+				break;
+			case "mic":
+				idSong = "mic_rachmaninoff";
+				break;
+			case "cello":
 				idSong = "cello_prelude";
-				goto IL_637;
+				break;
+			case "instrument_violin":
+			case "panty":
+				idSong = "violin_chaconne";
+				break;
+			case "stradivarius":
+				idSong = "violin_furusato";
+				break;
+			default:
+				idSong = "violin_chaconne";
+				break;
 			}
-			idSong = "violin_chaconne";
-			goto IL_637;
-			IL_627:
-			idSong = "violin_chaconne";
-			IL_637:
-			if (this.owner.IsPC && EClass.player.knownSongs.ContainsKey(idSong))
+			if (owner.IsPC && EClass.player.knownSongs.ContainsKey(idSong))
 			{
 				song = EClass.player.knownSongs[idSong];
 			}
 			if (song == null)
 			{
 				song = new KnownSong();
-				if (this.owner.IsPC)
+				if (owner.IsPC)
 				{
 					EClass.player.knownSongs[idSong] = song;
 				}
 			}
-			this.playing = new PlayingSong
+			playing = new PlayingSong
 			{
 				id = idSong,
-				idTool = this.tool.id
+				idTool = tool.id
 			};
-			if (this.owner.IsPC)
+			if (owner.IsPC)
 			{
-				EClass.player.playingSong = this.playing;
+				EClass.player.playingSong = playing;
 			}
 		}
-		if (this.owner.IsPC)
+		if (owner.IsPC)
 		{
-			(EClass.Sound.GetData("Instrument/" + idSong) as BGMData).song.index = this.playing.index;
+			(EClass.Sound.GetData("Instrument/" + idSong) as BGMData).song.index = playing.index;
 		}
-		if (Application.isEditor && this.owner.IsPC)
+		if (Application.isEditor && owner.IsPC)
 		{
 			song.lv += 10;
 			Debug.Log(song.lv);
@@ -327,229 +177,242 @@ public class AI_PlayMusic : AIAct
 			maxProgress = 15,
 			cancelWhenMoved = false,
 			showProgress = false,
-			canProgress = (() => this.tool != null && !this.tool.isDestroyed),
-			onProgressBegin = delegate()
+			canProgress = () => tool != null && !tool.isDestroyed,
+			onProgressBegin = delegate
 			{
-				this.owner.Say("music_start", this.owner, this.tool, null, null);
-				this.owner.ShowEmo(Emo.happy, 3f, false);
-				if (this.tool != null && this.tool.ExistsOnMap)
+				owner.Say("music_start", owner, tool);
+				owner.ShowEmo(Emo.happy, 3f, skipSame: false);
+				if (tool != null && tool.ExistsOnMap)
 				{
-					this.owner.LookAt(this.tool);
+					owner.LookAt(tool);
 				}
-				this.owner.PlayAnime(AnimeID.PlayMusic, false);
-				if (this.owner.IsPC)
+				owner.PlayAnime(AnimeID.PlayMusic);
+				if (owner.IsPC)
 				{
 					bool flag = false;
-					if (this.playing.mistakes == 0 && this.playing.source && this.playing.source.isPlaying && this.playing.source.data.name == idSong)
+					if (playing.mistakes == 0 && (bool)playing.source && playing.source.isPlaying && playing.source.data.name == idSong)
 					{
-						SoundSource source = this.playing.source;
-						if (Mathf.Abs(source.source.time - (source.data as BGMData).song.parts[this.playing.index].start) < 2f && this.playing.source.source.volume >= 0.1f)
+						SoundSource soundSource = playing.source;
+						if (Mathf.Abs(soundSource.source.time - (soundSource.data as BGMData).song.parts[playing.index].start) < 2f && playing.source.source.volume >= 0.1f)
 						{
-							source.KeepPlay();
+							soundSource.KeepPlay();
 							flag = true;
-							Debug.Log("keep:" + source.source.time.ToString());
+							Debug.Log("keep:" + soundSource.source.time);
 						}
 						else
 						{
-							EClass.Sound.Stop(source.data, 0.1f);
+							EClass.Sound.Stop(soundSource.data, 0.1f);
 						}
-						Debug.Log(this.playing.source);
+						Debug.Log(playing.source);
 					}
 					if (!flag)
 					{
-						this.playing.source = this.owner.PlaySound("Instrument/" + idSong, 1f, true);
-						Debug.Log(this.playing.source);
+						playing.source = owner.PlaySound("Instrument/" + idSong);
+						Debug.Log(playing.source);
 					}
-					this.playing.bgm = (this.playing.source.data as BGMData);
-					BGMData.Part part = this.playing.bgm.song.parts[this.playing.index];
+					playing.bgm = playing.source.data as BGMData;
+					BGMData.Part part = playing.bgm.song.parts[playing.index];
 					if (!UISong.Instance)
 					{
 						Util.Instantiate<UISong>("UI/Util/UISong", EClass.ui.rectDynamicEssential);
 					}
-					UISong.Instance.SetSong(this.playing.source, this.playing.bgm, part);
+					UISong.Instance.SetSong(playing.source, playing.bgm, part);
 					if (EClass.Sound.currentBGM != null)
 					{
-						float num2 = 0.5f - 0.1f * (float)this.playing.index;
-						if (num2 < 0f)
+						float num = 0.5f - 0.1f * (float)playing.index;
+						if (num < 0f)
 						{
-							num2 = 0f;
+							num = 0f;
 						}
-						if (EClass.Sound.sourceBGM.volume > EClass.Sound.currentBGM.data.volume * num2)
+						if (EClass.Sound.sourceBGM.volume > EClass.Sound.currentBGM.data.volume * num)
 						{
-							EClass.Sound.sourceBGM.DOFade(EClass.Sound.currentBGM.data.volume * num2, 3f);
+							EClass.Sound.sourceBGM.DOFade(EClass.Sound.currentBGM.data.volume * num, 3f);
 						}
-						SoundManager.jingleTimer = part.duration / this.playing.bgm.pitch + this.playing.bgm.song.fadeIn + 2f;
+						SoundManager.jingleTimer = part.duration / playing.bgm.pitch + playing.bgm.song.fadeIn + 2f;
 					}
 				}
 			},
 			onProgress = delegate(Progress_Custom p)
 			{
 				Msg.SetColor(Msg.colors.Ono);
-				this.owner.Say(Lang.GetList("music").RandomItem<string>(), null, null);
+				owner.Say(Lang.GetList("music").RandomItem());
 				Msg.SetColor();
 				if (EClass.debug.enable && EClass.pc.job.id == "pianist")
 				{
 					song.lv = 10000;
 				}
-				if (p.progress > 2 && (EClass.rnd(100 + 50 * this.owner.Evalue(1405)) == 0 || EClass.rnd(4 + (int)MathF.Max(0f, (float)(song.lv - this.playing.index * 25 - this.playing.index * this.playing.index / 2))) == 0))
+				if (p.progress > 2 && (EClass.rnd(100 + 50 * owner.Evalue(1405)) == 0 || EClass.rnd(4 + (int)MathF.Max(0f, song.lv - playing.index * 25 - playing.index * playing.index / 2)) == 0))
 				{
-					this.playing.mistakes++;
+					playing.mistakes++;
 					if (EClass.rnd(2) == 0)
 					{
-						base.<Run>g__LevelSong|0(2 + 2 * EClass.rnd(this.owner.Evalue(1405) + 1));
+						LevelSong(2 + 2 * EClass.rnd(owner.Evalue(1405) + 1));
 					}
-					if (this.playing.mistakes >= 10)
+					if (playing.mistakes >= 10)
 					{
-						this.playing.index = 0;
+						playing.index = 0;
 					}
-					this.Cancel();
-					return;
+					Cancel();
 				}
-				foreach (Chara chara in EClass._map.ListCharasInCircle(this.owner.pos, 4f, true))
+				else
 				{
-					if (chara.conSleep != null && chara.ResistLv(957) <= 0)
+					foreach (Chara item in EClass._map.ListCharasInCircle(owner.pos, 4f))
 					{
-						chara.conSleep.Kill(false);
-						chara.ShowEmo(Emo.angry, 0f, true);
-					}
-				}
-				List<Chara> list = this.owner.pos.ListWitnesses(this.owner, 4, WitnessType.music, null);
-				int num2 = this.owner.Evalue(241) * (100 + this.toolLv) / 100;
-				int num3 = 0;
-				foreach (Chara chara2 in list)
-				{
-					if (this.owner == null)
-					{
-						break;
-					}
-					if (!reacted.Contains(chara2) && EClass.rnd(5) == 0)
-					{
-						if (this.owner.IsPCParty)
+						if (item.conSleep != null && item.ResistLv(957) <= 0)
 						{
-							if (chara2.interest <= 0 || (EClass._zone is Zone_Music && (chara2.IsPCFaction || chara2.IsPCFactionMinion)))
-							{
-								continue;
-							}
-							chara2.interest -= EClass.rnd(10);
-							if (chara2.interest < 0)
-							{
-								chara2.Talk("musicBored", null, null, false);
-								continue;
-							}
-						}
-						if (EClass.rnd(num3 * num3) <= 30)
-						{
-							bool isMinion = chara2.IsMinion;
-							if (num2 < chara2.LV && EClass.rnd(2) == 0)
-							{
-								reacted.Add(chara2);
-								if (!isMinion)
-								{
-									this.score -= chara2.LV / 2 - 10;
-								}
-								if (EClass.rnd(2) == 0)
-								{
-									chara2.Talk("musicBad", null, null, false);
-								}
-								else
-								{
-									chara2.Say("musicBad", chara2, this.owner, null, null);
-								}
-								chara2.ShowEmo(Emo.sad, 0f, true);
-								this.owner.elements.ModExp(241, 10, false);
-								if (EClass.rnd(5) == 0)
-								{
-									this.ThrowReward(chara2, true);
-								}
-								num3++;
-							}
-							else if (EClass.rnd(num2 + 5) > EClass.rnd(chara2.LV * 5 + 1))
-							{
-								reacted.Add(chara2);
-								if (!isMinion)
-								{
-									this.score += EClass.rnd(chara2.LV / 2 + 5) + 5;
-								}
-								if (EClass.rnd(2) == 0)
-								{
-									chara2.Talk("musicGood", null, null, false);
-								}
-								else
-								{
-									chara2.Say("musicGood", chara2, this.owner, null, null);
-								}
-								chara2.ShowEmo(Emo.happy, 0f, true);
-								chara2.renderer.PlayAnime((EClass.rnd(2) == 0) ? AnimeID.Jump : AnimeID.Fishing, default(Vector3), false);
-								this.owner.elements.ModExp(241, EClass._zone.IsUserZone ? 10 : 50, false);
-								if (!isMinion)
-								{
-									this.ThrowReward(chara2, false);
-								}
-								num3++;
-							}
+							item.conSleep.Kill();
+							item.ShowEmo(Emo.angry);
 						}
 					}
-				}
-				if (this.owner != null && this.owner.IsPC && EClass.rnd(80) < num3)
-				{
-					this.owner.stamina.Mod(-1);
+					List<Chara> list = owner.pos.ListWitnesses(owner, 4, WitnessType.music);
+					int num2 = owner.Evalue(241) * (100 + toolLv) / 100;
+					int num3 = 0;
+					foreach (Chara item2 in list)
+					{
+						if (owner == null)
+						{
+							break;
+						}
+						if (!reacted.Contains(item2) && EClass.rnd(5) == 0)
+						{
+							if (owner.IsPCParty)
+							{
+								if (item2.interest <= 0 || (EClass._zone is Zone_Music && (item2.IsPCFaction || item2.IsPCFactionMinion)))
+								{
+									continue;
+								}
+								item2.interest -= EClass.rnd(10);
+								if (item2.interest < 0)
+								{
+									item2.Talk("musicBored");
+									continue;
+								}
+							}
+							if (EClass.rnd(num3 * num3) <= 30)
+							{
+								bool isMinion = item2.IsMinion;
+								if (num2 < item2.LV && EClass.rnd(2) == 0)
+								{
+									reacted.Add(item2);
+									if (!isMinion)
+									{
+										score -= item2.LV / 2 - 10;
+									}
+									if (EClass.rnd(2) == 0)
+									{
+										item2.Talk("musicBad");
+									}
+									else
+									{
+										item2.Say("musicBad", item2, owner);
+									}
+									item2.ShowEmo(Emo.sad);
+									owner.elements.ModExp(241, 10);
+									if (EClass.rnd(5) == 0)
+									{
+										ThrowReward(item2, punish: true);
+									}
+									num3++;
+								}
+								else if (EClass.rnd(num2 + 5) > EClass.rnd(item2.LV * 5 + 1))
+								{
+									reacted.Add(item2);
+									if (!isMinion)
+									{
+										score += EClass.rnd(item2.LV / 2 + 5) + 5;
+									}
+									if (EClass.rnd(2) == 0)
+									{
+										item2.Talk("musicGood");
+									}
+									else
+									{
+										item2.Say("musicGood", item2, owner);
+									}
+									item2.ShowEmo(Emo.happy);
+									item2.renderer.PlayAnime((EClass.rnd(2) == 0) ? AnimeID.Jump : AnimeID.Fishing);
+									owner.elements.ModExp(241, EClass._zone.IsUserZone ? 10 : 50);
+									if (!isMinion)
+									{
+										ThrowReward(item2, punish: false);
+									}
+									num3++;
+								}
+							}
+						}
+					}
+					if (owner != null && owner.IsPC && EClass.rnd(80) < num3)
+					{
+						owner.stamina.Mod(-1);
+					}
 				}
 			},
-			onProgressComplete = delegate()
+			onProgressComplete = delegate
 			{
 				if (EClass.rnd(2) == 0)
 				{
-					base.<Run>g__LevelSong|0(2);
+					LevelSong(2);
 				}
-				if (this.playing.bgm)
+				if ((bool)playing.bgm)
 				{
-					this.playing.index++;
-					this.playing.mistakes = 0;
-					if (this.playing.index >= this.playing.bgm.song.parts.Count)
+					playing.index++;
+					playing.mistakes = 0;
+					if (playing.index >= playing.bgm.song.parts.Count)
 					{
-						this.playing.index = 0;
+						playing.index = 0;
 					}
-					this.playing.bgm.song.index = this.playing.index;
+					playing.bgm.song.index = playing.index;
 				}
-				this.Evaluate(true);
+				Evaluate(success: true);
 			}
-		}.SetDuration(26, 2);
-		yield return base.Do(seq, null);
-		yield break;
+		}.SetDuration(26);
+		yield return Do(seq);
+		void LevelSong(int a)
+		{
+			if (a > 0)
+			{
+				song.lv += a + EClass.rnd(2);
+				if (owner == EClass.pc)
+				{
+					Msg.Say("level_song");
+				}
+			}
+		}
 	}
 
 	public void Evaluate(bool success)
 	{
-		if (this.owner.IsPC)
+		if (!owner.IsPC)
 		{
-			if (success)
+			return;
+		}
+		if (success)
+		{
+			score = score * 110 / 100;
+		}
+		else
+		{
+			score = score / 2 - 20;
+		}
+		int num = Mathf.Clamp(score / 20 + 1, 0, 9);
+		owner.Say(Lang.GetList("music_result")[num]);
+		if (gold > 0)
+		{
+			owner.Say("music_reward", owner, gold.ToString() ?? "");
+		}
+		if (EClass.rnd(3) != 0)
+		{
+			owner.stamina.Mod(-1);
+		}
+		QuestMusic questMusic = EClass.game.quests.Get<QuestMusic>();
+		if (questMusic != null)
+		{
+			questMusic.score += score;
+			questMusic.sumMoney += gold;
+			int num2 = num / 2 - 1;
+			if (num > 0)
 			{
-				this.score = this.score * 110 / 100;
-			}
-			else
-			{
-				this.score = this.score / 2 - 20;
-			}
-			int num = Mathf.Clamp(this.score / 20 + 1, 0, 9);
-			this.owner.Say(Lang.GetList("music_result")[num], null, null);
-			if (this.gold > 0)
-			{
-				this.owner.Say("music_reward", this.owner, this.gold.ToString() ?? "", null);
-			}
-			if (EClass.rnd(3) != 0)
-			{
-				this.owner.stamina.Mod(-1);
-			}
-			QuestMusic questMusic = EClass.game.quests.Get<QuestMusic>();
-			if (questMusic != null)
-			{
-				questMusic.score += this.score;
-				questMusic.sumMoney += this.gold;
-				int num2 = num / 2 - 1;
-				if (num > 0)
-				{
-					SE.Play("clap" + num2.ToString());
-				}
+				SE.Play("clap" + num2);
 			}
 		}
 	}
@@ -557,8 +420,8 @@ public class AI_PlayMusic : AIAct
 	public void ThrowReward(Chara c, bool punish)
 	{
 		Thing thing = null;
+		string text = "";
 		int num = 1;
-		string text;
 		if (punish)
 		{
 			text = ((EClass.rnd(5) == 0) ? "rock" : "pebble");
@@ -568,8 +431,7 @@ public class AI_PlayMusic : AIAct
 			}
 			if (!c.IsPCFactionOrMinion)
 			{
-				Thing thing2 = c.TryGetThrowable();
-				thing = ((thing2 != null) ? thing2.Split(1) : null);
+				thing = c.TryGetThrowable()?.Split(1);
 			}
 		}
 		else if (EClass.rnd(100) == 0 && !EClass._zone.IsUserZone)
@@ -594,7 +456,7 @@ public class AI_PlayMusic : AIAct
 		}
 		else
 		{
-			num = (EClass.rnd(c.LV * 2 + 1) + 1) * (100 + this.toolLv * 2 + this.owner.Evalue(1405) * 10) / 100;
+			num = (EClass.rnd(c.LV * 2 + 1) + 1) * (100 + toolLv * 2 + owner.Evalue(1405) * 10) / 100;
 			if (c.IsUnique)
 			{
 				num *= 2;
@@ -622,67 +484,51 @@ public class AI_PlayMusic : AIAct
 			{
 				num = 1;
 			}
-			this.gold += num;
+			gold += num;
 			text = "money";
 		}
-		if (!this.owner.IsPCParty && !punish && text != "money")
+		if (!owner.IsPCParty && !punish && text != "money")
 		{
 			return;
 		}
 		if (thing == null)
 		{
-			thing = ThingGen.Create(text, -1, -1).SetNum(num);
+			thing = ThingGen.Create(text).SetNum(num);
 		}
-		AI_PlayMusic.ignoreDamage = true;
-		ActThrow.Throw(c, this.owner.pos, thing, punish ? ThrowMethod.Punish : ThrowMethod.Reward, 0f);
-		AI_PlayMusic.ignoreDamage = false;
-		if (this.owner != null && thing.ExistsOnMap)
+		ignoreDamage = true;
+		ActThrow.Throw(c, owner.pos, thing, (!punish) ? ThrowMethod.Reward : ThrowMethod.Punish);
+		ignoreDamage = false;
+		if (owner == null || !thing.ExistsOnMap)
 		{
-			this.owner.Pick(thing, true, true);
-			if (thing.id == "money" && !this.owner.IsPCParty)
+			return;
+		}
+		owner.Pick(thing);
+		if (thing.id == "money" && !owner.IsPCParty)
+		{
+			if (thing.GetRootCard() != owner)
 			{
-				if (thing.GetRootCard() != this.owner)
-				{
-					thing.Destroy();
-					return;
-				}
-				if (this.owner.GetCurrency("money") >= (this.owner.Evalue(241) * 10 + 100) / ((this.owner.IsPCFaction && this.owner.memberType == FactionMemberType.Default) ? 1 : 10))
-				{
-					this.owner.c_allowance += num;
-					this.owner.ModCurrency(-num, "money");
-				}
+				thing.Destroy();
+			}
+			else if (owner.GetCurrency() >= (owner.Evalue(241) * 10 + 100) / ((owner.IsPCFaction && owner.memberType == FactionMemberType.Default) ? 1 : 10))
+			{
+				owner.c_allowance += num;
+				owner.ModCurrency(-num);
 			}
 		}
 	}
 
 	public override void OnCancel()
 	{
-		if (this.playing != null && this.playing.bgm)
+		if (playing != null && (bool)playing.bgm)
 		{
-			this.playing.bgm.song.Fail(this.playing.source, this.playing.bgm);
-			if (UISong.Instance)
+			playing.bgm.song.Fail(playing.source, playing.bgm);
+			if ((bool)UISong.Instance)
 			{
 				UISong.Instance.Kill();
 			}
-			this.playing.source = null;
+			playing.source = null;
 			SoundManager.jingleTimer = 1f;
 		}
-		this.Evaluate(false);
+		Evaluate(success: false);
 	}
-
-	public static bool keepPlaying;
-
-	public static Thing playingTool;
-
-	public Thing tool;
-
-	public static bool ignoreDamage;
-
-	public PlayingSong playing;
-
-	public int score;
-
-	public int gold;
-
-	public int toolLv;
 }

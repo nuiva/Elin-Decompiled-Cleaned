@@ -1,38 +1,56 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class MeetingManager : EClass
 {
+	[JsonProperty]
+	public List<Meeting> list = new List<Meeting>();
+
+	public FactionBranch branch;
+
+	public BaseArea room;
+
+	public bool CanStartMeeting
+	{
+		get
+		{
+			if (list.Count > 0)
+			{
+				return SetRoom() != null;
+			}
+			return false;
+		}
+	}
+
 	public void SetOwner(FactionBranch _branch)
 	{
-		this.branch = _branch;
-		foreach (Meeting meeting in this.list)
+		branch = _branch;
+		foreach (Meeting item in list)
 		{
-			meeting.SetOwner(this.branch);
+			item.SetOwner(branch);
 		}
 	}
 
 	public void OnSimulateHour(VirtualDate date)
 	{
-		if (this.list.Count > 0)
+		if (list.Count > 0)
 		{
-			for (int i = this.list.Count - 1; i >= 0; i--)
+			for (int num = list.Count - 1; num >= 0; num--)
 			{
-				if (this.list[i].dateExipire != 0 && date.IsExpired(this.list[i].dateExipire))
+				if (list[num].dateExipire != 0 && date.IsExpired(list[num].dateExipire))
 				{
-					this.list.RemoveAt(i);
+					list.RemoveAt(num);
 				}
 			}
 		}
-		int count = this.list.Count;
+		_ = list.Count;
 	}
 
 	public void Add(VirtualDate date)
 	{
 		MeetingMerchant meetingMerchant = new MeetingMerchant();
-		meetingMerchant.dateExipire = date.GetRaw(0) + 10080;
-		this.list.Add(meetingMerchant);
+		meetingMerchant.dateExipire = date.GetRaw() + 10080;
+		list.Add(meetingMerchant);
 		if (date.IsRealTime)
 		{
 			Msg.Say("newMeeting");
@@ -41,74 +59,57 @@ public class MeetingManager : EClass
 
 	public void Add(Meeting m)
 	{
-		this.list.Add(m);
+		list.Add(m);
 	}
 
 	public void Remove(Meeting m)
 	{
-		this.list.Remove(m);
-	}
-
-	public bool CanStartMeeting
-	{
-		get
-		{
-			return this.list.Count > 0 && this.SetRoom() != null;
-		}
+		list.Remove(m);
 	}
 
 	public BaseArea SetRoom()
 	{
-		Thing thing = EClass._map.props.installed.Find<TraitSpotMeeting>();
-		TraitSpotMeeting traitSpotMeeting = ((thing != null) ? thing.trait : null) as TraitSpotMeeting;
-		if (traitSpotMeeting != null)
+		if (EClass._map.props.installed.Find<TraitSpotMeeting>()?.trait is TraitSpotMeeting traitSpotMeeting)
 		{
-			this.room = traitSpotMeeting.owner.Cell.room;
-			if (this.room == null)
+			room = traitSpotMeeting.owner.Cell.room;
+			if (room == null)
 			{
-				this.room = new VirtualRoom(traitSpotMeeting.owner);
+				room = new VirtualRoom(traitSpotMeeting.owner);
 			}
 		}
 		else
 		{
-			this.room = EClass._map.rooms.listRoom.RandomItem<Room>();
+			room = EClass._map.rooms.listRoom.RandomItem();
 		}
-		return this.room;
+		return room;
 	}
 
 	public void Start()
 	{
-		this.SetRoom();
-		Thing emptySeat = this.room.GetEmptySeat();
-		EClass.pc.MoveImmediate(((emptySeat != null) ? emptySeat.pos : null) ?? this.room.GetRandomPoint(true, false), true, true);
-		this.CallNext();
+		SetRoom();
+		Thing emptySeat = room.GetEmptySeat();
+		EClass.pc.MoveImmediate(emptySeat?.pos ?? room.GetRandomPoint(walkable: true, allowChara: false));
+		CallNext();
 	}
 
 	public void CallNext()
 	{
-		if (this.list.Count == 0)
+		if (list.Count != 0)
 		{
-			return;
+			Point chara = room.GetEmptySeat()?.pos ?? room.GetRandomPoint(walkable: true, allowChara: false);
+			Meeting meeting = list[0];
+			list.RemoveAt(0);
+			meeting.SetChara(chara);
+			Chara maid = EClass.Branch.GetMaid();
+			if (maid != null)
+			{
+				GameLang.refDrama1 = meeting.chara.Name;
+				LayerDrama.Activate("_chara", null, "meeting", maid).SetOnKill(meeting.Start);
+			}
+			else
+			{
+				meeting.Start();
+			}
 		}
-		Thing emptySeat = this.room.GetEmptySeat();
-		Point chara = ((emptySeat != null) ? emptySeat.pos : null) ?? this.room.GetRandomPoint(true, false);
-		Meeting meeting = this.list[0];
-		this.list.RemoveAt(0);
-		meeting.SetChara(chara);
-		Chara maid = EClass.Branch.GetMaid();
-		if (maid != null)
-		{
-			GameLang.refDrama1 = meeting.chara.Name;
-			LayerDrama.Activate("_chara", null, "meeting", maid, null, "").SetOnKill(new Action(meeting.Start));
-			return;
-		}
-		meeting.Start();
 	}
-
-	[JsonProperty]
-	public List<Meeting> list = new List<Meeting>();
-
-	public FactionBranch branch;
-
-	public BaseArea room;
 }

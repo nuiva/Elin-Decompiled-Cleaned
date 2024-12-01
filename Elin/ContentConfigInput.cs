@@ -1,263 +1,8 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine.UI;
 
 public class ContentConfigInput : ContentConfigGame
 {
-	public override void OnInstantiate()
-	{
-		this.toggleAutorun.SetToggle(base.config.input.autorun, delegate(bool on)
-		{
-			base.config.input.autorun = on;
-		});
-		this.toggleAltKeyAxis.SetToggle(base.config.input.altKeyAxis, delegate(bool on)
-		{
-			base.config.input.altKeyAxis = on;
-		});
-		this.toggleIgnoreNPCs.SetToggle(base.config.input.ignoreNPCs, delegate(bool on)
-		{
-			base.config.input.ignoreNPCs = on;
-		});
-		this.toggleKeepRunning.SetToggle(base.config.input.keepRunning, delegate(bool on)
-		{
-			base.config.input.keepRunning = on;
-		});
-		this.toggleRightClickExitBuildMode.SetToggle(base.config.input.rightClickExitBuildMode, delegate(bool on)
-		{
-			base.config.input.rightClickExitBuildMode = on;
-		});
-		this.toggleAltExamine.SetToggle(base.config.input.altExamine, delegate(bool on)
-		{
-			base.config.input.altExamine = on;
-		});
-		this.toggleAltChangeHeight.SetToggle(base.config.input.altChangeHeight, delegate(bool on)
-		{
-			base.config.input.altChangeHeight = on;
-		});
-		this.toggleSmoothFollow.SetToggle(base.config.camera.smoothFollow, delegate(bool on)
-		{
-			base.config.camera.smoothFollow = on;
-		});
-		this.toggleSmoothMove.SetToggle(base.config.camera.smoothMove, delegate(bool on)
-		{
-			base.config.camera.smoothMove = on;
-			this.sliderMoveFrame.SetActive(!on);
-		});
-		this.toggleZoomToMouse.SetToggle(base.config.camera.zoomToMouse, delegate(bool on)
-		{
-			base.config.camera.zoomToMouse = on;
-		});
-		this.toggleZoomMin.SetToggle(base.config.camera.extendZoomMin, delegate(bool on)
-		{
-			base.config.camera.extendZoomMin = on;
-		});
-		this.toggleZoomMax.SetToggle(base.config.camera.extendZoomMax, delegate(bool on)
-		{
-			base.config.camera.extendZoomMax = on;
-		});
-		this.toggleEdge.SetToggle(base.config.camera.edgeScroll, delegate(bool on)
-		{
-			base.config.camera.edgeScroll = on;
-		});
-		this.toggleInvertX.SetToggle(base.config.camera.invertX, delegate(bool on)
-		{
-			base.config.camera.invertX = on;
-		});
-		this.toggleInvertY.SetToggle(base.config.camera.invertY, delegate(bool on)
-		{
-			base.config.camera.invertY = on;
-		});
-		this.toggleLinearZoom.SetToggle(base.config.camera.linearZoom, delegate(bool on)
-		{
-			base.config.camera.linearZoom = on;
-		});
-		base.SetSlider(this.sliderMoveFrame, (float)base.config.camera.moveframe, delegate(float a)
-		{
-			base.config.camera.moveframe = (int)a;
-			return Lang.Get("moveframe") + "(" + ((int)a).ToString() + ")";
-		});
-		this.sliderMoveFrame.SetActive(!base.config.camera.smoothMove);
-		base.SetSlider(this.sliderKeyboardScroll, base.config.camera.senseKeyboard, delegate(float a)
-		{
-			base.config.camera.senseKeyboard = a;
-			return Lang.Get("speed") + "(" + ((int)(a * 100f)).ToString() + ")";
-		});
-		base.SetSlider(this.sliderDragScroll, base.config.camera.sensDrag, delegate(float a)
-		{
-			base.config.camera.sensDrag = a;
-			return Lang.Get("speed") + "(" + ((int)(a * 100f)).ToString() + ")";
-		});
-		base.SetSlider(this.sliderEdgeScroll, base.config.camera.sensEdge, delegate(float a)
-		{
-			base.config.camera.sensEdge = a;
-			return Lang.Get("speed") + "(" + ((int)(a * 100f)).ToString() + ")";
-		});
-		List<CoreConfig.GameFunc> list = Util.EnumToList<CoreConfig.GameFunc>();
-		this.ddMiddleClick.SetList<CoreConfig.GameFunc>((int)base.config.input.middleClick, list, (CoreConfig.GameFunc a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFunc b)
-		{
-			base.config.input.middleClick = b;
-		}, true);
-		this.ddMiddleClickLong.SetList<CoreConfig.GameFunc>((int)base.config.input.middlePressLong, list, (CoreConfig.GameFunc a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFunc b)
-		{
-			base.config.input.middlePressLong = b;
-		}, true);
-		this.ddMouse3Click.SetList<CoreConfig.GameFunc>((int)base.config.input.mouse3Click, list, (CoreConfig.GameFunc a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFunc b)
-		{
-			base.config.input.mouse3Click = b;
-		}, true);
-		this.ddMouse3Long.SetList<CoreConfig.GameFunc>((int)base.config.input.mouse3PressLong, list, (CoreConfig.GameFunc a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFunc b)
-		{
-			base.config.input.mouse3PressLong = b;
-		}, true);
-		this.ddMouse4Click.SetList<CoreConfig.GameFunc>((int)base.config.input.mouse4Click, list, (CoreConfig.GameFunc a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFunc b)
-		{
-			base.config.input.mouse4Click = b;
-		}, true);
-		this.ddMouse4Long.SetList<CoreConfig.GameFunc>((int)base.config.input.mouse4PressLong, list, (CoreConfig.GameFunc a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFunc b)
-		{
-			base.config.input.mouse4PressLong = b;
-		}, true);
-		List<CoreConfig.GameFuncBuild> list2 = Util.EnumToList<CoreConfig.GameFuncBuild>();
-		this.b_ddMiddleClick.SetList<CoreConfig.GameFuncBuild>((int)base.config.input.b_middleClick, list2, (CoreConfig.GameFuncBuild a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFuncBuild b)
-		{
-			base.config.input.b_middleClick = b;
-		}, true);
-		this.b_ddMiddleClickLong.SetList<CoreConfig.GameFuncBuild>((int)base.config.input.b_middlePressLong, list2, (CoreConfig.GameFuncBuild a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFuncBuild b)
-		{
-			base.config.input.b_middlePressLong = b;
-		}, true);
-		this.b_ddMouse3Click.SetList<CoreConfig.GameFuncBuild>((int)base.config.input.b_mouse3Click, list2, (CoreConfig.GameFuncBuild a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFuncBuild b)
-		{
-			base.config.input.b_mouse3Click = b;
-		}, true);
-		this.b_ddMouse3Long.SetList<CoreConfig.GameFuncBuild>((int)base.config.input.b_mouse3PressLong, list2, (CoreConfig.GameFuncBuild a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFuncBuild b)
-		{
-			base.config.input.b_mouse3PressLong = b;
-		}, true);
-		this.b_ddMouse4Click.SetList<CoreConfig.GameFuncBuild>((int)base.config.input.b_mouse4Click, list2, (CoreConfig.GameFuncBuild a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFuncBuild b)
-		{
-			base.config.input.b_mouse4Click = b;
-		}, true);
-		this.b_ddMouse4Long.SetList<CoreConfig.GameFuncBuild>((int)base.config.input.b_mouse4PressLong, list2, (CoreConfig.GameFuncBuild a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFuncBuild b)
-		{
-			base.config.input.b_mouse4PressLong = b;
-		}, true);
-		this.listMovement.callbacks = new UIList.Callback<EInput.KeyMap, ItemKeymap>
-		{
-			onInstantiate = delegate(EInput.KeyMap a, ItemKeymap b)
-			{
-				this.<OnInstantiate>g___onInstantiate|38_45(a, b);
-			},
-			onList = delegate(UIList.SortMode m)
-			{
-				EInput.KeyMapManager keys = base.config.input.keys;
-				UIList uilist = this.listMovement;
-				uilist.Add(keys.axisUp);
-				uilist.Add(keys.axisDown);
-				uilist.Add(keys.axisLeft);
-				uilist.Add(keys.axisRight);
-				uilist.Add(keys.axisUpLeft);
-				uilist.Add(keys.axisUpRight);
-				uilist.Add(keys.axisDownLeft);
-				uilist.Add(keys.axisDownRight);
-				uilist.Add(keys.wait);
-			}
-		};
-		this.listGeneral.callbacks = new UIList.Callback<EInput.KeyMap, ItemKeymap>
-		{
-			onInstantiate = delegate(EInput.KeyMap a, ItemKeymap b)
-			{
-				this.<OnInstantiate>g___onInstantiate|38_45(a, b);
-			},
-			onList = delegate(UIList.SortMode m)
-			{
-				EInput.KeyMapManager keys = base.config.input.keys;
-				UIList uilist = this.listGeneral;
-				uilist.Add(keys.mouseLeft);
-				uilist.Add(keys.mouseMiddle);
-				uilist.Add(keys.mouseRight);
-				uilist.Add(keys.fire);
-				uilist.Add(keys.autoCombat);
-				uilist.Add(keys.emptyHand);
-			}
-		};
-		this.listMenu.callbacks = new UIList.Callback<EInput.KeyMap, ItemKeymap>
-		{
-			onInstantiate = delegate(EInput.KeyMap a, ItemKeymap b)
-			{
-				this.<OnInstantiate>g___onInstantiate|38_45(a, b);
-			},
-			onList = delegate(UIList.SortMode m)
-			{
-				EInput.KeyMapManager keys = base.config.input.keys;
-				UIList uilist = this.listMenu;
-				uilist.Add(keys.chara);
-				uilist.Add(keys.inventory);
-				uilist.Add(keys.ability);
-				uilist.Add(keys.journal);
-				uilist.Add(keys.log);
-				uilist.Add(keys.report);
-				uilist.Add(keys.search);
-			}
-		};
-		this.listEtc.callbacks = new UIList.Callback<EInput.KeyMap, ItemKeymap>
-		{
-			onInstantiate = delegate(EInput.KeyMap a, ItemKeymap b)
-			{
-				this.<OnInstantiate>g___onInstantiate|38_45(a, b);
-			},
-			onList = delegate(UIList.SortMode m)
-			{
-				EInput.KeyMapManager keys = base.config.input.keys;
-				UIList uilist = this.listEtc;
-				uilist.Add(keys.switchHotbar);
-				uilist.Add(keys.quickSave);
-				uilist.Add(keys.quickLoad);
-			}
-		};
-		this.listAdvanced.callbacks = new UIList.Callback<EInput.KeyMap, ItemKeymap>
-		{
-			onInstantiate = delegate(EInput.KeyMap a, ItemKeymap b)
-			{
-				this.<OnInstantiate>g___onInstantiate|38_45(a, b);
-			},
-			onList = delegate(UIList.SortMode m)
-			{
-				EInput.KeyMapManager keys = base.config.input.keys;
-				UIList uilist = this.listAdvanced;
-				uilist.Add(keys.examine);
-				uilist.Add(keys.getAll);
-				uilist.Add(keys.dump);
-				uilist.Add(keys.mute);
-				uilist.Add(keys.meditate);
-			}
-		};
-		this.<OnInstantiate>g___refreshList|38_44();
-	}
-
-	[CompilerGenerated]
-	private void <OnInstantiate>g___refreshList|38_44()
-	{
-		this.listMovement.List(false);
-		this.listGeneral.List(false);
-		this.listMenu.List(false);
-		this.listEtc.List(false);
-		this.listAdvanced.List(false);
-	}
-
-	[CompilerGenerated]
-	private void <OnInstantiate>g___onInstantiate|38_45(EInput.KeyMap a, ItemKeymap b)
-	{
-		b.text.text = ("key_" + a.action.ToString()).lang();
-		string text = a.key.ToString() ?? "";
-		b.buttonKey.mainText.text = text;
-		b.buttonKey.SetOnClick(delegate
-		{
-			Dialog.Keymap(a).SetOnKill(new Action(this.<OnInstantiate>g___refreshList|38_44));
-		});
-	}
-
 	public UIList listMovement;
 
 	public UIList listGeneral;
@@ -333,4 +78,253 @@ public class ContentConfigInput : ContentConfigGame
 	public UIDropdown b_ddMouse4Click;
 
 	public UIDropdown b_ddMouse4Long;
+
+	public override void OnInstantiate()
+	{
+		toggleAutorun.SetToggle(base.config.input.autorun, delegate(bool on)
+		{
+			base.config.input.autorun = on;
+		});
+		toggleAltKeyAxis.SetToggle(base.config.input.altKeyAxis, delegate(bool on)
+		{
+			base.config.input.altKeyAxis = on;
+		});
+		toggleIgnoreNPCs.SetToggle(base.config.input.ignoreNPCs, delegate(bool on)
+		{
+			base.config.input.ignoreNPCs = on;
+		});
+		toggleKeepRunning.SetToggle(base.config.input.keepRunning, delegate(bool on)
+		{
+			base.config.input.keepRunning = on;
+		});
+		toggleRightClickExitBuildMode.SetToggle(base.config.input.rightClickExitBuildMode, delegate(bool on)
+		{
+			base.config.input.rightClickExitBuildMode = on;
+		});
+		toggleAltExamine.SetToggle(base.config.input.altExamine, delegate(bool on)
+		{
+			base.config.input.altExamine = on;
+		});
+		toggleAltChangeHeight.SetToggle(base.config.input.altChangeHeight, delegate(bool on)
+		{
+			base.config.input.altChangeHeight = on;
+		});
+		toggleSmoothFollow.SetToggle(base.config.camera.smoothFollow, delegate(bool on)
+		{
+			base.config.camera.smoothFollow = on;
+		});
+		toggleSmoothMove.SetToggle(base.config.camera.smoothMove, delegate(bool on)
+		{
+			base.config.camera.smoothMove = on;
+			sliderMoveFrame.SetActive(!on);
+		});
+		toggleZoomToMouse.SetToggle(base.config.camera.zoomToMouse, delegate(bool on)
+		{
+			base.config.camera.zoomToMouse = on;
+		});
+		toggleZoomMin.SetToggle(base.config.camera.extendZoomMin, delegate(bool on)
+		{
+			base.config.camera.extendZoomMin = on;
+		});
+		toggleZoomMax.SetToggle(base.config.camera.extendZoomMax, delegate(bool on)
+		{
+			base.config.camera.extendZoomMax = on;
+		});
+		toggleEdge.SetToggle(base.config.camera.edgeScroll, delegate(bool on)
+		{
+			base.config.camera.edgeScroll = on;
+		});
+		toggleInvertX.SetToggle(base.config.camera.invertX, delegate(bool on)
+		{
+			base.config.camera.invertX = on;
+		});
+		toggleInvertY.SetToggle(base.config.camera.invertY, delegate(bool on)
+		{
+			base.config.camera.invertY = on;
+		});
+		toggleLinearZoom.SetToggle(base.config.camera.linearZoom, delegate(bool on)
+		{
+			base.config.camera.linearZoom = on;
+		});
+		SetSlider(sliderMoveFrame, base.config.camera.moveframe, delegate(float a)
+		{
+			base.config.camera.moveframe = (int)a;
+			return Lang.Get("moveframe") + "(" + (int)a + ")";
+		});
+		sliderMoveFrame.SetActive(!base.config.camera.smoothMove);
+		SetSlider(sliderKeyboardScroll, base.config.camera.senseKeyboard, delegate(float a)
+		{
+			base.config.camera.senseKeyboard = a;
+			return Lang.Get("speed") + "(" + (int)(a * 100f) + ")";
+		});
+		SetSlider(sliderDragScroll, base.config.camera.sensDrag, delegate(float a)
+		{
+			base.config.camera.sensDrag = a;
+			return Lang.Get("speed") + "(" + (int)(a * 100f) + ")";
+		});
+		SetSlider(sliderEdgeScroll, base.config.camera.sensEdge, delegate(float a)
+		{
+			base.config.camera.sensEdge = a;
+			return Lang.Get("speed") + "(" + (int)(a * 100f) + ")";
+		});
+		List<CoreConfig.GameFunc> list = Util.EnumToList<CoreConfig.GameFunc>();
+		ddMiddleClick.SetList((int)base.config.input.middleClick, list, (CoreConfig.GameFunc a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFunc b)
+		{
+			base.config.input.middleClick = b;
+		});
+		ddMiddleClickLong.SetList((int)base.config.input.middlePressLong, list, (CoreConfig.GameFunc a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFunc b)
+		{
+			base.config.input.middlePressLong = b;
+		});
+		ddMouse3Click.SetList((int)base.config.input.mouse3Click, list, (CoreConfig.GameFunc a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFunc b)
+		{
+			base.config.input.mouse3Click = b;
+		});
+		ddMouse3Long.SetList((int)base.config.input.mouse3PressLong, list, (CoreConfig.GameFunc a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFunc b)
+		{
+			base.config.input.mouse3PressLong = b;
+		});
+		ddMouse4Click.SetList((int)base.config.input.mouse4Click, list, (CoreConfig.GameFunc a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFunc b)
+		{
+			base.config.input.mouse4Click = b;
+		});
+		ddMouse4Long.SetList((int)base.config.input.mouse4PressLong, list, (CoreConfig.GameFunc a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFunc b)
+		{
+			base.config.input.mouse4PressLong = b;
+		});
+		List<CoreConfig.GameFuncBuild> list2 = Util.EnumToList<CoreConfig.GameFuncBuild>();
+		b_ddMiddleClick.SetList((int)base.config.input.b_middleClick, list2, (CoreConfig.GameFuncBuild a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFuncBuild b)
+		{
+			base.config.input.b_middleClick = b;
+		});
+		b_ddMiddleClickLong.SetList((int)base.config.input.b_middlePressLong, list2, (CoreConfig.GameFuncBuild a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFuncBuild b)
+		{
+			base.config.input.b_middlePressLong = b;
+		});
+		b_ddMouse3Click.SetList((int)base.config.input.b_mouse3Click, list2, (CoreConfig.GameFuncBuild a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFuncBuild b)
+		{
+			base.config.input.b_mouse3Click = b;
+		});
+		b_ddMouse3Long.SetList((int)base.config.input.b_mouse3PressLong, list2, (CoreConfig.GameFuncBuild a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFuncBuild b)
+		{
+			base.config.input.b_mouse3PressLong = b;
+		});
+		b_ddMouse4Click.SetList((int)base.config.input.b_mouse4Click, list2, (CoreConfig.GameFuncBuild a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFuncBuild b)
+		{
+			base.config.input.b_mouse4Click = b;
+		});
+		b_ddMouse4Long.SetList((int)base.config.input.b_mouse4PressLong, list2, (CoreConfig.GameFuncBuild a, int b) => a.ToString().lang(), delegate(int a, CoreConfig.GameFuncBuild b)
+		{
+			base.config.input.b_mouse4PressLong = b;
+		});
+		listMovement.callbacks = new UIList.Callback<EInput.KeyMap, ItemKeymap>
+		{
+			onInstantiate = delegate(EInput.KeyMap a, ItemKeymap b)
+			{
+				_onInstantiate(a, b);
+			},
+			onList = delegate
+			{
+				EInput.KeyMapManager keys = base.config.input.keys;
+				UIList uIList = listMovement;
+				uIList.Add(keys.axisUp);
+				uIList.Add(keys.axisDown);
+				uIList.Add(keys.axisLeft);
+				uIList.Add(keys.axisRight);
+				uIList.Add(keys.axisUpLeft);
+				uIList.Add(keys.axisUpRight);
+				uIList.Add(keys.axisDownLeft);
+				uIList.Add(keys.axisDownRight);
+				uIList.Add(keys.wait);
+			}
+		};
+		listGeneral.callbacks = new UIList.Callback<EInput.KeyMap, ItemKeymap>
+		{
+			onInstantiate = delegate(EInput.KeyMap a, ItemKeymap b)
+			{
+				_onInstantiate(a, b);
+			},
+			onList = delegate
+			{
+				EInput.KeyMapManager keys2 = base.config.input.keys;
+				UIList uIList2 = listGeneral;
+				uIList2.Add(keys2.mouseLeft);
+				uIList2.Add(keys2.mouseMiddle);
+				uIList2.Add(keys2.mouseRight);
+				uIList2.Add(keys2.fire);
+				uIList2.Add(keys2.autoCombat);
+				uIList2.Add(keys2.emptyHand);
+			}
+		};
+		listMenu.callbacks = new UIList.Callback<EInput.KeyMap, ItemKeymap>
+		{
+			onInstantiate = delegate(EInput.KeyMap a, ItemKeymap b)
+			{
+				_onInstantiate(a, b);
+			},
+			onList = delegate
+			{
+				EInput.KeyMapManager keys3 = base.config.input.keys;
+				UIList uIList3 = listMenu;
+				uIList3.Add(keys3.chara);
+				uIList3.Add(keys3.inventory);
+				uIList3.Add(keys3.ability);
+				uIList3.Add(keys3.journal);
+				uIList3.Add(keys3.log);
+				uIList3.Add(keys3.report);
+				uIList3.Add(keys3.search);
+			}
+		};
+		listEtc.callbacks = new UIList.Callback<EInput.KeyMap, ItemKeymap>
+		{
+			onInstantiate = delegate(EInput.KeyMap a, ItemKeymap b)
+			{
+				_onInstantiate(a, b);
+			},
+			onList = delegate
+			{
+				EInput.KeyMapManager keys4 = base.config.input.keys;
+				UIList uIList4 = listEtc;
+				uIList4.Add(keys4.switchHotbar);
+				uIList4.Add(keys4.quickSave);
+				uIList4.Add(keys4.quickLoad);
+			}
+		};
+		listAdvanced.callbacks = new UIList.Callback<EInput.KeyMap, ItemKeymap>
+		{
+			onInstantiate = delegate(EInput.KeyMap a, ItemKeymap b)
+			{
+				_onInstantiate(a, b);
+			},
+			onList = delegate
+			{
+				EInput.KeyMapManager keys5 = base.config.input.keys;
+				UIList uIList5 = listAdvanced;
+				uIList5.Add(keys5.examine);
+				uIList5.Add(keys5.getAll);
+				uIList5.Add(keys5.dump);
+				uIList5.Add(keys5.mute);
+				uIList5.Add(keys5.meditate);
+			}
+		};
+		_refreshList();
+		void _onInstantiate(EInput.KeyMap a, ItemKeymap b)
+		{
+			b.text.text = ("key_" + a.action).lang();
+			string text = a.key.ToString() ?? "";
+			b.buttonKey.mainText.text = text;
+			b.buttonKey.SetOnClick(delegate
+			{
+				Dialog.Keymap(a).SetOnKill(_refreshList);
+			});
+		}
+		void _refreshList()
+		{
+			listMovement.List();
+			listGeneral.List();
+			listMenu.List();
+			listEtc.List();
+			listAdvanced.List();
+		}
+	}
 }

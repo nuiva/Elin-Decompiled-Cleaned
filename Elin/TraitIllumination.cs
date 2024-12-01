@@ -1,20 +1,6 @@
-﻿using System;
-
 public class TraitIllumination : Trait
 {
-	public override bool AutoToggle
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool AutoToggle => true;
 
-	public override Trait.TileMode tileMode
-	{
-		get
-		{
-			return Trait.TileMode.Illumination;
-		}
-	}
+	public override TileMode tileMode => TileMode.Illumination;
 }

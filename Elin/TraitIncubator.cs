@@ -1,76 +1,20 @@
-﻿using System;
-
 public class TraitIncubator : TraitCrafter
 {
-	public override string IdSource
-	{
-		get
-		{
-			return "Incubator";
-		}
-	}
+	public override string IdSource => "Incubator";
 
-	public override string CrafterTitle
-	{
-		get
-		{
-			return "invIncubator";
-		}
-	}
+	public override string CrafterTitle => "invIncubator";
 
-	public override ToggleType ToggleType
-	{
-		get
-		{
-			return ToggleType.Electronics;
-		}
-	}
+	public override ToggleType ToggleType => ToggleType.Electronics;
 
-	public override string idSoundProgress
-	{
-		get
-		{
-			return "cook_micro";
-		}
-	}
+	public override string idSoundProgress => "cook_micro";
 
-	public override string idSoundComplete
-	{
-		get
-		{
-			return "egg";
-		}
-	}
+	public override string idSoundComplete => "egg";
 
-	public override TraitCrafter.AnimeType animeType
-	{
-		get
-		{
-			return TraitCrafter.AnimeType.Microwave;
-		}
-	}
+	public override AnimeType animeType => AnimeType.Microwave;
 
-	public override bool AutoTurnOff
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool AutoTurnOff => true;
 
-	public override bool AutoToggle
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool AutoToggle => false;
 
-	public override bool CanUseFromInventory
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanUseFromInventory => false;
 }

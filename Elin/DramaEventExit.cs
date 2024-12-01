@@ -1,10 +1,8 @@
-﻿using System;
-
 public class DramaEventExit : DramaEvent
 {
 	public override bool Play()
 	{
-		this.sequence.Exit();
+		sequence.Exit();
 		return false;
 	}
 }

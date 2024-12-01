@@ -1,9400 +1,18 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Algorithms;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class Chara : Card, IPathfindWalker
 {
-	public string Aka
-	{
-		get
-		{
-			return this._alias.IsEmpty(this.source.GetText("aka", true) ?? "");
-		}
-	}
-
-	public string _alias
-	{
-		get
-		{
-			return this._strs[0];
-		}
-		set
-		{
-			this._strs[0] = value;
-		}
-	}
-
-	public string idFaith
-	{
-		get
-		{
-			return this._strs[1];
-		}
-		set
-		{
-			this._strs[1] = value;
-		}
-	}
-
-	public string idFaction
-	{
-		get
-		{
-			return this._strs[2];
-		}
-		set
-		{
-			this._strs[2] = value;
-		}
-	}
-
-	public Zone currentZone
-	{
-		get
-		{
-			return RefZone.Get(this._cints[1]);
-		}
-		set
-		{
-			this._cints[1] = RefZone.Set(value);
-		}
-	}
-
-	public Zone homeZone
-	{
-		get
-		{
-			return RefZone.Get(this._cints[2]);
-		}
-		set
-		{
-			this._cints[2] = RefZone.Set(value);
-		}
-	}
-
-	public GoalListType goalListType
-	{
-		get
-		{
-			return this._cints[3].ToEnum<GoalListType>();
-		}
-		set
-		{
-			this._cints[3] = (int)value;
-		}
-	}
-
-	public Hostility hostility
-	{
-		get
-		{
-			return this._cints[4].ToEnum<Hostility>();
-		}
-		set
-		{
-			this._cints[4] = (int)value;
-		}
-	}
-
-	public int _affinity
-	{
-		get
-		{
-			return this._cints[5];
-		}
-		set
-		{
-			this._cints[5] = value;
-		}
-	}
-
-	public Affinity affinity
-	{
-		get
-		{
-			return Affinity.Get(this);
-		}
-	}
-
-	public int interest
-	{
-		get
-		{
-			return this._cints[6];
-		}
-		set
-		{
-			this._cints[6] = value;
-		}
-	}
-
-	public int daysStarved
-	{
-		get
-		{
-			return this._cints[7];
-		}
-		set
-		{
-			this._cints[7] = value;
-		}
-	}
-
-	public int _idTimeTable
-	{
-		get
-		{
-			return this._cints[9];
-		}
-		set
-		{
-			this._cints[9] = value;
-		}
-	}
-
-	public int uidEditor
-	{
-		get
-		{
-			return this._cints[10];
-		}
-		set
-		{
-			this._cints[10] = value;
-		}
-	}
-
-	public int _maxStamina
-	{
-		get
-		{
-			return this._cints[20];
-		}
-		set
-		{
-			this._cints[20] = value;
-		}
-	}
-
-	public int corruption
-	{
-		get
-		{
-			return this._cints[21];
-		}
-		set
-		{
-			this._cints[21] = value;
-		}
-	}
-
-	public bool isDead
-	{
-		get
-		{
-			return this._cbits1[0];
-		}
-		set
-		{
-			this._cbits1[0] = value;
-		}
-	}
-
-	public bool isAlawysVisible
-	{
-		get
-		{
-			return this._cbits1[1];
-		}
-		set
-		{
-			this._cbits1[1] = value;
-		}
-	}
-
-	public bool knowFav
-	{
-		get
-		{
-			return this._cbits1[3];
-		}
-		set
-		{
-			this._cbits1[3] = value;
-		}
-	}
-
-	public CharaAbility ability
-	{
-		get
-		{
-			CharaAbility result;
-			if ((result = this._ability) == null)
-			{
-				result = (this._ability = new CharaAbility(this));
-			}
-			return result;
-		}
-	}
-
-	public Faction faction
-	{
-		get
-		{
-			Faction result;
-			if ((result = this._faction) == null)
-			{
-				result = (this._faction = EClass.game.factions.dictAll.TryGetValue(this.idFaction, null));
-			}
-			return result;
-		}
-		set
-		{
-			this.idFaction = ((value != null) ? value.uid : null);
-		}
-	}
-
-	public Religion faith
-	{
-		get
-		{
-			return EClass.game.religions.dictAll.TryGetValue(this.idFaith, null) ?? EClass.game.religions.dictAll["eyth"];
-		}
-		set
-		{
-			this.idFaith = ((value != null) ? value.id : null);
-		}
-	}
-
-	public override CardRow sourceCard
-	{
-		get
-		{
-			return this.source;
-		}
-	}
-
-	public override CardRow sourceRenderCard
-	{
-		get
-		{
-			if (this.pccData != null && !(this.source.renderData is RenderDataPcc))
-			{
-				return SourceChara.rowDefaultPCC;
-			}
-			return this.source;
-		}
-	}
-
-	public SourceRace.Row race
-	{
-		get
-		{
-			SourceRace.Row result;
-			if ((result = this._race) == null)
-			{
-				result = ((this._race = EClass.sources.races.map.TryGetValue(base.c_idRace.IsEmpty(this.source.race), null)) ?? EClass.sources.races.map["norland"]);
-			}
-			return result;
-		}
-	}
-
-	public SourceJob.Row job
-	{
-		get
-		{
-			SourceJob.Row result;
-			if ((result = this._job) == null)
-			{
-				result = ((this._job = EClass.sources.jobs.map.TryGetValue(base.c_idJob.IsEmpty(this.source.job), null)) ?? EClass.sources.jobs.map["none"]);
-			}
-			return result;
-		}
-	}
-
-	public string idTimeTable
-	{
-		get
-		{
-			return Chara.IDTimeTable[this._idTimeTable];
-		}
-	}
-
-	public Hostility OriginalHostility
-	{
-		get
-		{
-			if (EClass.pc != null && this.IsPCFaction)
-			{
-				return Hostility.Ally;
-			}
-			if (base.c_originalHostility != (Hostility)0)
-			{
-				return base.c_originalHostility;
-			}
-			if (!this.source.hostility.IsEmpty())
-			{
-				return this.source.hostility.ToEnum(true);
-			}
-			return Hostility.Enemy;
-		}
-	}
-
-	public string IDPCCBodySet
-	{
-		get
-		{
-			if (this.source.idActor.Length <= 1)
-			{
-				return "female";
-			}
-			return this.source.idActor[1];
-		}
-	}
-
-	public new TraitChara trait
-	{
-		get
-		{
-			return this.trait as TraitChara;
-		}
-		set
-		{
-			this.trait = value;
-		}
-	}
-
-	public override string ToString()
-	{
-		string[] array = new string[9];
-		array[0] = base.Name;
-		array[1] = "(";
-		int num = 2;
-		AIAct aiact = this.ai;
-		array[num] = ((aiact != null) ? aiact.ToString() : null);
-		array[3] = ")";
-		int num2 = 4;
-		Point pos = this.pos;
-		array[num2] = ((pos != null) ? pos.ToString() : null);
-		array[5] = "/";
-		array[6] = base.ExistsOnMap.ToString();
-		array[7] = "/";
-		array[8] = this.isDead.ToString();
-		return string.Concat(array);
-	}
-
-	public string NameBraced
-	{
-		get
-		{
-			return this.GetName(NameStyle.Full, -1);
-		}
-	}
-
-	public string NameTitled
-	{
-		get
-		{
-			return ((EClass.game.idDifficulty == 0) ? "" : ((EClass.game.idDifficulty == 1) ? "☆" : "★")) + this.NameBraced;
-		}
-	}
-
-	public override string actorPrefab
-	{
-		get
-		{
-			if (this.IsPCC)
-			{
-				return "CharaActorPCC";
-			}
-			return "CharaActor";
-		}
-	}
-
-	public override int PrefIndex
-	{
-		get
-		{
-			if (this.sourceCard._tiles.Length == 0 && this.renderer.replacer == null)
-			{
-				return base.dir;
-			}
-			if (base.dir != 1 && base.dir != 2)
-			{
-				return 0;
-			}
-			return 1;
-		}
-	}
-
-	public override bool flipX
-	{
-		get
-		{
-			return base.dir == 1 || base.dir == 2;
-		}
-	}
-
-	public override string AliasMaterialOnCreate
-	{
-		get
-		{
-			return this.race.material;
-		}
-	}
-
-	public override bool IsAliveInCurrentZone
-	{
-		get
-		{
-			return !this.isDead && base.ExistsOnMap;
-		}
-	}
-
-	public override bool IsDeadOrSleeping
-	{
-		get
-		{
-			return this.isDead || this.conSleep != null || this.conSuspend != null || this.isFainted;
-		}
-	}
-
-	public override bool IsDisabled
-	{
-		get
-		{
-			return this.isDead || this.conSleep != null || this.isFainted || this.isParalyzed;
-		}
-	}
-
-	public bool IsLevitating
-	{
-		get
-		{
-			if (this.ride != null)
-			{
-				return this.ride._isLevitating;
-			}
-			return this._isLevitating;
-		}
-	}
-
-	public bool IsCriticallyWounded(bool includeRide = false)
-	{
-		if (this.host != null && !includeRide)
-		{
-			return false;
-		}
-		if (base.Evalue(1421) <= 0)
-		{
-			return base.hp < this.MaxHP / 5;
-		}
-		return base.hp + this.mana.value < (this.MaxHP + this.mana.max) / 5;
-	}
-
-	public override bool IsMoving
-	{
-		get
-		{
-			return this.idleTimer > 0f;
-		}
-	}
-
-	public override bool IsGlobal
-	{
-		get
-		{
-			return this.global != null;
-		}
-	}
-
-	public override bool IsPC
-	{
-		get
-		{
-			return this == EClass.player.chara;
-		}
-	}
-
-	public override bool IsPCParty
-	{
-		get
-		{
-			return this.party != null && this.party.leader == EClass.pc;
-		}
-	}
-
-	public override bool IsMinion
-	{
-		get
-		{
-			return this.master != null || base.c_uidMaster != 0;
-		}
-	}
-
-	public override bool IsPCPartyMinion
-	{
-		get
-		{
-			return this.master != null && (this.master.IsPCParty || this.master.IsPCPartyMinion);
-		}
-	}
-
-	public override bool IsPCFactionMinion
-	{
-		get
-		{
-			return this.master != null && (this.master.IsPCFaction || this.master.IsPCFactionMinion);
-		}
-	}
-
-	public override bool IsPCFaction
-	{
-		get
-		{
-			return EClass.pc != null && this.faction == EClass.pc.faction;
-		}
-	}
-
-	public override bool IsPCC
-	{
-		get
-		{
-			return this.pccData != null;
-		}
-	}
-
-	public override bool isThing
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public override bool isChara
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public override bool HasHost
-	{
-		get
-		{
-			return this.host != null;
-		}
-	}
-
-	public override bool isSynced
-	{
-		get
-		{
-			return this.renderer.isSynced || (this.host != null && this.host.renderer.isSynced);
-		}
-	}
-
-	public override bool IsMultisize
-	{
-		get
-		{
-			return this.sourceCard.multisize;
-		}
-	}
-
-	public override int MaxHP
-	{
-		get
-		{
-			return Mathf.Max(1, ((base.END * 2 + base.STR + base.WIL / 2) * Mathf.Min(base.LV, 25) / 25 + base.END + 10) * base.Evalue(60) / 100 * (int)((this.IsPCFaction ? ((Rarity)100) : ((Rarity)100 + (int)(base.rarity * (Rarity)300))) + (this.IsPC ? (EClass.player.lastEmptyAlly * base.Evalue(1646)) : 0)) / 100);
-		}
-	}
-
-	public override int WeightLimit
-	{
-		get
-		{
-			return (base.STR * 500 + base.END * 250 + base.Evalue(207) * 2000) * (base.HasElement(1411, 1) ? 5 : 1) + 45000;
-		}
-	}
-
-	public override int SelfWeight
-	{
-		get
-		{
-			return this.bio.weight * 1000;
-		}
-	}
-
-	public int MaxSummon
-	{
-		get
-		{
-			return (int)(Mathf.Max((int)Mathf.Sqrt((float)base.CHA), 1) + base.Evalue(1647) + ((!base.IsPCFactionOrMinion) ? (base.rarity * (Rarity)5) : Rarity.Normal));
-		}
-	}
-
-	public Element MainElement
-	{
-		get
-		{
-			if (base.c_idMainElement == 0)
-			{
-				return Element.Void;
-			}
-			return this.elements.GetElement(base.c_idMainElement);
-		}
-	}
-
-	public override int DV
-	{
-		get
-		{
-			if (this.IsPCFaction)
-			{
-				return this.elements.Value(64) / (this.HasCondition<ConWeakness>() ? 2 : 1);
-			}
-			int num = base.LV;
-			if (num > 50)
-			{
-				num = 50 + (num - 50) / 10;
-			}
-			return (num + this.elements.Value(64) * (100 + num + this.race.DV * 5) / 100) / (this.HasCondition<ConWeakness>() ? 2 : 1);
-		}
-	}
-
-	public override int PV
-	{
-		get
-		{
-			if (this.IsPCFaction)
-			{
-				return this.elements.Value(65) / (this.HasCondition<ConWeakness>() ? 2 : 1);
-			}
-			int num = base.LV;
-			if (num > 50)
-			{
-				num = 50 + (num - 50) / 10;
-			}
-			return (num + this.elements.Value(65) * (100 + num + this.race.PV * 5) / 100) / (this.HasCondition<ConWeakness>() ? 2 : 1);
-		}
-	}
-
-	public bool CanOpenDoor
-	{
-		get
-		{
-			return base.INT >= 5 || (this.IsPCFaction && this.memberType == FactionMemberType.Default);
-		}
-	}
-
-	public bool HasHigherGround(Card c)
-	{
-		if (c == null)
-		{
-			return false;
-		}
-		float num = this.renderer.position.y - this.pos.Position(0).y + (this._isLevitating ? 0.4f : 0f);
-		float num2 = c.renderer.position.y - c.pos.Position(0).y + ((c.isChara && c.Chara._isLevitating) ? 0.4f : 0f);
-		return num > num2 + 0.1f;
-	}
-
-	public bool CanSeeSimple(Point p)
-	{
-		return p.IsValid && !p.IsHidden && (!this.IsPC || (this.fov != null && this.fov.lastPoints.ContainsKey(p.index)));
-	}
-
-	public bool CanSee(Card c)
-	{
-		if (c == this)
-		{
-			return true;
-		}
-		if (!c.pos.IsValid)
-		{
-			return false;
-		}
-		if (c.isChara)
-		{
-			if (this.hasTelepathy && c.Chara.race.visibleWithTelepathy)
-			{
-				return true;
-			}
-			if (c.isHidden && c != this && !this.canSeeInvisible)
-			{
-				return false;
-			}
-		}
-		return !this.IsPC || (this.fov != null && this.fov.lastPoints.ContainsKey(c.pos.index));
-	}
-
-	public bool CanSeeLos(Card c, int dist = -1, bool includeTelepathy = false)
-	{
-		return (c.isChara && includeTelepathy && this.hasTelepathy && c.Chara.race.visibleWithTelepathy) || ((!c.isHidden || this.canSeeInvisible) && this.CanSeeLos(c.pos, dist));
-	}
-
-	public bool CanSeeLos(Point p, int dist = -1)
-	{
-		if (dist == -1)
-		{
-			dist = this.pos.Distance(p);
-		}
-		if (dist > base.GetSightRadius())
-		{
-			return false;
-		}
-		if (this.IsPC)
-		{
-			return this.fov != null && this.fov.lastPoints.ContainsKey(p.index);
-		}
-		return Los.IsVisible(this.pos, p, null);
-	}
-
-	public bool HasAccess(Card c)
-	{
-		return this.HasAccess(c.pos);
-	}
-
-	public bool HasAccess(Point p)
-	{
-		if (!EClass._zone.IsPCFaction || p.cell.room == null || this.IsPC)
-		{
-			return true;
-		}
-		BaseArea.AccessType accessType = p.cell.room.data.accessType;
-		if (accessType != BaseArea.AccessType.Resident)
-		{
-			return accessType != BaseArea.AccessType.Private;
-		}
-		return this.memberType == FactionMemberType.Default;
-	}
-
-	public Tactics tactics
-	{
-		get
-		{
-			Tactics result;
-			if ((result = this._tactics) == null)
-			{
-				result = (this._tactics = new Tactics(this));
-			}
-			return result;
-		}
-	}
-
-	public TimeTable.Span CurrentSpan
-	{
-		get
-		{
-			return TimeTable.GetSpan(this.idTimeTable, EClass.world.date.hour);
-		}
-	}
-
-	public bool IsInActiveZone
-	{
-		get
-		{
-			return this.currentZone == EClass.game.activeZone;
-		}
-	}
-
-	public bool IsLocalChara
-	{
-		get
-		{
-			return !this.IsGlobal && !base.isSubsetCard && this.homeZone == EClass._zone;
-		}
-	}
-
-	public bool IsIdle
-	{
-		get
-		{
-			return !this.IsDeadOrSleeping && this.ai.Current.IsIdle;
-		}
-	}
-
-	public bool IsInCombat
-	{
-		get
-		{
-			return this.ai is GoalCombat;
-		}
-	}
-
-	public int DestDist
-	{
-		get
-		{
-			return this.tactics.DestDist;
-		}
-	}
-
-	public bool HasNoGoal
-	{
-		get
-		{
-			return this.ai.IsNoGoal;
-		}
-	}
-
-	public bool CanWitness
-	{
-		get
-		{
-			return this.race.IsHuman || this.race.IsFairy || this.race.IsGod || this.race.id == "mutant";
-		}
-	}
-
-	public bool IsHuman
-	{
-		get
-		{
-			return this.race.tag.Contains("human");
-		}
-	}
-
-	public bool IsHumanSpeak
-	{
-		get
-		{
-			return this.IsHuman || this.race.tag.Contains("humanSpeak");
-		}
-	}
-
-	public bool IsMaid
-	{
-		get
-		{
-			return EClass.Branch != null && EClass.Branch.uidMaid == base.uid;
-		}
-	}
-
-	public bool IsPrisoner
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public bool IsAdventurer
-	{
-		get
-		{
-			return this.global != null && this.faction != EClass.pc.faction && this.IsPCC;
-		}
-	}
-
-	public bool IsEyth
-	{
-		get
-		{
-			return this.faith.id == "eyth";
-		}
-	}
-
-	public bool CanSleep()
-	{
-		return EClass._zone.events.GetEvent<ZoneEventQuest>() == null && (EClass.debug.godMode || this.sleepiness.GetPhase() != 0 || this.stamina.GetPhase() <= 1);
-	}
-
-	public bool IsWealthy
-	{
-		get
-		{
-			return this.source.works.Contains("Rich") || this.source.hobbies.Contains("Rich");
-		}
-	}
-
-	public FactionBranch homeBranch
-	{
-		get
-		{
-			Zone homeZone = this.homeZone;
-			if (homeZone == null)
-			{
-				return null;
-			}
-			return homeZone.branch;
-		}
-	}
-
-	public int MaxGene
-	{
-		get
-		{
-			return this.race.geneCap;
-		}
-	}
-
-	protected override void OnSerializing()
-	{
-		if (this.enemy != null)
-		{
-			base.SetInt(55, this.enemy.uid);
-		}
-		this._cints[0] = (int)this._cbits1.Bits;
-		List<BodySlot> slots = this.body.slots;
-		this.rawSlots = new int[slots.Count];
-		for (int i = 0; i < slots.Count; i++)
-		{
-			this.rawSlots[i] = slots[i].elementId;
-		}
-	}
-
-	protected override void OnDeserialized()
-	{
-		this.isCreated = true;
-		this._cbits1.Bits = (uint)this._cints[0];
-		this.InitStats(true);
-		this.body.SetOwner(this, true);
-		this.elements.ApplyElementMap(base.uid, SourceValueType.Chara, this.job.elementMap, base.DefaultLV, false, false);
-		this.elements.ApplyElementMap(base.uid, SourceValueType.Chara, this.race.elementMap, base.DefaultLV, false, false);
-		if (this.global != null && this.global.goal != null)
-		{
-			this.global.goal.SetOwner(this);
-		}
-		if (this.IsPCC)
-		{
-			this.pccData.state = (base.isCensored ? PCCState.Naked : PCCState.Normal);
-		}
-		if (this.tempElements != null)
-		{
-			this.tempElements.SetParent(this);
-		}
-		this.UpdateAngle();
-		this.RefreshFaithElement();
-		this.Refresh(false);
-		if (this.source.tag.Contains("boss"))
-		{
-			this.bossText = true;
-		}
-		this.sharedCheckTurn = EClass.rnd(200);
-	}
-
-	public override string GetName(NameStyle style, int num = -1)
-	{
-		if (base.isBackerContent && EClass.core.config.backer.Show(base.c_idBacker))
-		{
-			if (this.id == "follower" && !this.IsGlobal)
-			{
-				return "_follower".lang(EClass.sources.backers.map[base.c_idBacker].Name, this.faith.Name, null, null, null);
-			}
-			return EClass.sources.backers.map[base.c_idBacker].Name;
-		}
-		else
-		{
-			string text = base.c_altName ?? this.source.GetName(this, false);
-			text = text.Replace("#ele4", this.MainElement.source.GetAltname(2)).Replace("#ele3", this.MainElement.source.GetAltname(1)).Replace("#ele2", this.MainElement.source.GetAltname(0)).Replace("#ele", this.MainElement.source.GetName().ToLower());
-			if (base.c_bossType == BossType.Evolved)
-			{
-				text = "_evolved".lang(text.ToTitleCase(true), null, null, null, null);
-			}
-			this.trait.SetName(ref text);
-			if (text.Length > 0 && char.IsLower(text[0]))
-			{
-				if (base.rarity >= Rarity.Legendary)
-				{
-					text = text.ToTitleCase(false);
-				}
-				else if (num != 0)
-				{
-					text = text.AddArticle();
-				}
-			}
-			if (style == NameStyle.Simple)
-			{
-				return text;
-			}
-			int num2 = (base.rarity == Rarity.Mythical) ? 3 : ((base.rarity >= Rarity.Legendary) ? 2 : ((!this._alias.IsEmpty()) ? 1 : -1));
-			if (this.trait is TraitAdventurer)
-			{
-				num2 = 1;
-			}
-			if (!this.Aka.IsEmpty())
-			{
-				text = ((num2 == 1) ? "_aka3" : ((num2 == -1) ? "_aka" : "_aka2")).lang((num2 == -1) ? this.Aka : this.Aka.ToTitleCase(true), text.Bracket(num2), null, null, null);
-			}
-			else
-			{
-				text = text.Bracket(num2);
-			}
-			string str = base.isSale ? "forSale".lang(Lang._currency(this.GetPrice(CurrencyType.Money, true, PriceType.PlayerShop, null), "money"), null, null, null, null) : "";
-			return text + str;
-		}
-	}
-
-	public override void ChangeRarity(Rarity r)
-	{
-		if (r == base.rarity)
-		{
-			return;
-		}
-		base.rarity = r;
-		if (this.renderer != null && this.renderer.isSynced)
-		{
-			this.renderer.RefreshExtra();
-		}
-		base.hp = this.MaxHP;
-	}
-
-	public void SetFaction(Faction f)
-	{
-		this._faction = null;
-		this.faction = f;
-		this.hostility = this.faction.GetHostility();
-	}
-
-	public void SetHomeZone(Zone zone)
-	{
-		this.homeZone = zone;
-		this.SetGlobal();
-	}
-
-	public void OnBanish()
-	{
-		if (!this.IsGlobal)
-		{
-			return;
-		}
-		this.memberType = FactionMemberType.Default;
-		UniqueData c_uniqueData = base.c_uniqueData;
-		if (c_uniqueData != null)
-		{
-			Debug.Log(string.Concat(new string[]
-			{
-				c_uniqueData.uidZone.ToString(),
-				"/",
-				EClass.game.spatials.map.ContainsKey(c_uniqueData.uidZone).ToString(),
-				"/",
-				c_uniqueData.x.ToString(),
-				"/",
-				c_uniqueData.y.ToString()
-			}));
-		}
-		if (c_uniqueData != null && EClass.game.spatials.map.ContainsKey(c_uniqueData.uidZone))
-		{
-			this.MoveHome(EClass.game.spatials.map[c_uniqueData.uidZone] as Zone, c_uniqueData.x, c_uniqueData.y);
-			return;
-		}
-		Zone zone = EClass.game.spatials.Find("somewhere");
-		if (this.trait is TraitAdventurer)
-		{
-			zone = EClass.world.region.ListTowns().RandomItem<Zone>();
-			this.SetHomeZone(zone);
-		}
-		this.MoveZone(zone, ZoneTransition.EnterState.RandomVisit);
-	}
-
-	public Chara SetGlobal(Zone _home, int x, int z)
-	{
-		this.SetGlobal();
-		this.homeZone = _home;
-		_home.AddCard(this, x, z);
-		this.global.transition = new ZoneTransition
-		{
-			state = ZoneTransition.EnterState.Exact,
-			x = x,
-			z = z
-		};
-		this.orgPos = new Point(x, z);
-		return this;
-	}
-
-	public Chara SetGlobal()
-	{
-		if (!this.IsGlobal)
-		{
-			EClass.game.cards.globalCharas.Add(this);
-			this.global = new GlobalData();
-			base.isSubsetCard = false;
-			this.enemy = null;
-			base.c_uidMaster = 0;
-		}
-		return this;
-	}
-
-	public void RemoveGlobal()
-	{
-		if (!this.IsGlobal || this.trait is TraitUniqueChara || base.IsUnique || EClass.game.cards.listAdv.Contains(this))
-		{
-			return;
-		}
-		this.global = null;
-		EClass.game.cards.globalCharas.Remove(this);
-	}
-
-	public override void OnBeforeCreate()
-	{
-		if (this.source.job == "*r")
-		{
-			base.c_idJob = (from j in EClass.sources.jobs.rows
-			where j.playable < 4
-			select j).RandomItem<SourceJob.Row>().id;
-		}
-		if (this.bp.idJob != null)
-		{
-			base.c_idJob = this.bp.idJob;
-		}
-		if (this.bp.idRace != null)
-		{
-			base.c_idRace = this.bp.idRace;
-		}
-	}
-
-	public override void OnCreate(int genLv)
-	{
-		if (this.source.tag.Contains("boss"))
-		{
-			this.bossText = true;
-		}
-		int num = (this.bp.lv != -999) ? this.bp.lv : base.LV;
-		if (this.trait.AdvType == TraitChara.Adv_Type.Adv || this.trait.AdvType == TraitChara.Adv_Type.Adv_Fairy)
-		{
-			if (Chara.ListAdvRace.Count == 0)
-			{
-				Chara.ListAdvRace = (from a in EClass.sources.races.rows
-				where a.playable <= 1 && a.id != "fairy"
-				select a).ToList<SourceRace.Row>();
-				Chara.ListAdvJob = (from a in EClass.sources.jobs.rows
-				where a.playable <= 4
-				select a).ToList<SourceJob.Row>();
-			}
-			if (this.trait.AdvType == TraitChara.Adv_Type.Adv)
-			{
-				base.c_idRace = Chara.ListAdvRace.RandomItem<SourceRace.Row>().id;
-			}
-			base.c_idJob = Chara.ListAdvJob.RandomItem<SourceJob.Row>().id;
-			this._race = null;
-			this._job = null;
-			num = 10 + EClass.rnd(40);
-		}
-		this.bio = new Biography();
-		this.bio.Generate(this);
-		if (this.source.idActor.Length != 0 && this.source.idActor[0] == "pcc" && this.pccData == null)
-		{
-			this.pccData = PCCData.Create(this.IDPCCBodySet);
-			if (this.source.idActor.Length > 2)
-			{
-				this.pccData.SetPart("body", this.IDPCCBodySet, this.source.idActor[2], null);
-			}
-			else
-			{
-				this.pccData.Randomize(this.IDPCCBodySet, null, true);
-			}
-		}
-		if (this.source.mainElement.Length != 0)
-		{
-			List<Tuple<string, int, int>> list = new List<Tuple<string, int, int>>();
-			string[] mainElement = this.source.mainElement;
-			for (int i = 0; i < mainElement.Length; i++)
-			{
-				string[] array = mainElement[i].Split('/', StringSplitOptions.None);
-				SourceElement.Row row = EClass.sources.elements.alias["ele" + array[0]];
-				int num2 = this.source.LV * row.eleP / 100 + base.LV - this.source.LV;
-				if (list.Count == 0 || num2 < genLv)
-				{
-					list.Add(new Tuple<string, int, int>(array[0], (array.Length > 1) ? int.Parse(array[1]) : 0, num2));
-				}
-			}
-			Tuple<string, int, int> tuple = list.RandomItemWeighted((Tuple<string, int, int> a) => (float)(10000 / (100 + (genLv - a.Item3) * 25)));
-			if (!this.bp.idEle.IsEmpty())
-			{
-				tuple = (from a in list
-				where a.Item1 == this.bp.idEle
-				select a).First<Tuple<string, int, int>>();
-			}
-			this.SetMainElement(tuple.Item1, (tuple.Item2 == 0) ? 10 : tuple.Item2, true);
-			if (list.Count >= 2)
-			{
-				num = tuple.Item3;
-			}
-		}
-		if (this.source.name == "*r")
-		{
-			base.c_altName = NameGen.getRandomName();
-		}
-		if (this.source.GetText("aka", false) == "*r" || this.trait.UseRandomAlias)
-		{
-			this._alias = AliasGen.GetRandomAlias();
-		}
-		this.happiness = EClass.rnd(100);
-		this.contribution = EClass.rnd(100);
-		this.RerollHobby(true);
-		this._idTimeTable = ((EClass.rnd(5) == 0) ? 1 : 0);
-		this.ApplyRace(false);
-		this.ApplyJob(false);
-		if (num != this.source.LV)
-		{
-			base.SetLv(num);
-		}
-		if (base.LV > 5 && this.race.id == "mutant")
-		{
-			for (int j = 0; j < Mathf.Min(1 + base.LV / 5, 22); j++)
-			{
-				this.SetFeat(1644, j + 1, false);
-			}
-		}
-		this.InitStats(false);
-		this.body.SetOwner(this, false);
-		this.hostility = this.OriginalHostility;
-		if (this.race.EQ.Length != 0)
-		{
-			this.TryRestock(true);
-		}
-		string id = this.id;
-		uint num3 = <PrivateImplementationDetails>.ComputeStringHash(id);
-		if (num3 <= 2331752522U)
-		{
-			if (num3 != 108289031U)
-			{
-				if (num3 != 1020922669U)
-				{
-					if (num3 != 2331752522U)
-					{
-						goto IL_63C;
-					}
-					if (!(id == "snail"))
-					{
-						goto IL_63C;
-					}
-					base.idSkin = 5;
-					goto IL_63C;
-				}
-				else
-				{
-					if (!(id == "dodo"))
-					{
-						goto IL_63C;
-					}
-					base.idSkin = EClass.rnd(4);
-					goto IL_63C;
-				}
-			}
-			else if (!(id == "cat"))
-			{
-				goto IL_63C;
-			}
-		}
-		else if (num3 <= 3253821027U)
-		{
-			if (num3 != 2629043432U)
-			{
-				if (num3 != 3253821027U)
-				{
-					goto IL_63C;
-				}
-				if (!(id == "sister_undead"))
-				{
-					goto IL_63C;
-				}
-			}
-			else
-			{
-				if (!(id == "olderyoungersister"))
-				{
-					goto IL_63C;
-				}
-				base.idSkin = 1;
-				goto IL_63C;
-			}
-		}
-		else if (num3 != 3352919697U)
-		{
-			if (num3 != 3865623817U)
-			{
-				goto IL_63C;
-			}
-			if (!(id == "dog"))
-			{
-				goto IL_63C;
-			}
-		}
-		else
-		{
-			if (!(id == "putty_snow"))
-			{
-				goto IL_63C;
-			}
-			if (EClass.rnd(100) == 0 || EClass.debug.enable)
-			{
-				base.idSkin = EClass.rnd(4);
-				goto IL_63C;
-			}
-			goto IL_63C;
-		}
-		base.idSkin = EClass.rnd(this.sourceCard.tiles.Length);
-		if (this.id == "sister_undead" && EClass.rnd(10) == 0)
-		{
-			SourceBacker.Row row2 = EClass.sources.backers.listSister.NextItem(ref BackerContent.indexSister);
-			if (row2 != null && (!EClass.player.doneBackers.Contains(row2.id) || EClass.core.config.test.ignoreBackerDestoryFlag))
-			{
-				base.ApplyBacker(row2.id);
-			}
-		}
-		IL_63C:
-		if (this.source.tag.Contains("random_color"))
-		{
-			base.DyeRandom();
-		}
-		this.SetAI(new NoGoal());
-		if (!this.source.faith.IsEmpty())
-		{
-			this.SetFaith(this.source.faith);
-		}
-		else if (EClass.game.activeZone != null && EClass.game.activeZone.id == "foxtown")
-		{
-			this.SetFaith(EClass.game.religions.Trickery);
-		}
-		else if (EClass.game.activeZone != null && EClass.game.activeZone.id == "foxtown_nefu")
-		{
-			this.SetFaith(EClass.game.religions.MoonShadow);
-		}
-		else
-		{
-			this.SetFaith(EClass.game.religions.GetRandomReligion(true, EClass.rnd(10) == 0));
-		}
-		this._affinity = 0;
-		this.interest = 100;
-		this.CalculateMaxStamina();
-		this.Refresh(false);
-		this.stamina.value = this.stamina.max;
-		this.mana.value = this.mana.max;
-		this.isCreated = true;
-	}
-
-	public void SetFaith(string id)
-	{
-		this.SetFaith(EClass.game.religions.dictAll[id]);
-	}
-
-	public void SetFaith(Religion r)
-	{
-		this.faith = r;
-		this.RefreshFaithElement();
-	}
-
-	public void HealAll()
-	{
-		this.Cure(CureType.Death, 100, BlessedState.Normal);
-		base.hp = this.MaxHP;
-		this.mana.value = this.mana.max;
-		this.stamina.value = this.stamina.max;
-		this.Refresh(false);
-	}
-
-	public void Refresh(bool calledRecursive = false)
-	{
-		if (this.ride != null)
-		{
-			this.ride.Refresh(true);
-		}
-		this.hasTelepathy = false;
-		this.isWet = false;
-		this._isLevitating = (base.HasElement(401, 1) || (this.ride != null && this.ride._isLevitating));
-		this.canSeeInvisible = base.HasElement(416, 1);
-		base.isHidden = base.HasElement(415, 1);
-		foreach (Condition condition in this.conditions)
-		{
-			condition.OnRefresh();
-		}
-		if (this.isWet)
-		{
-			base.isHidden = false;
-		}
-		this.SetDirtySpeed();
-		if (this.host != null && !calledRecursive)
-		{
-			this.host.Refresh(true);
-		}
-	}
-
-	public Chara Duplicate()
-	{
-		Chara chara = CharaGen.Create(this.id, -1);
-		chara.mana.value = this.mana.value;
-		chara.stamina.value = this.stamina.value;
-		foreach (KeyValuePair<int, Element> keyValuePair in this.elements.dict)
-		{
-			Element element = chara.elements.GetElement(keyValuePair.Key);
-			if (element != null)
-			{
-				element.vBase = keyValuePair.Value.ValueWithoutLink - element.vSource;
-			}
-		}
-		chara.SetFaith(this.faith);
-		chara.bio = IO.DeepCopy<Biography>(this.bio);
-		chara.hp = Mathf.Max(0, (int)((float)chara.MaxHP * ((float)base.hp / (float)this.MaxHP) * 0.99f));
-		chara.LV = base.LV;
-		chara.isCopy = true;
-		if (base.HaveFur())
-		{
-			chara.c_fur = -1;
-		}
-		return chara;
-	}
-
-	public int GetBurden(Card t = null, int num = -1)
-	{
-		int num2 = (base.ChildrenWeight + ((t != null) ? ((num == -1) ? t.ChildrenAndSelfWeight : (t.SelfWeight * num)) : 0)) * 100 / this.WeightLimit;
-		if (num2 < 0)
-		{
-			num2 = 1000;
-		}
-		if (EClass.debug.ignoreWeight && this.IsPC)
-		{
-			num2 = 0;
-		}
-		int num3 = (num2 < 100) ? 0 : ((num2 - 100) / 10 + 1);
-		if (num3 > 9)
-		{
-			num3 = 9;
-		}
-		return num3;
-	}
-
-	public void CalcBurden()
-	{
-		int num = base.ChildrenWeight * 100 / this.WeightLimit;
-		if (num < 0)
-		{
-			num = 1000;
-		}
-		if (EClass.debug.ignoreWeight && this.IsPC)
-		{
-			num = 0;
-		}
-		this.burden.Set(num);
-		this.SetDirtySpeed();
-	}
-
-	public void Stumble(int mtp = 100)
-	{
-		bool flag = EClass._map.FindThing((Thing t) => t.IsInstalled && t.pos.Equals(EClass.pc.pos) && t.trait is TraitStairsUp) != null;
-		base.Say(flag ? "dmgBurdenStairs" : "dmgBurdenFallDown", this, null, null);
-		int num = this.MaxHP;
-		if (base.Evalue(1421) > 0)
-		{
-			num = this.mana.max;
-		}
-		int num2 = (num * (base.ChildrenWeight * 100 / this.WeightLimit) / (flag ? 100 : 200) + 1) * mtp / 100;
-		if (base.hp <= 0)
-		{
-			num2 *= 2;
-		}
-		base.DamageHP(num2, flag ? AttackSource.BurdenStairs : AttackSource.BurdenFallDown, null);
-	}
-
-	public int Speed
-	{
-		get
-		{
-			if (this.dirtySpeed)
-			{
-				this.RefreshSpeed(null);
-			}
-			return this._Speed;
-		}
-	}
-
-	public void SetDirtySpeed()
-	{
-		this.dirtySpeed = true;
-		if (this.host != null)
-		{
-			this.host.SetDirtySpeed();
-		}
-	}
-
-	public void RefreshSpeed(Element.BonusInfo info = null)
-	{
-		if (this.ride != null && !this.ride.IsDeadOrSleeping)
-		{
-			this.ride.RefreshSpeed(null);
-			this._Speed = this.ride._Speed;
-		}
-		else if (this.host != null)
-		{
-			if (this.host.ride == this)
-			{
-				this._Speed = base.Evalue(79);
-				this._Speed = this._Speed * 100 / Mathf.Clamp(100 + this._Speed * (this.race.tag.Contains("noRide") ? 5 : 1) - base.STR - this.host.EvalueRiding() * 2 - (this.race.tag.Contains("ride") ? 50 : 0), 100, 1000);
-			}
-			else
-			{
-				this._Speed = (base.Evalue(79) + this.host.Evalue(79)) / 2;
-			}
-		}
-		else
-		{
-			this._Speed = base.Evalue(79) + base.Evalue(407) / 2;
-		}
-		BodySlot slot = this.body.GetSlot(37, false, false);
-		if (((slot != null) ? slot.thing : null) != null && base.HasElement(1209, 1))
-		{
-			this._Speed -= 25;
-		}
-		int num = 100;
-		if (this.parasite != null)
-		{
-			this._Speed = this._Speed * 100 / Mathf.Clamp(120 + this.parasite.LV * 2 - base.STR - base.Evalue(227) * 2, 100, 1000);
-		}
-		if (this.IsPCFaction)
-		{
-			switch (this.burden.GetPhase())
-			{
-			case 1:
-				num -= 10;
-				if (info != null)
-				{
-					info.AddFix(-10, this.burden.GetPhaseStr());
-				}
-				break;
-			case 2:
-				num -= 20;
-				if (info != null)
-				{
-					info.AddFix(-20, this.burden.GetPhaseStr());
-				}
-				break;
-			case 3:
-				num -= 30;
-				if (info != null)
-				{
-					info.AddFix(-30, this.burden.GetPhaseStr());
-				}
-				break;
-			case 4:
-				num -= (this.IsPC ? 50 : 100);
-				if (info != null)
-				{
-					info.AddFix(this.IsPC ? -50 : -100, this.burden.GetPhaseStr());
-				}
-				break;
-			}
-			if (this.IsPC)
-			{
-				int phase = this.stamina.GetPhase();
-				if (phase != 0)
-				{
-					if (phase == 1)
-					{
-						num -= 10;
-						if (info != null)
-						{
-							info.AddFix(-10, this.stamina.GetPhaseStr());
-						}
-					}
-				}
-				else
-				{
-					num -= 20;
-					if (info != null)
-					{
-						info.AddFix(-20, this.stamina.GetPhaseStr());
-					}
-				}
-				phase = this.sleepiness.GetPhase();
-				if (phase != 2)
-				{
-					if (phase == 3)
-					{
-						num -= 20;
-						if (info != null)
-						{
-							info.AddFix(-20, this.sleepiness.GetPhaseStr());
-						}
-					}
-				}
-				else
-				{
-					num -= 10;
-					if (info != null)
-					{
-						info.AddFix(-10, this.sleepiness.GetPhaseStr());
-					}
-				}
-				switch (this.hunger.GetPhase())
-				{
-				case 3:
-				case 4:
-					num -= 10;
-					if (info != null)
-					{
-						info.AddFix(-10, this.hunger.GetPhaseStr());
-					}
-					break;
-				case 5:
-					num -= 30;
-					if (info != null)
-					{
-						info.AddFix(-30, this.hunger.GetPhaseStr());
-					}
-					break;
-				}
-				num += EClass.player.lastEmptyAlly * base.Evalue(1646);
-				if (info != null)
-				{
-					info.AddFix(EClass.player.lastEmptyAlly * base.Evalue(1646), EClass.sources.elements.map[1646].GetName());
-				}
-			}
-			if (this.IsPCParty && EClass.player.lastEmptyAlly < 0)
-			{
-				num += EClass.player.lastEmptyAlly * 10 - 10;
-				if (info != null)
-				{
-					info.AddFix(EClass.player.lastEmptyAlly * 10 - 10, "exceedParty".lang());
-				}
-			}
-		}
-		if (this.HasCondition<ConGravity>())
-		{
-			num -= 30;
-			if (info != null)
-			{
-				info.AddFix(-30, this.GetCondition<ConGravity>().Name);
-			}
-		}
-		this._Speed = this._Speed * num / 100;
-		if (this._Speed < 10)
-		{
-			this._Speed = 10;
-		}
-		this.dirtySpeed = false;
-	}
-
-	public void CalculateMaxStamina()
-	{
-		int num = base.END;
-		foreach (Element element in this.elements.dict.Values)
-		{
-			if (element.source.category == "skill")
-			{
-				if (this.IsPC)
-				{
-					num += Mathf.Max(element.vBase, 0);
-				}
-				else
-				{
-					num += Mathf.Max(element.ValueWithoutLink, 0);
-				}
-			}
-		}
-		int num2 = EClass.curve(num, 30, 10, 60);
-		if (num2 < 10)
-		{
-			num2 = 10;
-		}
-		this._maxStamina = num2 + 15;
-	}
-
-	public override void ApplyEditorTags(EditorTag tag)
-	{
-		switch (tag)
-		{
-		case EditorTag.HostilityNeutral:
-			this.hostility = (base.c_originalHostility = Hostility.Neutral);
-			break;
-		case EditorTag.HostilityFriend:
-			this.hostility = (base.c_originalHostility = Hostility.Friend);
-			break;
-		case EditorTag.HostilityEnemy:
-			this.hostility = (base.c_originalHostility = Hostility.Enemy);
-			break;
-		default:
-			if (tag != EditorTag.Male)
-			{
-				if (tag == EditorTag.Female)
-				{
-					this.bio.SetGender(1);
-					base.c_idPortrait = Portrait.GetRandomPortrait(1, this.GetIdPortraitCat());
-				}
-			}
-			else
-			{
-				this.bio.SetGender(2);
-				base.c_idPortrait = Portrait.GetRandomPortrait(2, this.GetIdPortraitCat());
-			}
-			break;
-		}
-		base.ApplyEditorTags(tag);
-	}
-
-	public override void SetSource()
-	{
-		this.source = EClass.sources.charas.map.TryGetValue(this.id, null);
-		if (this.source == null)
-		{
-			Debug.LogWarning("Chara " + this.id + " not found");
-			this.id = "begger";
-			this.source = EClass.sources.charas.map[this.id];
-		}
-		this.path.walker = this;
-	}
-
-	public void SetMainElement(string id, int v = 0, bool elemental = false)
-	{
-		if (!id.StartsWith("ele"))
-		{
-			id = "ele" + id;
-		}
-		this.SetMainElement(EClass.sources.elements.alias[id].id, v, elemental);
-	}
-
-	public void SetMainElement(int id, int v = 0, bool elemental = false)
-	{
-		if (base.c_idMainElement != 0)
-		{
-			this.elements.SetBase(base.c_idMainElement, 0, 0);
-			this.elements.ModBase(EClass.sources.elements.alias[EClass.sources.elements.map[base.c_idMainElement].aliasRef].id, -20);
-			base.c_idMainElement = 0;
-		}
-		if (id == 0)
-		{
-			return;
-		}
-		SourceElement.Row row = EClass.sources.elements.map[id];
-		base.c_idMainElement = id;
-		this.elements.ModBase(id, (v == 0) ? 10 : v);
-		this.elements.ModBase(EClass.sources.elements.alias[row.aliasRef].id, 20);
-		if (elemental)
-		{
-			base.isElemental = true;
-			this._colorInt = 0;
-			Color colorSprite = EClass.setting.elements[this.MainElement.source.alias].colorSprite;
-			base.c_lightColor = (int)((byte)Mathf.Clamp(colorSprite.r * 3f, 1f, 31f)) * 1024 + (int)((byte)Mathf.Clamp(colorSprite.g * 3f, 1f, 31f) * 32) + (int)((byte)Mathf.Clamp(colorSprite.b * 3f, 1f, 31f));
-		}
-		this._ability = null;
-	}
-
-	public void ApplyJob(bool remove = false)
-	{
-		this.elements.ApplyElementMap(base.uid, SourceValueType.Chara, this.job.elementMap, base.DefaultLV, remove, true);
-		if (this.IsPCC)
-		{
-			EClass.game.uniforms.Apply(this.pccData, this.job.id, base.IsMale, true);
-		}
-	}
-
-	public void ChangeJob(string idNew)
-	{
-		this.ApplyJob(true);
-		base.c_idJob = idNew;
-		this._job = null;
-		this.ApplyJob(false);
-		if (this.IsPCC)
-		{
-			PCC.Get(this.pccData).Build(false);
-		}
-	}
-
-	private int ParseBodySlot(string s)
-	{
-		uint num = <PrivateImplementationDetails>.ComputeStringHash(s);
-		if (num <= 2451230377U)
-		{
-			if (num <= 656231480U)
-			{
-				if (num != 44370790U)
-				{
-					if (num == 656231480U)
-					{
-						if (s == "頭")
-						{
-							return 30;
-						}
-					}
-				}
-				else if (s == "指")
-				{
-					return 36;
-				}
-			}
-			else if (num != 1212265771U)
-			{
-				if (num == 2451230377U)
-				{
-					if (s == "首")
-					{
-						return 31;
-					}
-				}
-			}
-			else if (s == "背")
-			{
-				return 33;
-			}
-		}
-		else if (num <= 3467005066U)
-		{
-			if (num != 3039685058U)
-			{
-				if (num == 3467005066U)
-				{
-					if (s == "手")
-					{
-						return 35;
-					}
-				}
-			}
-			else if (s == "足")
-			{
-				return 39;
-			}
-		}
-		else if (num != 3477141168U)
-		{
-			if (num != 3596583458U)
-			{
-				if (num == 4097913071U)
-				{
-					if (s == "腰")
-					{
-						return 37;
-					}
-				}
-			}
-			else if (s == "体")
-			{
-				return 32;
-			}
-		}
-		else if (s == "腕")
-		{
-			return 34;
-		}
-		return -1;
-	}
-
-	public void AddRandomBodyPart(bool msg = false)
-	{
-		int num = new int[]
-		{
-			30,
-			31,
-			33,
-			35,
-			35,
-			36,
-			34,
-			37,
-			39
-		}.RandomItem<int>();
-		this.body.AddBodyPart(num, null);
-		if (msg)
-		{
-			base.Say("gain_bodyparts", this, Element.Get(num).GetName().ToLower(), null);
-			base.PlaySound("offering", 1f, true);
-		}
-	}
-
-	public void ApplyRace(bool remove = false)
-	{
-		foreach (string s in this.race.figure.Split('|', StringSplitOptions.None))
-		{
-			int num = this.ParseBodySlot(s);
-			if (num != -1)
-			{
-				if (remove)
-				{
-					this.body.RemoveBodyPart(num);
-				}
-				else
-				{
-					this.body.AddBodyPart(num, null);
-				}
-			}
-		}
-		this.elements.ApplyElementMap(base.uid, SourceValueType.Chara, this.race.elementMap, base.DefaultLV, remove, true);
-	}
-
-	public void ChangeRace(string idNew)
-	{
-		this.ApplyRace(true);
-		base.c_idRace = idNew;
-		this._race = null;
-		this.ApplyRace(false);
-		base.ChangeMaterial(this.race.material);
-	}
-
-	public void MakePartyMemeber()
-	{
-		this._MakeAlly();
-		EClass.pc.party.AddMemeber(this);
-	}
-
-	public void MakeAlly(bool msg = true)
-	{
-		if (this.IsLocalChara && !base.IsUnique)
-		{
-			Debug.Log("Creating Replacement NPC for:" + ((this != null) ? this.ToString() : null));
-			EClass._map.deadCharas.Add(this.CreateReplacement());
-		}
-		this._MakeAlly();
-		if (msg)
-		{
-			EClass.pc.Say("hire", this, null, null);
-			EClass.Sound.Play("good");
-		}
-		EClass.pc.party.AddMemeber(this);
-		if (EClass._zone.IsTown)
-		{
-			EClass._zone.RefreshListCitizen();
-		}
-	}
-
-	public void _MakeAlly()
-	{
-		if (EClass.pc.homeBranch != null)
-		{
-			EClass.pc.homeBranch.AddMemeber(this);
-		}
-		else
-		{
-			this.SetGlobal();
-			this.SetFaction(EClass.Home);
-		}
-		this.hostility = (base.c_originalHostility = Hostility.Ally);
-		this.orgPos = null;
-		base.c_summonDuration = 0;
-		base.isSummon = false;
-		this.ReleaseMinion();
-		base.SetInt(32, 0);
-		this.Refresh(false);
-	}
-
-	public bool CanBeTempAlly(Chara c)
-	{
-		return !this.IsPCFaction && !this.IsGlobal && !this.IsMinion && !this.IsMultisize && EClass._zone.CountMinions(c) <= c.MaxSummon && base.rarity < Rarity.Legendary && !base.HasElement(1222, 1);
-	}
-
-	public void MakeMinion(Chara _master, MinionType type = MinionType.Default)
-	{
-		this.ReleaseMinion();
-		this.hostility = (base.c_originalHostility = (_master.IsPCFaction ? Hostility.Ally : _master.hostility));
-		base.c_uidMaster = _master.uid;
-		base.c_minionType = type;
-		this.master = _master;
-		this.Refresh(false);
-	}
-
-	public void ReleaseMinion()
-	{
-		Debug.Log("released:" + ((this != null) ? this.ToString() : null));
-		base.c_uidMaster = 0;
-		this.master = null;
-		this.enemy = null;
-		foreach (Chara chara in EClass._map.charas)
-		{
-			if (chara.enemy == this)
-			{
-				chara.SetEnemy(null);
-				chara.ai.Cancel();
-			}
-		}
-		this.ai.Cancel();
-		this.Refresh(false);
-	}
-
-	public void SetSummon(int duration)
-	{
-		base.c_summonDuration = duration;
-		base.isSummon = true;
-	}
-
-	public Chara FindMaster()
-	{
-		if (this.IsMinion)
-		{
-			this.master = EClass._map.FindChara(base.c_uidMaster);
-		}
-		return this.master;
-	}
-
-	public bool IsEscorted()
-	{
-		if (!this.IsPCPartyMinion)
-		{
-			return false;
-		}
-		foreach (Quest quest in EClass.game.quests.list)
-		{
-			QuestEscort questEscort = quest as QuestEscort;
-			if (questEscort != null && questEscort.uidChara == base.uid)
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public bool CanDestroyPath()
-	{
-		return this.IsMultisize || (base.rarity >= Rarity.Superior && !base.IsPCFactionOrMinion && this.ai is GoalCombat && !EClass._zone.IsPCFaction && !(EClass._zone is Zone_Town));
-	}
-
-	public bool CanMoveTo(Point p, bool allowDestroyPath = true)
-	{
-		if (!p.IsValid)
-		{
-			return false;
-		}
-		int num = (p.z < this.pos.z) ? 0 : ((p.x > this.pos.x) ? 1 : ((p.z > this.pos.z) ? 2 : 3));
-		if (allowDestroyPath && this.CanDestroyPath())
-		{
-			if (!p.IsInBounds)
-			{
-				return false;
-			}
-		}
-		else
-		{
-			if (EClass._map.cells[p.x, p.z].blocked || EClass._map.cells[this.pos.x, this.pos.z].weights[num] == 0)
-			{
-				return false;
-			}
-			if (p.x != this.pos.x && p.z != this.pos.z)
-			{
-				Cell[,] cells = EClass._map.cells;
-				int x = p.x;
-				int z = this.pos.z;
-				int num2 = (z < this.pos.z) ? 0 : ((x > this.pos.x) ? 1 : ((z > this.pos.z) ? 2 : 3));
-				if (cells[this.pos.x, this.pos.z].weights[num2] == 0)
-				{
-					return false;
-				}
-				if (cells[x, z].blocked)
-				{
-					return false;
-				}
-				num2 = ((z < p.z) ? 0 : ((x > p.x) ? 1 : ((z > p.z) ? 2 : 3)));
-				if (cells[p.x, p.z].weights[num2] == 0)
-				{
-					return false;
-				}
-				x = this.pos.x;
-				z = p.z;
-				num2 = ((z < this.pos.z) ? 0 : ((x > this.pos.x) ? 1 : ((z > this.pos.z) ? 2 : 3)));
-				if (cells[this.pos.x, this.pos.z].weights[num2] == 0)
-				{
-					return false;
-				}
-				if (cells[x, z].blocked)
-				{
-					return false;
-				}
-				num2 = ((z < p.z) ? 0 : ((x > p.x) ? 1 : ((z > p.z) ? 2 : 3)));
-				if (cells[p.x, p.z].weights[num2] == 0)
-				{
-					return false;
-				}
-			}
-		}
-		if (this.IsPC)
-		{
-			if (this.IsEnemyOnPath(p, true))
-			{
-				return false;
-			}
-		}
-		else if (p.HasChara && !this.IsMultisize && !this.CanReplace(p.FirstChara))
-		{
-			return false;
-		}
-		return true;
-	}
-
-	public bool IsEnemyOnPath(Point p, bool cancelAI = true)
-	{
-		if (!this.currentZone.IsRegion && p.IsValid)
-		{
-			CellDetail detail = p.detail;
-			if (detail != null && detail.charas.Count > 0)
-			{
-				foreach (Chara chara in p.detail.charas)
-				{
-					if (chara.IsHostile(this) || !chara.trait.CanBePushed)
-					{
-						if (cancelAI && EClass.pc.ai is GoalManualMove)
-						{
-							EClass.pc.ai.Cancel();
-						}
-						return true;
-					}
-				}
-				return false;
-			}
-		}
-		return false;
-	}
-
-	public bool CanInteractTo(Card c)
-	{
-		return this.CanInteractTo(c.pos);
-	}
-
-	public bool CanInteractTo(Point p)
-	{
-		if (!p.IsValid)
-		{
-			return false;
-		}
-		if (EClass._map.cells[p.x, p.z].blocked)
-		{
-			return true;
-		}
-		int num = (p.z < this.pos.z) ? 0 : ((p.x > this.pos.x) ? 1 : ((p.z > this.pos.z) ? 2 : 3));
-		if (EClass._map.cells[this.pos.x, this.pos.z].weights[num] == 0)
-		{
-			return false;
-		}
-		if (p.x != this.pos.x && p.z != this.pos.z)
-		{
-			Cell[,] cells = EClass._map.cells;
-			int x = p.x;
-			int z = this.pos.z;
-			int num2 = (z < this.pos.z) ? 0 : ((x > this.pos.x) ? 1 : ((z > this.pos.z) ? 2 : 3));
-			if (cells[this.pos.x, this.pos.z].weights[num2] == 0)
-			{
-				return false;
-			}
-			num2 = ((z < p.z) ? 0 : ((x > p.x) ? 1 : ((z > p.z) ? 2 : 3)));
-			if (cells[p.x, p.z].weights[num2] == 0)
-			{
-				return false;
-			}
-			x = this.pos.x;
-			z = p.z;
-			num2 = ((z < this.pos.z) ? 0 : ((x > this.pos.x) ? 1 : ((z > this.pos.z) ? 2 : 3)));
-			if (cells[this.pos.x, this.pos.z].weights[num2] == 0)
-			{
-				return false;
-			}
-			num2 = ((z < p.z) ? 0 : ((x > p.x) ? 1 : ((z > p.z) ? 2 : 3)));
-			if (cells[p.x, p.z].weights[num2] == 0)
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-
-	public Point GetFirstStep(Point newPoint, PathManager.MoveType moveType = PathManager.MoveType.Default)
-	{
-		return PathManager.Instance.GetFirstStep(this.pos, newPoint, this, this.IsPC ? 40 : 10, this.IsMultisize ? PathManager.MoveType.Default : moveType);
-	}
-
-	public bool MoveRandom()
-	{
-		Point randomNeighbor = this.pos.GetRandomNeighbor();
-		return !randomNeighbor.Equals(this.pos) && !randomNeighbor.HasChara && this.HasAccess(randomNeighbor) && this.TryMove(randomNeighbor, true) == Card.MoveResult.Success;
-	}
-
-	public bool MoveNeighborDefinitely()
-	{
-		List<Point> list = new List<Point>();
-		this.pos.ForeachNeighbor(delegate(Point p)
-		{
-			list.Add(p.Copy());
-		}, true);
-		list.Shuffle<Point>();
-		foreach (Point point in list)
-		{
-			if (!point.Equals(this.pos) && !point.HasChara && this.TryMove(point, true) == Card.MoveResult.Success)
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public void MoveByForce(Point newPoint, Card c = null, bool checkWall = false)
-	{
-		if (newPoint.sourceBlock.tileType.IsBlockPass)
-		{
-			return;
-		}
-		if (checkWall && (base.Dist(newPoint) > 1 || !this.CanMoveTo(newPoint, false)))
-		{
-			return;
-		}
-		if (this._Move(newPoint, Card.MoveType.Force) == Card.MoveResult.Success && this.ai.Current.CancelWhenMoved)
-		{
-			this.ai.Current.TryCancel(c);
-		}
-	}
-
-	public Card.MoveResult TryMoveTowards(Point p)
-	{
-		if (p.Equals(this.pos))
-		{
-			return Card.MoveResult.Success;
-		}
-		if (this.IsPC && EClass.player.TooHeavyToMove())
-		{
-			return Card.MoveResult.Fail;
-		}
-		Chara._sharedPos.Set(p);
-		if (this.CanDestroyPath() && this.TryMove(this.pos.GetPointTowards(Chara._sharedPos), true) == Card.MoveResult.Success)
-		{
-			return Card.MoveResult.Success;
-		}
-		int num = this.pos.Distance(p);
-		PathProgress pathProgress = PathManager.Instance.RequestPathImmediate(this.pos, p, this, PathManager.MoveType.Default, num + 4, 1);
-		if (pathProgress.HasPath && pathProgress.nodes.Count < num + 4)
-		{
-			PathFinderNode pathFinderNode = pathProgress.nodes[pathProgress.nodes.Count - 1];
-			if (this.TryMove(new Point(pathFinderNode.X, pathFinderNode.Z), true) == Card.MoveResult.Success)
-			{
-				return Card.MoveResult.Success;
-			}
-		}
-		pathProgress = PathManager.Instance.RequestPathImmediate(this.pos, p, this, PathManager.MoveType.Combat, num + 4, 1);
-		if (pathProgress.HasPath && pathProgress.nodes.Count < num + 4)
-		{
-			PathFinderNode pathFinderNode2 = pathProgress.nodes[pathProgress.nodes.Count - 1];
-			if (this.TryMove(new Point(pathFinderNode2.X, pathFinderNode2.Z), true) == Card.MoveResult.Success)
-			{
-				return Card.MoveResult.Success;
-			}
-		}
-		pathProgress = PathManager.Instance.RequestPathImmediate(this.pos, p, this, PathManager.MoveType.Default, num + 25, 2);
-		if (pathProgress.HasPath && pathProgress.nodes.Count < num + 25)
-		{
-			PathFinderNode pathFinderNode3 = pathProgress.nodes[pathProgress.nodes.Count - 1];
-			if (this.TryMove(new Point(pathFinderNode3.X, pathFinderNode3.Z), true) == Card.MoveResult.Success)
-			{
-				return Card.MoveResult.Success;
-			}
-		}
-		pathProgress = PathManager.Instance.RequestPathImmediate(this.pos, p, this, PathManager.MoveType.Combat, num + 25, 2);
-		if (pathProgress.HasPath && pathProgress.nodes.Count < num + 25)
-		{
-			PathFinderNode pathFinderNode4 = pathProgress.nodes[pathProgress.nodes.Count - 1];
-			if (this.TryMove(new Point(pathFinderNode4.X, pathFinderNode4.Z), true) == Card.MoveResult.Success)
-			{
-				return Card.MoveResult.Success;
-			}
-		}
-		return Card.MoveResult.Fail;
-	}
-
-	public Card.MoveResult TryMoveFrom(Point p)
-	{
-		if (this.IsPC && EClass.player.TooHeavyToMove())
-		{
-			return Card.MoveResult.Fail;
-		}
-		Point point = p.Copy();
-		int num = p.x - this.pos.x;
-		int num2 = p.z - this.pos.z;
-		if (num > 1)
-		{
-			num = 1;
-		}
-		else if (num < -1)
-		{
-			num = -1;
-		}
-		if (num2 > 1)
-		{
-			num2 = 1;
-		}
-		else if (num2 < -1)
-		{
-			num2 = -1;
-		}
-		if (num == 0 && num2 == 0)
-		{
-			num = EClass.rnd(3) - 1;
-			num2 = EClass.rnd(3) - 1;
-		}
-		point.Set(this.pos);
-		point.x -= num;
-		point.z -= num2;
-		if (point.IsValid && !point.HasChara)
-		{
-			return this.TryMove(point, false);
-		}
-		return Card.MoveResult.Fail;
-	}
-
-	public Card.MoveResult TryMove(Point newPoint, bool allowDestroyPath = true)
-	{
-		using (List<Condition>.Enumerator enumerator = this.conditions.GetEnumerator())
-		{
-			while (enumerator.MoveNext())
-			{
-				if (!enumerator.Current.TryMove(newPoint))
-				{
-					return Card.MoveResult.Fail;
-				}
-			}
-		}
-		if (base.isRestrained)
-		{
-			if (!this.IsPC)
-			{
-				return Card.MoveResult.Fail;
-			}
-			base.isRestrained = false;
-		}
-		if (!this.CanMoveTo(newPoint, allowDestroyPath))
-		{
-			return Card.MoveResult.Fail;
-		}
-		return this._Move(newPoint, Card.MoveType.Walk);
-	}
-
-	public override Card.MoveResult _Move(Point newPoint, Card.MoveType type = Card.MoveType.Walk)
-	{
-		if (this.isDead)
-		{
-			return Card.MoveResult.Fail;
-		}
-		if (this.IsPC)
-		{
-			float num = EClass.setting.defaultActPace;
-			switch (this.burden.GetPhase())
-			{
-			case 3:
-				num *= 1.5f;
-				break;
-			case 4:
-				num *= 2f;
-				break;
-			}
-			if (this.currentZone.IsRegion)
-			{
-				int num2 = 30;
-				if (!EClass.pc.HasElement(408, 1))
-				{
-					switch (EClass.world.weather.CurrentCondition)
-					{
-					case Weather.Condition.Rain:
-						num2 += 5;
-						break;
-					case Weather.Condition.RainHeavy:
-						num2 += 10;
-						num *= 1.5f;
-						break;
-					case Weather.Condition.Snow:
-						num2 += 10;
-						break;
-					case Weather.Condition.SnowHeavy:
-						num2 += 15;
-						num *= 1.5f;
-						break;
-					}
-				}
-				if (newPoint.matFloor.id == 48)
-				{
-					num2 += 20;
-					num *= 1.8f;
-				}
-				num2 = num2 * 100 / (100 + base.Evalue(240) + base.Evalue(407) * 5);
-				EClass.world.date.AdvanceMin(num2 * 6);
-				EClass.player.lastZonePos = null;
-				EClass.player.distanceTravel++;
-				int hp = base.hp;
-				for (int i = 0; i < num2 * 4; i++)
-				{
-					EClass.pc.party.members.ForeachReverse(delegate(Chara m)
-					{
-						if (!m.isDead)
-						{
-							m.TickConditions();
-						}
-					});
-					if (base.hp < this.MaxHP / 5 && base.hp < hp && !EClass.player.regionMoveWarned)
-					{
-						EClass.player.regionMoveWarned = true;
-						Msg.Say("regionAbortMove");
-						EInput.Consume(true, 1);
-						this.SetAI(new NoGoal());
-						return Card.MoveResult.Fail;
-					}
-				}
-				if (newPoint.cell.CanSuffocate())
-				{
-					this.AddCondition<ConSuffocation>((EClass.pc.Evalue(200) > 0) ? (2000 / (100 + base.Evalue(200) * 10)) : 30, false);
-					ConSuffocation condition = this.GetCondition<ConSuffocation>();
-					int num3 = (condition != null) ? condition.GetPhase() : 0;
-					if (num3 >= 2)
-					{
-						base.DamageHP(EClass.rndHalf(10 + this.MaxHP / 5), AttackSource.Condition, null);
-					}
-					if (!this.isDead && !base.HasElement(429, 1))
-					{
-						base.ModExp(200, 8 + num3 * 12);
-					}
-				}
-				EClass.player.regionMoveWarned = false;
-				if (this.isDead)
-				{
-					return Card.MoveResult.Fail;
-				}
-			}
-			if (num > EClass.setting.defaultActPace * 3f)
-			{
-				num = EClass.setting.defaultActPace * 3f;
-			}
-			this.actTime = num;
-		}
-		Chara chara = (this.ride == null) ? this : this.ride;
-		if (!EClass._zone.IsRegion || chara.IsPC)
-		{
-			bool flag = (chara.isConfused && EClass.rnd(2) == 0) || (chara.isDrunk && EClass.rnd(this.IsIdle ? 2 : 8) == 0 && !chara.HasElement(1215, 1));
-			if (this.host != null && this.host.ride == this && ((this.host.isConfused && EClass.rnd(2) == 0) || (this.host.isDrunk && EClass.rnd(this.IsIdle ? 2 : 8) == 0 && !this.host.HasElement(1215, 1))))
-			{
-				flag = true;
-			}
-			if (flag && newPoint.Distance(this.pos) <= 1)
-			{
-				Point randomNeighbor = this.pos.GetRandomNeighbor();
-				if (this.CanMoveTo(randomNeighbor, false))
-				{
-					newPoint = randomNeighbor;
-					if (this.isDrunk)
-					{
-						base.Talk("drunk", null, null, false);
-					}
-				}
-			}
-		}
-		if (newPoint.x != this.pos.x || newPoint.z != this.pos.z)
-		{
-			this.LookAt(newPoint);
-		}
-		CellEffect effect = base.Cell.effect;
-		if (effect != null && effect.id == 7)
-		{
-			CellEffect effect2 = base.Cell.effect;
-			if (this.race.height < 500 && !this.race.tag.Contains("webfree") && EClass.rnd(effect2.power + 25) > EClass.rnd(base.STR + base.DEX + 1))
-			{
-				base.Say("abWeb_caught", this, null, null);
-				base.PlaySound("web", 1f, true);
-				effect2.power = effect2.power * 3 / 4;
-				this.renderer.PlayAnime(AnimeID.Shiver, default(Vector3), false);
-				return Card.MoveResult.Fail;
-			}
-			base.Say("abWeb_pass", this, null, null);
-			EClass._map.SetEffect((int)base.Cell.x, (int)base.Cell.z, null);
-		}
-		if (this.IsPC)
-		{
-			if (EClass._zone.IsRegion)
-			{
-				this.actTime *= EClass.setting.render.anime.regionSpeed;
-			}
-			else if ((newPoint.x > this.pos.x && newPoint.z > this.pos.z) || (newPoint.x < this.pos.x && newPoint.z < this.pos.z))
-			{
-				this.actTime += this.actTime * EClass.setting.render.anime.diagonalSpeed;
-			}
-		}
-		if (newPoint.cell.hasDoor)
-		{
-			foreach (Thing thing in this.pos.Things)
-			{
-				TraitDoor traitDoor = thing.trait as TraitDoor;
-				if (traitDoor != null && traitDoor.owner.c_lockLv > 0)
-				{
-					if (base.INT < 10)
-					{
-						return Card.MoveResult.Fail;
-					}
-					traitDoor.TryOpenLock(this, true);
-					return Card.MoveResult.Door;
-				}
-			}
-		}
-		Cell cell = newPoint.cell;
-		Cell cell2 = this.pos.cell;
-		bool flag2 = cell.HasLiquid && !this.IsLevitating;
-		bool hasBridge = cell.HasBridge;
-		bool hasRamp = cell.HasRamp;
-		bool flag3 = EClass._zone.IsSnowCovered && !cell.HasRoof && !cell.isClearSnow;
-		TileRow tileRow = hasRamp ? cell.sourceBlock : (hasBridge ? cell.sourceBridge : cell.sourceFloor);
-		SourceMaterial.Row row = hasRamp ? cell.matBlock : (hasBridge ? cell.matBridge : cell.matFloor);
-		bool flag4 = cell.IsTopWater && !cell.isFloating;
-		if (!EClass._zone.IsRegion)
-		{
-			if (cell.hasDoorBoat)
-			{
-				tileRow = FLOOR.sourceWood;
-				row = MATERIAL.sourceOak;
-				flag4 = false;
-			}
-			else if (flag3 && !tileRow.ignoreSnow)
-			{
-				if (tileRow.tileType.IsWater)
-				{
-					tileRow = FLOOR.sourceIce;
-					row = MATERIAL.sourceIce;
-				}
-				else
-				{
-					tileRow = FLOOR.sourceSnow;
-					row = MATERIAL.sourceSnow;
-				}
-				flag4 = false;
-			}
-		}
-		if ((this.pos.sourceFloor.isBeach || cell2.IsSnowTile) && !this.pos.HasObj)
-		{
-			EClass._map.SetFoormark(this.pos, 1, (int)Util.GetAngle((float)(this.pos.x - newPoint.x), (float)(this.pos.z - newPoint.z)), cell2.IsSnowTile ? 312 : 304);
-		}
-		if (this.isSynced)
-		{
-			string text = (flag2 || flag4) ? "water" : tileRow.soundFoot.IsEmpty(row.soundFoot.IsEmpty("default"));
-			if (cell.obj != 0 && cell.sourceObj.tileType.IsPlayFootSound && !cell.matObj.soundFoot.IsEmpty())
-			{
-				text = cell.matObj.soundFoot;
-			}
-			if (!text.IsEmpty())
-			{
-				SoundManager.altLastData = this.IsPC;
-				base.PlaySound("Footstep/" + text, this.IsPC ? 1f : 0.9f, true);
-			}
-			if (!flag4)
-			{
-				Scene scene = EClass.scene;
-				PCOrbit pcOrbit = EClass.screen.pcOrbit;
-				bool flag5 = scene.actionMode.gameSpeed > 1f;
-				scene.psFoot.transform.position = this.renderer.position + pcOrbit.footPos;
-				scene.psFoot.startColor = row.matColor;
-				scene.psFoot.Emit(pcOrbit.emitFoot * (flag5 ? 2 : 1));
-				if (flag5 && this.IsPC)
-				{
-					scene.psSmoke.transform.position = this.renderer.position + pcOrbit.smokePos;
-					scene.psSmoke.Emit(pcOrbit.emitSmoke);
-				}
-			}
-			if (flag2 || flag4)
-			{
-				Effect.Get("ripple").Play(0.4f * this.actTime * EClass.scene.actionMode.gameSpeed, newPoint, 0f, null, null);
-			}
-		}
-		this.lastPos.Set(this.pos);
-		if (type != Card.MoveType.Force)
-		{
-			if (newPoint.HasChara && this.ai.Current.PushChara)
-			{
-				this.TryPush(newPoint);
-			}
-			if (newPoint.HasChara && newPoint.Charas.Count == 1)
-			{
-				Chara chara2 = newPoint.Charas[0];
-				if (this.CanReplace(chara2))
-				{
-					chara2.MoveByForce(this.lastPos, this, false);
-					if (chara.IsPC)
-					{
-						base.Say("replace_pc", chara, chara2, null, null);
-					}
-				}
-			}
-		}
-		if (cell.hasDoor)
-		{
-			foreach (Thing thing2 in newPoint.Things)
-			{
-				TraitDoor traitDoor2 = thing2.trait as TraitDoor;
-				if (traitDoor2 != null)
-				{
-					traitDoor2.TryOpen(this);
-				}
-			}
-		}
-		EClass._zone.map.MoveCard(newPoint, this);
-		this.SyncRide();
-		if (this.IsPC && EClass._zone.PetFollow && (!EClass._zone.KeepAllyDistance || !EClass.game.config.tactics.allyKeepDistance) && !EClass._zone.IsRegion)
-		{
-			foreach (Chara chara3 in EClass.pc.party.members)
-			{
-				if (chara3.isLeashed && !chara3.IsPC && chara3.host == null && !chara3.IsDisabled && !chara3.HasCondition<ConEntangle>() && !chara3.IsInCombat && chara3.Dist(EClass.pc) > 1)
-				{
-					chara3.TryMoveTowards(EClass.pc.pos);
-				}
-			}
-		}
-		if (EClass.core.config.test.animeFramePCC == 0 && this.isSynced && this.renderer.hasActor && this.renderer.actor.isPCC)
-		{
-			this.renderer.NextFrame();
-		}
-		if (this.IsPC)
-		{
-			base.PlaySound("Footstep/Extra/pcfootstep", 1f, true);
-			if (this.pos.HasThing)
-			{
-				foreach (Card card in this.pos.ListCards(false))
-				{
-					if (card.isThing && card.placeState == PlaceState.roaming && !card.ignoreAutoPick)
-					{
-						if (EClass.core.config.game.advancedMenu)
-						{
-							Window.SaveData dataPick = EClass.player.dataPick;
-							ContainerFlag containerFlag = card.category.GetRoot().id.ToEnum(true);
-							if (containerFlag == ContainerFlag.none)
-							{
-								containerFlag = ContainerFlag.other;
-							}
-							if ((!dataPick.noRotten || !card.IsDecayed) && (!dataPick.onlyRottable || card.trait.Decay != 0) && (!dataPick.userFilter || dataPick.IsFilterPass(card.GetName(NameStyle.Full, 1))))
-							{
-								if (dataPick.advDistribution)
-								{
-									using (HashSet<int>.Enumerator enumerator4 = dataPick.cats.GetEnumerator())
-									{
-										while (enumerator4.MoveNext())
-										{
-											int num4 = enumerator4.Current;
-											if (card.category.uid == num4)
-											{
-												this.Pick(card.Thing, true, true);
-											}
-										}
-										continue;
-									}
-								}
-								if (!dataPick.flag.HasFlag(containerFlag))
-								{
-									this.Pick(card.Thing, true, true);
-								}
-							}
-						}
-						else
-						{
-							this.Pick(card.Thing, true, true);
-						}
-					}
-				}
-			}
-			if (EClass._zone.IsRegion)
-			{
-				EloMap.Cell cell3 = EClass.scene.elomap.GetCell(EClass.pc.pos);
-				if (((cell3 != null) ? cell3.zone : null) != null && !cell3.zone.HiddenInRegionMap && (!(cell3.zone is Zone_Field) || cell3.zone.children.Count > 0 || cell3.zone.IsPCFaction))
-				{
-					Msg.Say((!cell3.zone.source.GetText("textFlavor", false).IsEmpty()) ? cell3.zone.source.GetText("textFlavor", false) : (cell3.zone.ShowDangerLv ? "seeZoneDanger" : "seeZone"), cell3.zone.Name, cell3.zone.DangerLv.ToString() ?? "", null, null);
-				}
-				if (this.pos.matFloor.alias == "snow" && EClass.rnd(3) == 0)
-				{
-					Msg.SetColor(Msg.colors.Ono);
-					Msg.Say(Lang.GetList("walk_snow").RandomItem<string>());
-				}
-				else if (EClass.world.weather.CurrentCondition == Weather.Condition.RainHeavy && EClass.rnd(3) == 0)
-				{
-					Msg.SetColor(Msg.colors.Ono);
-					Msg.Say(Lang.GetList("walk_storm").RandomItem<string>());
-				}
-			}
-			ActWait.Search(EClass.pc, false);
-		}
-		if (this.IsPCC)
-		{
-			int num5 = Mathf.Abs((int)(cell2.topHeight - cell.topHeight));
-			if ((num5 >= 3 && this.lastPos.sourceBlock.tileType.slopeHeight == 0 && newPoint.sourceBlock.tileType.slopeHeight == 0) || cell2.hasDoorBoat || cell.hasDoorBoat)
-			{
-				this.renderer.PlayAnime((cell2.topHeight >= cell.topHeight) ? AnimeID.JumpDown : ((num5 >= 6) ? AnimeID.Jump : AnimeID.JumpSmall), default(Vector3), false);
-			}
-			else
-			{
-				float surfaceHeight = cell2.GetSurfaceHeight();
-				float surfaceHeight2 = cell.GetSurfaceHeight();
-				num5 = (int)Mathf.Abs((surfaceHeight - surfaceHeight2) * 100f);
-				if (num5 >= 15)
-				{
-					this.renderer.PlayAnime((surfaceHeight >= surfaceHeight2) ? AnimeID.JumpDown : ((num5 >= 40) ? AnimeID.Jump : AnimeID.JumpSmall), default(Vector3), false);
-				}
-			}
-		}
-		this.lastPos.Things.ForeachReverse(delegate(Thing t)
-		{
-			t.trait.OnSteppedOut(this);
-		});
-		if (!this.IsPC)
-		{
-			this.pos.Things.ForeachReverse(delegate(Thing t)
-			{
-				t.trait.OnStepped(this);
-			});
-		}
-		if (this.CanDestroyPath())
-		{
-			this.DestroyPath(this.pos);
-		}
-		if (this.IsPC)
-		{
-			if (this.renderer.anime == null && this.renderer.replacer != null)
-			{
-				this.renderer.PlayAnime(AnimeID.Hop, default(Vector3), false);
-			}
-			if (EClass.player.flags.isShoesOff)
-			{
-				if (!FLOOR.IsTatami(this.pos.cell.sourceSurface.id) && this.pos.cell.room == null)
-				{
-					EClass.player.flags.isShoesOff = false;
-					EClass.pc.Say("shoes_on", EClass.pc, null, null);
-					EClass.pc.SetPCCState(PCCState.Normal);
-				}
-			}
-			else if (FLOOR.IsTatami(this.pos.cell.sourceSurface.id) && this.pos.cell.room != null)
-			{
-				EClass.player.flags.isShoesOff = true;
-				EClass.pc.Say("shoes_off", EClass.pc, null, null);
-				EClass.pc.SetPCCState(PCCState.ShoesOff);
-			}
-		}
-		this.hasMovedThisTurn = true;
-		return Card.MoveResult.Success;
-	}
-
-	public void DestroyPath(Point pos)
-	{
-		bool broke = false;
-		pos.ForeachMultiSize(base.W, base.H, delegate(Point _p, bool main)
-		{
-			if (!_p.IsValid)
-			{
-				return;
-			}
-			if (_p.HasBlock)
-			{
-				EClass._map.MineBlock(_p, false, this);
-				if (_p.HasObj)
-				{
-					EClass._map.MineObj(_p, null, this);
-				}
-				broke = true;
-			}
-			if (_p.HasObj && _p.IsBlocked)
-			{
-				EClass._map.MineObj(_p, null, this);
-				broke = true;
-			}
-			_p.Things.ForeachReverse(delegate(Thing t)
-			{
-				if (t.IsInstalled && (t.trait.IsBlockPath || t.trait.IsDoor))
-				{
-					if (t.isNPCProperty && t.trait.CanBeDestroyed)
-					{
-						t.Destroy();
-						return;
-					}
-					t.SetPlaceState(PlaceState.roaming, false);
-				}
-			});
-		});
-		if (broke)
-		{
-			Msg.Say("stomp");
-			Shaker.ShakeCam("stomp", 1f);
-		}
-	}
-
-	public void TryPush(Point point)
-	{
-		point.Charas.ForeachReverse(delegate(Chara c)
-		{
-			if (c.ai.IsMoveAI || c.IsPC || !c.trait.CanBePushed || c == this || c.noMove || (EClass._zone.IsRegion && !c.IsPCFactionOrMinion))
-			{
-				return;
-			}
-			List<Point> list = new List<Point>();
-			for (int i = point.x - 1; i <= point.x + 1; i++)
-			{
-				for (int j = point.z - 1; j <= point.z + 1; j++)
-				{
-					if (i != point.x || j != point.z)
-					{
-						Point point2 = new Point(i, j);
-						if (point2.IsValid && !point2.HasChara && !point2.IsBlocked && !point2.cell.hasDoor && !point2.IsBlockByHeight(point))
-						{
-							list.Add(point2);
-						}
-					}
-				}
-			}
-			if (list.Count > 0)
-			{
-				if (list.Count > 1)
-				{
-					list.ForeachReverse(delegate(Point p)
-					{
-						if (p.Equals(new Point(point.x + point.x - this.pos.x, point.z + point.z - this.pos.z)))
-						{
-							list.Remove(p);
-						}
-					});
-				}
-				Point newPoint = list.RandomItem<Point>();
-				if (this.IsPC)
-				{
-					this.Say("displace", this, c, null, null);
-					this.PlaySound("push", 1f, true);
-				}
-				else if (c.isSynced)
-				{
-					c.PlayEffect("push", true, 0f, default(Vector3));
-				}
-				c.MoveByForce(newPoint, this, true);
-				if (this.IsPC && !c.IsPCParty && !c.IsUnique && c.IsHuman && EClass.rnd(5) == 0)
-				{
-					c.Talk("pushed", null, null, false);
-				}
-			}
-		});
-	}
-
-	public bool CanReplace(Chara c)
-	{
-		if (c.IsMultisize || !c.trait.CanBePushed || c.noMove || this.IsHostile(c) || this.IsMinion || (EClass._zone.IsRegion && !c.IsPCFactionOrMinion))
-		{
-			return false;
-		}
-		if (this.IsPC)
-		{
-			return true;
-		}
-		if (c.IsPC || c.pos.Equals(EClass.pc.pos) || c.host != null)
-		{
-			return false;
-		}
-		if (!this.IsHostile(c))
-		{
-			if (c.c_uidMaster != 0 || c.isSummon || base.IsPowerful || this.IsEscorted())
-			{
-				return true;
-			}
-			if (this.DestDist < c.DestDist)
-			{
-				return true;
-			}
-			if (this.IsPCParty && !c.IsPCParty)
-			{
-				return true;
-			}
-			if (this.IsPCFaction && !c.IsPCParty)
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public void MoveZone(string alias)
-	{
-		this.MoveZone(EClass.game.spatials.Find(alias), ZoneTransition.EnterState.Auto);
-	}
-
-	public void MoveZone(Zone z, ZoneTransition.EnterState state = ZoneTransition.EnterState.Auto)
-	{
-		this.MoveZone(z, new ZoneTransition
-		{
-			state = state
-		});
-	}
-
-	public void MoveZone(Zone z, ZoneTransition transition)
-	{
-		if (z == this.currentZone)
-		{
-			return;
-		}
-		if (this.HasCondition<ConInvulnerable>())
-		{
-			this.RemoveCondition<ConInvulnerable>();
-		}
-		if (this.IsPC)
-		{
-			EClass.player.nextZone = z;
-			if (this.IsInActiveZone && !EClass.player.simulatingZone)
-			{
-				if (this.held != null && this.held.trait.CanOnlyCarry)
-				{
-					this.DropHeld(null);
-				}
-				if (z.instance == null && this.currentZone.instance == null && !EClass.player.deathZoneMove && !EClass.pc.isDead && (z.IsPCFaction || z.WillAutoSave) && z.GetTopZone() != EClass._zone.GetTopZone())
-				{
-					if (EClass.player.returnInfo != null)
-					{
-						EClass.player.returnInfo.turns += 5;
-					}
-					if (!EClass.debug.ignoreAutoSave)
-					{
-						EClass.game.Save(true, null, false);
-					}
-				}
-				EClass.player.deathZoneMove = false;
-			}
-			this.currentZone.events.OnLeaveZone();
-			if (this.currentZone.instance != null)
-			{
-				ZoneInstance instance = this.currentZone.instance;
-				z = EClass.game.spatials.Find(instance.uidZone);
-				transition = new ZoneTransition
-				{
-					state = instance.ReturnState,
-					x = instance.x,
-					z = instance.z
-				};
-				instance.OnLeaveZone();
-				Debug.Log(z);
-			}
-			EInput.Consume(true, 1);
-			EClass.player.uidLastZone = this.currentZone.uid;
-			if (!EClass.player.simulatingZone)
-			{
-				if (this.currentZone.IsRegion)
-				{
-					Msg.Say("enterZone", z.Name, null, null, null);
-				}
-				else
-				{
-					if (z.IsRegion)
-					{
-						Msg.Say("leaveZone", this.currentZone.Name, null, null, null);
-					}
-					else if (z.id != this.currentZone.id)
-					{
-						Msg.Say("enterZone", z.Name, null, null, null);
-					}
-					EClass.player.lastZonePos = this.pos.Copy();
-				}
-				EClass.player.lastTransition = transition;
-			}
-			foreach (Chara t in (from c in EClass._map.charas
-			where c.IsPCPartyMinion && c.master != EClass.pc
-			select c).ToList<Chara>())
-			{
-				EClass._zone.RemoveCard(t);
-			}
-			EClass.player.listSummon = (from c in EClass._map.charas
-			where c.c_uidMaster != 0 && c.FindMaster() == EClass.pc && c.c_minionType == MinionType.Default
-			select c).ToList<Chara>();
-			foreach (Chara t2 in EClass.player.listSummon)
-			{
-				EClass._zone.RemoveCard(t2);
-			}
-		}
-		if (this.party != null && this.party.leader == this)
-		{
-			foreach (Chara chara in this.party.members)
-			{
-				if (chara != this && !chara.isDead && chara.parent is Zone)
-				{
-					chara.MoveZone(z, ZoneTransition.EnterState.Auto);
-				}
-			}
-		}
-		if (this.global == null)
-		{
-			Debug.Log(base.Name);
-			return;
-		}
-		ZoneTransition zoneTransition = transition;
-		Zone currentZone = this.currentZone;
-		zoneTransition.uidLastZone = ((currentZone != null) ? currentZone.uid : 0);
-		this.global.transition = transition;
-		if (z.IsActiveZone)
-		{
-			Point spawnPos = z.GetSpawnPos(this, ZoneTransition.EnterState.Auto);
-			this.global.transition = null;
-			if (this.IsPC)
-			{
-				EClass.player.lastTransition = null;
-			}
-			z.AddCard(this, spawnPos);
-			if (this.IsBranchMember())
-			{
-				EClass._map.rooms.AssignCharas();
-				return;
-			}
-		}
-		else
-		{
-			z.AddCard(this);
-		}
-	}
-
-	public void MoveHome(string id, int x = -1, int z = -1)
-	{
-		this.MoveHome(EClass.game.world.FindZone(id), x, z);
-	}
-
-	public void MoveHome(Zone zone, int x = -1, int z = -1)
-	{
-		if (this.isDead)
-		{
-			this.Revive(null, false);
-		}
-		else
-		{
-			this.Cure(CureType.Death, 100, BlessedState.Normal);
-		}
-		this.CureCondition<ConSuspend>(99999);
-		if (this.IsPCParty)
-		{
-			EClass.pc.party.RemoveMember(this);
-		}
-		FactionBranch homeBranch = this.homeBranch;
-		if (x == -1)
-		{
-			x = 50;
-		}
-		if (z == -1)
-		{
-			z = 50;
-		}
-		Point point = new Point(x, z);
-		if (zone.IsActiveZone)
-		{
-			point = point.GetNearestPoint(false, false, true, false);
-		}
-		zone.AddCard(this, point);
-		this.SetHomeZone(zone);
-		this.global.transition = new ZoneTransition
-		{
-			state = ZoneTransition.EnterState.Dead,
-			x = point.x,
-			z = point.z
-		};
-		this.orgPos = new Point(x, z);
-		if (homeBranch != null)
-		{
-			this.RefreshWorkElements(null);
-			homeBranch.policies.Validate();
-		}
-	}
-
-	public void FallFromZone()
-	{
-		Msg.Say("skyFall", EClass.pc, EClass._zone.Name, null, null);
-		Zone zone = EClass._zone.isExternalZone ? null : EClass._zone.GetTopZone().FindZone(EClass._zone.lv - 1);
-		zone = (zone ?? EClass.world.region);
-		this.MoveZone(zone ?? EClass.world.region, new ZoneTransition
-		{
-			state = ZoneTransition.EnterState.Fall,
-			x = this.pos.x,
-			z = this.pos.z
-		});
-	}
-
-	public override void SetDir(int d)
-	{
-		base.dir = d;
-		this.UpdateAngle();
-		this.renderer.RefreshSprite();
-	}
-
-	public override void Rotate(bool reverse = false)
-	{
-		if (this.renderer.hasActor)
-		{
-			base.dir = (base.dir + (reverse ? -1 : 1)).Clamp(0, 3, true);
-		}
-		else
-		{
-			base.dir = ((base.dir == 0) ? 1 : 0);
-		}
-		this.UpdateAngle();
-		this.renderer.RefreshSprite();
-	}
-
-	public override void LookAt(Card c)
-	{
-		this.LookAt(c.pos);
-	}
-
-	public override void LookAt(Point p)
-	{
-		this.angle = Util.GetAngle((float)(p.x - this.pos.x), (float)(p.z - this.pos.z));
-		if (EClass._zone.IsRegion)
-		{
-			if (this.angle > 100f && this.angle < 170f)
-			{
-				base.dir = 2;
-			}
-			else if (this.angle > 170f && this.angle < 190f)
-			{
-				base.dir = 0;
-			}
-			else if (this.angle > 190f || (this.angle < -10f && this.angle > -100f))
-			{
-				base.dir = 3;
-			}
-			else
-			{
-				base.dir = 1;
-			}
-			this.angle -= 45f;
-		}
-		else if (this.angle > 170f && this.angle < 235f)
-		{
-			base.dir = 0;
-		}
-		else if (this.angle > 80f && this.angle < 145f)
-		{
-			base.dir = 1;
-		}
-		else if (this.angle > -100f && this.angle < -35f)
-		{
-			base.dir = 3;
-		}
-		else if (this.angle > -10f && this.angle < 55f)
-		{
-			base.dir = 2;
-		}
-		this.renderer.RefreshSprite();
-	}
-
-	public void UpdateAngle()
-	{
-		if (this.IsPCC)
-		{
-			if (base.dir == 0)
-			{
-				this.angle = 225f;
-				return;
-			}
-			if (base.dir == 1)
-			{
-				this.angle = 135f;
-				return;
-			}
-			if (base.dir == 2)
-			{
-				this.angle = 45f;
-				return;
-			}
-			if (base.dir == 3)
-			{
-				this.angle = -45f;
-				return;
-			}
-		}
-		else
-		{
-			if (base.dir == 0)
-			{
-				this.angle = 165f;
-				return;
-			}
-			if (base.dir == 1)
-			{
-				this.angle = 300f;
-				return;
-			}
-			if (base.dir == 2)
-			{
-				this.angle = 0f;
-				return;
-			}
-			if (base.dir == 3)
-			{
-				this.angle = 120f;
-			}
-		}
-	}
-
-	public int GetCurrentDir()
-	{
-		Debug.Log(this.angle);
-		if (this.renderer.hasActor)
-		{
-			return this.renderer.actor.currentDir;
-		}
-		if (this.angle == 0f || this.angle == 45f || this.angle == 90f)
-		{
-			return 2;
-		}
-		if (this.angle == -135f || this.angle == 180f || this.angle == -90f)
-		{
-			return 1;
-		}
-		if (this.angle == 135f)
-		{
-			return 0;
-		}
-		return 3;
-	}
-
-	public void UpdateSight()
-	{
-		int num = 4;
-		for (int i = -num; i < num + 1; i++)
-		{
-			for (int j = -num; j < num + 1; j++)
-			{
-				Chara.shared.Set(this.pos.x + i, this.pos.z + j);
-				if (!Chara.shared.IsValid || Chara.shared.cell.isSeen || i < -1 || i > 1 || j >= -1)
-				{
-				}
-			}
-		}
-	}
-
-	public bool WillConsumeTurn()
-	{
-		for (int i = this.conditions.Count - 1; i >= 0; i--)
-		{
-			if (this.conditions[i].ConsumeTurn)
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public void TickConditions()
-	{
-		if (this._cooldowns != null)
-		{
-			this.TickCooldown();
-		}
-		this.turn++;
-		Chara.consumeTurn = false;
-		Chara.preventRegen = false;
-		this.emoIcon = Emo2.none;
-		if (base.isSummon)
-		{
-			int c_summonDuration = base.c_summonDuration;
-			base.c_summonDuration = c_summonDuration - 1;
-			if (base.c_summonDuration <= 0)
-			{
-				this.Die(null, null, AttackSource.None);
-				return;
-			}
-		}
-		if (EClass.world.weather.IsRaining && !EClass._map.IsIndoor && !this.pos.cell.HasRoof)
-		{
-			this.AddCondition<ConWet>(20, false);
-		}
-		switch (this.turn % 50)
-		{
-		case 0:
-			this.happiness = (this.hunger.value + this.stamina.value + this.depression.value + this.bladder.value + this.hygiene.value) / 5;
-			break;
-		case 1:
-			if (!this.IsPC || !EClass.debug.godMode)
-			{
-				if (EClass.rnd(2) == 0)
-				{
-					this.sleepiness.Mod(1);
-				}
-				if (EClass.rnd(3) == 0)
-				{
-					this.hunger.Mod(1);
-				}
-				if (this.IsPC && (this.sleepiness.GetPhase() != 0 || this.stamina.GetPhase() <= 1))
-				{
-					Tutorial.Play("sleep");
-				}
-			}
-			break;
-		case 2:
-			if (this.parasite != null)
-			{
-				base.ModExp(227, (EClass._zone.IsRegion ? 5 : 40) * 100 / Mathf.Max(100, 100 + (this.elements.Base(227) - this.parasite.LV) * 25));
-			}
-			if (this.ride != null)
-			{
-				base.ModExp(226, (EClass._zone.IsRegion ? 5 : 40) * 100 / Mathf.Max(100, 100 + (this.elements.Base(226) - this.ride.LV) * 25));
-			}
-			break;
-		}
-		if (this.turn % 500 == 0)
-		{
-			this.DiminishTempElements(1);
-		}
-		if (this.IsPCParty)
-		{
-			if (this.dirtyWeight)
-			{
-				this.CalcBurden();
-			}
-			int phase = this.burden.GetPhase();
-			int phase2 = this.hunger.GetPhase();
-			if (phase2 >= 4)
-			{
-				Chara.preventRegen = true;
-			}
-			if (EClass.rnd(EClass._zone.IsRegion ? 100 : 30) == 0 && phase >= 3)
-			{
-				base.Say("dmgBurden", this, null, null);
-				base.DamageHP(this.MaxHP * (base.ChildrenWeight * 100 / this.WeightLimit) / 1000 + 1, AttackSource.Burden, null);
-				if (this.isDead)
-				{
-					return;
-				}
-			}
-			if (EClass.rnd(12) == 0)
-			{
-				if (this.IsPC)
-				{
-					if (phase > 0)
-					{
-						base.ModExp(207, 1 + phase * phase);
-					}
-				}
-				else
-				{
-					base.ModExp(207, 4);
-				}
-			}
-			if (this.IsPC)
-			{
-				if (phase2 >= 5 && !(this.ai is AI_Eat) && EClass.rnd(5) == 0)
-				{
-					base.DamageHP(1 + EClass.rnd(2) + this.MaxHP / 50, AttackSource.Hunger, null);
-				}
-				if (this.isDead)
-				{
-					return;
-				}
-				phase2 = this.stamina.GetPhase();
-				if (phase2 <= 0)
-				{
-					Chara.preventRegen = true;
-				}
-				if (this.currentZone.IsRegion && EClass.world.weather.CurrentCondition == Weather.Condition.RainHeavy && !EClass.pc.HasElement(408, 1))
-				{
-					if (EClass.rnd(100) == 0 && !this.isConfused)
-					{
-						Msg.Say("rain_confuse");
-						this.AddCondition<ConConfuse>(500, false);
-					}
-					if (EClass.rnd(300) == 0 && !this.isBlind)
-					{
-						Msg.Say("rain_confuse");
-						this.AddCondition<ConBlind>(200, false);
-					}
-				}
-				if (this.turn % (2000 * (100 + base.Evalue(412) * 2) / (100 + base.Evalue(409) * 10)) == 0)
-				{
-					this.ModCorruption(1);
-				}
-			}
-		}
-		if (!this.IsPC)
-		{
-			int num = base.Evalue(409);
-			if (num > 0 && this.turn % 2000 * (100 + base.Evalue(412) * 2) / (100 + num * 10) == 0)
-			{
-				this.ModCorruption(1);
-			}
-		}
-		for (int i = this.conditions.Count - 1; i >= 0; i--)
-		{
-			if (i < this.conditions.Count)
-			{
-				Condition condition = this.conditions[i];
-				if (!condition.TimeBased)
-				{
-					condition.Tick();
-				}
-				if (!condition.IsKilled)
-				{
-					if (condition.ConsumeTurn)
-					{
-						Chara.consumeTurn = true;
-					}
-					if (condition.PreventRegen)
-					{
-						Chara.preventRegen = true;
-					}
-					if (condition.EmoIcon != Emo2.none && condition.EmoIcon > this.emoIcon)
-					{
-						this.emoIcon = condition.EmoIcon;
-					}
-				}
-				if (this.isDead)
-				{
-					return;
-				}
-			}
-		}
-		if (!Chara.preventRegen)
-		{
-			if (EClass.rnd(25) == 0 && base.hp < this.MaxHP)
-			{
-				this.HealHP(EClass.rnd(base.Evalue(300) / 3 + 1) + 1, HealSource.None);
-				this.elements.ModExp(300, 8, false);
-			}
-			if (EClass.rnd(8) == 0 && this.mana.value < this.mana.max)
-			{
-				this.mana.Mod(EClass.rnd(base.Evalue(301) / 2 + 1) + 1);
-				this.elements.ModExp(301, 8, false);
-			}
-			if (EClass.rnd(20) == 0 && !this.IsPC && this.stamina.value < this.stamina.max)
-			{
-				this.stamina.Mod(EClass.rnd(5) + 1);
-			}
-		}
-	}
-
-	public void SyncRide()
-	{
-		if (this.host != null)
-		{
-			this.host.SyncRide();
-		}
-		if (this.ride != null)
-		{
-			this.SyncRide(this.ride);
-		}
-		if (this.parasite != null)
-		{
-			this.SyncRide(this.parasite);
-		}
-	}
-
-	public void SyncRide(Chara c)
-	{
-		if (!c.pos.Equals(this.pos))
-		{
-			if (!this.pos.IsValid)
-			{
-				string str = "exception: pos is not valid:";
-				Point pos = this.pos;
-				Debug.LogError(str + ((pos != null) ? pos.ToString() : null) + "/" + ((this != null) ? this.ToString() : null));
-				this.pos = new Point();
-			}
-			EClass._map.MoveCard(this.pos, c);
-		}
-	}
-
-	public override void Tick()
-	{
-		Chara.<>c__DisplayClass337_0 CS$<>8__locals1 = new Chara.<>c__DisplayClass337_0();
-		CS$<>8__locals1.<>4__this = this;
-		this.SyncRide();
-		this.combatCount--;
-		if (this.IsPC)
-		{
-			if (this.hasMovedThisTurn)
-			{
-				this.pos.Things.ForeachReverse(delegate(Thing t)
-				{
-					t.trait.OnStepped(CS$<>8__locals1.<>4__this);
-				});
-				if (this.isDead)
-				{
-					return;
-				}
-				this.hasMovedThisTurn = false;
-				if (EClass.player.haltMove)
-				{
-					EClass.player.haltMove = false;
-					ActionMode.Adv.TryCancelInteraction(false);
-					EInput.Consume(1);
-					return;
-				}
-				if (EClass._zone.IsRegion)
-				{
-					if (EClass.game.config.preference.autoEat)
-					{
-						foreach (Chara chara in EClass.pc.party.members)
-						{
-							if (chara.hunger.value > 65)
-							{
-								chara.InstantEat(null, false);
-							}
-						}
-					}
-					Chara chara2 = null;
-					EloMap.Cell cell = EClass.scene.elomap.GetCell(EClass.pc.pos);
-					if (cell != null && (cell.zone == null || (cell.zone is Zone_Field && !cell.zone.IsPCFaction)))
-					{
-						foreach (Chara chara3 in EClass._map.charas)
-						{
-							if (!chara3.IsPCFactionOrMinion && !chara3.IsGlobal && chara3.pos.Equals(EClass.pc.pos))
-							{
-								chara2 = chara3;
-								break;
-							}
-						}
-					}
-					if (chara2 != null)
-					{
-						if (!EClass.pc.HasCondition<ConDrawMonster>())
-						{
-							EClass.player.safeTravel = 5 + EClass.rnd(5);
-						}
-						EClass._zone.RemoveCard(chara2);
-						Msg.Say("encounter");
-						EClass.player.EnterLocalZone(true, chara2);
-					}
-					else if (EClass.player.safeTravel <= 0)
-					{
-						if (cell != null && cell.zone == null && !EClass.debug.ignoreEncounter)
-						{
-							EloMap.TileInfo tileInfo = EClass.scene.elomap.GetTileInfo(EClass.pc.pos.eloX, EClass.pc.pos.eloY);
-							if (!tileInfo.shore)
-							{
-								bool flag = EClass.pc.HasCondition<ConWardMonster>();
-								bool flag2 = EClass.pc.HasCondition<ConDrawMonster>();
-								bool flag3 = EClass.game.quests.Get<QuestEscort>() != null;
-								int num = tileInfo.isRoad ? 22 : 12;
-								if (flag3)
-								{
-									num = (tileInfo.isRoad ? 16 : 10);
-								}
-								if (flag)
-								{
-									num *= (flag3 ? 2 : 20);
-								}
-								if (flag2)
-								{
-									num /= 2;
-								}
-								if (EClass.rnd(num) == 0)
-								{
-									Msg.Say("encounter");
-									if (!flag2)
-									{
-										EClass.player.safeTravel = 5 + EClass.rnd(5);
-									}
-									EClass.player.EnterLocalZone(true, null);
-								}
-							}
-						}
-					}
-					else
-					{
-						EClass.player.safeTravel--;
-					}
-				}
-			}
-			EClass.player.pickupDelay = 0f;
-			if (EClass.player.returnInfo != null)
-			{
-				EClass.player.returnInfo.turns--;
-				if (EClass.player.returnInfo.turns <= 0)
-				{
-					if (EClass.pc.burden.GetPhase() != 4 || EClass.debug.ignoreWeight)
-					{
-						int uidDest = EClass.player.returnInfo.uidDest;
-						Zone zone = null;
-						if (uidDest != 0)
-						{
-							zone = (EClass.game.spatials.map.TryGetValue(uidDest, null) as Zone);
-						}
-						if (zone == null || zone.destryoed)
-						{
-							zone = EClass.world.region;
-						}
-						if (zone == EClass.game.activeZone || EClass.game.activeZone.IsRegion)
-						{
-							Msg.Say("returnFail");
-						}
-						else
-						{
-							Msg.Say("returnComplete");
-							EClass.player.uidLastTravelZone = 0;
-							EClass.pc.MoveZone(zone, ZoneTransition.EnterState.Return);
-							EClass.player.lastZonePos = null;
-						}
-						EClass.player.returnInfo = null;
-						return;
-					}
-					EClass.player.returnInfo = null;
-					Msg.Say("returnOverweight");
-				}
-			}
-			if ((this.HasNoGoal || !this.ai.IsRunning) && !this.WillConsumeTurn())
-			{
-				this.SetAI(Chara._NoGoalPC);
-				return;
-			}
-			EClass.player.stats.turns++;
-			if (EClass.core.config.game.alwaysUpdateRecipe)
-			{
-				RecipeUpdater.dirty = true;
-			}
-			this.actTime = EClass.player.baseActTime;
-		}
-		else
-		{
-			this.actTime = EClass.player.baseActTime * Mathf.Max(0.1f, (float)EClass.pc.Speed / (float)this.Speed);
-			this.hasMovedThisTurn = false;
-		}
-		this.TickConditions();
-		if (!this.IsAliveInCurrentZone)
-		{
-			return;
-		}
-		this.renderer.RefreshStateIcon();
-		if (this.host != null && !Chara.consumeTurn)
-		{
-			if (this.host.ride == this && ((this.host.hasMovedThisTurn && this.IsInCombat) || (this.enemy != null && this.turn % 3 != 0)))
-			{
-				Chara.consumeTurn = true;
-			}
-			if (this.host.parasite == this && this.enemy != null && EClass.rnd(10) > EClass.rnd(this.host.Evalue(227) + 10))
-			{
-				if (base.Dist(this.enemy) < 3 && EClass.rnd(2) == 0)
-				{
-					base.Say("parasite_fail", this, this.host, null, null);
-					if (EClass.rnd(2) == 0 && base.GetInt(106, null) == 0)
-					{
-						base.Talk("parasite_fail", null, null, false);
-					}
-				}
-				Chara.consumeTurn = true;
-			}
-		}
-		if (Chara.consumeTurn)
-		{
-			if (this.IsPC)
-			{
-				ActionMode.Adv.SetTurbo(-1);
-			}
-		}
-		else
-		{
-			if (base.isRestrained)
-			{
-				base.TryUnrestrain(false, null);
-			}
-			if (this.enemy != null)
-			{
-				if (!this.enemy.IsAliveInCurrentZone || EClass._zone.IsRegion)
-				{
-					this.enemy = null;
-				}
-				else if (!this.IsPC && ((!(this.ai is GoalCombat) && !(this.ai is AI_Trolley)) || !this.ai.IsRunning))
-				{
-					this.SetAIAggro();
-				}
-			}
-			if (this.HasNoGoal || !this.ai.IsRunning)
-			{
-				this.ChooseNewGoal();
-			}
-			this.ai.Tick();
-		}
-		CS$<>8__locals1.cell = base.Cell;
-		if (CS$<>8__locals1.cell.IsTopWaterAndNoSnow && !CS$<>8__locals1.cell.isFloating)
-		{
-			this.AddCondition<ConWet>(50, false);
-		}
-		if (this.IsPC && !EClass._zone.IsRegion && CS$<>8__locals1.cell.CanSuffocate())
-		{
-			this.AddCondition<ConSuffocation>(800 / (100 + base.Evalue(200) * 10), false);
-		}
-		if (CS$<>8__locals1.cell.effect != null)
-		{
-			Chara.<>c__DisplayClass337_1 CS$<>8__locals2;
-			CS$<>8__locals2.e = CS$<>8__locals1.cell.effect;
-			switch (CS$<>8__locals2.e.id)
-			{
-			case 1:
-			case 2:
-			case 4:
-				if (this.IsLevitating)
-				{
-					base.Say("levitating", null, null);
-				}
-				else
-				{
-					this.AddCondition<ConWet>(50, false);
-					CS$<>8__locals1.<Tick>g__ProcEffect|2(ref CS$<>8__locals2);
-				}
-				break;
-			case 3:
-				base.PlaySound("fire_step", 1f, true);
-				this.AddCondition<ConBurning>(30, false);
-				break;
-			case 5:
-				if (!this.isWet)
-				{
-					base.PlaySound("bubble", 1f, true);
-					this.AddCondition<ConWet>(30, false);
-					CS$<>8__locals1.<Tick>g__ProcEffect|2(ref CS$<>8__locals2);
-				}
-				break;
-			case 6:
-				if (this.hasMovedThisTurn)
-				{
-					base.Say("abMistOfDarkness_step", this, null, null);
-				}
-				break;
-			}
-		}
-		if (this.IsPC)
-		{
-			if (EClass.player.currentHotItem.Thing != null)
-			{
-				EClass.player.currentHotItem.Thing.trait.OnTickHeld();
-			}
-			EClass.screen.OnEndPlayerTurn();
-		}
-	}
-
-	public bool CanLift(Card c)
-	{
-		return true;
-	}
-
-	public bool CanAutoPick(Card c)
-	{
-		return true;
-	}
-
-	public bool CanPick(Card c)
-	{
-		if (c.isDestroyed)
-		{
-			return false;
-		}
-		Card rootCard = c.GetRootCard();
-		return !rootCard.isDestroyed && (!rootCard.ExistsOnMap || rootCard.pos.Distance(this.pos) <= 1) && (rootCard == this || !this.things.IsFull(c.Thing, true, true));
-	}
-
-	public void PickOrDrop(Point p, string idThing, int idMat = -1, int num = 1, bool msg = true)
-	{
-		if (num == 0)
-		{
-			return;
-		}
-		this.PickOrDrop(p, ThingGen.Create(idThing, idMat, -1).SetNum(num), msg);
-	}
-
-	public void PickOrDrop(Point p, Thing t, bool msg = true)
-	{
-		if (this.things.GetDest(t, true).IsValid)
-		{
-			this.Pick(t, msg, true);
-			return;
-		}
-		EClass._zone.AddCard(t, p);
-	}
-
-	public Thing Pick(Thing t, bool msg = true, bool tryStack = true)
-	{
-		if (t.trait is TraitCard && t.isNew && EClass.game.config.autoCollectCard)
-		{
-			ContentCodex.Collect(t);
-			return t;
-		}
-		if (t.parent == this)
-		{
-			return t;
-		}
-		ThingContainer.DestData dest = this.things.GetDest(t, tryStack);
-		if (!dest.IsValid)
-		{
-			if (t.parent != EClass._zone)
-			{
-				if (this.IsPC)
-				{
-					base.Say("backpack_full_drop", t, null, null);
-					SE.Drop();
-				}
-				return EClass._zone.AddCard(t, this.pos).Thing;
-			}
-			if (this.IsPC)
-			{
-				base.Say("backpack_full", t, null, null);
-			}
-			return t;
-		}
-		else
-		{
-			if (dest.stack != null)
-			{
-				if (msg)
-				{
-					base.PlaySound("pick_thing", 1f, true);
-					base.Say("pick_thing", this, t, null, null);
-				}
-				t.TryStackTo(dest.stack);
-				return dest.stack;
-			}
-			this.TryAbsorbRod(t);
-			if (t.trait is TraitPotion && t.id != "1165" && !t.source.tag.Contains("neg") && EClass.rnd(2) == 0 && base.HasElement(1565, 1))
-			{
-				string id = (from a in EClass.sources.things.rows
-				where a._origin == "potion" && a.tag.Contains("neg")
-				select a).ToList<SourceThing.Row>().RandomItemWeighted((SourceThing.Row a) => (float)a.chance).id;
-				base.Say("poisonDrip", this, null, null);
-				int num = t.Num;
-				t.Destroy();
-				t = ThingGen.Create(id, -1, -1).SetNum(num);
-			}
-			if (msg)
-			{
-				base.PlaySound("pick_thing", 1f, true);
-				base.Say("pick_thing", this, t, null, null);
-			}
-			this.TryReservePickupTutorial(t);
-			return dest.container.AddThing(t, tryStack, -1, -1);
-		}
-	}
-
-	public void TryAbsorbRod(Thing t)
-	{
-		if (!this.IsPC)
-		{
-			return;
-		}
-		if (t.trait is TraitRod && t.c_charges > 0 && base.HasElement(1564, 1))
-		{
-			base.Say("absorbRod", this, t, null, null);
-			TraitRod rod = t.trait as TraitRod;
-			bool flag = false;
-			if (rod.source != null)
-			{
-				IEnumerable<SourceElement.Row> rows = EClass.sources.elements.rows;
-				Func<SourceElement.Row, bool> predicate;
-				Func<SourceElement.Row, bool> <>9__0;
-				if ((predicate = <>9__0) == null)
-				{
-					predicate = (<>9__0 = ((SourceElement.Row a) => a.id == rod.source.id));
-				}
-				using (IEnumerator<SourceElement.Row> enumerator = rows.Where(predicate).GetEnumerator())
-				{
-					if (enumerator.MoveNext())
-					{
-						SourceElement.Row row = enumerator.Current;
-						if (this.IsPC)
-						{
-							this.GainAbility(row.id, t.c_charges * 100);
-							flag = true;
-						}
-					}
-				}
-			}
-			if (!flag)
-			{
-				this.mana.Mod(-50 * t.c_charges);
-			}
-			t.c_charges = 0;
-			LayerInventory.SetDirty(t);
-		}
-	}
-
-	public void TryReservePickupTutorial(Thing t)
-	{
-		if (t.id == "axe")
-		{
-			Tutorial.Reserve("tool", null);
-		}
-		if (t.category.id == "mushroom")
-		{
-			Tutorial.Reserve("food", null);
-		}
-		if (t.category.id == "herb")
-		{
-			Tutorial.Reserve("herb", null);
-		}
-		if (t.id == "pasture")
-		{
-			Tutorial.Reserve("pasture", null);
-		}
-		if (t.id == "log")
-		{
-			Tutorial.Reserve("process", null);
-		}
-	}
-
-	public void TryPickGroundItem()
-	{
-		foreach (Card card in this.pos.ListCards(false))
-		{
-			if (!this.IsPC)
-			{
-				AI_UseCrafter ai_UseCrafter = EClass.pc.ai as AI_UseCrafter;
-				if (ai_UseCrafter != null && ai_UseCrafter.ings.Contains(card))
-				{
-					continue;
-				}
-			}
-			if (card.isThing && card.placeState == PlaceState.roaming && this.CanPick(card))
-			{
-				Thing thing = this.Pick(card.Thing, true, true);
-				if (thing != null && !this.IsPC)
-				{
-					thing.isNPCProperty = true;
-				}
-				break;
-			}
-		}
-	}
-
-	public void TryPutShared(Thing t, List<Thing> containers = null, bool dropIfFail = true)
-	{
-		if (EClass._zone.TryAddThingInSharedContainer(t, containers, true, false, null, true))
-		{
-			return;
-		}
-		if (dropIfFail)
-		{
-			EClass._zone.AddCard(t, this.pos);
-		}
-	}
-
-	public bool TryHoldCard(Card t, int num = -1, bool pickHeld = false)
-	{
-		if (this.held == t)
-		{
-			return true;
-		}
-		if (t.isDestroyed || t.Num <= 0)
-		{
-			return false;
-		}
-		if (!this.CanPick(t))
-		{
-			if (t.parent == null)
-			{
-				EClass._zone.AddCard(t, this.pos);
-			}
-			return false;
-		}
-		this.HoldCard(t, num);
-		return true;
-	}
-
-	public void HoldCard(Card t, int num = -1)
-	{
-		if (this.held == t || t.isDestroyed || t.Num <= 0)
-		{
-			return;
-		}
-		if (this.IsPC && t.isNPCProperty)
-		{
-			t.isNPCProperty = false;
-			EClass.player.ModKarma(-1);
-			this.pos.TryWitnessCrime(this, null, 4, null);
-		}
-		this.PickHeld(false);
-		if (t.isChara)
-		{
-			if (t.IsAliveInCurrentZone)
-			{
-				t.ShowEmo(Emo.love, 0f, true);
-			}
-			EClass.player.altHeldPos = (t.renderer.data.ForceAltHeldPosition || EClass.rnd(2) == 0);
-		}
-		else
-		{
-			if (num == -1 || num > t.Num)
-			{
-				num = t.Num;
-			}
-			if (num < t.Num)
-			{
-				t = t.Split(num);
-			}
-		}
-		if (t.GetRootCard() != this)
-		{
-			t = this.Pick(t.Thing, false, true);
-			if (t.GetRootCard() != this)
-			{
-				return;
-			}
-		}
-		this.held = t;
-		if (this.held.GetLightRadius() > 0)
-		{
-			base.RecalculateFOV();
-		}
-		if (this.IsPC)
-		{
-			LayerInventory.SetDirty(t.Thing);
-			WidgetHotbar.dirtyCurrentItem = true;
-		}
-	}
-
-	public void PickHeld(bool msg = false)
-	{
-		if (this.held == null)
-		{
-			return;
-		}
-		Card card = this.held;
-		if (this.IsPC && this.held.invY == 1)
-		{
-			WidgetHotbar.dirtyCurrentItem = true;
-			LayerInventory.SetDirty(this.held.Thing);
-			this.held = null;
-			return;
-		}
-		if (this.held.isChara)
-		{
-			this.DropHeld(null);
-			return;
-		}
-		if (this.IsPC && !this.held.IsHotItem && this.held.trait.CanOnlyCarry)
-		{
-			base.Say("canOnlyCarry", this.held, null, null);
-			this.DropHeld(null);
-			return;
-		}
-		bool flag = this.held != this.things.TryStack(this.held.Thing, -1, -1);
-		if (!flag && this.things.IsOverflowing())
-		{
-			if (this.IsPC)
-			{
-				base.Say("backpack_full_drop", this.held, null, null);
-				SE.Drop();
-			}
-			this.DropHeld(null);
-			return;
-		}
-		if (msg)
-		{
-			base.PlaySound("pick_thing", 1f, true);
-			base.Say("pick_held", this, card, null, null);
-			if (this.IsPC && card.id == "statue_weird")
-			{
-				base.Say("statue_pick", null, null);
-			}
-		}
-		if (this.IsPC)
-		{
-			WidgetHotbar.dirtyCurrentItem = true;
-			if (!flag)
-			{
-				LayerInventory.SetDirty(this.held.Thing);
-				if (this.held.GetRootCard() != EClass.pc)
-				{
-					this.Pick(this.held.Thing, false, true);
-				}
-			}
-		}
-		this.held = null;
-	}
-
-	public Card SplitHeld(int a)
-	{
-		return this.held.Split(a);
-	}
-
-	public Card DropHeld(Point dropPos = null)
-	{
-		if (this.held == null)
-		{
-			return null;
-		}
-		if (this.IsPC)
-		{
-			WidgetHotbar.dirtyCurrentItem = true;
-			LayerInventory.SetDirty(this.held.Thing);
-		}
-		Card card = EClass._zone.AddCard(this.held, dropPos ?? this.pos);
-		card.OnLand();
-		if (card.trait.CanOnlyCarry)
-		{
-			card.SetPlaceState(PlaceState.installed, false);
-		}
-		return card;
-	}
-
-	public void DropThing(Thing t, int num = -1)
-	{
-		if (t.c_isImportant)
-		{
-			Msg.Say("markedImportant");
-			return;
-		}
-		if (!t.trait.CanBeDropped)
-		{
-			Msg.Say("cantDrop", t, null, null, null);
-			return;
-		}
-		if (t.trait is TraitAbility)
-		{
-			SE.Trash();
-			t.Destroy();
-			return;
-		}
-		Msg.Say("dropItem", t.Name, null, null, null);
-		t.ignoreAutoPick = true;
-		base.PlaySound("drop", 1f, true);
-		EClass._zone.AddCard(t, this.pos);
-	}
-
-	public AttackStyle GetFavAttackStyle()
-	{
-		int num = base.Evalue(131);
-		int num2 = base.Evalue(130);
-		int num3 = base.Evalue(123);
-		if (num > num2 && num > num3)
-		{
-			return AttackStyle.TwoWield;
-		}
-		if (num2 > num && num2 > num3)
-		{
-			return AttackStyle.TwoHand;
-		}
-		if (num3 > num && num3 > num2)
-		{
-			return AttackStyle.Shield;
-		}
-		return AttackStyle.Default;
-	}
-
-	public Element GetFavWeaponSkill()
-	{
-		return this.elements.ListElements((Element e) => e.source.categorySub == "weapon" && !e.HasTag("ranged"), null).FindMax((Element a) => a.Value);
-	}
-
-	public Element GetFavArmorSkill()
-	{
-		if (this.elements.Value(122) > this.elements.Value(120))
-		{
-			return this.elements.GetElement(122);
-		}
-		return this.elements.GetElement(120);
-	}
-
-	public void TryRestock(bool onCreate)
-	{
-		Chara.isOnCreate = onCreate;
-		if (onCreate || (!this.IsPCFaction && (base.IsUnique || this.trait is TraitAdventurer || this.trait is TraitGuard)))
-		{
-			this.RestockEquip((!EClass.core.IsGameStarted || !(EClass._zone is Zone_Music)) && onCreate);
-		}
-		this.RestockInventory(onCreate);
-	}
-
-	public void RestockEquip(bool onCreate)
-	{
-		string equip = this.source.equip;
-		if (equip.IsEmpty())
-		{
-			equip = this.job.equip;
-		}
-		string id = this.id;
-		uint num = <PrivateImplementationDetails>.ComputeStringHash(id);
-		if (num <= 1337759161U)
-		{
-			if (num <= 646060618U)
-			{
-				if (num != 511800731U)
-				{
-					if (num != 613794712U)
-					{
-						if (num != 646060618U)
-						{
-							goto IL_490;
-						}
-						if (!(id == "seeker"))
-						{
-							goto IL_490;
-						}
-						if (onCreate)
-						{
-							this.EQ_ID("helm_seeker", -1, Rarity.Random);
-						}
-						this.EQ_ID("robe_pope", -1, Rarity.Random);
-						this.EQ_ID("sword_katana", -1, Rarity.Random);
-						this.EQ_ID("staff", -1, Rarity.Random);
-						this.EQ_ID("sword_katana", -1, Rarity.Random);
-						if (onCreate)
-						{
-							this.EQ_ID("boots_seven", -1, Rarity.Random);
-						}
-						if (onCreate)
-						{
-							for (int i = 0; i < 20; i++)
-							{
-								base.AddThing(ThingGen.CreateFromCategory("book", 50), true, -1, -1);
-							}
-							this.EQ_Item("panty", 1);
-							base.AddThing("plat", -1).SetNum(6);
-							goto IL_490;
-						}
-						goto IL_490;
-					}
-					else
-					{
-						if (!(id == "adv_ivory"))
-						{
-							goto IL_490;
-						}
-						this.EQ_ID("dagger", -1, Rarity.Legendary);
-						base.AddThing("60", -1);
-						goto IL_490;
-					}
-				}
-				else
-				{
-					if (!(id == "adv_gaki"))
-					{
-						goto IL_490;
-					}
-					if (onCreate)
-					{
-						this.EQ_ID("dagger_gaki", -1, Rarity.Random);
-					}
-					if (onCreate)
-					{
-						this.EQ_ID("dagger_ninto", -1, Rarity.Random);
-						goto IL_490;
-					}
-					goto IL_490;
-				}
-			}
-			else if (num <= 1184812370U)
-			{
-				if (num != 1052270088U)
-				{
-					if (num != 1184812370U)
-					{
-						goto IL_490;
-					}
-					if (!(id == "ashland"))
-					{
-						goto IL_490;
-					}
-					if (onCreate)
-					{
-						base.AddThing("guitar_ash", -1);
-						goto IL_490;
-					}
-					goto IL_490;
-				}
-				else
-				{
-					if (!(id == "swordkeeper"))
-					{
-						goto IL_490;
-					}
-					if (onCreate)
-					{
-						this.EQ_ID("EtherDagger", -1, Rarity.Random);
-						goto IL_490;
-					}
-					goto IL_490;
-				}
-			}
-			else if (num != 1188679840U)
-			{
-				if (num != 1337759161U)
-				{
-					goto IL_490;
-				}
-				if (!(id == "adv_verna"))
-				{
-					goto IL_490;
-				}
-				if (onCreate)
-				{
-					this.EQ_ID("staff_long", -1, Rarity.Legendary);
-				}
-				if (onCreate)
-				{
-					this.EQ_ID("cloak_wing", -1, Rarity.Mythical);
-					goto IL_490;
-				}
-				goto IL_490;
-			}
-			else if (!(id == "loytel"))
-			{
-				goto IL_490;
-			}
-		}
-		else if (num <= 2936881100U)
-		{
-			if (num <= 1491226603U)
-			{
-				if (num != 1488976522U)
-				{
-					if (num != 1491226603U)
-					{
-						goto IL_490;
-					}
-					if (!(id == "adv_mesherada"))
-					{
-						goto IL_490;
-					}
-					if (onCreate)
-					{
-						this.EQ_ID("dagger_hathaway", -1, Rarity.Random);
-						goto IL_490;
-					}
-					goto IL_490;
-				}
-				else if (!(id == "quru"))
-				{
-					goto IL_490;
-				}
-			}
-			else if (num != 1808495106U)
-			{
-				if (num != 2936881100U)
-				{
-					goto IL_490;
-				}
-				if (!(id == "shojo"))
-				{
-					goto IL_490;
-				}
-			}
-			else if (!(id == "kettle"))
-			{
-				goto IL_490;
-			}
-		}
-		else if (num <= 3538562634U)
-		{
-			if (num != 3099445666U)
-			{
-				if (num != 3538562634U)
-				{
-					goto IL_490;
-				}
-				if (!(id == "adv_wini"))
-				{
-					goto IL_490;
-				}
-				if (onCreate)
-				{
-					this.EQ_ID("staff_Cat", -1, Rarity.Mythical);
-				}
-				base.AddCard(ThingGen.CreateSpellbook(9150, 1));
-				if (onCreate)
-				{
-					base.AddThing("1071", -1);
-					goto IL_490;
-				}
-				goto IL_490;
-			}
-			else
-			{
-				if (!(id == "big_sister"))
-				{
-					goto IL_490;
-				}
-				if (onCreate)
-				{
-					this.EQ_ID("sword_muramasa", -1, Rarity.Random);
-					goto IL_490;
-				}
-				goto IL_490;
-			}
-		}
-		else if (num != 3590419257U)
-		{
-			if (num != 4273125121U)
-			{
-				goto IL_490;
-			}
-			if (!(id == "adv_kiria"))
-			{
-				goto IL_490;
-			}
-			if (onCreate)
-			{
-				this.EQ_ID("sword_zephir", -1, Rarity.Random);
-				goto IL_490;
-			}
-			goto IL_490;
-		}
-		else
-		{
-			if (!(id == "ephrond"))
-			{
-				goto IL_490;
-			}
-			if (onCreate)
-			{
-				base.AddThing("guitar_efrond", -1);
-				goto IL_490;
-			}
-			goto IL_490;
-		}
-		this.EQ_ID("staff_long", 1, Rarity.Random);
-		this.EQ_CAT("head");
-		this.EQ_CAT("torso");
-		this.EQ_CAT("arm");
-		return;
-		IL_490:
-		if (!(equip == "archer"))
-		{
-			if (!(equip == "inquisitor") && !(equip == "gunner"))
-			{
-				if (!(equip == "predator") && !(equip == "none"))
-				{
-				}
-			}
-			else if (onCreate || !this.TryEquipRanged())
-			{
-				this.EQ_CAT("gun");
-			}
-		}
-		else if (onCreate || !this.TryEquipRanged())
-		{
-			this.EQ_CAT((EClass.rnd(4) == 0) ? "crossbow" : "bow");
-		}
-		int num2 = (base.rarity >= Rarity.Mythical) ? (base.LV * 3) : ((base.rarity >= Rarity.Legendary) ? (base.LV * 2) : base.LV);
-		if (this.trait is TraitAdventurer)
-		{
-			num2 *= 3;
-		}
-		if (this.race.id == "asura")
-		{
-			for (int j = 0; j < 4; j++)
-			{
-				this.EQ_CAT(this.job.weapon.RandomItem<string>());
-			}
-		}
-		for (int k = 0; k < ((this.race.id == "mutant") ? (2 + base.LV / 30) : 1); k++)
-		{
-			if (!this.job.weapon.IsEmpty())
-			{
-				if (this.race.id == "mutant" || (this.body.slotMainHand != null && this.body.slotMainHand.thing == null))
-				{
-					this.EQ_CAT(this.job.weapon.RandomItem<string>());
-				}
-				if (this.race.id == "mutant" || (base.Evalue(131) > 0 && EClass.rnd(2) == 0))
-				{
-					this.EQ_CAT(this.job.weapon.RandomItem<string>());
-				}
-			}
-			this.EQ_CAT("torso");
-			if (EClass.rnd(num2) > 5)
-			{
-				this.EQ_CAT("arm");
-			}
-			if (EClass.rnd(num2) > 10)
-			{
-				this.EQ_CAT("head");
-			}
-			if (EClass.rnd(num2) > 15)
-			{
-				this.EQ_CAT("back");
-			}
-			if (EClass.rnd(num2) > 20)
-			{
-				this.EQ_CAT("ring");
-			}
-			if (EClass.rnd(num2) > 25)
-			{
-				this.EQ_CAT("amulet");
-			}
-			if (EClass.rnd(num2) > 30)
-			{
-				this.EQ_CAT("foot");
-			}
-			if (EClass.rnd(num2) > 35)
-			{
-				this.EQ_CAT("waist");
-			}
-			if (EClass.rnd(num2) > 40)
-			{
-				this.EQ_CAT("ring");
-			}
-		}
-		if (this.trait is TraitBard)
-		{
-			base.AddThing(ThingGen.Create("lute", -1, -1), true, -1, -1);
-		}
-	}
-
-	public void RestockInventory(bool onCreate)
-	{
-		string id = this.id;
-		if (id == "fiama")
-		{
-			this.<RestockInventory>g__Restock|360_0("book_story", 1);
-			return;
-		}
-		if (id == "rock_thrower")
-		{
-			this.<RestockInventory>g__Restock|360_0("stone", 10 + EClass.rnd(10));
-			return;
-		}
-		if (!(id == "giant"))
-		{
-			if (!(id == "begger"))
-			{
-				if (!(id == "farris"))
-				{
-					return;
-				}
-				this.<RestockInventory>g__Restock|360_0("lute", 1);
-			}
-			return;
-		}
-		this.<RestockInventory>g__Restock|360_0("rock", 2 + EClass.rnd(10));
-	}
-
-	private void SetEQQuality()
-	{
-		CardBlueprint.Set(CardBlueprint.CharaGenEQ);
-		Rarity rarity = Rarity.Normal;
-		int num = (base.LV >= 1000) ? 7 : ((base.LV >= 500) ? 5 : ((base.LV >= 250) ? 3 : ((base.LV >= 100) ? 2 : ((base.LV >= 50) ? 1 : 0))));
-		Rarity rarity2 = base.rarity;
-		if (this.id == "big_sister")
-		{
-			num = (Chara.isOnCreate ? 8 : 4);
-		}
-		if (!Chara.isOnCreate && EClass.rnd(10) != 0)
-		{
-			num /= 2;
-		}
-		if (rarity2 == Rarity.Superior && EClass.rnd(10) <= num)
-		{
-			rarity = Rarity.Superior;
-		}
-		else if (rarity2 == Rarity.Legendary)
-		{
-			rarity = ((EClass.rnd(10) <= num) ? Rarity.Legendary : ((EClass.rnd(5) <= num) ? Rarity.Superior : Rarity.Normal));
-		}
-		else if (rarity2 >= Rarity.Mythical)
-		{
-			rarity = ((EClass.rnd(30) <= num) ? Rarity.Mythical : ((EClass.rnd(10) <= num) ? Rarity.Legendary : Rarity.Superior));
-		}
-		if (rarity == Rarity.Normal && EClass.rnd(1000) == 0)
-		{
-			rarity = Rarity.Legendary;
-		}
-		CardBlueprint.current.rarity = rarity;
-	}
-
-	public Thing EQ_ID(string s, int mat = -1, Rarity r = Rarity.Random)
-	{
-		this.SetEQQuality();
-		if (r != Rarity.Random)
-		{
-			CardBlueprint.current.rarity = r;
-		}
-		Thing thing = ThingGen.Create(s, mat, base.LV);
-		if (this.body.GetSlot(thing, true, false) == null)
-		{
-			return thing;
-		}
-		base.AddThing(thing, true, -1, -1);
-		if (!this.body.Equip(thing, null, true))
-		{
-			thing.Destroy();
-		}
-		return thing;
-	}
-
-	public void EQ_CAT(string s)
-	{
-		int slot = EClass.sources.categories.map[s].slot;
-		BodySlot bodySlot = (slot == 0) ? null : this.body.GetSlot(slot, true, false);
-		if (slot != 0 && bodySlot == null)
-		{
-			return;
-		}
-		if (slot == 37 && base.HasElement(1209, 1))
-		{
-			return;
-		}
-		this.SetEQQuality();
-		Thing thing = ThingGen.CreateFromCategory(s, base.LV);
-		base.AddThing(thing, true, -1, -1);
-		if (bodySlot != null && !this.body.Equip(thing, bodySlot, true))
-		{
-			thing.Destroy();
-		}
-	}
-
-	public void EQ_Item(string s, int num = 1)
-	{
-		this.SetEQQuality();
-		Thing t = ThingGen.Create(s, -1, base.LV).SetNum(num);
-		base.AddThing(t, true, -1, -1);
-	}
-
-	public void Drink(Card t)
-	{
-		base.Say("drink", this, t.Duplicate(1), null, null);
-		base.Say("quaff", null, null);
-		base.PlaySound("drink", 1f, true);
-		this.hunger.Mod(-2);
-		t.ModNum(-1, true);
-		t.trait.OnDrink(this);
-		bool isPC = this.IsPC;
-	}
-
-	public void GetRevived()
-	{
-		this.Revive(EClass.pc.pos.GetNearestPoint(false, false, true, false), true);
-		if (!this.IsPCFaction)
-		{
-			return;
-		}
-		if (!this.IsPC && !this.trait.CanJoinPartyResident)
-		{
-			if (this.homeZone != null && EClass._zone != this.homeZone)
-			{
-				Msg.Say("returnHome", this, this.homeZone.Name, null, null);
-				this.MoveZone(this.homeZone, ZoneTransition.EnterState.Auto);
-			}
-			return;
-		}
-		if (!EClass._zone.IsPCFaction || this.homeBranch != EClass.Branch || base.GetInt(103, null) != 0)
-		{
-			EClass.pc.party.AddMemeber(this);
-		}
-	}
-
-	public void Revive(Point p = null, bool msg = false)
-	{
-		if (!this.isDead)
-		{
-			return;
-		}
-		this.isDead = false;
-		base.hp = this.MaxHP / 3;
-		this.mana.value = 0;
-		this.stamina.value = 0;
-		this.hunger.value = 30;
-		this.sleepiness.value = 0;
-		this.hostility = this.OriginalHostility;
-		if (this.IsPC)
-		{
-			if (EClass.player.preventDeathPenalty)
-			{
-				Msg.Say("noDeathPenalty2", this, null, null, null);
-			}
-			else if (EClass.player.stats.days <= 90 && !EClass.debug.enable)
-			{
-				Msg.Say("noDeathPenalty", this, null, null, null);
-			}
-			else
-			{
-				EClass.pc.ApplyDeathPenalty();
-			}
-			List<Thing> dropList = new List<Thing>();
-			EClass.pc.things.Foreach(delegate(Thing t)
-			{
-				if (!t.IsContainer && t.SelfWeight > EClass.pc.WeightLimit && t.trait.CanBeDropped && (t.parentCard.c_lockLv == 0 || t.parentCard.trait is TraitChestPractice))
-				{
-					t.ignoreAutoPick = true;
-					dropList.Add(t);
-				}
-			}, false);
-			foreach (Thing thing in dropList)
-			{
-				EClass._zone.AddCard(thing, EClass.pc.pos);
-				Msg.Say("backpack_full_drop", thing, null, null, null);
-			}
-			EClass.player.preventDeathPenalty = false;
-		}
-		if (this.IsPCFaction && this.homeBranch != null)
-		{
-			this.homeBranch.Log("bRevive", this, null, null, null);
-		}
-		if (p == null)
-		{
-			return;
-		}
-		if (!p.IsInBounds)
-		{
-			p.Set(EClass._map.GetCenterPos().GetNearestPoint(false, true, true, false) ?? EClass._map.GetCenterPos());
-		}
-		EClass._zone.AddCard(this, p);
-		if (msg)
-		{
-			SE.Play("revive");
-			Msg.Say("revive", this, null, null, null);
-			base.PlayEffect("revive", true, 0f, default(Vector3));
-		}
-	}
-
-	public void MakeGrave(string lastword)
-	{
-		if (EClass._zone.IsRegion)
-		{
-			return;
-		}
-		List<string> list = new List<string>
-		{
-			"930",
-			"931",
-			"947",
-			"948",
-			"949",
-			"950",
-			"951",
-			"952"
-		};
-		if (this.IsPC && EClass.rnd(2) == 0 && EClass.pc.things.Find("letter_will", -1, -1) != null)
-		{
-			list = new List<string>
-			{
-				"944",
-				"946",
-				"backerGrave",
-				"backerGrave2"
-			};
-		}
-		Thing thing = ThingGen.Create(list.RandomItem<string>(), -1, -1);
-		thing.MakeRefFrom(this, null);
-		if (!lastword.IsEmpty())
-		{
-			thing.c_note = lastword;
-		}
-		thing.isModified = true;
-		EClass._zone.AddCard(thing, this.pos).Install();
-	}
-
-	public void ApplyDeathPenalty()
-	{
-		if (this.IsPC)
-		{
-			int currency = base.GetCurrency("money");
-			if (currency > 0)
-			{
-				int num = currency / 3 + EClass.rnd(currency / 3 + 1);
-				if (num <= 0)
-				{
-					num = 1;
-				}
-				Msg.Say("panaltyMoney", this, Lang._currency(num, false, 14), null, null);
-				base.ModCurrency(-num, "money");
-				EClass._zone.AddCard(ThingGen.CreateCurrency(num, "money"), EClass.pc.pos);
-				foreach (Element element in EClass.pc.elements.dict.Values)
-				{
-					if (EClass.rnd(5) == 0 && element.IsMainAttribute)
-					{
-						EClass.pc.elements.ModExp(element.id, -500, false);
-					}
-				}
-			}
-		}
-	}
-
-	public void Vomit()
-	{
-		int c_vomit = base.c_vomit;
-		base.c_vomit = c_vomit + 1;
-		base.Say("vomit", this, null, null);
-		base.PlaySound("vomit", 1f, true);
-		if (!EClass._zone.IsRegion)
-		{
-			Thing thing = ThingGen.Create("731", -1, -1);
-			if (!EClass._zone.IsPCFaction)
-			{
-				thing.MakeRefFrom(this, null);
-			}
-			EClass._zone.AddCard(thing, this.pos);
-		}
-		if (this.HasCondition<ConAnorexia>())
-		{
-			base.ModExp(70, -50);
-			base.ModExp(71, -75);
-			base.ModExp(77, -100);
-		}
-		else if (base.c_vomit > 10)
-		{
-			this.AddCondition<ConAnorexia>(100, false);
-		}
-		this.AddCondition<ConDim>(100, false);
-		if (this.HasCondition<ConAnorexia>())
-		{
-			this.ModWeight(-1 * (1 + EClass.rnd(5)), false);
-		}
-		if (this.hunger.GetPhase() >= 4)
-		{
-			base.DamageHP(9999, AttackSource.Hunger, null);
-		}
-		this.hunger.Mod(30);
-	}
-
-	public override void Die(Element e = null, Card origin = null, AttackSource attackSource = AttackSource.None)
-	{
-		this.combatCount = 0;
-		if (this.isDead || this.host != null)
-		{
-			return;
-		}
-		bool isInActiveZone = this.IsInActiveZone;
-		if (isInActiveZone)
-		{
-			if (this.IsPC)
-			{
-				EClass._zone.ResetHostility();
-			}
-			if (base.isSummon)
-			{
-				base.Say("summon_vanish", this, null, null);
-				this.pos.PlayEffect("vanish");
-				this.pos.PlaySound("vanish", true, 1f, true);
-				base.Destroy();
-				return;
-			}
-			if (attackSource == AttackSource.DeathSentense)
-			{
-				if (this.trait is TraitLittleOne)
-				{
-					this.MakeEgg(true, 1, true);
-				}
-				base.PlayEffect("revive", true, 0f, default(Vector3));
-				base.PlaySound("chime_angel", 1f, true);
-			}
-			else
-			{
-				Effect.Get("blood").Play((this.parent is Chara) ? (this.parent as Chara).pos : this.pos, 0f, null, null).SetParticleColor(EClass.Colors.matColors[base.material.alias].main).Emit(50);
-				base.AddBlood(2 + EClass.rnd(2), -1);
-				base.PlaySound(base.material.GetSoundDead(this.source), 1f, true);
-			}
-			this.renderer.RefreshSprite();
-			this.renderer.RefreshStateIcon();
-			base.ClearFOV();
-		}
-		string text = "";
-		"dead_in".langGame(EClass._zone.Name, null, null, null);
-		string text2 = (origin == null) ? "" : origin.GetName(NameStyle.Full, -1);
-		if (LangGame.Has("dead_" + attackSource.ToString()))
-		{
-			text = "dead_" + attackSource.ToString();
-		}
-		else
-		{
-			if (e != Element.Void && e != null)
-			{
-				text = "dead_" + e.source.alias;
-			}
-			if (text == "" || !LangGame.Has(text))
-			{
-				text = "dead";
-			}
-		}
-		if (this.IsPC)
-		{
-			EClass._zone.isDeathLocation = true;
-			string s = (origin == null) ? text : "dead_by";
-			Msg.thirdPerson1.Set(EClass.pc, false);
-			if (attackSource == AttackSource.Wrath)
-			{
-				text2 = Religion.recentWrath.NameShort;
-			}
-			EClass.player.deathMsg = GameLang.Parse(s.langGame(), true, EClass.pc.NameBraced, "dead_in".langGame(EClass._zone.Name, null, null, null), text2, null);
-			Debug.Log(EClass.player.deathMsg);
-			ZoneInstanceRandomQuest zoneInstanceRandomQuest = EClass._zone.instance as ZoneInstanceRandomQuest;
-			if (zoneInstanceRandomQuest != null)
-			{
-				zoneInstanceRandomQuest.status = ZoneInstance.Status.Fail;
-			}
-			AI_PlayMusic.keepPlaying = false;
-		}
-		if (isInActiveZone)
-		{
-			if (attackSource == AttackSource.DeathSentense)
-			{
-				Msg.Say("goto_heaven", this, null, null, null);
-			}
-			else
-			{
-				if (origin == null || !origin.isSynced || (attackSource != AttackSource.Melee && attackSource != AttackSource.Range))
-				{
-					Msg.Say(text, this, "", text2, null);
-				}
-				string text3 = this.TalkTopic("dead");
-				if (!text3.IsEmpty())
-				{
-					text3 = text3.StripBrackets();
-				}
-				bool flag = base.rarity >= Rarity.Legendary && !this.IsPCFaction;
-				if (!this.IsPC && flag)
-				{
-					this.MakeGrave(text3);
-				}
-				Msg.SetColor();
-				base.SpawnLoot(origin);
-			}
-			if (this.held != null && this.held.trait.CanOnlyCarry)
-			{
-				this.DropHeld(null);
-			}
-		}
-		if (this.IsPCFaction)
-		{
-			if (this.homeBranch != null)
-			{
-				this.homeBranch.Log(text, this, "", null, null);
-			}
-			WidgetPopText.Say("popDead".lang(base.Name, null, null, null, null), FontColor.Bad, null);
-			if (!this.IsPC)
-			{
-				if (EClass.player.stats.allyDeath == 0)
-				{
-					Tutorial.Reserve("death_pet", null);
-				}
-				EClass.player.stats.allyDeath++;
-			}
-		}
-		if (this.id == "mandrake")
-		{
-			base.Say("a_scream", this, null, null);
-			ActEffect.ProcAt(EffectId.Scream, base.LV * 3 + 200, BlessedState.Normal, this, this, this.pos, true, default(ActRef));
-		}
-		this.daysStarved = 0;
-		this.isDead = true;
-		this.enemy = null;
-		this._cooldowns = null;
-		base.isSale = false;
-		EClass._map.props.sales.Remove(this);
-		this.Cure(CureType.Death, 100, BlessedState.Normal);
-		this.SetAI(new NoGoal());
-		this.TryDropBossLoot();
-		if (isInActiveZone && EClass._zone.HasLaw && this.IsHuman && this.OriginalHostility >= Hostility.Neutral)
-		{
-			this.pos.TalkWitnesses((origin != null) ? origin.Chara : null, "witness", 3, WitnessType.crime, (Chara c) => !c.IsPCParty && !c.IsUnique, 3);
-		}
-		if (this.IsPC)
-		{
-			EClass.player.returnInfo = null;
-			EClass.player.uidLastTravelZone = 0;
-			foreach (Chara chara in EClass._map.charas)
-			{
-				if (chara.IsHostile())
-				{
-					chara.hostility = chara.OriginalHostility;
-				}
-				if (chara.enemy == EClass.pc)
-				{
-					chara.enemy = null;
-				}
-			}
-			if (EClass.pc.things.Find("letter_will", -1, -1) != null && EClass.rnd(10) == 0)
-			{
-				EClass.player.preventDeathPenalty = true;
-			}
-		}
-		else
-		{
-			bool flag2 = this.currentZone.IsActiveZone && this.IsLocalChara && !this.currentZone.IsPCFaction;
-			if (this.currentZone is Zone_LittleGarden && this.id == "littleOne")
-			{
-				flag2 = false;
-			}
-			if (flag2)
-			{
-				EClass._map.deadCharas.Add(this);
-			}
-			this.currentZone.RemoveCard(this);
-		}
-		string id;
-		if ((origin != null && origin.IsPCParty) || this.IsPCFaction)
-		{
-			int a = -10;
-			if (this.IsPCFaction && !this.IsPCParty && (origin == null || !origin.IsPCParty))
-			{
-				a = -5;
-			}
-			this.ModAffinity(EClass.pc, a, false);
-			id = this.id;
-			if (!(id == "quru"))
-			{
-				if (id == "corgon")
-				{
-					Chara chara2 = EClass.game.cards.globalCharas.Find("quru");
-					if (chara2 != null)
-					{
-						chara2.ModAffinity(EClass.pc, -20, false);
-					}
-				}
-			}
-			else
-			{
-				Chara chara3 = EClass.game.cards.globalCharas.Find("corgon");
-				if (chara3 != null)
-				{
-					chara3.ModAffinity(EClass.pc, -20, false);
-				}
-			}
-		}
-		if (origin != null)
-		{
-			if (origin.IsPCParty || origin.IsPCPartyMinion)
-			{
-				int num = 0;
-				if (this.OriginalHostility >= Hostility.Friend && this.IsHuman && !base.IsPCFactionOrMinion)
-				{
-					num = -5;
-				}
-				else if (this.race.id == "cat" && this.OriginalHostility >= Hostility.Neutral)
-				{
-					EClass.pc.Say("killcat", null, null);
-					num = -1;
-				}
-				if (EClass.pc.party.HasElement(1563) && num < 0)
-				{
-					num = num * 30 / 100;
-				}
-				if (num != 0)
-				{
-					EClass.player.ModKarma(num);
-				}
-			}
-			if (origin == EClass.pc)
-			{
-				EClass.pc.faith.Revelation("kill", 10);
-			}
-			else if (origin.IsPCFaction)
-			{
-				origin.Chara.ModAffinity(EClass.pc, 1, false);
-				origin.Chara.ShowEmo(Emo.love, 0f, true);
-			}
-		}
-		if (base.sourceBacker != null && origin != null && origin.IsPCParty)
-		{
-			EClass.player.doneBackers.Add(base.sourceBacker.id);
-		}
-		base.SetInt(103, this.IsPCParty ? 1 : 0);
-		if (this.IsPCParty)
-		{
-			if (!this.IsPC)
-			{
-				EClass.pc.party.RemoveMember(this);
-				EClass.pc.Say("allyDead", null, null);
-				if (EClass.game.config.autoCombat.abortOnAllyDead && EClass.player.TryAbortAutoCombat())
-				{
-					Msg.Say("abort_allyDead");
-				}
-			}
-		}
-		else if (EClass.game.config.autoCombat.abortOnEnemyDead && EClass.player.TryAbortAutoCombat())
-		{
-			Msg.Say("abort_enemyDead");
-		}
-		id = this.id;
-		if (!(id == "littleOne"))
-		{
-			if (id == "big_daddy")
-			{
-				if (!this.IsPCFaction)
-				{
-					Chara t = CharaGen.Create("littleOne", -1);
-					EClass._zone.AddCard(t, this.pos.Copy());
-					Msg.Say("little_pop");
-				}
-			}
-		}
-		else if (attackSource != AttackSource.DeathSentense)
-		{
-			EClass.player.flags.little_killed = true;
-			EClass.player.little_dead++;
-		}
-		if (attackSource == AttackSource.Finish && origin != null && origin.Evalue(665) > 0)
-		{
-			Chara chara4 = CharaGen.CreateFromFilter("c_plant", base.LV, -1);
-			EClass._zone.AddCard(chara4, this.pos.Copy());
-			if (chara4.LV < base.LV)
-			{
-				chara4.SetLv(base.LV);
-			}
-			chara4.MakeMinion((origin.IsPCParty || origin.IsPCPartyMinion) ? EClass.pc : origin.Chara, MinionType.Friend);
-			Msg.Say("plant_pop", this, chara4, null, null);
-		}
-		foreach (ZoneEvent zoneEvent in EClass._zone.events.list)
-		{
-			zoneEvent.OnCharaDie(this);
-		}
-	}
-
-	public void TryDropBossLoot()
-	{
-		if (this.IsPCFaction || this.IsPCFactionMinion)
-		{
-			return;
-		}
-		int num = 0;
-		bool flag = false;
-		bool flag2 = false;
-		Point point = this.pos.GetNearestPoint(true, false, false, true) ?? this.pos;
-		TreasureType type = TreasureType.BossQuest;
-		if (EClass._zone.Boss == this)
-		{
-			type = TreasureType.BossNefia;
-			num = 2 + EClass.rnd(2);
-			flag2 = (flag = true);
-			EClass._zone.Boss = null;
-			Msg.Say("boss_win", EClass._zone.Name, null, null, null);
-			if (EClass._zone is Zone_Void && (!EClass.player.flags.KilledBossInVoid || EClass.debug.enable))
-			{
-				Msg.Say("boss_win_void", EClass._zone.Name, null, null, null);
-				EClass.player.flags.KilledBossInVoid = true;
-			}
-			if (EClass._zone.IsNefia)
-			{
-				EClass._zone.GetTopZone().isConquered = true;
-				EClass.Sound.StopBGM(2f, false);
-				SE.Play("Jingle/fanfare2");
-				EClass._zone.SetBGM(114, true);
-			}
-			EClass.player.ModFame(EClass.rndHalf(30 + EClass._zone.DangerLv * 2));
-			EClass.player.ModKarma(5);
-		}
-		string id = this.id;
-		if (!(id == "vernis_boss"))
-		{
-			if (!(id == "melilith_boss"))
-			{
-				if (!(id == "isygarad"))
-				{
-					if (id == "swordkeeper")
-					{
-						num = 10;
-						flag = true;
-						SE.Play("kill_boss");
-						SoundManager.ForceBGM();
-						LayerDrama.Activate("_event", "event", "swordkeeper_defeat", null, null, "");
-					}
-				}
-				else
-				{
-					num = 5;
-					flag2 = (flag = true);
-					QuestExploration questExploration = EClass.game.quests.Get<QuestExploration>();
-					if (questExploration != null)
-					{
-						SE.Play("kill_boss");
-						questExploration.ChangePhase(3);
-						EClass.Sound.StopBGM(3f, false);
-						EClass._zone.SetBGM(1, false);
-					}
-				}
-			}
-			else
-			{
-				num = 5;
-				flag2 = (flag = true);
-				EClass.Sound.StopBGM(3f, false);
-				EClass._zone.SetBGM(1, false);
-			}
-		}
-		else
-		{
-			num = 5;
-			flag2 = (flag = true);
-			EClass.Sound.StopBGM(3f, false);
-			EClass._zone.SetBGM(1, false);
-			if (EClass.game.quests.GetPhase<QuestVernis>() == 8)
-			{
-				EClass.game.quests.Get<QuestVernis>().UpdateOnTalk();
-			}
-		}
-		if (flag)
-		{
-			SE.Play("kill_boss");
-		}
-		if (num != 0)
-		{
-			EClass.player.willAutoSave = true;
-			Thing thing = ThingGen.CreateTreasure("chest_boss", base.LV, type);
-			point.SetBlock(0, 0);
-			point.SetObj(0, 1, 0);
-			EClass._zone.AddCard(thing, point).Install();
-			ThingGen.TryLickChest(thing);
-		}
-		if (flag2)
-		{
-			EClass._zone.AddCard(ThingGen.CreateScroll(8221, 1), this.pos);
-		}
-	}
-
-	public void Kick(Point p, bool ignoreSelf = false)
-	{
-		foreach (Chara t in p.ListCharas())
-		{
-			this.Kick(t, ignoreSelf, true);
-		}
-	}
-
-	public void Kick(Chara t, bool ignoreSelf = false, bool karmaLoss = true)
-	{
-		if (!this.IsAliveInCurrentZone)
-		{
-			return;
-		}
-		if (t.IsPC)
-		{
-			ActionMode.Adv.ClearPlans();
-		}
-		if (t.host != null)
-		{
-			return;
-		}
-		if (t == this)
-		{
-			if (!ignoreSelf)
-			{
-				Debug.Log(t.pos.GetNearestPoint(false, true, true, false));
-				if (this.TryMove(t.pos.GetNearestPoint(false, true, true, false), true) != Card.MoveResult.Success)
-				{
-					t.MoveImmediate(this.pos.GetNearestPoint(false, true, true, false) ?? t.pos, true, true);
-					return;
-				}
-			}
-		}
-		else
-		{
-			base.Say("kick", this, t, null, null);
-			base.PlaySound("kick", 1f, true);
-			if ((t.conSuspend == null || t.conSuspend.uidMachine != 0) && t.trait.CanBePushed && (!t.IsHostile() || EClass.rnd(2) == 0) && !t.noMove && !t.isRestrained)
-			{
-				t.MoveByForce(t.pos.GetNearestPoint(false, false, true, true), this, !t.pos.IsBlocked);
-			}
-			if (t.conSleep != null)
-			{
-				t.conSleep.Kill(false);
-			}
-			if (this.IsPC && t.IsFriendOrAbove() && !t.IsPCFactionOrMinion && karmaLoss)
-			{
-				EClass.player.ModKarma(-1);
-			}
-			t.PlayEffect("kick", true, 0f, default(Vector3));
-		}
-	}
-
-	public bool UseAbility(string idAct, Card tc = null, Point pos = null, bool pt = false)
-	{
-		Element element = this.elements.GetElement(idAct);
-		return this.UseAbility(((element != null) ? element.act : null) ?? ACT.Create(idAct), tc, pos, pt);
-	}
-
-	public bool UseAbility(Act a, Card tc = null, Point pos = null, bool pt = false)
-	{
-		Chara.<>c__DisplayClass377_0 CS$<>8__locals1 = new Chara.<>c__DisplayClass377_0();
-		CS$<>8__locals1.<>4__this = this;
-		CS$<>8__locals1.tc = tc;
-		CS$<>8__locals1.a = a;
-		CS$<>8__locals1.pos = pos;
-		CS$<>8__locals1.pt = pt;
-		if (!this.IsPC && this.HasCooldown(CS$<>8__locals1.a.id))
-		{
-			return false;
-		}
-		int num = 1;
-		Act.Cost cost = CS$<>8__locals1.a.GetCost(this);
-		CS$<>8__locals1.a.GetPower(this);
-		CS$<>8__locals1.n = 1;
-		int num2 = 0;
-		if (this.IsPC && this.HasCondition<StanceManaCost>())
-		{
-			num2 = base.Evalue(1657);
-		}
-		Chara._pts.Clear();
-		if (CS$<>8__locals1.a.TargetType.ForceParty)
-		{
-			CS$<>8__locals1.pt = true;
-		}
-		if (CS$<>8__locals1.pt)
-		{
-			CS$<>8__locals1.n = 0;
-			CS$<>8__locals1.<UseAbility>g__ForeachParty|0(delegate(Chara c)
-			{
-				int n = CS$<>8__locals1.n;
-				CS$<>8__locals1.n = n + 1;
-			});
-		}
-		if (CS$<>8__locals1.a is Spell && this.IsPC && CS$<>8__locals1.a.vPotential < CS$<>8__locals1.n)
-		{
-			CS$<>8__locals1.n = 1;
-			Chara._pts.Clear();
-			Chara._pts.Add(this);
-			CS$<>8__locals1.pt = false;
-		}
-		int num3 = 100;
-		if (!CS$<>8__locals1.a.TargetType.ForceParty && CS$<>8__locals1.n > 1)
-		{
-			num3 = (this.IsPC ? (CS$<>8__locals1.n * 100) : (50 + CS$<>8__locals1.n * 50));
-		}
-		int num4 = cost.cost * num3 / 100;
-		if (cost.type == Act.CostType.MP && base.Evalue(483) > 0)
-		{
-			num4 = num4 * 100 / (100 + (int)Mathf.Sqrt((float)(base.Evalue(483) * 10)) * 3);
-		}
-		if (CS$<>8__locals1.n == 0)
-		{
-			if (this.IsPC)
-			{
-				Msg.SayNothingHappen();
-			}
-			return false;
-		}
-		if (!this.IsPC && cost.type == Act.CostType.MP && this.mana.value < 0 && (EClass.rnd(4) != 0 || this.IsPCFaction || (base.IsPowerful && this.mana.value < -20)))
-		{
-			return false;
-		}
-		if (this.IsPC)
-		{
-			if (!Dialog.warned && cost.type == Act.CostType.MP && cost.cost > 0 && this.mana.value < num4 && !EClass.debug.godMode)
-			{
-				ActPlan.warning = true;
-				Dialog.TryWarnMana(delegate
-				{
-					if (CS$<>8__locals1.<>4__this.UseAbility(CS$<>8__locals1.a, CS$<>8__locals1.tc, CS$<>8__locals1.pos, CS$<>8__locals1.pt))
-					{
-						EClass.player.EndTurn(true);
-					}
-				});
-				return false;
-			}
-			EClass.ui.CloseLayers();
-		}
-		if ((this.isConfused && EClass.rnd(4) == 0) || (this.isBlind && (CS$<>8__locals1.pt || (CS$<>8__locals1.pos != null && !CS$<>8__locals1.pos.Equals(this.pos)) || (CS$<>8__locals1.tc != null && CS$<>8__locals1.tc.pos != null && !CS$<>8__locals1.tc.pos.Equals(this.pos))) && EClass.rnd(2) == 0))
-		{
-			base.Say("shakeHead", this, null, null);
-			return true;
-		}
-		if (CS$<>8__locals1.tc != null && CS$<>8__locals1.tc != this)
-		{
-			this.LookAt(CS$<>8__locals1.tc.pos);
-		}
-		if (CS$<>8__locals1.pos != null && !this.pos.Equals(CS$<>8__locals1.pos))
-		{
-			this.LookAt(CS$<>8__locals1.pos);
-		}
-		if (CS$<>8__locals1.a.CanRapidFire && base.HasElement(1648, 1))
-		{
-			num = 1 + base.Evalue(1648);
-		}
-		if (this.IsPC && cost.cost > 0 && CS$<>8__locals1.a.Value == 0)
-		{
-			Msg.SayNothingHappen();
-			return false;
-		}
-		if (CS$<>8__locals1.a is Spell)
-		{
-			string s = this.isConfused ? "_cast_confuse" : (this.HasCondition<ConDim>() ? "_cast_dim" : "");
-			if (!CS$<>8__locals1.a.source.tag.Contains("useHand"))
-			{
-				base.Say(this.race.castStyle.IsEmpty("cast"), this, CS$<>8__locals1.a.source.GetName().ToLower(), s.lang());
-			}
-			if (this.IsPC)
-			{
-				int num5 = (CS$<>8__locals1.n + 1) / 2;
-				if (CS$<>8__locals1.a.vPotential < CS$<>8__locals1.n)
-				{
-					Msg.Say("noSpellStock");
-					EInput.Consume(false, 1);
-					return false;
-				}
-				if (num2 > 0 && CS$<>8__locals1.a.vPotential >= CS$<>8__locals1.n * 2)
-				{
-					CS$<>8__locals1.a.vPotential -= CS$<>8__locals1.n * 2;
-					num4 = num4 * (100 - num2 * 20) / 100;
-				}
-				else
-				{
-					CS$<>8__locals1.a.vPotential -= CS$<>8__locals1.n;
-				}
-				LayerAbility.SetDirty(CS$<>8__locals1.a);
-			}
-		}
-		else if (CS$<>8__locals1.a.source.langAct.Length != 0 && CS$<>8__locals1.tc != null)
-		{
-			string text = CS$<>8__locals1.a.source.langAct[0];
-			string text2 = (CS$<>8__locals1.a.source.langAct.Length >= 2) ? CS$<>8__locals1.a.source.langAct[1] : "";
-			if (text == "spell_hand")
-			{
-				string[] list = Lang.GetList("attack" + this.race.meleeStyle.IsEmpty("Touch"));
-				string @ref = text2.lang(list[4], null, null, null, null);
-				base.Say(CS$<>8__locals1.tc.IsPCParty ? "cast_hand_ally" : "cast_hand", this, CS$<>8__locals1.tc, @ref, CS$<>8__locals1.tc.IsPCParty ? list[1] : list[2]);
-			}
-			else
-			{
-				base.Say(text, this, CS$<>8__locals1.tc, text2.IsEmpty() ? "" : text2.lang(), null);
-			}
-			if (CS$<>8__locals1.a.source.id == 6630)
-			{
-				base.Talk("insult_" + (base.IsMale ? "m" : "f"), null, null, false);
-			}
-		}
-		Act.CostType type = cost.type;
-		if (type != Act.CostType.MP)
-		{
-			if (type == Act.CostType.SP)
-			{
-				this.stamina.Mod(-num4);
-			}
-		}
-		else
-		{
-			if (base.Evalue(1421) >= 2 && base.hp <= this.MaxHP / (9 - base.Evalue(1421) * 2))
-			{
-				num4 /= 2;
-			}
-			base.PlayEffect("cast", true, 0f, default(Vector3));
-			this.mana.Mod(-num4);
-			if (this.isDead)
-			{
-				return true;
-			}
-			this.elements.ModExp(304, Mathf.Clamp(num4 * 2, 1, 200), false);
-		}
-		if (CS$<>8__locals1.a is Spell && this.GetCondition<ConSilence>() != null)
-		{
-			base.Say("cast_silence", this, null, null);
-			return true;
-		}
-		if (this.isDead)
-		{
-			return true;
-		}
-		int spellExp = this.elements.GetSpellExp(this, CS$<>8__locals1.a, num3);
-		if (EClass.rnd(100) >= this.CalcCastingChance(CS$<>8__locals1.a, CS$<>8__locals1.n) && !EClass.debug.godMode)
-		{
-			base.Say("fizzle", this, null, null);
-			base.PlayEffect("fizzle", true, 0f, default(Vector3));
-			base.PlaySound("fizzle", 1f, true);
-			if (cost.cost > 0 && CS$<>8__locals1.a.source.lvFactor > 0)
-			{
-				base.ModExp(CS$<>8__locals1.a.id, spellExp / 5);
-			}
-			this.RemoveCondition<ConInvisibility>();
-			return true;
-		}
-		bool flag = true;
-		if (CS$<>8__locals1.pt)
-		{
-			Act.forcePt = true;
-			CS$<>8__locals1.<UseAbility>g__ForeachParty|0(delegate(Chara c)
-			{
-				CS$<>8__locals1.a.Perform(CS$<>8__locals1.<>4__this, c, c.pos);
-			});
-			Act.forcePt = false;
-		}
-		else
-		{
-			int num6 = 0;
-			while (num6 < num && (CS$<>8__locals1.a.TargetType == TargetType.SelfParty || CS$<>8__locals1.tc == null || CS$<>8__locals1.tc.IsAliveInCurrentZone))
-			{
-				ActEffect.RapidCount = num6;
-				ActEffect.RapidDelay = CS$<>8__locals1.a.RapidDelay;
-				flag = CS$<>8__locals1.a.Perform(this, CS$<>8__locals1.tc, CS$<>8__locals1.pos);
-				num6++;
-			}
-		}
-		if (flag && !this.isDead && cost.cost > 0 && CS$<>8__locals1.a.source.lvFactor > 0)
-		{
-			base.ModExp(CS$<>8__locals1.a.id, spellExp);
-		}
-		ActEffect.RapidCount = 0;
-		if (!this.IsPC && CS$<>8__locals1.a.source.cooldown > 0)
-		{
-			this.AddCooldown(CS$<>8__locals1.a.id, CS$<>8__locals1.a.source.cooldown);
-		}
-		if (flag && !CS$<>8__locals1.a.source.tag.Contains("keepInvisi") && EClass.rnd(2) == 0)
-		{
-			this.RemoveCondition<ConInvisibility>();
-		}
-		return flag;
-	}
-
-	public int EvalueRiding()
-	{
-		if (this.ride != null && this.ride.HasCondition<ConTransmuteBroom>() && base.HasElement(1417, 1))
-		{
-			return 25 + base.Evalue(226) * 125 / 100;
-		}
-		return base.Evalue(226);
-	}
-
-	public int CalcCastingChance(Element e, int num = 1)
-	{
-		if (!(e is Spell))
-		{
-			return 100;
-		}
-		if (!this.IsPC)
-		{
-			int num2 = 95;
-			if (this.host != null)
-			{
-				if (this.host.ride == this)
-				{
-					return num2 * 100 / (100 + 300 / Mathf.Max(5, 10 + this.host.EvalueRiding()));
-				}
-				if (this.host.parasite == this)
-				{
-					return num2 * 100 / (100 + 300 / Mathf.Max(5, 10 + this.host.Evalue(227)));
-				}
-			}
-			return num2;
-		}
-		int num3 = base.Evalue(304);
-		if (!this.IsPCFaction)
-		{
-			num3 = Mathf.Max(num3, base.LV + 5);
-		}
-		int num4 = 0;
-		bool flag = this.GetArmorSkill() == 122;
-		AttackStyle attackStyle = this.body.GetAttackStyle();
-		int num5;
-		if (flag)
-		{
-			num5 = 20 - base.Evalue(122) / 5;
-			num4 += 10 - base.Evalue(1654) * 4;
-		}
-		else
-		{
-			num5 = 10 - base.Evalue(120) / 5;
-		}
-		if (num5 < 5)
-		{
-			num5 = 5;
-		}
-		if (this.ride != null)
-		{
-			num5 += 5;
-		}
-		if (this.parasite != null)
-		{
-			num5 += 10;
-		}
-		if (attackStyle == AttackStyle.TwoWield)
-		{
-			num5 += 5;
-		}
-		if (attackStyle == AttackStyle.Shield)
-		{
-			num5 += 5;
-			num4 += 10 - base.Evalue(1654) * 4;
-		}
-		if (this.isConfused)
-		{
-			num5 += 10000;
-		}
-		if (this.HasCondition<ConDim>())
-		{
-			num5 += ((base.Evalue(1654) >= 3) ? 1500 : 2500);
-		}
-		if (num > 1)
-		{
-			num5 += 5 * num;
-		}
-		if (num4 < 0)
-		{
-			num4 = 0;
-		}
-		return Mathf.Clamp(100 + e.Value - 10 - e.source.LV * e.source.cost[0] * num5 / (10 + num3 * 10), 0, 100 - num4);
-	}
-
-	public void DoAI(int wait, Action onPerform)
-	{
-		this.SetAI(new DynamicAIAct("", delegate()
-		{
-			onPerform();
-			return true;
-		}, false)
-		{
-			wait = wait
-		});
-	}
-
-	public bool IsMofuable
-	{
-		get
-		{
-			return this.race.tag.Contains("mofu");
-		}
-	}
-
-	public void Cuddle(Chara c, bool headpat = false)
-	{
-		base.Talk("goodBoy", null, null, false);
-		base.Say(headpat ? "headpat" : "cuddle", this, c, null, null);
-		c.ShowEmo(Emo.love, 0f, true);
-		if (EClass.rnd(this.IsPC ? 100 : 5000) == 0)
-		{
-			c.MakeEgg(true, 1, true);
-		}
-		if (headpat && this != c)
-		{
-			if (c.interest > 0)
-			{
-				c.ModAffinity(EClass.pc, 1 + EClass.rnd(3), true);
-				c.interest -= 20 + EClass.rnd(10);
-			}
-			if (this.faith == EClass.game.religions.MoonShadow && c.IsPCParty)
-			{
-				foreach (Chara chara in this.party.members)
-				{
-					if (!chara.IsPC && this.CanSeeLos(chara, -1, false))
-					{
-						chara.AddCondition<ConEuphoric>(100 + base.Evalue(6904) * 5, false);
-					}
-				}
-			}
-		}
-	}
-
-	public Chara SetEnemy(Chara c = null)
-	{
-		this.enemy = c;
-		if (c != null)
-		{
-			this.calmCheckTurn = 10 + EClass.rnd(30);
-		}
-		return c;
-	}
-
-	public void TrySetEnemy(Chara c)
-	{
-		if (this.IsPC && EClass.game.config.autoCombat.bDontChangeTarget)
-		{
-			return;
-		}
-		if (this.enemy != null && (EClass.rnd(5) != 0 || base.Dist(c) > 1))
-		{
-			return;
-		}
-		if (((this.IsPCFaction || this.IsPCFactionMinion) && (c.IsPCFaction || c.IsPCFactionMinion)) || (this.hostility == Hostility.Enemy && c.hostility == Hostility.Enemy))
-		{
-			return;
-		}
-		if (c.IsPC && this.hostility >= Hostility.Neutral)
-		{
-			return;
-		}
-		this.SetEnemy(c);
-	}
-
-	private void GoHostile(Card _tg)
-	{
-		if (this.enemy == null && !this.IsPC)
-		{
-			if (base.GetInt(106, null) == 0)
-			{
-				this.TalkTopic("aggro");
-			}
-			if (this.OriginalHostility != Hostility.Enemy)
-			{
-				base.ShowEmo(Emo.angry, 0f, true);
-			}
-			this.SetEnemy(_tg.Chara);
-		}
-		if (!this.IsPCFaction && !this.IsPCFactionMinion && (_tg.IsPCFaction || _tg.IsPCFactionMinion))
-		{
-			if (this.hostility >= Hostility.Neutral)
-			{
-				base.Say("angry", this, null, null);
-			}
-			this.hostility = Hostility.Enemy;
-		}
-	}
-
-	public void DoHostileAction(Card _tg, bool immediate = false)
-	{
-		if (_tg == null || !_tg.isChara)
-		{
-			return;
-		}
-		Chara chara = _tg.Chara;
-		if (chara.IsPC)
-		{
-			EClass.pc.combatCount = 10;
-		}
-		if (!chara.IsAliveInCurrentZone || !this.IsAliveInCurrentZone || chara == this)
-		{
-			return;
-		}
-		if ((this.IsPCFaction || this.IsPCFactionMinion) && (chara.IsPCFaction || chara.IsPCFactionMinion))
-		{
-			chara.Say("frown", this, chara, null, null);
-			return;
-		}
-		if (EClass._zone.IsRegion)
-		{
-			return;
-		}
-		if (this.IsPC)
-		{
-			if (chara.IsFriendOrAbove() && !immediate)
-			{
-				chara.Say("frown", this, chara, null, null);
-				chara.ShowEmo(Emo.sad, 0f, true);
-				chara.hostility = Hostility.Neutral;
-				return;
-			}
-			if (!chara.IsPCFaction && chara.hostility >= Hostility.Neutral && !EClass._zone.IsPCFaction)
-			{
-				bool flag = chara.id == "fanatic";
-				if (EClass.rnd(4) == 0 || flag)
-				{
-					chara.Say("callHelp", chara, null, null);
-					chara.CallHelp(this, flag);
-				}
-			}
-			if (chara.hostility > Hostility.Enemy)
-			{
-				goto IL_1C5;
-			}
-			using (List<Chara>.Enumerator enumerator = EClass.pc.party.members.GetEnumerator())
-			{
-				while (enumerator.MoveNext())
-				{
-					Chara chara2 = enumerator.Current;
-					if (chara2 != EClass.pc && chara2.enemy == null)
-					{
-						chara2.SetEnemy(chara);
-					}
-				}
-				goto IL_1C5;
-			}
-		}
-		if (chara.IsPC && this.hostility <= Hostility.Enemy)
-		{
-			foreach (Chara chara3 in EClass.pc.party.members)
-			{
-				if (chara3 != EClass.pc && chara3.enemy == null)
-				{
-					chara3.SetEnemy(this);
-				}
-			}
-		}
-		IL_1C5:
-		if (chara.calmCheckTurn <= 0 || this.IsPC)
-		{
-			chara.calmCheckTurn = (this.IsPC ? (20 + EClass.rnd(30)) : (10 + EClass.rnd(10)));
-		}
-		if (this.hostility == Hostility.Enemy && chara.hostility == Hostility.Enemy)
-		{
-			return;
-		}
-		this.GoHostile(chara);
-		chara.GoHostile(this);
-		if (base.isHidden && !chara.CanSee(this) && !chara.IsDisabled && !chara.IsPCParty && !chara.IsPCPartyMinion && EClass.rnd(6) == 0)
-		{
-			Thing t = ThingGen.Create("49", -1, -1);
-			ActThrow.Throw(chara, this.pos, t, ThrowMethod.Default, 0f);
-		}
-	}
-
-	public void CallHelp(Chara tg, bool fanatic = false)
-	{
-		foreach (Chara chara in EClass._map.charas)
-		{
-			if (!chara.IsPCFaction && chara.OriginalHostility == this.OriginalHostility && (fanatic || base.Dist(chara) <= 6) && (EClass.rnd(3) != 0 || fanatic))
-			{
-				chara.GoHostile(tg);
-			}
-		}
-	}
-
-	public bool FindNewEnemy()
-	{
-		if (EClass._zone.isPeace && base.IsPCFactionOrMinion)
-		{
-			return false;
-		}
-		if (this.enemy != null && !this.enemy.IsAliveInCurrentZone)
-		{
-			this.enemy = null;
-		}
-		if (this.enemy != null)
-		{
-			return false;
-		}
-		bool flag = this.enemy != null || this.ai is GoalCombat;
-		int num = (base.PER + base.Evalue(210) * 2) * (flag ? 2 : 1);
-		bool flag2 = this.IsPCParty && !this.IsPC && EClass.game.config.tactics.dontWander;
-		bool flag3 = !this.IsPCParty;
-		for (int i = 0; i < EClass._map.charas.Count; i++)
-		{
-			Chara chara = EClass._map.charas[i];
-			if (chara != this && this.IsHostile(chara) && this.CanSee(chara))
-			{
-				int num2 = base.Dist(chara);
-				int num3 = base.GetSightRadius() + (flag ? 1 : 0);
-				if (num2 <= num3)
-				{
-					if (flag3 && EClass.rnd(chara.Evalue(152) + 5) * (100 + num2 * num2 * 10) / 100 > EClass.rnd(num))
-					{
-						if (this == this.pos.FirstChara)
-						{
-							chara.ModExp(152, Mathf.Clamp((num - chara.Evalue(152)) / 2, 1, Mathf.Max(30 - this.stealthSeen * 2, 1)));
-						}
-						this.stealthSeen++;
-					}
-					else if (Los.IsVisible(this.pos.x, chara.pos.x, this.pos.z, chara.pos.z, null, true) && (!flag2 || EClass.pc.isBlind || EClass.pc.CanSeeLos(chara, -1, false)))
-					{
-						if (this.IsPCFaction)
-						{
-							AI_Shear ai_Shear = EClass.pc.ai as AI_Shear;
-							if (ai_Shear != null && ai_Shear.target == chara)
-							{
-								goto IL_217;
-							}
-						}
-						this.DoHostileAction(chara, false);
-						this.enemy = chara;
-						return true;
-					}
-				}
-			}
-			IL_217:;
-		}
-		return false;
-	}
-
-	public bool FindNearestNewEnemy()
-	{
-		for (int i = 0; i < EClass._map.charas.Count; i++)
-		{
-			Chara chara = EClass._map.charas[i];
-			if (chara != this && chara != this.enemy && this.IsHostile(chara) && base.Dist(chara) <= 1 && this.CanInteractTo(chara.pos))
-			{
-				this.DoHostileAction(chara, false);
-				this.enemy = chara;
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public bool IsHostile()
-	{
-		return this.hostility <= Hostility.Enemy;
-	}
-
-	public bool IsHostile(Chara c)
-	{
-		if (c == null)
-		{
-			return false;
-		}
-		if (base.IsPCFactionOrMinion)
-		{
-			if ((c == EClass.pc.enemy && !c.IsPCFactionOrMinion) || c.hostility <= Hostility.Enemy)
-			{
-				return true;
-			}
-		}
-		else
-		{
-			if (this.trait is TraitGuard && c.IsPCParty && EClass.player.IsCriminal && EClass._zone.instance == null)
-			{
-				return true;
-			}
-			if (this.OriginalHostility >= Hostility.Friend)
-			{
-				if (c.hostility <= Hostility.Enemy && c.OriginalHostility == Hostility.Enemy)
-				{
-					return true;
-				}
-			}
-			else if (this.OriginalHostility <= Hostility.Enemy && (c.IsPCFactionOrMinion || (c.OriginalHostility != Hostility.Enemy && c.hostility >= Hostility.Friend)))
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public bool IsNeutral()
-	{
-		return this.hostility == Hostility.Neutral;
-	}
-
-	public bool IsNeutralOrAbove()
-	{
-		return this.hostility >= Hostility.Neutral;
-	}
-
-	public bool IsBranchMember()
-	{
-		return this.faction == EClass.Home && this.homeZone == EClass.game.activeZone;
-	}
-
-	public bool IsHomeMember()
-	{
-		return this.faction == EClass.Home;
-	}
-
-	public bool IsInHomeZone()
-	{
-		return EClass.game.activeZone == this.currentZone;
-	}
-
-	public bool IsInSpot<T>() where T : TraitSpot
-	{
-		foreach (T t in EClass._map.props.installed.traits.List<T>(null))
-		{
-			foreach (Point obj in t.ListPoints(null, true))
-			{
-				if (this.pos.Equals(obj))
-				{
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	public bool IsGuest()
-	{
-		return this.memberType == FactionMemberType.Guest;
-	}
-
-	public bool IsFriendOrAbove()
-	{
-		return this.hostility >= Hostility.Friend;
-	}
-
-	public bool IsFriendOrAbove(Chara c)
-	{
-		if (base.IsPCFactionOrMinion || this.IsFriendOrAbove())
-		{
-			if (c.IsPCFactionOrMinion || c.IsFriendOrAbove())
-			{
-				return true;
-			}
-		}
-		else if (this.IsHostile() && c.IsHostile())
-		{
-			return true;
-		}
-		return this.race == c.race;
-	}
-
-	public override CardRenderer _CreateRenderer()
-	{
-		CharaRenderer charaRenderer = new CharaRenderer();
-		if (this.source.moveAnime == "hop")
-		{
-			charaRenderer.hopCurve = EClass.setting.render.anime.hop;
-		}
-		if (this.host != null)
-		{
-			charaRenderer.pccData = PCCData.Create("ride");
-			string text = base.c_idRidePCC.IsEmpty(EClass.core.pccs.sets["ride"].map["body"].map.Keys.First<string>());
-			charaRenderer.pccData.SetPart("body", "ride", text, null);
-			charaRenderer.pccData.ride = EClass.core.pccs.GetRideData(text);
-		}
-		else
-		{
-			foreach (Condition condition in this.conditions)
-			{
-				RendererReplacer rendererReplacer = condition.GetRendererReplacer();
-				if (rendererReplacer != null)
-				{
-					charaRenderer.replacer = rendererReplacer;
-					charaRenderer.data = rendererReplacer.data;
-					break;
-				}
-			}
-			if (charaRenderer.replacer == null)
-			{
-				charaRenderer.pccData = this.pccData;
-			}
-		}
-		this.renderer = charaRenderer;
-		this.renderer.SetOwner(this);
-		return charaRenderer;
-	}
-
-	public void SetPCCState(PCCState state)
-	{
-		if (this.IsPCC)
-		{
-			PCC.Get(this.pccData).Build(state, false);
-		}
-	}
-
-	public override Sprite GetSprite(int dir = 0)
-	{
-		if (this.IsPCC)
-		{
-			PCC pcc = PCC.Get(this.pccData);
-			pcc.Build(false);
-			return pcc.variation.idle[0, 0];
-		}
-		return this.sourceCard.GetSprite((this.sourceCard._tiles.Length > 1) ? ((base.idSkin != 0 || this.source.staticSkin) ? base.idSkin : (base.uid % this.sourceCard._tiles.Length / 2 * 2 + (base.IsMale ? 0 : 1))) : 0, 0, false);
-	}
-
-	public void SetTempHand(int right = 0, int left = 0)
-	{
-		if (!this.IsPC)
-		{
-			return;
-		}
-		if (this.IsPC)
-		{
-			return;
-		}
-		this.pccData.tempRight = EClass.scene.screenElin.renderTempEQ.ConvertTile(right);
-		this.pccData.tempLeft = EClass.scene.screenElin.renderTempEQ.ConvertTile(left);
-	}
-
-	public override SubPassData GetSubPassData()
-	{
-		if (this.IsPCC && (this.IsDeadOrSleeping || (!EClass.player.altHeldPos && this.parent is Chara)))
-		{
-			return EClass.setting.pass.subDeadPCC;
-		}
-		return SubPassData.Default;
-	}
-
-	public override void SetRenderParam(RenderParam p)
-	{
-		p.mat = base.material;
-		p.matColor = (float)base.colorInt;
-		if (!this.renderer.usePass)
-		{
-			return;
-		}
-		if (this.renderer.replacer != null)
-		{
-			p.tile = (float)(this.renderer.replacer.tile * (this.flipX ? -1 : 1));
-		}
-		else if (this.source._tiles_snow.Length != 0 && EClass._zone.IsSnowCovered)
-		{
-			if (this.source._tiles_snow.Length > 1)
-			{
-				int num = (base.idSkin != 0 || this.source.staticSkin) ? base.idSkin : (base.uid % this.source._tiles_snow.Length / 2 * 2 + (base.IsMale ? 0 : 1));
-				p.tile = (float)(this.source._tiles_snow[(num < this.source._tiles_snow.Length) ? num : 0] * (this.flipX ? -1 : 1));
-			}
-			else
-			{
-				p.tile = (float)(this.source._tiles_snow[0] * (this.flipX ? -1 : 1));
-			}
-		}
-		else if (this.sourceCard._tiles.Length > 1)
-		{
-			int num2 = (base.idSkin != 0 || this.source.staticSkin) ? base.idSkin : (base.uid % this.sourceCard._tiles.Length / 2 * 2 + (base.IsMale ? 0 : 1));
-			p.tile = (float)(this.sourceCard._tiles[(num2 < this.sourceCard._tiles.Length) ? num2 : 0] * (this.flipX ? -1 : 1));
-		}
-		else
-		{
-			p.tile = (float)(this.sourceCard._tiles[0] * (this.flipX ? -1 : 1));
-		}
-		p.dir = base.dir;
-	}
-
-	public override string GetHoverText()
-	{
-		string text = base.Name;
-		if (this.IsFriendOrAbove())
-		{
-			text = text.TagColor(EClass.Colors.colorFriend);
-		}
-		else if (this.IsHostile())
-		{
-			text = text.TagColor(EClass.Colors.colorHostile);
-		}
-		int num = 2;
-		int lv = EClass.pc.LV;
-		if (base.LV >= lv * 5)
-		{
-			num = 0;
-		}
-		else if (base.LV >= lv * 2)
-		{
-			num = 1;
-		}
-		else if (base.LV <= lv / 4)
-		{
-			num = 4;
-		}
-		else if (base.LV <= lv / 2)
-		{
-			num = 3;
-		}
-		string text2 = Lang.GetList("lvComparison")[num];
-		text2 = (" (" + text2 + ") ").TagSize(14).TagColor(EClass.Colors.gradientLVComparison.Evaluate(0.25f * (float)num));
-		string s = this.IsFriendOrAbove() ? "HostilityAlly" : (this.IsNeutral() ? "HostilityNeutral" : "HostilityEnemy");
-		s = (" (" + s.lang() + ") ").TagSize(14);
-		if (!EClass.pc.IsMoving)
-		{
-			if (EClass.pc.HasHigherGround(this))
-			{
-				text2 += "lowerGround".lang();
-			}
-			else if (this.HasHigherGround(EClass.pc))
-			{
-				text2 += "higherGround".lang();
-			}
-		}
-		if (base.Evalue(1232) > 0)
-		{
-			text2 = "milkBaby".lang().TagSize(14) + text2;
-		}
-		if (Guild.Fighter.ShowBounty(this) && Guild.Fighter.HasBounty(this))
-		{
-			text2 = "hasBounty".lang().TagSize(14) + text2;
-		}
-		if (EClass.pc.HasElement(481, 1))
-		{
-			text2 += ("( " + this.faith.Name + ")").TagSize(14);
-		}
-		return text + text2;
-	}
-
-	public override string GetHoverText2()
-	{
-		string str = "";
-		if (this.knowFav)
-		{
-			str += Environment.NewLine;
-			str = str + "<size=14>" + "favgift".lang(this.GetFavCat().GetName().ToLower(), this.GetFavFood().GetName(), null, null, null) + "</size>";
-		}
-		string text = "";
-		if (EClass.debug.showExtra)
-		{
-			text += Environment.NewLine;
-			text = string.Concat(new string[]
-			{
-				text,
-				"Lv:",
-				base.LV.ToString(),
-				"  HP:",
-				base.hp.ToString(),
-				"/",
-				this.MaxHP.ToString(),
-				"  MP:",
-				this.mana.value.ToString(),
-				"/",
-				this.mana.max.ToString(),
-				"  DV:",
-				this.DV.ToString(),
-				"  PV:",
-				this.PV.ToString(),
-				"  Hunger:",
-				this.hunger.value.ToString()
-			});
-			text += Environment.NewLine;
-			string[] array = new string[7];
-			array[0] = text;
-			array[1] = "Global:";
-			array[2] = this.IsGlobal.ToString();
-			array[3] = "  AI:";
-			int num = 4;
-			AIAct aiact = this.ai;
-			array[num] = ((aiact != null) ? aiact.ToString() : null);
-			array[5] = " ";
-			int num2 = 6;
-			string tactics = this.source.tactics;
-			SourceTactics.Row row = EClass.sources.tactics.map.TryGetValue(this.id, null);
-			string defaultStr;
-			if ((defaultStr = ((row != null) ? row.id : null)) == null)
-			{
-				SourceTactics.Row row2 = EClass.sources.tactics.map.TryGetValue(this.job.id, null);
-				defaultStr = (((row2 != null) ? row2.id : null) ?? "predator");
-			}
-			array[num2] = tactics.IsEmpty(defaultStr);
-			text = string.Concat(array);
-			text += Environment.NewLine;
-			string[] array2 = new string[7];
-			array2[0] = text;
-			array2[1] = base.uid.ToString();
-			array2[2] = this.IsMinion.ToString();
-			array2[3] = "/";
-			array2[4] = base.c_uidMaster.ToString();
-			array2[5] = "/";
-			int num3 = 6;
-			Chara chara = this.master;
-			array2[num3] = ((chara != null) ? chara.ToString() : null);
-			text = string.Concat(array2);
-		}
-		string text2 = "";
-		IEnumerable<BaseStats> first = this.conditions;
-		IEnumerable<BaseStats> second;
-		if (!this.IsPCFaction)
-		{
-			second = new BaseStats[0];
-		}
-		else
-		{
-			BaseStats[] array3 = new BaseStats[2];
-			array3[0] = this.hunger;
-			second = array3;
-			array3[1] = this.stamina;
-		}
-		IEnumerable<BaseStats> enumerable = first.Concat(second);
-		if (enumerable.Count<BaseStats>() > 0)
-		{
-			str = "";
-			text2 += Environment.NewLine;
-			text2 += "<size=14>";
-			foreach (BaseStats baseStats in enumerable)
-			{
-				string text3 = baseStats.GetPhaseStr();
-				if (!text3.IsEmpty() && !(text3 == "#"))
-				{
-					Color c = Color.white;
-					string group = baseStats.source.group;
-					if (!(group == "Bad") && !(group == "Debuff") && !(group == "Disease"))
-					{
-						if (group == "Buff")
-						{
-							c = EClass.Colors.colorBuff;
-						}
-					}
-					else
-					{
-						c = EClass.Colors.colorDebuff;
-					}
-					if (EClass.debug.showExtra)
-					{
-						text3 = text3 + "(" + baseStats.GetValue().ToString() + ")";
-						if (this.resistCon != null && this.resistCon.ContainsKey(baseStats.id))
-						{
-							text3 = text3 + "{" + this.resistCon[baseStats.id].ToString() + "}";
-						}
-					}
-					text2 = text2 + text3.TagColor(c) + ", ";
-				}
-			}
-			text2 = text2.TrimEnd(", ".ToCharArray()) + "</size>";
-		}
-		return str + text + text2;
-	}
-
-	public string GetTopicText(string topic = "calm")
-	{
-		string key = this.source.idText.IsEmpty(this.id);
-		if (this.id == "littleOne" && EClass._zone is Zone_LittleGarden)
-		{
-			key = "littleOne2";
-		}
-		SourceCharaText.Row row = EClass.sources.charaText.map.TryGetValue(key, null);
-		if (row == null)
-		{
-			return null;
-		}
-		string text = row.GetText(topic, true);
-		if (text.IsEmpty())
-		{
-			return null;
-		}
-		if (text.StartsWith("@"))
-		{
-			row = EClass.sources.charaText.map.TryGetValue(text.Replace("@", ""), null);
-			if (row == null)
-			{
-				return null;
-			}
-			text = row.GetText(topic, true);
-			if (text.IsEmpty())
-			{
-				return null;
-			}
-		}
-		return text.Split(Environment.NewLine.ToCharArray()).RandomItem<string>();
-	}
-
-	public unsafe string TalkTopic(string topic = "calm")
-	{
-		if (this.host == null && !this.IsInActiveZone)
-		{
-			return null;
-		}
-		if (!this.isSynced && (this.host == null || !this.host.isSynced) && topic != "dead")
-		{
-			return null;
-		}
-		if (this.IsPCParty)
-		{
-			int num = EClass.pc.party.members.Count - 1;
-			if (!(topic == "calm"))
-			{
-				if (!(topic == "aggro"))
-				{
-					if (!(topic == "kill"))
-					{
-						if (topic == "fov")
-						{
-							return null;
-						}
-					}
-					else if (EClass.rnd(num * 3) != 0)
-					{
-						return null;
-					}
-				}
-				else if (EClass.rnd(num * 10) != 0)
-				{
-					return null;
-				}
-			}
-			else if (EClass.rnd(num * 5) != 0)
-			{
-				return null;
-			}
-		}
-		string text = this.GetTopicText(topic);
-		if (text.IsEmpty())
-		{
-			return null;
-		}
-		string text2 = "_bracketTalk".lang();
-		bool flag = text.StartsWith("*");
-		bool flag2 = text.StartsWith("(");
-		bool flag3 = text.StartsWith(text2) || (text.Length > 0 && text[0] == text2[0]) || text[0] == '“';
-		text = base.ApplyTone(text, false);
-		text = text.Replace("~", "*");
-		Msg.SetColor(flag2 ? Msg.colors.Thinking : (flag3 ? Msg.colors.Talk : Msg.colors.Ono));
-		Msg.Say(text.Replace("&", ""));
-		if (topic == "dead")
-		{
-			EClass.ui.popGame.PopText(base.ApplyNewLine(text.StripBrackets()), null, "PopTextDead", default(Color), *this.pos.Position() + EClass.setting.render.tc.textPosDead, 0f);
-		}
-		else if (flag || flag3 || flag2)
-		{
-			(this.host ?? this).renderer.Say(base.ApplyNewLine(text.StripBrackets()), default(Color), this.IsPCParty ? 0.6f : 0f);
-		}
-		return text;
-	}
-
-	public override Sprite GetImageSprite()
-	{
-		return this.GetSprite(0);
-	}
-
-	public void ChangeMemberType(FactionMemberType type)
-	{
-		this.memberType = type;
-	}
-
-	public void ShowDialog()
-	{
-		Zone_Nymelle zone_Nymelle = EClass._zone as Zone_Nymelle;
-		if (this.IsDeadOrSleeping)
-		{
-			this.ShowDialog("_chara", "sleep", "");
-			return;
-		}
-		if (base.isRestrained)
-		{
-			this.ShowDialog("_chara", "strain", "");
-			return;
-		}
-		if (EClass.pc.isHidden && !this.CanSee(EClass.pc))
-		{
-			this.ShowDialog("_chara", "invisible", "");
-			return;
-		}
-		if (this.IsEscorted())
-		{
-			this.ShowDialog("_chara", "escort", "");
-			return;
-		}
-		if (EClass._zone is Zone_Music)
-		{
-			this.ShowDialog("_chara", "party", "");
-			return;
-		}
-		if (LayerDrama.forceJump == null && EClass.game.quests.OnShowDialog(this))
-		{
-			return;
-		}
-		string id = this.id;
-		if (!(id == "loytel"))
-		{
-			if (!(id == "farris"))
-			{
-				if (!(id == "ashland"))
-				{
-					if (!(id == "fiama"))
-					{
-						if (id == "big_sister")
-						{
-							if (EClass.player.flags.little_saved)
-							{
-								this.ShowDialog("big_sister", "little_saved", "");
-								EClass.player.flags.little_saved = false;
-								return;
-							}
-							if (EClass.player.flags.little_killed)
-							{
-								this.ShowDialog("big_sister", "little_dead", "");
-								EClass.player.flags.little_killed = false;
-								return;
-							}
-						}
-					}
-					else
-					{
-						if (zone_Nymelle != null && zone_Nymelle.IsCrystalLv)
-						{
-							SoundManager.ForceBGM();
-							LayerDrama.ActivateMain("mono", "nymelle_crystal", null, null, "");
-							return;
-						}
-						if (!EClass.player.EnableDreamStory)
-						{
-							this.ShowDialog("fiama", "main", "");
-							return;
-						}
-						if (!EClass.player.flags.fiamaFirstDream && EClass.player.flags.storyFiama >= 10)
-						{
-							EClass.player.flags.fiamaFirstDream = true;
-							this.ShowDialog("fiama", "firstDream", "");
-							return;
-						}
-						if (!EClass.player.flags.fiamaStoryBookGiven && EClass.player.flags.storyFiama >= 30)
-						{
-							this.ShowDialog("fiama", "giveStoryBook", "").SetOnKill(delegate
-							{
-								EClass.player.flags.fiamaStoryBookGiven = true;
-								EClass.player.DropReward(ThingGen.Create("book_story", -1, -1), false);
-							});
-							return;
-						}
-						this.ShowDialog("fiama", "main", "");
-						return;
-					}
-				}
-				else
-				{
-					if (zone_Nymelle != null && zone_Nymelle.IsCrystalLv)
-					{
-						SoundManager.ForceBGM();
-						LayerDrama.ActivateMain("mono", "nymelle_crystal", null, null, "");
-						return;
-					}
-					this.ShowDialog("ashland", "main", "");
-					return;
-				}
-			}
-			else
-			{
-				if (EClass._zone.id == "startVillage" || EClass._zone.id == "startVillage3")
-				{
-					this.ShowDialog("_chara", "main", "");
-					return;
-				}
-				int phase = EClass.game.quests.GetPhase<QuestExploration>();
-				if (phase == -1)
-				{
-					this.ShowDialog("farris", "nymelle_noQuest", "");
-					return;
-				}
-				if (phase == 0)
-				{
-					this.ShowDialog("farris", "nymelle_first", "");
-					return;
-				}
-				if (phase == 1)
-				{
-					this.ShowDialog("farris", "home_first", "");
-					return;
-				}
-				this.ShowDialog("_chara", "main", "");
-				return;
-			}
-		}
-		else
-		{
-			if (EClass.player.flags.loytelEscaped)
-			{
-				EClass.game.quests.Get("pre_debt_runaway").Complete();
-				EClass.player.flags.loytelEscaped = false;
-				EClass.game.quests.Add("debt", "loytel");
-				this.ShowDialog("loytel", "loytelEscaped", "");
-				return;
-			}
-			QuestDebt questDebt = EClass.game.quests.Get<QuestDebt>();
-			if (questDebt != null && questDebt.paid)
-			{
-				questDebt.stage++;
-				if (questDebt.stage > 6)
-				{
-					questDebt.stage = 1;
-				}
-				this.ShowDialog("loytel", "debt" + questDebt.stage.ToString(), "");
-				return;
-			}
-		}
-		if (this.trait is TraitGuildDoorman)
-		{
-			string tag = (this.trait is TraitDoorman_Fighter) ? "fighter" : ((this.trait is TraitDoorman_Mage) ? "mage" : "thief");
-			this.ShowDialog("guild_doorman", "main", tag);
-			return;
-		}
-		if (this.trait is TraitGuildClerk)
-		{
-			string tag2 = (this.trait is TraitClerk_Fighter) ? "fighter" : ((this.trait is TraitClerk_Mage) ? "mage" : "thief");
-			this.ShowDialog("guild_clerk", "main", tag2);
-			return;
-		}
-		if (File.Exists(CorePath.DramaData + this.id + ".xlsx"))
-		{
-			this.ShowDialog(this.id, "main", "");
-			return;
-		}
-		this.ShowDialog("_chara", "main", "");
-	}
-
-	public LayerDrama ShowDialog(string book, string step = "main", string tag = "")
-	{
-		return this._ShowDialog(book, null, step, tag);
-	}
-
-	private LayerDrama _ShowDialog(string book, string sheet, string step = "main", string tag = "")
-	{
-		EClass.Sound.Play("pop_drama");
-		if (book == "_chara" && this.IsPC)
-		{
-			step = "pc";
-		}
-		return LayerDrama.Activate(book, sheet, step, this, null, tag);
-	}
-
-	public Point GetDestination()
-	{
-		return (this.ai.IsRunning ? this.ai.GetDestination() : this.pos).Copy();
-	}
-
-	public int GetHireCost()
-	{
-		return base.LV / 2 + 4;
-	}
-
-	public int GetHappiness()
-	{
-		int num = 50;
-		if (this.FindBed() != null)
-		{
-			num += 50;
-		}
-		return num;
-	}
-
-	public string GetTextHappiness()
-	{
-		return this.GetHappiness().ToString() ?? "";
-	}
-
-	public string GetActionText()
-	{
-		string result = "?????";
-		if (this.ai != null)
-		{
-			result = this.ai.GetCurrentActionText();
-		}
-		return result;
-	}
-
-	public override void WriteNote(UINote n, Action<UINote> onWriteNote = null, IInspect.NoteMode mode = IInspect.NoteMode.Default, Recipe recipe = null)
-	{
-		n.Clear();
-		UIItem uiitem = n.AddHeaderCard(base.Name.ToTitleCase(false), null);
-		this.SetImage(uiitem.image2);
-		uiitem.text2.SetText(this.race.GetText("name", false).ToTitleCase(true) + " " + this.job.GetText("name", false).ToTitleCase(true));
-		n.AddText("", FontColor.DontChange);
-		n.Build();
-	}
-
-	public override void SetSortVal(UIList.SortMode m, CurrencyType currency = CurrencyType.Money)
-	{
-		if (m <= UIList.SortMode.ByRace)
-		{
-			if (m == UIList.SortMode.ByJob)
-			{
-				this.sortVal = this.job._index * 10000 + this.sourceCard._index;
-				return;
-			}
-			if (m == UIList.SortMode.ByRace)
-			{
-				this.sortVal = this.race._index * 10000 * (this.IsHuman ? -1 : 1) + this.sourceCard._index;
-				return;
-			}
-		}
-		else
-		{
-			if (m == UIList.SortMode.ByWorkk)
-			{
-				return;
-			}
-			if (m == UIList.SortMode.ByFeat)
-			{
-				this.sortVal = -this.GetTotalFeat();
-				return;
-			}
-		}
-		this.sortVal = this.sourceCard._index * (this.IsHuman ? -1 : 1);
-	}
-
-	public void ClearBed(Map map = null)
-	{
-		if (map == null)
-		{
-			map = EClass._map;
-		}
-		foreach (Card card in map.props.installed.all.Values)
-		{
-			TraitBed traitBed = card.trait as TraitBed;
-			if (traitBed != null && traitBed.IsHolder(this))
-			{
-				traitBed.RemoveHolder(this);
-			}
-		}
-	}
-
-	public TraitBed FindBed()
-	{
-		foreach (Card card in EClass._map.props.installed.all.Values)
-		{
-			TraitBed traitBed = card.trait as TraitBed;
-			if (traitBed != null && traitBed.IsHolder(this))
-			{
-				return traitBed;
-			}
-		}
-		return null;
-	}
-
-	public TraitBed TryAssignBed()
-	{
-		if (this.memberType == FactionMemberType.Livestock || (!this.IsPCFaction && !this.IsGuest()))
-		{
-			return null;
-		}
-		foreach (Card card in EClass._map.props.installed.all.Values)
-		{
-			TraitBed traitBed = card.trait as TraitBed;
-			if (traitBed != null && traitBed.CanAssign(this))
-			{
-				traitBed.AddHolder(this);
-				Msg.Say("claimBed", this, null, null, null);
-				return traitBed;
-			}
-		}
-		return null;
-	}
-
-	public void TryPutSharedItems(IEnumerable<Thing> containers, bool msg = true)
-	{
-		if (base.GetInt(113, null) != 0)
-		{
-			return;
-		}
-		Chara._ListItems.Clear();
-		Thing bestRangedWeapon = this.GetBestRangedWeapon();
-		foreach (Thing thing in this.things)
-		{
-			if (!thing.IsAmmo)
-			{
-				if (thing.category.slot != 0 && !thing.isEquipped && !thing.HasTag(CTAG.gift))
-				{
-					Chara._ListItems.Add(thing);
-				}
-				else if (thing.IsRangedWeapon && thing.category.slot == 0 && bestRangedWeapon != thing)
-				{
-					Chara._ListItems.Add(thing);
-				}
-			}
-		}
-		if (Chara._ListItems.Count == 0)
-		{
-			return;
-		}
-		List<Thing> containers2 = containers.ToList<Thing>();
-		foreach (Thing t in Chara._ListItems)
-		{
-			EClass._zone.TryAddThingInSharedContainer(t, containers2, true, true, this, true);
-		}
-	}
-
-	public void TryPutSharedItems(bool msg = true)
-	{
-		this.TryPutSharedItems(EClass._map.props.installed.containers, true);
-	}
-
-	public void TryTakeSharedItems(bool msg = true)
-	{
-		this.TryTakeSharedItems(EClass._map.props.installed.containers, true, true);
-	}
-
-	public void TryTakeSharedItems(IEnumerable<Thing> containers, bool msg = true, bool shouldEat = true)
-	{
-		if (base.isSummon)
-		{
-			return;
-		}
-		int num = 2;
-		int num2 = 2;
-		bool flag = base.GetInt(113, null) == 0;
-		int num3 = 2;
-		int num4 = 2;
-		int num5 = 2;
-		foreach (Thing thing in this.things)
-		{
-			if (this.CanEat(thing, shouldEat))
-			{
-				num -= thing.Num;
-			}
-			if (thing.trait.GetHealAction(this) != null)
-			{
-				num2 -= thing.Num;
-			}
-			if (thing.id == "polish_powder")
-			{
-				num3 -= thing.Num;
-			}
-			if (thing.trait is TraitBlanketColdproof)
-			{
-				num4 -= thing.Num;
-			}
-			if (thing.trait is TraitBlanketFireproof)
-			{
-				num5 -= thing.Num;
-			}
-		}
-		Chara._ListItems.Clear();
-		foreach (Thing thing2 in containers)
-		{
-			if (thing2.IsSharedContainer)
-			{
-				foreach (Thing thing3 in thing2.things)
-				{
-					if (!thing3.c_isImportant)
-					{
-						if (num3 > 0 && thing3.id == "polish_powder")
-						{
-							Chara._ListItems.Add(thing3);
-							num3 -= thing3.Num;
-						}
-						else if (num4 > 0 && thing3.trait is TraitBlanketColdproof)
-						{
-							Chara._ListItems.Add(thing3);
-							num4 -= thing3.Num;
-						}
-						else if (num5 > 0 && thing3.trait is TraitBlanketFireproof)
-						{
-							Chara._ListItems.Add(thing3);
-							num5 -= thing3.Num;
-						}
-						else if (num > 0 && this.CanEat(thing3, shouldEat))
-						{
-							Chara._ListItems.Add(thing3);
-							num -= thing3.Num;
-						}
-						else if (num2 > 0 && thing3.trait.GetHealAction(this) != null)
-						{
-							Chara._ListItems.Add(thing3);
-							num2 -= thing3.Num;
-						}
-						else if (flag && thing3.IsEquipmentOrRanged && !thing3.HasTag(CTAG.gift) && this.ShouldEquip(thing3, true))
-						{
-							Chara._ListItems.Add(thing3);
-						}
-					}
-				}
-			}
-		}
-		if (Chara._ListItems.Count == 0)
-		{
-			return;
-		}
-		Chara._ListItems.ForeachReverse(delegate(Thing t)
-		{
-			if (!t.IsEquipmentOrRanged)
-			{
-				return;
-			}
-			bool flag3 = false;
-			int slot = t.category.slot;
-			int equipValue = t.GetEquipValue();
-			foreach (Thing thing7 in Chara._ListItems)
-			{
-				if (thing7.category.slot == slot && thing7.GetEquipValue() > equipValue)
-				{
-					flag3 = true;
-					break;
-				}
-			}
-			if (flag3)
-			{
-				Chara._ListItems.Remove(t);
-			}
-		});
-		bool flag2 = false;
-		foreach (Thing thing4 in Chara._ListItems)
-		{
-			Thing thing5 = thing4;
-			if (this.things.IsFull(thing5, true, true))
-			{
-				break;
-			}
-			Thing thing6 = thing4.parent as Thing;
-			if (thing5.Num > 2)
-			{
-				thing5 = thing5.Split(2);
-			}
-			if (msg)
-			{
-				base.Say("takeSharedItem", this, thing5, thing6.GetName(NameStyle.Full, -1), null);
-			}
-			base.AddCard(thing5);
-			if (this.ShouldEquip(thing5, true) && thing5.category.slot != 0)
-			{
-				this.TryEquip(thing5, true);
-				flag2 = true;
-			}
-		}
-		if (flag2 && flag)
-		{
-			this.TryPutSharedItems(containers, true);
-		}
-	}
-
-	public void InstantEat(Thing t = null, bool sound = true)
-	{
-		if (t == null)
-		{
-			t = this.things.Find((Thing a) => this.CanEat(a, true), true);
-		}
-		if (t == null)
-		{
-			t = this.things.Find((Thing a) => this.CanEat(a, false), true);
-		}
-		if (t == null)
-		{
-			return;
-		}
-		base.Say("eat_start", this, t.Duplicate(1), null, null);
-		if (sound)
-		{
-			base.PlaySound("eat", 1f, true);
-		}
-		FoodEffect.Proc(this, t);
-		t.ModNum(-1, true);
-	}
-
-	public bool CanEat(Thing t, bool shouldEat = false)
-	{
-		return (!t.IsDecayed || base.HasElement(480, 1)) && (!shouldEat || t.trait is TraitFoodPrepared) && (!t.IsNegativeGift && !t.HasTag(CTAG.ignoreUse) && !t.isEquipped) && t.trait.CanEat(this);
-	}
-
-	public bool ShouldEquip(Thing t, bool useFav = false)
-	{
-		if (t.IsRangedWeapon && t.category.slot == 0)
-		{
-			if (!this.CanEquipRanged(t))
-			{
-				return false;
-			}
-			int num = 0;
-			foreach (Thing thing in this.things)
-			{
-				if (thing.IsRangedWeapon)
-				{
-					if (thing.category.slot != 0 && thing.isEquipped)
-					{
-						return false;
-					}
-					if (this.CanEquipRanged(thing) && thing.GetEquipValue() > num)
-					{
-						num = thing.GetEquipValue();
-					}
-				}
-			}
-			return t.GetEquipValue() > num;
-		}
-		else
-		{
-			BodySlot bodySlot = this.body.GetSlot(t, false, false);
-			if (bodySlot == null)
-			{
-				return false;
-			}
-			if (useFav)
-			{
-				switch (this.GetFavAttackStyle())
-				{
-				case AttackStyle.Default:
-				case AttackStyle.TwoHand:
-					if (t.IsMeleeWeapon)
-					{
-						bodySlot = this.body.slotMainHand;
-					}
-					else if (bodySlot.elementId == 35)
-					{
-						return false;
-					}
-					break;
-				case AttackStyle.TwoWield:
-					if (bodySlot.elementId == 35 && !t.IsMeleeWeapon)
-					{
-						return false;
-					}
-					break;
-				case AttackStyle.Shield:
-					if (t.IsMeleeWeapon)
-					{
-						bodySlot = this.body.slotMainHand;
-					}
-					else if (bodySlot.elementId == 35 && t.IsMeleeWeapon)
-					{
-						return false;
-					}
-					break;
-				}
-			}
-			return this.body.IsEquippable(t, bodySlot, false) && (bodySlot.thing == null || (bodySlot.thing.blessedState > BlessedState.Cursed && bodySlot.thing.GetEquipValue() < t.GetEquipValue())) && !t.HasTag(CTAG.gift);
-		}
-	}
-
-	public bool TryEquip(Thing t, bool useFav = false)
-	{
-		if (!this.ShouldEquip(t, useFav))
-		{
-			return false;
-		}
-		if (t.category.slot == 0)
-		{
-			return false;
-		}
-		if (useFav)
-		{
-			BodySlot slot = this.body.GetSlot(t, false, false);
-			AttackStyle favAttackStyle = this.GetFavAttackStyle();
-			if (favAttackStyle > AttackStyle.TwoHand)
-			{
-				if (favAttackStyle == AttackStyle.Shield)
-				{
-					if (t.IsMeleeWeapon)
-					{
-						slot = this.body.slotMainHand;
-					}
-				}
-			}
-			else if (t.IsMeleeWeapon)
-			{
-				slot = this.body.slotMainHand;
-			}
-			this.body.Equip(t, slot, true);
-		}
-		else
-		{
-			this.body.Equip(t, null, true);
-		}
-		base.Say("equip", this, t, null, null);
-		return true;
-	}
-
-	public bool CanEquipRanged(Thing t)
-	{
-		return !this.body.IsTooHeavyToEquip(t);
-	}
-
-	public Thing TryGetThrowable()
-	{
-		Chara.<>c__DisplayClass438_0 CS$<>8__locals1 = new Chara.<>c__DisplayClass438_0();
-		CS$<>8__locals1.<>4__this = this;
-		CS$<>8__locals1.dest = null;
-		if (!this.IsPC)
-		{
-			this.things.Foreach(delegate(Thing t)
-			{
-				if (t.HasTag(CTAG.throwWeapon) || (!CS$<>8__locals1.<>4__this.IsPCFactionOrMinion && t.HasTag(CTAG.throwWeaponEnemy)))
-				{
-					CS$<>8__locals1.dest = t;
-					return;
-				}
-			}, true);
-			return CS$<>8__locals1.dest;
-		}
-		if (EClass.game.config.autoCombat.bUseHotBar)
-		{
-			return CS$<>8__locals1.<TryGetThrowable>g__FindThrowable|0(true);
-		}
-		return null;
-	}
-
-	public Thing FindAmmo(Thing weapon)
-	{
-		TraitToolRange ranged = weapon.trait as TraitToolRange;
-		Thing thing = this.IsPC ? EClass.pc.things.Find<TraitQuiver>() : null;
-		if (thing != null)
-		{
-			Thing thing2 = thing.things.Find((Thing t) => ranged.IsAmmo(t), true);
-			if (thing2 != null)
-			{
-				return thing2;
-			}
-		}
-		return this.things.Find((Thing t) => ranged.IsAmmo(t), true);
-	}
-
-	public Thing GetBestRangedWeapon()
-	{
-		Thing result = null;
-		int num = 0;
-		foreach (Thing thing in this.things)
-		{
-			if (thing.IsRangedWeapon && this.CanEquipRanged(thing) && thing.GetEquipValue() > num)
-			{
-				num = thing.GetEquipValue();
-				result = thing;
-			}
-		}
-		return result;
-	}
-
-	public bool TryEquipRanged()
-	{
-		if (this.IsPC)
-		{
-			Thing thing = EClass.player.currentHotItem.Thing;
-			if (((thing != null) ? thing.trait : null) is TraitToolRange && this.CanEquipRanged(thing))
-			{
-				this.ranged = thing;
-				return true;
-			}
-			return false;
-		}
-		else
-		{
-			if (this.ranged != null && this.ranged.parent == this)
-			{
-				return true;
-			}
-			this.ranged = this.GetBestRangedWeapon();
-			return this.ranged != null;
-		}
-	}
-
-	public override int GetArmorSkill()
-	{
-		if (this.body.GetWeight(true) <= 30000)
-		{
-			return 120;
-		}
-		return 122;
-	}
-
-	public bool TryUse(Thing t)
-	{
-		if (t.id == "338")
-		{
-			Thing thing = this.things.Find((Thing a) => a.IsEquipmentOrRanged && !a.isAcidproof, true);
-			if (thing != null)
-			{
-				base.Say("dip", this, thing, t.GetName(NameStyle.Full, 1), null);
-				SE.Change();
-				t.trait.OnBlend(thing, this);
-				return true;
-			}
-			return false;
-		}
-		else
-		{
-			if (t.IsNegativeGift || t.source.HasTag(CTAG.ignoreUse))
-			{
-				return false;
-			}
-			if (t.trait.CanEat(this) && this.hunger.GetPhase() > ((this.IsPCFaction || this.IsPCFactionMinion) ? 2 : 0))
-			{
-				this.SetAIImmediate(new AI_Eat
-				{
-					target = t
-				});
-				return true;
-			}
-			if (t.trait.CanDrink(this))
-			{
-				this.Drink(t);
-				return true;
-			}
-			if (t.trait.CanRead(this))
-			{
-				this.SetAIImmediate(new AI_Read
-				{
-					target = t
-				});
-				return true;
-			}
-			return false;
-		}
-	}
-
-	public Room FindRoom()
-	{
-		TraitBed traitBed = this.FindBed();
-		if (traitBed == null)
-		{
-			return null;
-		}
-		return traitBed.owner.pos.cell.room;
-	}
-
-	public void ModAffinity(Chara c, int a, bool show = true)
-	{
-		if (c == this)
-		{
-			return;
-		}
-		if (this.IsPC)
-		{
-			c.ModAffinity(EClass.pc, a, show);
-			return;
-		}
-		if (c.IsPC)
-		{
-			a = this.affinity.Mod(a);
-		}
-		bool flag = a > 0;
-		if (show)
-		{
-			if (a == 0)
-			{
-				base.Say("affinityNone", this, c, null, null);
-				return;
-			}
-			base.ShowEmo(flag ? Emo.love : Emo.angry, 0f, true);
-			c.ShowEmo(flag ? Emo.love : Emo.sad, 0f, true);
-			base.Say(flag ? "affinityPlus" : "affinityMinus", this, c, null, null);
-		}
-	}
-
-	public bool TryIdentify(Thing t, int count = 1, bool show = true)
-	{
-		int num = base.Evalue(289);
-		if (num == 0)
-		{
-			return false;
-		}
-		int lv = t.LV;
-		if (EClass.rnd(num * num + 5) > EClass.rnd(lv * lv) * 20)
-		{
-			t.Identify(show, (num >= 20) ? IDTSource.SkillHigh : IDTSource.Skill);
-			int num2 = 50;
-			if (lv > num)
-			{
-				num2 += (lv - num) * 10;
-			}
-			this.elements.ModExp(289, Mathf.Min(num2, 1000), false);
-			return true;
-		}
-		return false;
-	}
-
-	public Chara CreateReplacement()
-	{
-		Chara chara = CharaGen.Create(this.id, -1);
-		chara.c_originalHostility = base.c_originalHostility;
-		if (chara.c_originalHostility != (Hostility)0)
-		{
-			chara.hostility = chara.c_originalHostility;
-		}
-		if (this.orgPos != null)
-		{
-			chara.orgPos = this.orgPos.Copy();
-		}
-		chara.pos = this.pos.Copy();
-		chara.isImported = true;
-		chara.c_editorTags = base.c_editorTags;
-		chara.c_editorTraitVal = base.c_editorTraitVal;
-		chara.c_idTrait = base.c_idTrait;
-		chara.homeZone = this.homeZone;
-		return chara;
-	}
-
-	public SourceThing.Row GetFavFood()
-	{
-		if (Chara._listFavFood.Count == 0)
-		{
-			foreach (SourceThing.Row row in EClass.sources.things.rows)
-			{
-				if (row._origin == "dish" && row.value != 0)
-				{
-					Chara._listFavFood.Add(row);
-				}
-			}
-		}
-		SourceThing.Row r = null;
-		Rand.UseSeed(base.uid + EClass.game.seed, delegate
-		{
-			r = Chara._listFavFood.RandomItem<SourceThing.Row>();
-		});
-		return r;
-	}
-
-	public SourceCategory.Row GetFavCat()
-	{
-		SourceCategory.Row r = null;
-		if (Chara._listFavCat.Count == 0)
-		{
-			foreach (SourceCategory.Row row in EClass.sources.categories.rows)
-			{
-				if (row.gift > 0)
-				{
-					Chara._listFavCat.Add(row);
-				}
-			}
-		}
-		Rand.UseSeed(base.uid + EClass.game.seed, delegate
-		{
-			r = Chara._listFavCat.RandomItem<SourceCategory.Row>();
-		});
-		return r;
-	}
-
-	public int GetTotalFeat()
-	{
-		int num = 0;
-		if (base.c_upgrades != null)
-		{
-			num += base.c_upgrades.spent;
-		}
-		if (base.c_genes != null)
-		{
-			num += base.c_genes.GetTotalCost();
-		}
-		return num + base.feat;
-	}
-
-	public bool CanInsult()
-	{
-		using (List<ActList.Item>.Enumerator enumerator = this.ability.list.items.GetEnumerator())
-		{
-			while (enumerator.MoveNext())
-			{
-				if (enumerator.Current.act.id == 6630)
-				{
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	public string GetIdPortraitCat()
-	{
-		string id = this.race.id;
-		if ((id == "mifu" || id == "nefu") && EClass.rnd(2) == 0)
-		{
-			return "foxfolk";
-		}
-		if (this.trait is TraitGuard)
-		{
-			return "guard";
-		}
-		return "";
-	}
-
-	public string GetIdPortrait()
-	{
-		if (this.id == "olderyoungersister")
-		{
-			if (base.idSkin != 2)
-			{
-				return "UN_olderyoungersister";
-			}
-			return "UN_olderyoungersister_alt";
-		}
-		else
-		{
-			if (Portrait.allIds.Contains("UN_" + this.id + ".png"))
-			{
-				return "UN_" + this.id;
-			}
-			return base.c_idPortrait;
-		}
-	}
-
-	public Thing GiveBirth(Thing t, bool effect)
-	{
-		EClass.player.forceTalk = true;
-		base.Talk("giveBirth", null, null, false);
-		EClass._zone.TryAddThing(t, this.pos, false);
-		if (effect)
-		{
-			base.PlayEffect("revive", true, 0f, default(Vector3));
-			base.PlaySound("egg", 1f, true);
-			base.PlayAnime(AnimeID.Shiver, false);
-			this.AddCondition<ConDim>(200, false);
-		}
-		return t;
-	}
-
-	public Thing MakeGene(DNA.Type? type = null)
-	{
-		return DNA.GenerateGene(this, type);
-	}
-
-	public Thing MakeBraineCell()
-	{
-		return DNA.GenerateGene(this, new DNA.Type?(DNA.Type.Brain));
-	}
-
-	public Thing MakeMilk(bool effect = true, int num = 1, bool addToZone = true)
-	{
-		Thing thing = ThingGen.Create("milk", -1, -1).SetNum(num);
-		thing.MakeRefFrom(this, null);
-		int num2 = base.LV - this.source.LV;
-		if (EClass._zone.IsUserZone && !base.IsPCFactionOrMinion)
-		{
-			num2 = 0;
-		}
-		if (num2 >= 10)
-		{
-			thing.SetEncLv(num2 / 10);
-		}
-		if (!addToZone)
-		{
-			return thing;
-		}
-		return this.GiveBirth(thing, effect);
-	}
-
-	public Thing MakeEgg(bool effect = true, int num = 1, bool addToZone = true)
-	{
-		Thing thing = ThingGen.Create((EClass.rnd(EClass.debug.enable ? 1 : 20) == 0) ? "egg_fertilized" : "_egg", -1, -1).SetNum(num);
-		thing.MakeFoodFrom(this);
-		thing.c_idMainElement = base.c_idMainElement;
-		if (!addToZone)
-		{
-			return thing;
-		}
-		return this.GiveBirth(thing, effect);
-	}
-
-	public void OnInsulted()
-	{
-		if (this.isDead)
-		{
-			return;
-		}
-		if (base.HasElement(1231, 1))
-		{
-			base.Talk("insulted", null, null, false);
-			this.AddCondition<ConEuphoric>(100, false);
-			return;
-		}
-		if (EClass.rnd(20) == 0)
-		{
-			this.SetFeat(1231, 1, true);
-		}
-	}
-
-	public bool IsValidGiftWeight(Card t, int num = -1)
-	{
-		int num2 = base.HasElement(1411, 1) ? 3 : 1;
-		return this.GetBurden(t, num) < num2;
-	}
-
-	public bool CanAcceptItem(Card t, int num = -1)
-	{
-		return EClass.debug.enable || (this.IsValidGiftWeight(t, num) && !t.c_isImportant && ((!t.category.IsChildOf("furniture") && !t.category.IsChildOf("junk")) || base.HasElement(1411, 1)));
-	}
-
-	public bool CanAcceptGift(Chara c, Card t)
-	{
-		return !this.things.IsFull(0) && !t.c_isImportant && (t.id == "1084" || t.trait is TraitBookSecret || (!t.trait.CanOnlyCarry && t.trait.CanBeDestroyed && !t.trait.CanExtendBuild && t.rarity != Rarity.Artifact && !t.IsContainer));
-	}
-
-	public void GiveGift(Chara c, Thing t)
-	{
-		if (c.IsHostile() || c.IsDeadOrSleeping)
-		{
-			Msg.Say("affinityNone", c, this, null, null);
-			return;
-		}
-		if (t.IsCursed && t.IsEquipmentOrRanged && c.HasElement(1414, 1))
-		{
-			bool flag = t.blessedState == BlessedState.Doomed;
-			int num = 200 + t.LV * 3;
-			if (t.rarity == Rarity.Legendary)
-			{
-				num *= 3;
-			}
-			if (t.rarity >= Rarity.Mythical)
-			{
-				num *= 5;
-			}
-			if (flag)
-			{
-				num *= 2;
-			}
-			EClass.pc.PlayEffect("identify", true, 0f, default(Vector3));
-			EClass.pc.PlaySound("identify", 1f, true);
-			c.PlayEffect("mutation", true, 0f, default(Vector3));
-			c.Say("draw_curse", c, t, null, null);
-			t.Destroy();
-			List<Element> list = new List<Element>();
-			foreach (Element element in EClass.pc.elements.dict.Values)
-			{
-				if (element is Spell)
-				{
-					list.Add(element);
-				}
-			}
-			if (list.Count == 0)
-			{
-				EClass.pc.SayNothingHappans();
-				return;
-			}
-			Element element2 = list.RandomItem<Element>();
-			EClass.pc.ModExp(element2.id, num);
-			EClass.pc.Say("draw_curse2", EClass.pc, element2.Name, null);
-			return;
-		}
-		else
-		{
-			if ((t.id == "lovepotion" || t.id == "dreambug") && !Application.isEditor)
-			{
-				this.GiveLovePotion(c, t);
-				return;
-			}
-			if (t.trait is TraitErohon && c.id == t.c_idRefName)
-			{
-				c.OnGiveErohon(t);
-				return;
-			}
-			if (!(t.trait is TraitTicketMassage))
-			{
-				if (t.id == "flyer")
-				{
-					this.stamina.Mod(-1);
-					if (c.things.Find((Thing a) => a.id == "flyer", true) != null)
-					{
-						c.Talk("flyer_miss", null, null, false);
-						this.DoHostileAction(c, false);
-						return;
-					}
-					if (EClass.rnd(20) != 0 && c.CHA > EClass.rnd(base.CHA + base.Evalue(291) * 3 + 10))
-					{
-						Msg.Say("affinityNone", c, this, null, null);
-						t.Destroy();
-						this.elements.ModExp(291, 10, false);
-						return;
-					}
-					this.elements.ModExp(291, 50, false);
-				}
-				if (t.id == "statue_weird")
-				{
-					EClass.pc.Say("statue_sell", null, null);
-				}
-				t.isGifted = true;
-				c.nextUse = c.affinity.OnGift(t);
-				if (!t.isDestroyed)
-				{
-					EClass.game.quests.list.ForeachReverse(delegate(Quest q)
-					{
-						q.OnGiveItem(c, t);
-					});
-					if (c.TryEquip(t, false))
-					{
-						c.nextUse = null;
-					}
-				}
-				return;
-			}
-			t.ModNum(-1, true);
-			c.Talk("ticket", null, null, false);
-			string id = t.id;
-			if (id == "ticket_massage")
-			{
-				c.ModAffinity(EClass.pc, 10, true);
-				EClass.pc.SetAI(new AI_Massage
-				{
-					target = c
-				});
-				return;
-			}
-			if (id == "ticket_armpillow")
-			{
-				c.ModAffinity(EClass.pc, 20, true);
-				EClass.pc.AddCondition<ConSleep>(300, true);
-				c.SetAI(new AI_ArmPillow
-				{
-					target = EClass.pc
-				});
-				return;
-			}
-			if (!(id == "ticket_champagne"))
-			{
-				return;
-			}
-			c.ModAffinity(EClass.pc, 10, true);
-			c.AddCondition<ConChampagne>(100, false);
-			return;
-		}
-	}
-
-	public void OnGiveErohon(Thing t)
-	{
-		base.Say("give_erohon", this, null, null);
-		this.AddCondition<ConParalyze>(50, true);
-		this.AddCondition<ConConfuse>(50, true);
-		this.AddCondition<ConFear>(1000, true);
-		this.ModAffinity(EClass.pc, 100, true);
-		t.Destroy();
-		base.Talk("pervert", null, null, false);
-	}
-
-	public void GiveLovePotion(Chara c, Thing t)
-	{
-		c.Say("give_love", c, t, null, null);
-		c.PlaySound(t.material.GetSoundDead(null), 1f, true);
-		c.ShowEmo(Emo.angry, 0f, true);
-		c.ModAffinity(EClass.pc, -20, false);
-		c.Talk("pervert", null, null, false);
-		t.Destroy();
-	}
-
-	public void RequestProtection(Chara attacker, Action<Chara> action)
-	{
-		if (this.HasCondition<StanceTaunt>() || base.isRestrained || attacker == this)
-		{
-			return;
-		}
-		if (this.host != null && this.host.isRestrained)
-		{
-			return;
-		}
-		if (this.IsPCFaction && attacker.IsPCFaction)
-		{
-			return;
-		}
-		bool flag = false;
-		foreach (Chara chara in EClass._map.charas)
-		{
-			if (chara != attacker && chara.enemy != this && chara != this && chara.host == null && !chara.IsDisabled && chara.IsFriendOrAbove(this) && chara.conSuspend == null && (!chara.IsPCParty || this.IsPCParty) && (!this.IsPCFaction || chara.IsPCFaction))
-			{
-				bool flag2 = chara.HasElement(1225, 1);
-				if ((flag2 || (!flag && EClass.rnd(2) != 0 && chara.HasCondition<StanceTaunt>())) && !chara.HasCooldown(1225))
-				{
-					int num = Mathf.Max(chara.Evalue(1649), chara.IsPC ? 0 : (flag2 ? 3 : 1));
-					int num2 = base.Dist(chara);
-					if (num2 <= 25)
-					{
-						if (num2 > num || !chara.CanSeeLos(this.pos, num2))
-						{
-							if (!flag2)
-							{
-								continue;
-							}
-							if (base.Dist(chara) < 5)
-							{
-								chara.GoHostile(attacker);
-								chara.SetEnemy(attacker);
-								attacker.SetEnemy(chara);
-								continue;
-							}
-							Point nearestPoint = this.pos.GetNearestPoint(false, false, true, true);
-							if (!nearestPoint.IsValid)
-							{
-								continue;
-							}
-							chara.Teleport(nearestPoint, false, false);
-							chara.AddCooldown(1225, 10);
-							num2 = base.Dist(chara);
-							base.Say("intercept_loyal", chara, this, null, null);
-							chara.SetEnemy(attacker);
-							attacker.SetEnemy(chara);
-							if (num2 > num || !chara.CanSeeLos(this.pos, num2))
-							{
-								continue;
-							}
-						}
-						if (!flag && !base.HasElement(1225, 1))
-						{
-							base.Say("intercept", chara, this, null, null);
-							if (EClass.rnd(10) == 0)
-							{
-								chara.Talk("intercept", base.NameSimple, null, false);
-							}
-							if (attacker.enemy == this)
-							{
-								attacker.SetEnemy(chara);
-							}
-							action(chara);
-							flag = true;
-						}
-					}
-				}
-			}
-		}
-	}
-
-	public bool ShouldThrowAway(Thing t, ClearInventoryType type)
-	{
-		if (this.IsPCFaction)
-		{
-			if (t.IsFood && t.category.id != "fish" && !t.IsDecayed)
-			{
-				return false;
-			}
-			if (t.trait.GetHealAction(this) != null)
-			{
-				return false;
-			}
-			if (t.IsThrownWeapon || t.IsRangedWeapon || t.IsAmmo)
-			{
-				return false;
-			}
-			if (t.trait is TraitBlanket || t.trait is TraitItemProc || t.trait is TraitBookSkill)
-			{
-				return false;
-			}
-		}
-		if (t.isEquipped || t.rarity >= Rarity.Legendary || !t.trait.CanBeDestroyed)
-		{
-			return false;
-		}
-		if (this.trait is TraitBard && t.trait is TraitToolMusic)
-		{
-			return false;
-		}
-		if (t.trait is TraitCurrency)
-		{
-			return false;
-		}
-		if (type != ClearInventoryType.Purge)
-		{
-			if (type == ClearInventoryType.SellAtTown && !t.isGifted && !t.isNPCProperty)
-			{
-				return false;
-			}
-		}
-		else
-		{
-			string id = t.category.id;
-			if (!(id == "fish"))
-			{
-				if (id == "junk" || id == "garbage")
-				{
-					if (EClass.rnd(3) != 0)
-					{
-						return true;
-					}
-				}
-			}
-			else if (EClass.rnd(3) == 0)
-			{
-				return true;
-			}
-			if (t.id == "flyer")
-			{
-				return true;
-			}
-			if (!t.IsDecayed && EClass.rnd(3) == 0)
-			{
-				return false;
-			}
-			if (t.IsRangedWeapon && !this.things.IsFull(0))
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-
-	public void ClearInventory(ClearInventoryType type)
-	{
-		int num = 0;
-		for (int i = this.things.Count - 1; i >= 0; i--)
-		{
-			Thing thing = this.things[i];
-			if (this.ShouldThrowAway(thing, type))
-			{
-				num += thing.GetPrice(CurrencyType.Money, true, PriceType.Default, this) * thing.Num;
-				thing.Destroy();
-			}
-		}
-		if (num > 0)
-		{
-			base.ModCurrency(num, "money");
-			if (type == ClearInventoryType.SellAtTown)
-			{
-				Msg.Say("party_sell", this, num.ToString() ?? "", null, null);
-				base.PlaySound("pay", 1f, true);
-			}
-		}
-	}
-
-	public void ResetUpgrade()
-	{
-		CharaUpgrade c_upgrades = base.c_upgrades;
-	}
-
-	public void TryUpgrade(bool msg = true)
-	{
-		if (!EClass.debug.enable)
-		{
-			return;
-		}
-		if (this.IsPC || !this.IsGlobal || !this.IsPCFaction)
-		{
-			return;
-		}
-		for (int i = 0; i < 100; i++)
-		{
-			if (base.feat == 0)
-			{
-				return;
-			}
-			if (base.c_upgrades == null)
-			{
-				base.c_upgrades = new CharaUpgrade();
-			}
-			if (base.c_upgrades.halt)
-			{
-				return;
-			}
-			Rand.SetSeed(base.uid + base.c_upgrades.count);
-			int num = EClass.rnd(100);
-			int num2 = 0;
-			int num3 = 1;
-			int num4 = 0;
-			bool flag = false;
-			IEnumerable<SourceElement.Row> ie = from a in EClass.sources.elements.rows
-			where !this.elements.Has(a) && a.category == "skill" && !a.tag.Contains("noPet")
-			select a;
-			List<Element> list = this.ListAvailabeFeats(true);
-			if (num >= 90 && list.Count > 0)
-			{
-				Element element = list.RandomItem<Element>();
-				num2 = element.id;
-				num4 = element.CostLearn;
-			}
-			else if (num >= 60 && ie.Any<SourceElement.Row>())
-			{
-				num2 = ie.RandomItem<SourceElement.Row>().id;
-				num4 = 3;
-			}
-			else
-			{
-				num2 = Element.List_MainAttributesMajor.RandomItem<int>();
-				num4 = 1;
-				num3 = 2;
-				flag = true;
-			}
-			Rand.SetSeed(-1);
-			if (num4 > base.feat)
-			{
-				return;
-			}
-			base.feat -= num4;
-			base.c_upgrades.count++;
-			base.c_upgrades.spent += num4;
-			bool flag2 = false;
-			if (flag)
-			{
-				foreach (CharaUpgrade.Item item in base.c_upgrades.items)
-				{
-					if (item.idEle == num2)
-					{
-						item.value += num3;
-						item.cost += num4;
-						flag2 = true;
-						break;
-					}
-				}
-			}
-			if (!flag2)
-			{
-				base.c_upgrades.items.Add(new CharaUpgrade.Item
-				{
-					idEle = num2,
-					value = num3,
-					cost = num4
-				});
-			}
-			SourceElement.Row row = EClass.sources.elements.map[num2];
-			if (row.category == "feat")
-			{
-				this.SetFeat(num2, this.elements.ValueWithoutLink(num2) + 1, true);
-			}
-			else if (this.elements.ValueWithoutLink(row.id) == 0)
-			{
-				this.elements.Learn(row.id, 1);
-			}
-			else
-			{
-				this.elements.ModBase(num2, num3);
-			}
-		}
-	}
-
-	public void AddCooldown(int idEle, int turns = 0)
-	{
-		if (this._cooldowns == null)
-		{
-			this._cooldowns = new List<int>();
-		}
-		if (turns != 0)
-		{
-			this._cooldowns.Add(idEle * 1000 + turns);
-			return;
-		}
-		SourceElement.Row row = EClass.sources.elements.map[idEle];
-		if (row.cooldown > 0)
-		{
-			this._cooldowns.Add(idEle * 1000 + row.cooldown);
-		}
-	}
-
-	public bool HasCooldown(int idEle)
-	{
-		if (this._cooldowns != null)
-		{
-			for (int i = 0; i < this._cooldowns.Count; i++)
-			{
-				if (this._cooldowns[i] / 1000 == idEle)
-				{
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	public void TickCooldown()
-	{
-		for (int i = this._cooldowns.Count - 1; i >= 0; i--)
-		{
-			if (this._cooldowns[i] % 1000 == 1)
-			{
-				this._cooldowns.RemoveAt(i);
-			}
-			else
-			{
-				List<int> cooldowns = this._cooldowns;
-				int index = i;
-				int num = cooldowns[index];
-				cooldowns[index] = num - 1;
-			}
-		}
-		if (this._cooldowns.Count == 0)
-		{
-			this._cooldowns = null;
-		}
-	}
-
-	public void ChooseNewGoal()
-	{
-		if (this.IsPC && EClass.AdvMode)
-		{
-			this.SetNoGoal();
-			return;
-		}
-		if (this.IsPCParty || base.noMove)
-		{
-			this.SetAI(new GoalIdle());
-			return;
-		}
-		if ((this.IsHomeMember() && this.IsInHomeZone()) || this.IsGuest())
-		{
-			Goal goalFromTimeTable = this.GetGoalFromTimeTable(EClass.world.date.hour);
-			if (goalFromTimeTable != null)
-			{
-				this.SetAI(goalFromTimeTable);
-				if (goalFromTimeTable is GoalWork)
-				{
-					goalFromTimeTable.Tick();
-				}
-				return;
-			}
-		}
-		if (this.goalList.index == -2)
-		{
-			this.goalList.Refresh(this, this.goalListType);
-		}
-		this.SetAI(this.goalList.Next());
-	}
-
-	public Goal GetGoalFromTimeTable(int hour)
-	{
-		if (this.IsPC)
-		{
-			return null;
-		}
-		switch (TimeTable.GetSpan(this.idTimeTable, hour))
-		{
-		case TimeTable.Span.Free:
-			if (this.IsGuest())
-			{
-				return new GoalIdle();
-			}
-			return this.GetGoalHobby();
-		case TimeTable.Span.Eat:
-			return new GoalIdle();
-		case TimeTable.Span.Work:
-			if (this.IsGuest())
-			{
-				return new GoalIdle();
-			}
-			return this.GetGoalWork();
-		case TimeTable.Span.Sleep:
-			if (this.sleepiness.value > 10 || EClass._zone.isSimulating)
-			{
-				return new GoalSleep();
-			}
-			break;
-		}
-		return null;
-	}
-
-	public Goal GetGoalWork()
-	{
-		if (this.IsPrisoner)
-		{
-			return new GoalIdle();
-		}
-		if (this.memberType == FactionMemberType.Livestock)
-		{
-			return new GoalGraze();
-		}
-		return new GoalWork();
-	}
-
-	public Goal GetGoalHobby()
-	{
-		if (this.IsPrisoner)
-		{
-			return new GoalIdle();
-		}
-		if (this.memberType == FactionMemberType.Livestock)
-		{
-			return new GoalGraze();
-		}
-		return new GoalHobby();
-	}
-
-	public void SetAIIdle()
-	{
-	}
-
-	public void SetAIAggro()
-	{
-		this.SetAI(new GoalCombat());
-	}
-
-	public AIAct SetNoGoal()
-	{
-		return this.SetAI(Chara._NoGoalPC);
-	}
-
-	public AIAct SetAI(AIAct g)
-	{
-		if (this.IsPC)
-		{
-			EClass.player.queues.OnSetGoal(g);
-		}
-		if (this.ai.IsRunning)
-		{
-			if (this.ai == g && this.ai.IsNoGoal)
-			{
-				return g;
-			}
-			this.ai.Cancel();
-			if (this.ai == g)
-			{
-				string str = "goal is g:";
-				AIAct aiact = this.ai;
-				Debug.Log(str + ((aiact != null) ? aiact.ToString() : null) + "/" + ((this != null) ? this.ToString() : null));
-				return g;
-			}
-		}
-		if (this.HasCondition<ConWait>())
-		{
-			this.RemoveCondition<ConWait>();
-		}
-		this.ai = g;
-		this.ai.SetOwner(this);
-		if (this.IsPC)
-		{
-			this.renderer.RefreshStateIcon();
-		}
-		return g;
-	}
-
-	public void SetAIImmediate(AIAct g)
-	{
-		bool hasNoGoal = this.HasNoGoal;
-		this.SetAI(g);
-		if (EClass.scene.actionMode == ActionMode.Sim && EClass.scene.paused)
-		{
-			return;
-		}
-		if (hasNoGoal && !(this.renderer as CharaRenderer).IsMoving)
-		{
-			this.Tick();
-		}
-	}
-
-	public List<Hobby> ListWorks(bool useMemberType = true)
-	{
-		Chara.listHobby.Clear();
-		if (useMemberType && this.memberType == FactionMemberType.Livestock)
-		{
-			Chara.listHobby.Add(new Hobby
-			{
-				id = 45
-			});
-		}
-		else
-		{
-			if (this._works == null)
-			{
-				this.RerollHobby(true);
-			}
-			foreach (int id in this._works)
-			{
-				Chara.listHobby.Add(new Hobby
-				{
-					id = id
-				});
-			}
-		}
-		return Chara.listHobby;
-	}
-
-	public List<Hobby> ListHobbies(bool useMemberType = true)
-	{
-		Chara.listHobby.Clear();
-		if (!useMemberType || this.memberType != FactionMemberType.Livestock)
-		{
-			if (this._hobbies == null)
-			{
-				this.RerollHobby(true);
-			}
-			foreach (int id in this._hobbies)
-			{
-				Chara.listHobby.Add(new Hobby
-				{
-					id = id
-				});
-			}
-		}
-		return Chara.listHobby;
-	}
-
-	public Hobby GetWork(string id)
-	{
-		foreach (Hobby hobby in this.ListWorks(true))
-		{
-			if (hobby.source.alias == id)
-			{
-				return hobby;
-			}
-		}
-		foreach (Hobby hobby2 in this.ListHobbies(true))
-		{
-			if (hobby2.source.alias == id)
-			{
-				return hobby2;
-			}
-		}
-		return null;
-	}
-
-	public ElementContainer baseWorkElements
-	{
-		get
-		{
-			if (this._baseWorkElements == null)
-			{
-				this._baseWorkElements = new ElementContainer();
-				foreach (Hobby h in this.ListHobbies(true))
-				{
-					this.<get_baseWorkElements>g__Build|494_0(h);
-				}
-				foreach (Hobby h2 in this.ListWorks(true))
-				{
-					this.<get_baseWorkElements>g__Build|494_0(h2);
-				}
-			}
-			return this._baseWorkElements;
-		}
-	}
-
-	public void RefreshWorkElements(ElementContainer parent = null)
-	{
-		if (this.workElements != null)
-		{
-			this.workElements.SetParent(null);
-		}
-		this.workElements = null;
-		if (this.IsPCParty || this.homeBranch == null || this.homeBranch.owner == null)
-		{
-			return;
-		}
-		foreach (Hobby h in this.ListHobbies(true))
-		{
-			this.<RefreshWorkElements>g__TryAdd|495_0(h);
-		}
-		foreach (Hobby h2 in this.ListWorks(true))
-		{
-			this.<RefreshWorkElements>g__TryAdd|495_0(h2);
-		}
-		if (this.workElements != null)
-		{
-			this.workElements.SetParent(parent);
-		}
-	}
-
-	public string GetTextHobby(bool simple = false)
-	{
-		string text = simple ? "" : ("hobby".lang() + ":");
-		foreach (Hobby hobby in this.ListHobbies(true))
-		{
-			text = text + " " + hobby.Name.TagColor((hobby.GetEfficiency(this) > 0) ? FontColor.Good : FontColor.Warning, null) + ",";
-		}
-		return text.TrimEnd(',');
-	}
-
-	public string GetTextWork(bool simple = false)
-	{
-		string text = simple ? "" : ("work".lang() + ":");
-		foreach (Hobby hobby in this.ListWorks(true))
-		{
-			text = text + " " + hobby.Name.TagColor((hobby.GetEfficiency(this) > 0) ? FontColor.Good : FontColor.Warning, null) + ",";
-		}
-		return text.TrimEnd(',');
-	}
-
-	public void AddHobby(int id)
-	{
-		using (List<int>.Enumerator enumerator = this._hobbies.GetEnumerator())
-		{
-			while (enumerator.MoveNext())
-			{
-				if (enumerator.Current == id)
-				{
-					return;
-				}
-			}
-		}
-		this._hobbies.Add(id);
-	}
-
-	public void AddWork(int id)
-	{
-		using (List<int>.Enumerator enumerator = this._works.GetEnumerator())
-		{
-			while (enumerator.MoveNext())
-			{
-				if (enumerator.Current == id)
-				{
-					return;
-				}
-			}
-		}
-		this._works.Add(id);
-	}
-
-	public void RerollHobby(bool extraSlotChance = true)
-	{
-		if (this._hobbies != null && this._works != null)
-		{
-			this._hobbies.Clear();
-			this._works.Clear();
-		}
-		else
-		{
-			this._hobbies = new List<int>();
-			this._works = new List<int>();
-		}
-		if (this.source.hobbies.IsEmpty())
-		{
-			this.AddHobby(EClass.sources.hobbies.listHobbies.RandomItem<SourceHobby.Row>().id);
-		}
-		else
-		{
-			foreach (string key in this.source.hobbies)
-			{
-				this.AddHobby(EClass.sources.hobbies.alias[key].id);
-			}
-		}
-		if (this.source.works.IsEmpty())
-		{
-			this.AddWork(EClass.sources.hobbies.listWorks.RandomItem<SourceHobby.Row>().id);
-		}
-		else
-		{
-			foreach (string key2 in this.source.works)
-			{
-				this.AddWork(EClass.sources.hobbies.alias[key2].id);
-			}
-		}
-		this.GetWorkSummary().Reset();
-	}
-
-	public WorkSummary GetWorkSummary()
-	{
-		if (this._workSummary == null)
-		{
-			this._workSummary = new WorkSummary();
-		}
-		return this._workSummary;
-	}
-
-	public void TickWork(VirtualDate date)
-	{
-		TimeTable.Span span = TimeTable.GetSpan(this.idTimeTable, date.hour);
-		if (span != TimeTable.Span.Work && span != TimeTable.Span.Free)
-		{
-			return;
-		}
-		WorkSummary workSummary = this.GetWorkSummary();
-		if (span == TimeTable.Span.Work)
-		{
-			if (workSummary.work != null)
-			{
-				this.PerformWork(workSummary.work, false, date.IsRealTime);
-				return;
-			}
-		}
-		else if (workSummary.hobbies.Count > 0)
-		{
-			this.PerformWork(workSummary.hobbies.RandomItem<WorkSession>(), true, date.IsRealTime);
-		}
-	}
-
-	public bool TryWorkOutside(SourceHobby.Row sourceWork)
-	{
-		if (EClass.world.date.IsExpired(base.GetInt(51, null)))
-		{
-			Expedition expedition = Expedition.Create(this, sourceWork.expedition.ToEnum(true));
-			base.SetInt(51, EClass.world.date.GetRaw(0) + 60 * (expedition.hours + 24));
-			this.homeBranch.expeditions.Add(expedition);
-			return true;
-		}
-		return false;
-	}
-
-	public void PerformWork(WorkSession session, bool isHobby = false, bool IsRealTime = false)
-	{
-		Chara.<>c__DisplayClass506_0 CS$<>8__locals1;
-		CS$<>8__locals1.session = session;
-		Hobby hobby = new Hobby();
-		hobby.id = CS$<>8__locals1.session.id;
-		WorkSummary workSummary = this._workSummary;
-		hobby.GetAI(this).OnPerformWork(IsRealTime);
-		if (!isHobby)
-		{
-			workSummary.progress += EClass.rnd(5) + 5;
-		}
-		int num = Chara.<PerformWork>g__PerformWork|506_0(hobby, 0, isHobby, ref CS$<>8__locals1);
-		int num2 = Chara.<PerformWork>g__PerformWork|506_0(hobby, 1, isHobby, ref CS$<>8__locals1);
-		int num3 = Chara.<PerformWork>g__PerformWork|506_0(hobby, 2, isHobby, ref CS$<>8__locals1);
-		int num4 = Chara.<PerformWork>g__PerformWork|506_0(hobby, 3, isHobby, ref CS$<>8__locals1);
-		workSummary.money += num;
-		workSummary.food += num2;
-		workSummary.knowledge += num3;
-		workSummary.material += num4;
-	}
-
-	public void ValidateWorks()
-	{
-		Chara._goalWork.FindWork(this, false);
-		Chara._goalHobby.ValidateHobby(this);
-	}
-
-	public Stats hunger
-	{
-		get
-		{
-			return Stats.Hunger.Set(this._cints, 10, this);
-		}
-	}
-
-	public Stats burden
-	{
-		get
-		{
-			return Stats.Burden.Set(this._cints, 11, this);
-		}
-	}
-
-	public Stats stamina
-	{
-		get
-		{
-			return Stats.Stamina.Set(this._cints, 12, this);
-		}
-	}
-
-	public Stats depression
-	{
-		get
-		{
-			return Stats.Depression.Set(this._cints, 13, this);
-		}
-	}
-
-	public Stats bladder
-	{
-		get
-		{
-			return Stats.Bladder.Set(this._cints, 14, this);
-		}
-	}
-
-	public Stats hygiene
-	{
-		get
-		{
-			return Stats.Hygiene.Set(this._cints, 15, this);
-		}
-	}
-
-	public Stats mana
-	{
-		get
-		{
-			return Stats.Mana.Set(this._cints, 16, this);
-		}
-	}
-
-	public Stats sleepiness
-	{
-		get
-		{
-			return Stats.Sleepiness.Set(this._cints, 17, this);
-		}
-	}
-
-	public Stats SAN
-	{
-		get
-		{
-			return Stats.SAN.Set(this._cints, 17, this);
-		}
-	}
-
-	public void InitStats(bool onDeserialize = false)
-	{
-		if (!onDeserialize)
-		{
-			this._cints[10] = 20;
-			this._cints[11] = 70;
-			this._cints[13] = 70;
-			this._cints[14] = 70;
-			this._cints[15] = 70;
-			this._cints[17] = 0;
-		}
-		foreach (Condition condition in this.conditions)
-		{
-			condition.SetOwner(this, onDeserialize);
-		}
-	}
-
-	public Condition AddCondition<T>(int p = 100, bool force = false) where T : Condition
-	{
-		return this.AddCondition(typeof(T).Name, p, force);
-	}
-
-	public Condition AddCondition(string id, int p = 100, bool force = false)
-	{
-		return this.AddCondition(Condition.Create(id, p, null), force);
-	}
-
-	public Condition AddCondition(Condition c, bool force = false)
-	{
-		c.owner = this;
-		if (!(c is ConBurning))
-		{
-			if (c is ConBleed)
-			{
-				if (base.ResistLv(964) >= 3)
-				{
-					return null;
-				}
-			}
-		}
-		else if (base.ResistLv(950) >= 3)
-		{
-			return null;
-		}
-		if (c.GainResistFactor > 0 && this.CanGainConResist)
-		{
-			if (c.GainResistFactor >= 400)
-			{
-				c.power /= 2;
-			}
-			this.ResistCon(c);
-			if (c.power <= 0)
-			{
-				return null;
-			}
-		}
-		if (!force)
-		{
-			if (c.source.negate.Length != 0)
-			{
-				foreach (string id in c.source.negate)
-				{
-					if (base.HasElement(id, 1))
-					{
-						return null;
-					}
-				}
-			}
-			Element defenseAttribute = c.GetDefenseAttribute(this);
-			if (defenseAttribute != null)
-			{
-				c.power = 100 * c.power / (100 + defenseAttribute.Value);
-			}
-			if (c.source.resistance.Length != 0)
-			{
-				int num = base.ResistLv(EClass.sources.elements.alias[c.source.resistance[0]].id);
-				if (num > 0)
-				{
-					c.power /= num * num + 1;
-					if (c.power <= 40)
-					{
-						return null;
-					}
-				}
-			}
-			c.power = c.EvaluatePower(c.power);
-			if (c.power <= 0)
-			{
-				return null;
-			}
-		}
-		for (int j = 0; j < this.conditions.Count; j++)
-		{
-			if (this.conditions[j].id == c.id)
-			{
-				if (c.Type == ConditionType.Stance || c.IsToggle)
-				{
-					this.conditions[j].Kill(false);
-					return null;
-				}
-				if (this.conditions[j].CanStack(c))
-				{
-					if (this.conditions[j].WillOverride)
-					{
-						this.conditions[j].Kill(true);
-						goto IL_243;
-					}
-					if (this.CanGainConResist)
-					{
-						this.AddResistCon(c);
-					}
-					this.conditions[j].OnStacked(c.power);
-					this.conditions[j].OnStartOrStack();
-					this.conditions[j].PlayEffect();
-				}
-				if (!this.conditions[j].AllowMultipleInstance)
-				{
-					return null;
-				}
-			}
-			IL_243:;
-		}
-		using (List<Condition>.Enumerator enumerator = this.conditions.GetEnumerator())
-		{
-			while (enumerator.MoveNext())
-			{
-				if (enumerator.Current.TryNullify(c))
-				{
-					return null;
-				}
-			}
-		}
-		int num2 = c.EvaluateTurn(c.power);
-		if (num2 == 0)
-		{
-			return null;
-		}
-		c.value = num2;
-		this.conditions.Add(c);
-		if (this.CanGainConResist)
-		{
-			this.AddResistCon(c);
-		}
-		c.SetOwner(this, false);
-		c.Start();
-		this.SetDirtySpeed();
-		if (c.ShouldRefresh)
-		{
-			this.Refresh(false);
-		}
-		if (this.IsPC && c.ConsumeTurn && !EClass.pc.isRestrained)
-		{
-			EClass.player.EndTurn(true);
-		}
-		if (c.SyncRide && (this.ride != null || this.parasite != null))
-		{
-			if (this.ride != null)
-			{
-				this.ride.AddCondition(Condition.Create(c.source.alias, c.power, null), false);
-			}
-			if (this.parasite != null)
-			{
-				this.parasite.AddCondition(Condition.Create(c.source.alias, c.power, null), false);
-			}
-		}
-		return c;
-	}
-
-	public override bool HasCondition<T>()
-	{
-		for (int i = 0; i < this.conditions.Count; i++)
-		{
-			if (this.conditions[i] is T)
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public bool HasCondition(string alias)
-	{
-		for (int i = 0; i < this.conditions.Count; i++)
-		{
-			if (this.conditions[i].source.alias == alias)
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public Element GetBuffStats(string alias)
-	{
-		return this.GetBuffStats(EClass.sources.elements.alias[alias].id);
-	}
-
-	public Element GetBuffStats(int ele)
-	{
-		for (int i = 0; i < this.conditions.Count; i++)
-		{
-			ConBuffStats conBuffStats = this.conditions[i] as ConBuffStats;
-			if (conBuffStats != null && conBuffStats.refVal == ele)
-			{
-				return conBuffStats.elements.GetElement(ele);
-			}
-		}
-		return null;
-	}
-
-	public void CureCondition<T>(int v = 99999) where T : Condition
-	{
-		T condition = this.GetCondition<T>();
-		if (condition == null)
-		{
-			return;
-		}
-		ref T ptr = ref condition;
-		ptr.value -= v;
-		if (condition.value <= 0)
-		{
-			condition.Kill(false);
-		}
-	}
-
-	public T GetCondition<T>() where T : Condition
-	{
-		for (int i = 0; i < this.conditions.Count; i++)
-		{
-			if (this.conditions[i] is T)
-			{
-				return this.conditions[i] as T;
-			}
-		}
-		return default(T);
-	}
-
-	public void RemoveCondition<T>() where T : Condition
-	{
-		for (int i = this.conditions.Count - 1; i >= 0; i--)
-		{
-			if (this.conditions[i] is T)
-			{
-				this.conditions[i].Kill(false);
-				return;
-			}
-		}
-	}
-
-	public void CureHost(CureType type, int p = 100, BlessedState state = BlessedState.Normal)
-	{
-		if (this.parasite != null)
-		{
-			this.parasite.Cure(type, p, state);
-		}
-		if (this.ride != null)
-		{
-			this.ride.Cure(type, p, state);
-		}
-		this.Cure(type, p, state);
-	}
-
-	public void Cure(CureType type, int p = 100, BlessedState state = BlessedState.Normal)
-	{
-		bool flag = state == BlessedState.Blessed;
-		switch (type)
-		{
-		case CureType.Heal:
-		case CureType.Prayer:
-			this.CureCondition<ConFear>(99999);
-			this.CureCondition<ConBlind>(2 * p / 100 + 5);
-			this.CureCondition<ConPoison>(5 * p / 100 + 5);
-			this.CureCondition<ConConfuse>(10 * p / 100 + 10);
-			this.CureCondition<ConDim>(p / 100 + 5);
-			this.CureCondition<ConBleed>(2 * p / 100 + 10);
-			if (flag)
-			{
-				this.SAN.Mod(-5);
-				return;
-			}
-			break;
-		case CureType.HealComplete:
-		case CureType.Death:
-		case CureType.Jure:
-		case CureType.Boss:
-			this.CureTempElements(p * 100, true, true);
-			for (int i = this.conditions.Count - 1; i >= 0; i--)
-			{
-				Condition condition = this.conditions[i];
-				if (condition.Type == ConditionType.Bad || condition.Type == ConditionType.Debuff || condition.Type == ConditionType.Disease)
-				{
-					condition.Kill(false);
-				}
-				else if (type == CureType.Death && condition.isPerfume)
-				{
-					condition.Kill(false);
-				}
-			}
-			this.CureCondition<ConWait>(99999);
-			this.CureCondition<ConSleep>(99999);
-			if (type == CureType.Death)
-			{
-				this.hunger.value = 30;
-			}
-			if (type == CureType.Jure)
-			{
-				this.SAN.Mod(-999);
-				if (base.HasElement(1206, 1))
-				{
-					this.SetFeat(1206, 0, true);
-				}
-			}
-			break;
-		case CureType.Sleep:
-		{
-			for (int j = this.conditions.Count - 1; j >= 0; j--)
-			{
-				Condition condition2 = this.conditions[j];
-				if (!(condition2 is ConSleep) && !(condition2 is ConFaint))
-				{
-					if (condition2.isPerfume)
-					{
-						condition2.Mod(-1, true);
-					}
-					else if (condition2.Type == ConditionType.Bad || condition2.Type == ConditionType.Debuff)
-					{
-						condition2.Kill(false);
-					}
-				}
-			}
-			this.CureCondition<ConWait>(99999);
-			this.CureCondition<ConDisease>((EClass.rnd(20) + 10) * p / 100);
-			bool flag2 = this.HasCondition<ConAnorexia>();
-			base.c_vomit -= (flag2 ? 3 : 2) * p / 100;
-			if (base.c_vomit < 0)
-			{
-				base.c_vomit = 0;
-				if (flag2)
-				{
-					this.RemoveCondition<ConAnorexia>();
-					return;
-				}
-			}
-			break;
-		}
-		case CureType.CureBody:
-			this.CureCondition<ConBlind>(5 * p / 100 + 15);
-			this.CureCondition<ConPoison>(10 * p / 100 + 15);
-			this.CureCondition<ConBleed>(5 * p / 100 + 20);
-			this.CureTempElements(p, true, false);
-			return;
-		case CureType.CureMind:
-			this.CureCondition<ConFear>(99999);
-			this.CureCondition<ConDim>(3 * p / 100 + 10);
-			this.CureTempElements(p, false, true);
-			return;
-		default:
-			return;
-		}
-	}
-
-	public bool TryNeckHunt(Chara TC, int power, bool harvest = false)
-	{
-		if (TC == null || TC.HasCondition<ConInvulnerable>() || TC.Evalue(1421) > 0 || !TC.ExistsOnMap)
-		{
-			return false;
-		}
-		if (TC.hp > TC.MaxHP * Mathf.Min(5 + (int)Mathf.Sqrt((float)power), harvest ? 35 : 25) / 100)
-		{
-			return false;
-		}
-		if (TC.HasElement(427, 1))
-		{
-			return false;
-		}
-		base.PlaySound("hit_finish", 1f, true);
-		base.Say("finish", null, null);
-		base.Say("finish2", this, TC, null, null);
-		TC.DamageHP(TC.MaxHP, AttackSource.Finish, this);
-		return false;
-	}
-
-	public bool CanGainConResist
-	{
-		get
-		{
-			return base.rarity >= Rarity.Legendary && !this.IsPCFaction;
-		}
-	}
-
-	public void AddResistCon(Condition con)
-	{
-		if (con.power <= 0 || con.GainResistFactor <= 0)
-		{
-			return;
-		}
-		int id = con.id;
-		if (this.resistCon == null)
-		{
-			this.resistCon = new Dictionary<int, int>();
-		}
-		if (this.resistCon.ContainsKey(id))
-		{
-			Dictionary<int, int> dictionary = this.resistCon;
-			int key = id;
-			dictionary[key] += con.power * con.GainResistFactor / 100;
-			return;
-		}
-		this.resistCon[id] = con.power * con.GainResistFactor / 100;
-	}
-
-	public void ResistCon(Condition con)
-	{
-		if (con.power <= 0 || this.resistCon == null)
-		{
-			return;
-		}
-		int a = this.resistCon.TryGetValue(con.id, 0);
-		if (1000 < EClass.rnd(a))
-		{
-			con.power = 0;
-			return;
-		}
-		if (500 < EClass.rnd(a))
-		{
-			con.power /= 5;
-			return;
-		}
-		if (200 < EClass.rnd(a))
-		{
-			con.power /= 2;
-		}
-	}
-
-	public void Sleep(Thing bed = null, Thing pillow = null, bool pickup = false, ItemPosition posBed = null, ItemPosition posPillow = null)
-	{
-		this.AddCondition(Condition.Create<ConSleep>(100, delegate(ConSleep con)
-		{
-			con.pcSleep = 15;
-			con.pcBed = bed;
-			con.pcPillow = pillow;
-			con.pickup = pickup;
-			con.posBed = posBed;
-			con.posPillow = posPillow;
-		}), true);
-	}
-
-	public void OnSleep(Thing bed = null, int days = 1)
-	{
-		TraitPillow traitPillow = this.pos.FindThing<TraitPillow>();
-		int num = (bed == null) ? 20 : bed.Power;
-		if (traitPillow != null)
-		{
-			num += traitPillow.owner.Power / 2;
-		}
-		num += base.Evalue(750) * 5;
-		this.OnSleep(num, days);
-	}
-
-	public void OnSleep(int power, int days = 1)
-	{
-		if (days < 1)
-		{
-			days = 1;
-		}
-		int num = power * days;
-		if (this.stamina.value < 0)
-		{
-			this.stamina.Set(1);
-		}
-		this.HealHP(num, HealSource.None);
-		this.stamina.Mod(10 + 25 * num / 100 * (100 + this.elements.GetFeatRef(1642, 0)) / 100);
-		this.mana.Mod(num);
-		if (this.IsPCFaction)
-		{
-			this.hunger.Mod(20);
-		}
-		this.sleepiness.Set(0);
-		this.interest = 100;
-		this.Cure(CureType.Sleep, power, BlessedState.Normal);
-	}
-
-	public void ModHeight(int a)
-	{
-		int num = this.bio.height;
-		num = num * (100 + a) / 100 + ((a > 0) ? 1 : -1);
-		if (num < 1)
-		{
-			num = 1;
-		}
-		if (num == this.bio.height)
-		{
-			return;
-		}
-		this.bio.height = num;
-		base.Say((a > 0) ? "height_gain" : "height_lose", this, null, null);
-	}
-
-	public void ModWeight(int a, bool ignoreLimit = false)
-	{
-		if (a == 0)
-		{
-			return;
-		}
-		int num = this.bio.weight;
-		int height = this.bio.height;
-		int num2 = height * height * 18 / 25000;
-		int num3 = height * height * 24 / 10000;
-		if (!ignoreLimit && (num <= num2 || num >= num3))
-		{
-			return;
-		}
-		num = num * (100 + a) / 100 + ((a > 0) ? 1 : -1);
-		if (num < 1)
-		{
-			num = 1;
-		}
-		if (num == this.bio.weight)
-		{
-			return;
-		}
-		this.bio.weight = num;
-		base.Say((a > 0) ? "weight_gain" : "weight_lose", this, null, null);
-	}
-
-	public void ModCorruption(int a)
-	{
-		if (a > 0 && base.ResistLv(962) > 0 && EClass.rnd(base.ResistLv(962) + 1) != 0)
-		{
-			return;
-		}
-		int num = (this.corruption + a) / 100 - this.corruption / 100;
-		int num2 = 0;
-		while (num2 < Mathf.Abs(num) && this.MutateRandom((num > 0) ? 1 : -1, 100, true, BlessedState.Normal))
-		{
-			num2++;
-		}
-		this.corruption += a;
-		int num3 = 0;
-		foreach (Element element in this.elements.dict.Values)
-		{
-			if (element.source.category == "ether")
-			{
-				num3 += element.Value;
-			}
-		}
-		if (num3 > 0 && this.IsPC)
-		{
-			Tutorial.Reserve("ether", null);
-		}
-		this.corruption = num3 * 100 + this.corruption % 100;
-	}
-
-	public List<Element> ListAvailabeFeats(bool pet = false)
-	{
-		List<Element> list = new List<Element>();
-		foreach (SourceElement.Row row in from a in EClass.sources.elements.rows
-		where a.@group == "FEAT" && a.cost[0] != -1 && !a.categorySub.IsEmpty()
-		select a)
-		{
-			Feat feat = this.elements.GetOrCreateElement(row.id) as Feat;
-			int num = (feat.ValueWithoutLink > 0) ? (feat.ValueWithoutLink + 1) : 1;
-			if (num <= feat.source.max && !feat.HasTag("class") && !feat.HasTag("hidden") && !feat.HasTag("innate") && (!pet || !feat.HasTag("noPet")) && feat.IsAvailable(this.elements, feat.Value))
-			{
-				list.Add(Element.Create(feat.id, num) as Feat);
-			}
-		}
-		return list;
-	}
-
-	public void SetFeat(int id, int value = 1, bool msg = false)
-	{
-		Feat feat = this.elements.GetElement(id) as Feat;
-		int num = 0;
-		if (feat != null && feat.Value > 0)
-		{
-			if (value == feat.Value)
-			{
-				return;
-			}
-			num = feat.Value;
-			feat.Apply(-feat.Value, this.elements, false);
-		}
-		if (value > 0)
-		{
-			feat = (this.elements.SetBase(id, value - ((feat != null) ? feat.vSource : 0), 0) as Feat);
-			feat.Apply(feat.Value, this.elements, false);
-		}
-		else
-		{
-			this.elements.Remove(id);
-		}
-		if (EClass.core.IsGameStarted)
-		{
-			this.Refresh(false);
-			this.CalculateMaxStamina();
-		}
-		if (msg)
-		{
-			if (feat.source.textInc.IsEmpty())
-			{
-				base.PlaySound("ding_skill", 1f, true);
-				Msg.SetColor(Msg.colors.Ding);
-				base.Say("gainFeat", this, feat.FullName, null);
-			}
-			else
-			{
-				bool flag = value < num;
-				if (feat.source.tag.Contains("neg"))
-				{
-					flag = !flag;
-				}
-				base.PlaySound("mutation", 1f, true);
-				Msg.SetColor(flag ? Msg.colors.Negative : Msg.colors.Ding);
-				base.Say((value > num) ? feat.source.GetText("textInc", false) : feat.source.GetText("textDec", false), this, feat.FullName, null);
-			}
-			this.elements.CheckSkillActions();
-		}
-	}
-
-	public bool MutateRandom(int vec = 0, int tries = 100, bool ether = false, BlessedState state = BlessedState.Normal)
-	{
-		if (!ether && vec >= 0 && base.HasElement(406, 1) && EClass.rnd(5) != 0)
-		{
-			base.Say("resistMutation", this, null, null);
-			return false;
-		}
-		IEnumerable<SourceElement.Row> ie = from a in EClass.sources.elements.rows
-		where a.category == (ether ? "ether" : "mutation")
-		select a;
-		for (int i = 0; i < tries; i++)
-		{
-			SourceElement.Row row = ie.RandomItem<SourceElement.Row>();
-			if (((i == 0 && vec < 0) & ether) && base.c_corruptionHistory != null && base.c_corruptionHistory.Count > 0)
-			{
-				row = EClass.sources.elements.map[base.c_corruptionHistory.LastItem<int>()];
-				base.c_corruptionHistory.RemoveAt(base.c_corruptionHistory.Count - 1);
-				if (base.c_corruptionHistory.Count == 0)
-				{
-					base.c_corruptionHistory = null;
-				}
-			}
-			Element element = this.elements.GetElement(row.id);
-			int num = 1;
-			if ((vec <= 0 || ((row.id != 1563 || this.corruption >= 300) && (row.id != 1562 || this.corruption >= 1000 || !base.IsPowerful))) && (vec >= 0 || (element != null && element.Value > 0)) && (vec <= 0 || element == null || element.Value < row.max))
-			{
-				if (element == null && !row.aliasParent.IsEmpty() && this.elements.Has(row.aliasParent))
-				{
-					row = EClass.sources.elements.alias[row.aliasParent];
-					element = this.elements.GetElement(row.id);
-				}
-				bool flag = row.tag.Contains("neg");
-				if (vec > 0)
-				{
-					if (state >= BlessedState.Blessed && flag)
-					{
-						goto IL_44F;
-					}
-					if (state <= BlessedState.Cursed && !flag)
-					{
-						goto IL_44F;
-					}
-				}
-				else if (vec < 0 && ((state >= BlessedState.Blessed && !flag) || (state <= BlessedState.Cursed && flag)))
-				{
-					goto IL_44F;
-				}
-				bool flag2 = true;
-				if (element != null)
-				{
-					num = element.Value + ((vec != 0) ? vec : ((EClass.rnd(2) == 0) ? 1 : -1));
-					if (num > element.source.max)
-					{
-						num = element.source.max - 1;
-					}
-					flag = ((flag && num > element.Value) || (!flag && num < element.Value));
-					flag2 = (num > element.Value);
-					if (vec > 0 && !flag2)
-					{
-						goto IL_44F;
-					}
-				}
-				base.Say(flag2 ? "mutation_gain" : "mutation_loose", this, null, null);
-				this.SetFeat(row.id, num, false);
-				if (flag2 & ether)
-				{
-					if (base.c_corruptionHistory == null)
-					{
-						base.c_corruptionHistory = new List<int>();
-					}
-					base.c_corruptionHistory.Add(row.id);
-					if (this.IsPCFaction)
-					{
-						Element element2 = this.elements.GetElement(row.id);
-						WidgetPopText.Say("popEther".lang(element2.Name, base.Name, null, null, null), FontColor.Default, null);
-					}
-					if (this.IsPC && !EClass.player.flags.gotEtherDisease)
-					{
-						EClass.player.flags.gotEtherDisease = true;
-						Thing thing = ThingGen.Create("parchment", -1, -1);
-						thing.SetStr(53, "letter_ether");
-						Thing thing2 = ThingGen.Create("1165", -1, -1);
-						thing2.SetBlessedState(BlessedState.Normal);
-						Thing p = ThingGen.CreateParcel(null, new Thing[]
-						{
-							thing2,
-							thing
-						});
-						EClass.world.SendPackage(p);
-					}
-				}
-				if (EClass.core.IsGameStarted && this.pos != null)
-				{
-					base.PlaySound(ether ? "mutation_ether" : "mutation", 1f, true);
-					base.PlayEffect("mutation", true, 0f, default(Vector3));
-					Msg.SetColor(flag ? Msg.colors.MutateBad : Msg.colors.MutateGood);
-					base.Say(row.GetText(flag ? "textDec" : "textInc", true) ?? row.alias, this, null, null);
-				}
-				return true;
-			}
-			IL_44F:;
-		}
-		base.Say("nothingHappens", null, null);
-		return false;
-	}
-
-	public void GainAbility(int ele, int mtp = 100)
-	{
-		Element orCreateElement = this.elements.GetOrCreateElement(ele);
-		if (orCreateElement.ValueWithoutLink == 0)
-		{
-			this.elements.ModBase(orCreateElement.id, 1);
-		}
-		if (orCreateElement is Spell)
-		{
-			int num = mtp * orCreateElement.source.charge * (100 + base.Evalue(307) + (base.HasElement(307, 1) ? 20 : 0)) / 100 / 100;
-			if (orCreateElement.source.charge == 1)
-			{
-				num = 1;
-			}
-			orCreateElement.vPotential += Mathf.Max(1, num / 2 + EClass.rnd(num / 2 + 1));
-		}
-		base.Say("spell_gain", this, orCreateElement.Name, null);
-		LayerAbility.SetDirty(orCreateElement);
-	}
-
-	public bool TryNullifyCurse()
-	{
-		if (this.IsPCParty)
-		{
-			using (List<Chara>.Enumerator enumerator = EClass.pc.party.members.GetEnumerator())
-			{
-				while (enumerator.MoveNext())
-				{
-					Chara chara = enumerator.Current;
-					if (chara.HasElement(1641, 1) && EClass.rnd(3) != 0)
-					{
-						Msg.Say("curse_nullify", chara, null, null, null);
-						return true;
-					}
-				}
-				goto IL_8F;
-			}
-		}
-		if (base.HasElement(1641, 1) && EClass.rnd(3) != 0)
-		{
-			base.Say("curse_nullify", this, null, null);
-			return true;
-		}
-		IL_8F:
-		if (this.GetCondition<ConHolyVeil>() != null && EClass.rnd(5) != 0)
-		{
-			base.Say("curse_nullify", this, null, null);
-			return true;
-		}
-		return false;
-	}
-
-	public int GetPietyValue()
-	{
-		if (base._IsPC)
-		{
-			return 10 + (int)(Mathf.Sqrt((float)base.c_daysWithGod) * 2f + (float)base.Evalue(85)) / 2;
-		}
-		return 10 + (int)(Mathf.Sqrt((float)base.LV) * 5f + (float)base.Evalue(306)) / 2;
-	}
-
-	public void RefreshFaithElement()
-	{
-		if (this.faithElements != null)
-		{
-			this.faithElements.SetParent(null);
-		}
-		this.faithElements = new ElementContainer();
-		if (this.idFaith == "eyth" && !base.HasElement(1228, 1))
-		{
-			return;
-		}
-		SourceReligion.Row row = EClass.sources.religions.map.TryGetValue(this.idFaith, null);
-		if (row == null)
-		{
-			return;
-		}
-		this.faithElements = new ElementContainer();
-		SourceElement.Row row2 = EClass.sources.elements.alias.TryGetValue("featGod_" + row.id + "1", null);
-		if (row2 != null)
-		{
-			this.faithElements.SetBase(row2.id, 1, 0);
-		}
-		if (!this.HasCondition<ConExcommunication>())
-		{
-			int[] elements = row.elements;
-			int num = this.GetPietyValue() * (120 + base.Evalue(1407) * 15) / 100;
-			for (int i = 0; i < elements.Length; i += 2)
-			{
-				int num2 = elements[i + 1] * num / 50;
-				if (elements[i] == 79)
-				{
-					num2 = EClass.curve(num2, 100, 20, 60);
-				}
-				if (num2 >= 20 && elements[i] >= 950 && elements[i] < 970)
-				{
-					num2 = 20;
-				}
-				this.faithElements.SetBase(elements[i], Mathf.Max(num2, 1), 0);
-			}
-		}
-		this.faithElements.SetParent(this);
-	}
-
-	public void ModTempElement(int ele, int a, bool naturalDecay = false)
-	{
-		if (a < 0 && !naturalDecay)
-		{
-			SourceElement.Row row = EClass.sources.elements.alias["sustain_" + EClass.sources.elements.map[ele].alias];
-			if (base.HasElement((row != null) ? row.id : 0, 1))
-			{
-				return;
-			}
-		}
-		if (this.tempElements == null)
-		{
-			this.tempElements = new ElementContainer();
-			this.tempElements.SetParent(this);
-		}
-		if (a > 0 && this.tempElements.Base(ele) > a)
-		{
-			a = a * 100 / (200 + (this.tempElements.Base(ele) - a) * 10);
-		}
-		Element element = this.tempElements.ModBase(ele, a);
-		if (element.vBase == 0)
-		{
-			this.tempElements.Remove(element.id);
-			if (this.tempElements.dict.Count == 0)
-			{
-				this.tempElements = null;
-			}
-		}
-	}
-
-	public void DamageTempElements(int p, bool body, bool mind)
-	{
-		if (body)
-		{
-			this.DamageTempElement(Element.List_Body.RandomItem<int>(), p);
-		}
-		if (mind)
-		{
-			this.DamageTempElement(Element.List_Mind.RandomItem<int>(), p);
-		}
-	}
-
-	public void DamageTempElement(int ele, int p)
-	{
-		this.ModTempElement(ele, -(p / 100 + EClass.rnd(p / 100 + 1) + 1), false);
-	}
-
-	public void EnhanceTempElements(int p, bool body, bool mind)
-	{
-		if (body)
-		{
-			this.EnhanceTempElement(Element.List_Body.RandomItem<int>(), p);
-		}
-		if (mind)
-		{
-			this.EnhanceTempElement(Element.List_Mind.RandomItem<int>(), p);
-		}
-	}
-
-	public void EnhanceTempElement(int ele, int p)
-	{
-		this.ModTempElement(ele, p / 100 + EClass.rnd(p / 100 + 1), false);
-	}
-
-	public void DiminishTempElements(int a = 1)
-	{
-		if (this.tempElements == null)
-		{
-			return;
-		}
-		foreach (Element element in this.tempElements.dict.Values.ToList<Element>())
-		{
-			if (element.vBase > 0)
-			{
-				this.ModTempElement(element.id, -Mathf.Min(a, element.vBase), true);
-			}
-		}
-	}
-
-	public void CureTempElements(int p, bool body, bool mind)
-	{
-		Chara.<>c__DisplayClass565_0 CS$<>8__locals1;
-		CS$<>8__locals1.<>4__this = this;
-		CS$<>8__locals1.p = p;
-		if (this.tempElements == null)
-		{
-			return;
-		}
-		if (body)
-		{
-			this.<CureTempElements>g__Cure|565_0(Element.List_Body, ref CS$<>8__locals1);
-		}
-		if (mind)
-		{
-			this.<CureTempElements>g__Cure|565_0(Element.List_Mind, ref CS$<>8__locals1);
-		}
-	}
-
-	[CompilerGenerated]
-	private void <RestockInventory>g__Restock|360_0(string id, int num)
-	{
-		if (this.things.Find(id, -1, -1) == null)
-		{
-			base.AddCard(ThingGen.Create(id, -1, -1).SetNum(num));
-		}
-	}
-
-	[CompilerGenerated]
-	private void <get_baseWorkElements>g__Build|494_0(Hobby h)
-	{
-		if (h.source.elements.IsEmpty())
-		{
-			return;
-		}
-		for (int i = 0; i < h.source.elements.Length; i += 2)
-		{
-			int ele = h.source.elements[i];
-			int v = h.source.elements[i + 1];
-			this._baseWorkElements.ModBase(ele, v);
-		}
-	}
-
-	[CompilerGenerated]
-	private void <RefreshWorkElements>g__TryAdd|495_0(Hobby h)
-	{
-		if (h.source.elements.IsEmpty())
-		{
-			return;
-		}
-		if (this.workElements == null)
-		{
-			this.workElements = new ElementContainer();
-		}
-		int i = 0;
-		while (i < h.source.elements.Length)
-		{
-			int num = h.source.elements[i];
-			int num2 = h.source.elements[i + 1];
-			int num3 = 100;
-			if (num == 2115 || num == 2207)
-			{
-				goto IL_79;
-			}
-			num3 = h.GetEfficiency(this) * this.homeBranch.efficiency / 100;
-			if (num3 > 0)
-			{
-				goto IL_79;
-			}
-			IL_AD:
-			i += 2;
-			continue;
-			IL_79:
-			this.workElements.ModBase(num, (num2 < 0) ? (num2 / 10) : Mathf.Max(1, h.source.elements[i + 1] * num3 / 1000));
-			goto IL_AD;
-		}
-	}
-
-	[CompilerGenerated]
-	internal static int <PerformWork>g__PerformWork|506_0(Hobby work, int idx, bool isHobby, ref Chara.<>c__DisplayClass506_0 A_3)
-	{
-		if (idx >= work.source.resources.Length)
-		{
-			return 0;
-		}
-		int num = work.source.resources[idx];
-		int num2 = num;
-		num = Rand.Range(num * (100 - work.source.resources[idx]) / 100, num);
-		num = num * (isHobby ? 50 : 100) * A_3.session.efficiency / 10000;
-		if (num2 > 0 && num <= 0)
-		{
-			num = 1;
-		}
-		return num;
-	}
-
-	[CompilerGenerated]
-	private void <CureTempElements>g__Cure|565_0(int[] eles, ref Chara.<>c__DisplayClass565_0 A_2)
-	{
-		foreach (int num in eles)
-		{
-			if (this.tempElements == null)
-			{
-				return;
-			}
-			Element element = this.tempElements.GetElement(num);
-			if (element != null && element.vBase < 0)
-			{
-				this.ModTempElement(num, Mathf.Clamp(A_2.p / 20 + EClass.rnd(A_2.p / 20), 1, -element.vBase), false);
-			}
-		}
-	}
-
 	private static Point shared = new Point();
 
 	private static List<Hobby> listHobby = new List<Hobby>();
 
-	public static string[] IDTimeTable = new string[]
-	{
-		"default",
-		"owl"
-	};
+	public static string[] IDTimeTable = new string[2] { "default", "owl" };
 
 	[JsonProperty]
 	public int contribution;
@@ -9579,4 +197,8674 @@ public class Chara : Card, IPathfindWalker
 
 	[JsonProperty]
 	public Dictionary<int, int> resistCon;
+
+	public string Aka => _alias.IsEmpty(source.GetText("aka", returnNull: true) ?? "");
+
+	public string _alias
+	{
+		get
+		{
+			return _strs[0];
+		}
+		set
+		{
+			_strs[0] = value;
+		}
+	}
+
+	public string idFaith
+	{
+		get
+		{
+			return _strs[1];
+		}
+		set
+		{
+			_strs[1] = value;
+		}
+	}
+
+	public string idFaction
+	{
+		get
+		{
+			return _strs[2];
+		}
+		set
+		{
+			_strs[2] = value;
+		}
+	}
+
+	public Zone currentZone
+	{
+		get
+		{
+			return RefZone.Get(_cints[1]);
+		}
+		set
+		{
+			_cints[1] = RefZone.Set(value);
+		}
+	}
+
+	public Zone homeZone
+	{
+		get
+		{
+			return RefZone.Get(_cints[2]);
+		}
+		set
+		{
+			_cints[2] = RefZone.Set(value);
+		}
+	}
+
+	public GoalListType goalListType
+	{
+		get
+		{
+			return _cints[3].ToEnum<GoalListType>();
+		}
+		set
+		{
+			_cints[3] = (int)value;
+		}
+	}
+
+	public Hostility hostility
+	{
+		get
+		{
+			return _cints[4].ToEnum<Hostility>();
+		}
+		set
+		{
+			_cints[4] = (int)value;
+		}
+	}
+
+	public int _affinity
+	{
+		get
+		{
+			return _cints[5];
+		}
+		set
+		{
+			_cints[5] = value;
+		}
+	}
+
+	public Affinity affinity => Affinity.Get(this);
+
+	public int interest
+	{
+		get
+		{
+			return _cints[6];
+		}
+		set
+		{
+			_cints[6] = value;
+		}
+	}
+
+	public int daysStarved
+	{
+		get
+		{
+			return _cints[7];
+		}
+		set
+		{
+			_cints[7] = value;
+		}
+	}
+
+	public int _idTimeTable
+	{
+		get
+		{
+			return _cints[9];
+		}
+		set
+		{
+			_cints[9] = value;
+		}
+	}
+
+	public int uidEditor
+	{
+		get
+		{
+			return _cints[10];
+		}
+		set
+		{
+			_cints[10] = value;
+		}
+	}
+
+	public int _maxStamina
+	{
+		get
+		{
+			return _cints[20];
+		}
+		set
+		{
+			_cints[20] = value;
+		}
+	}
+
+	public int corruption
+	{
+		get
+		{
+			return _cints[21];
+		}
+		set
+		{
+			_cints[21] = value;
+		}
+	}
+
+	public bool isDead
+	{
+		get
+		{
+			return _cbits1[0];
+		}
+		set
+		{
+			_cbits1[0] = value;
+		}
+	}
+
+	public bool isAlawysVisible
+	{
+		get
+		{
+			return _cbits1[1];
+		}
+		set
+		{
+			_cbits1[1] = value;
+		}
+	}
+
+	public bool knowFav
+	{
+		get
+		{
+			return _cbits1[3];
+		}
+		set
+		{
+			_cbits1[3] = value;
+		}
+	}
+
+	public CharaAbility ability => _ability ?? (_ability = new CharaAbility(this));
+
+	public Faction faction
+	{
+		get
+		{
+			return _faction ?? (_faction = EClass.game.factions.dictAll.TryGetValue(idFaction));
+		}
+		set
+		{
+			idFaction = value?.uid;
+		}
+	}
+
+	public Religion faith
+	{
+		get
+		{
+			return EClass.game.religions.dictAll.TryGetValue(idFaith) ?? EClass.game.religions.dictAll["eyth"];
+		}
+		set
+		{
+			idFaith = value?.id;
+		}
+	}
+
+	public override CardRow sourceCard => source;
+
+	public override CardRow sourceRenderCard
+	{
+		get
+		{
+			if (pccData != null && !(source.renderData is RenderDataPcc))
+			{
+				return SourceChara.rowDefaultPCC;
+			}
+			return source;
+		}
+	}
+
+	public SourceRace.Row race => _race ?? (_race = EClass.sources.races.map.TryGetValue(base.c_idRace.IsEmpty(source.race))) ?? EClass.sources.races.map["norland"];
+
+	public SourceJob.Row job => _job ?? (_job = EClass.sources.jobs.map.TryGetValue(base.c_idJob.IsEmpty(source.job))) ?? EClass.sources.jobs.map["none"];
+
+	public string idTimeTable => IDTimeTable[_idTimeTable];
+
+	public Hostility OriginalHostility
+	{
+		get
+		{
+			if (EClass.pc == null || !IsPCFaction)
+			{
+				if (base.c_originalHostility == (Hostility)0)
+				{
+					if (!source.hostility.IsEmpty())
+					{
+						return source.hostility.ToEnum<Hostility>();
+					}
+					return Hostility.Enemy;
+				}
+				return base.c_originalHostility;
+			}
+			return Hostility.Ally;
+		}
+	}
+
+	public string IDPCCBodySet
+	{
+		get
+		{
+			if (source.idActor.Length <= 1)
+			{
+				return "female";
+			}
+			return source.idActor[1];
+		}
+	}
+
+	public new TraitChara trait
+	{
+		get
+		{
+			return base.trait as TraitChara;
+		}
+		set
+		{
+			base.trait = value;
+		}
+	}
+
+	public string NameBraced => GetName(NameStyle.Full);
+
+	public string NameTitled => ((EClass.game.idDifficulty == 0) ? "" : ((EClass.game.idDifficulty == 1) ? "☆" : "★")) + NameBraced;
+
+	public override string actorPrefab
+	{
+		get
+		{
+			if (IsPCC)
+			{
+				return "CharaActorPCC";
+			}
+			return "CharaActor";
+		}
+	}
+
+	public override int PrefIndex
+	{
+		get
+		{
+			if (sourceCard._tiles.Length != 0 || renderer.replacer != null)
+			{
+				if (base.dir != 1 && base.dir != 2)
+				{
+					return 0;
+				}
+				return 1;
+			}
+			return base.dir;
+		}
+	}
+
+	public override bool flipX
+	{
+		get
+		{
+			if (base.dir != 1)
+			{
+				return base.dir == 2;
+			}
+			return true;
+		}
+	}
+
+	public override string AliasMaterialOnCreate => race.material;
+
+	public override bool IsAliveInCurrentZone
+	{
+		get
+		{
+			if (!isDead)
+			{
+				return base.ExistsOnMap;
+			}
+			return false;
+		}
+	}
+
+	public override bool IsDeadOrSleeping
+	{
+		get
+		{
+			if (!isDead && conSleep == null && conSuspend == null)
+			{
+				return isFainted;
+			}
+			return true;
+		}
+	}
+
+	public override bool IsDisabled
+	{
+		get
+		{
+			if (!isDead && conSleep == null && !isFainted)
+			{
+				return isParalyzed;
+			}
+			return true;
+		}
+	}
+
+	public bool IsLevitating
+	{
+		get
+		{
+			if (ride != null)
+			{
+				return ride._isLevitating;
+			}
+			return _isLevitating;
+		}
+	}
+
+	public override bool IsMoving => idleTimer > 0f;
+
+	public override bool IsGlobal => global != null;
+
+	public override bool IsPC => this == EClass.player.chara;
+
+	public override bool IsPCParty
+	{
+		get
+		{
+			if (party != null)
+			{
+				return party.leader == EClass.pc;
+			}
+			return false;
+		}
+	}
+
+	public override bool IsMinion
+	{
+		get
+		{
+			if (master == null)
+			{
+				return base.c_uidMaster != 0;
+			}
+			return true;
+		}
+	}
+
+	public override bool IsPCPartyMinion
+	{
+		get
+		{
+			if (master != null)
+			{
+				if (!master.IsPCParty)
+				{
+					return master.IsPCPartyMinion;
+				}
+				return true;
+			}
+			return false;
+		}
+	}
+
+	public override bool IsPCFactionMinion
+	{
+		get
+		{
+			if (master != null)
+			{
+				if (!master.IsPCFaction)
+				{
+					return master.IsPCFactionMinion;
+				}
+				return true;
+			}
+			return false;
+		}
+	}
+
+	public override bool IsPCFaction
+	{
+		get
+		{
+			if (EClass.pc != null)
+			{
+				return faction == EClass.pc.faction;
+			}
+			return false;
+		}
+	}
+
+	public override bool IsPCC => pccData != null;
+
+	public override bool isThing => false;
+
+	public override bool isChara => true;
+
+	public override bool HasHost => host != null;
+
+	public override bool isSynced
+	{
+		get
+		{
+			if (!renderer.isSynced)
+			{
+				if (host != null)
+				{
+					return host.renderer.isSynced;
+				}
+				return false;
+			}
+			return true;
+		}
+	}
+
+	public override bool IsMultisize => sourceCard.multisize;
+
+	public override int MaxHP => Mathf.Max(1, ((base.END * 2 + base.STR + base.WIL / 2) * Mathf.Min(base.LV, 25) / 25 + base.END + 10) * Evalue(60) / 100 * ((IsPCFaction ? 100 : (100 + (int)base.rarity * 300)) + (IsPC ? (EClass.player.lastEmptyAlly * Evalue(1646)) : 0)) / 100);
+
+	public override int WeightLimit => (base.STR * 500 + base.END * 250 + Evalue(207) * 2000) * ((!HasElement(1411)) ? 1 : 5) + 45000;
+
+	public override int SelfWeight => bio.weight * 1000;
+
+	public int MaxSummon => Mathf.Max((int)Mathf.Sqrt(base.CHA), 1) + Evalue(1647) + ((!base.IsPCFactionOrMinion) ? ((int)base.rarity * 5) : 0);
+
+	public Element MainElement
+	{
+		get
+		{
+			if (base.c_idMainElement == 0)
+			{
+				return Element.Void;
+			}
+			return elements.GetElement(base.c_idMainElement);
+		}
+	}
+
+	public override int DV
+	{
+		get
+		{
+			if (IsPCFaction)
+			{
+				return elements.Value(64) / ((!HasCondition<ConWeakness>()) ? 1 : 2);
+			}
+			int num = base.LV;
+			if (num > 50)
+			{
+				num = 50 + (num - 50) / 10;
+			}
+			return (num + elements.Value(64) * (100 + num + race.DV * 5) / 100) / ((!HasCondition<ConWeakness>()) ? 1 : 2);
+		}
+	}
+
+	public override int PV
+	{
+		get
+		{
+			if (IsPCFaction)
+			{
+				return elements.Value(65) / ((!HasCondition<ConWeakness>()) ? 1 : 2);
+			}
+			int num = base.LV;
+			if (num > 50)
+			{
+				num = 50 + (num - 50) / 10;
+			}
+			return (num + elements.Value(65) * (100 + num + race.PV * 5) / 100) / ((!HasCondition<ConWeakness>()) ? 1 : 2);
+		}
+	}
+
+	public bool CanOpenDoor
+	{
+		get
+		{
+			if (base.INT < 5)
+			{
+				if (IsPCFaction)
+				{
+					return memberType == FactionMemberType.Default;
+				}
+				return false;
+			}
+			return true;
+		}
+	}
+
+	public Tactics tactics => _tactics ?? (_tactics = new Tactics(this));
+
+	public TimeTable.Span CurrentSpan => TimeTable.GetSpan(idTimeTable, EClass.world.date.hour);
+
+	public bool IsInActiveZone => currentZone == EClass.game.activeZone;
+
+	public bool IsLocalChara
+	{
+		get
+		{
+			if (!IsGlobal && !base.isSubsetCard)
+			{
+				return homeZone == EClass._zone;
+			}
+			return false;
+		}
+	}
+
+	public bool IsIdle
+	{
+		get
+		{
+			if (!IsDeadOrSleeping)
+			{
+				return ai.Current.IsIdle;
+			}
+			return false;
+		}
+	}
+
+	public bool IsInCombat => ai is GoalCombat;
+
+	public int DestDist => tactics.DestDist;
+
+	public bool HasNoGoal => ai.IsNoGoal;
+
+	public bool CanWitness
+	{
+		get
+		{
+			if (!race.IsHuman && !race.IsFairy && !race.IsGod)
+			{
+				return race.id == "mutant";
+			}
+			return true;
+		}
+	}
+
+	public bool IsHuman => race.tag.Contains("human");
+
+	public bool IsHumanSpeak
+	{
+		get
+		{
+			if (!IsHuman)
+			{
+				return race.tag.Contains("humanSpeak");
+			}
+			return true;
+		}
+	}
+
+	public bool IsMaid
+	{
+		get
+		{
+			if (EClass.Branch != null)
+			{
+				return EClass.Branch.uidMaid == base.uid;
+			}
+			return false;
+		}
+	}
+
+	public bool IsPrisoner => false;
+
+	public bool IsAdventurer
+	{
+		get
+		{
+			if (global != null && faction != EClass.pc.faction)
+			{
+				return IsPCC;
+			}
+			return false;
+		}
+	}
+
+	public bool IsEyth => faith.id == "eyth";
+
+	public bool IsWealthy
+	{
+		get
+		{
+			if (!source.works.Contains("Rich"))
+			{
+				return source.hobbies.Contains("Rich");
+			}
+			return true;
+		}
+	}
+
+	public FactionBranch homeBranch => homeZone?.branch;
+
+	public int MaxGene => race.geneCap;
+
+	public int Speed
+	{
+		get
+		{
+			if (dirtySpeed)
+			{
+				RefreshSpeed();
+			}
+			return _Speed;
+		}
+	}
+
+	public bool IsMofuable => race.tag.Contains("mofu");
+
+	public ElementContainer baseWorkElements
+	{
+		get
+		{
+			if (_baseWorkElements == null)
+			{
+				_baseWorkElements = new ElementContainer();
+				foreach (Hobby item in ListHobbies())
+				{
+					Build(item);
+				}
+				foreach (Hobby item2 in ListWorks())
+				{
+					Build(item2);
+				}
+			}
+			return _baseWorkElements;
+			void Build(Hobby h)
+			{
+				if (!h.source.elements.IsEmpty())
+				{
+					for (int i = 0; i < h.source.elements.Length; i += 2)
+					{
+						int ele = h.source.elements[i];
+						int v = h.source.elements[i + 1];
+						_baseWorkElements.ModBase(ele, v);
+					}
+				}
+			}
+		}
+	}
+
+	public Stats hunger => Stats.Hunger.Set(_cints, 10, this);
+
+	public Stats burden => Stats.Burden.Set(_cints, 11, this);
+
+	public Stats stamina => Stats.Stamina.Set(_cints, 12, this);
+
+	public Stats depression => Stats.Depression.Set(_cints, 13, this);
+
+	public Stats bladder => Stats.Bladder.Set(_cints, 14, this);
+
+	public Stats hygiene => Stats.Hygiene.Set(_cints, 15, this);
+
+	public Stats mana => Stats.Mana.Set(_cints, 16, this);
+
+	public Stats sleepiness => Stats.Sleepiness.Set(_cints, 17, this);
+
+	public Stats SAN => Stats.SAN.Set(_cints, 17, this);
+
+	public bool CanGainConResist
+	{
+		get
+		{
+			if (base.rarity >= Rarity.Legendary)
+			{
+				return !IsPCFaction;
+			}
+			return false;
+		}
+	}
+
+	public override string ToString()
+	{
+		return base.Name + "(" + ai?.ToString() + ")" + pos?.ToString() + "/" + base.ExistsOnMap + "/" + isDead;
+	}
+
+	public bool IsCriticallyWounded(bool includeRide = false)
+	{
+		if (host == null || includeRide)
+		{
+			if (Evalue(1421) <= 0)
+			{
+				return base.hp < MaxHP / 5;
+			}
+			return base.hp + mana.value < (MaxHP + mana.max) / 5;
+		}
+		return false;
+	}
+
+	public bool HasHigherGround(Card c)
+	{
+		if (c == null)
+		{
+			return false;
+		}
+		float num = renderer.position.y - pos.Position(0).y + (_isLevitating ? 0.4f : 0f);
+		float num2 = c.renderer.position.y - c.pos.Position(0).y + ((c.isChara && c.Chara._isLevitating) ? 0.4f : 0f);
+		return num > num2 + 0.1f;
+	}
+
+	public bool CanSeeSimple(Point p)
+	{
+		if (!p.IsValid || p.IsHidden)
+		{
+			return false;
+		}
+		if (IsPC)
+		{
+			if (fov != null)
+			{
+				return fov.lastPoints.ContainsKey(p.index);
+			}
+			return false;
+		}
+		return true;
+	}
+
+	public bool CanSee(Card c)
+	{
+		if (c == this)
+		{
+			return true;
+		}
+		if (!c.pos.IsValid)
+		{
+			return false;
+		}
+		if (c.isChara)
+		{
+			if (hasTelepathy && c.Chara.race.visibleWithTelepathy)
+			{
+				return true;
+			}
+			if (c.isHidden && c != this && !canSeeInvisible)
+			{
+				return false;
+			}
+		}
+		if (IsPC)
+		{
+			if (fov != null)
+			{
+				return fov.lastPoints.ContainsKey(c.pos.index);
+			}
+			return false;
+		}
+		return true;
+	}
+
+	public bool CanSeeLos(Card c, int dist = -1, bool includeTelepathy = false)
+	{
+		if (c.isChara && includeTelepathy && hasTelepathy && c.Chara.race.visibleWithTelepathy)
+		{
+			return true;
+		}
+		if (c.isHidden && !canSeeInvisible)
+		{
+			return false;
+		}
+		return CanSeeLos(c.pos, dist);
+	}
+
+	public bool CanSeeLos(Point p, int dist = -1)
+	{
+		if (dist == -1)
+		{
+			dist = pos.Distance(p);
+		}
+		if (dist > GetSightRadius())
+		{
+			return false;
+		}
+		if (IsPC)
+		{
+			if (fov != null)
+			{
+				return fov.lastPoints.ContainsKey(p.index);
+			}
+			return false;
+		}
+		return Los.IsVisible(pos, p);
+	}
+
+	public bool HasAccess(Card c)
+	{
+		return HasAccess(c.pos);
+	}
+
+	public bool HasAccess(Point p)
+	{
+		if (!EClass._zone.IsPCFaction || p.cell.room == null || IsPC)
+		{
+			return true;
+		}
+		return p.cell.room.data.accessType switch
+		{
+			BaseArea.AccessType.Resident => memberType == FactionMemberType.Default, 
+			BaseArea.AccessType.Private => false, 
+			_ => true, 
+		};
+	}
+
+	public bool CanSleep()
+	{
+		if (EClass._zone.events.GetEvent<ZoneEventQuest>() != null)
+		{
+			return false;
+		}
+		if (!EClass.debug.godMode && sleepiness.GetPhase() == 0)
+		{
+			return stamina.GetPhase() <= 1;
+		}
+		return true;
+	}
+
+	protected override void OnSerializing()
+	{
+		if (enemy != null)
+		{
+			SetInt(55, enemy.uid);
+		}
+		_cints[0] = (int)_cbits1.Bits;
+		List<BodySlot> slots = body.slots;
+		rawSlots = new int[slots.Count];
+		for (int i = 0; i < slots.Count; i++)
+		{
+			rawSlots[i] = slots[i].elementId;
+		}
+	}
+
+	protected override void OnDeserialized()
+	{
+		isCreated = true;
+		_cbits1.Bits = (uint)_cints[0];
+		InitStats(onDeserialize: true);
+		body.SetOwner(this, deserialized: true);
+		elements.ApplyElementMap(base.uid, SourceValueType.Chara, job.elementMap, base.DefaultLV);
+		elements.ApplyElementMap(base.uid, SourceValueType.Chara, race.elementMap, base.DefaultLV);
+		if (global != null && global.goal != null)
+		{
+			global.goal.SetOwner(this);
+		}
+		if (IsPCC)
+		{
+			pccData.state = (base.isCensored ? PCCState.Naked : PCCState.Normal);
+		}
+		if (tempElements != null)
+		{
+			tempElements.SetParent(this);
+		}
+		UpdateAngle();
+		RefreshFaithElement();
+		Refresh();
+		if (source.tag.Contains("boss"))
+		{
+			bossText = true;
+		}
+		sharedCheckTurn = EClass.rnd(200);
+	}
+
+	public override string GetName(NameStyle style, int num = -1)
+	{
+		if (base.isBackerContent && EClass.core.config.backer.Show(base.c_idBacker))
+		{
+			if (id == "follower" && !IsGlobal)
+			{
+				return "_follower".lang(EClass.sources.backers.map[base.c_idBacker].Name, faith.Name);
+			}
+			return EClass.sources.backers.map[base.c_idBacker].Name;
+		}
+		string text = base.c_altName ?? source.GetName(this);
+		text = text.Replace("#ele4", MainElement.source.GetAltname(2)).Replace("#ele3", MainElement.source.GetAltname(1)).Replace("#ele2", MainElement.source.GetAltname(0))
+			.Replace("#ele", MainElement.source.GetName().ToLower());
+		if (base.c_bossType == BossType.Evolved)
+		{
+			text = "_evolved".lang(text.ToTitleCase(wholeText: true));
+		}
+		trait.SetName(ref text);
+		if (text.Length > 0 && char.IsLower(text[0]))
+		{
+			if (base.rarity >= Rarity.Legendary)
+			{
+				text = text.ToTitleCase();
+			}
+			else if (num != 0)
+			{
+				text = text.AddArticle();
+			}
+		}
+		if (style == NameStyle.Simple)
+		{
+			return text;
+		}
+		int num2 = ((base.rarity == Rarity.Mythical) ? 3 : ((base.rarity >= Rarity.Legendary) ? 2 : ((!_alias.IsEmpty()) ? 1 : (-1))));
+		if (trait is TraitAdventurer)
+		{
+			num2 = 1;
+		}
+		text = (Aka.IsEmpty() ? text.Bracket(num2) : (num2 switch
+		{
+			-1 => "_aka", 
+			1 => "_aka3", 
+			_ => "_aka2", 
+		}).lang((num2 == -1) ? Aka : Aka.ToTitleCase(wholeText: true), text.Bracket(num2)));
+		string text2 = (base.isSale ? "forSale".lang(Lang._currency(GetPrice(CurrencyType.Money, sell: true, PriceType.PlayerShop), "money")) : "");
+		return text + text2;
+	}
+
+	public override void ChangeRarity(Rarity r)
+	{
+		if (r != base.rarity)
+		{
+			base.rarity = r;
+			if (renderer != null && renderer.isSynced)
+			{
+				renderer.RefreshExtra();
+			}
+			base.hp = MaxHP;
+		}
+	}
+
+	public void SetFaction(Faction f)
+	{
+		_faction = null;
+		faction = f;
+		hostility = faction.GetHostility();
+	}
+
+	public void SetHomeZone(Zone zone)
+	{
+		homeZone = zone;
+		SetGlobal();
+	}
+
+	public void OnBanish()
+	{
+		if (!IsGlobal)
+		{
+			return;
+		}
+		memberType = FactionMemberType.Default;
+		UniqueData uniqueData = base.c_uniqueData;
+		if (uniqueData != null)
+		{
+			Debug.Log(uniqueData.uidZone + "/" + EClass.game.spatials.map.ContainsKey(uniqueData.uidZone) + "/" + uniqueData.x + "/" + uniqueData.y);
+		}
+		if (uniqueData != null && EClass.game.spatials.map.ContainsKey(uniqueData.uidZone))
+		{
+			MoveHome(EClass.game.spatials.map[uniqueData.uidZone] as Zone, uniqueData.x, uniqueData.y);
+			return;
+		}
+		Zone z = EClass.game.spatials.Find("somewhere");
+		if (trait is TraitAdventurer)
+		{
+			z = EClass.world.region.ListTowns().RandomItem();
+			SetHomeZone(z);
+		}
+		MoveZone(z, ZoneTransition.EnterState.RandomVisit);
+	}
+
+	public Chara SetGlobal(Zone _home, int x, int z)
+	{
+		SetGlobal();
+		homeZone = _home;
+		_home.AddCard(this, x, z);
+		global.transition = new ZoneTransition
+		{
+			state = ZoneTransition.EnterState.Exact,
+			x = x,
+			z = z
+		};
+		orgPos = new Point(x, z);
+		return this;
+	}
+
+	public Chara SetGlobal()
+	{
+		if (!IsGlobal)
+		{
+			EClass.game.cards.globalCharas.Add(this);
+			global = new GlobalData();
+			base.isSubsetCard = false;
+			enemy = null;
+			base.c_uidMaster = 0;
+		}
+		return this;
+	}
+
+	public void RemoveGlobal()
+	{
+		if (IsGlobal && !(trait is TraitUniqueChara) && !base.IsUnique && !EClass.game.cards.listAdv.Contains(this))
+		{
+			global = null;
+			EClass.game.cards.globalCharas.Remove(this);
+		}
+	}
+
+	public override void OnBeforeCreate()
+	{
+		if (source.job == "*r")
+		{
+			base.c_idJob = EClass.sources.jobs.rows.Where((SourceJob.Row j) => j.playable < 4).RandomItem().id;
+		}
+		if (bp.idJob != null)
+		{
+			base.c_idJob = bp.idJob;
+		}
+		if (bp.idRace != null)
+		{
+			base.c_idRace = bp.idRace;
+		}
+	}
+
+	public override void OnCreate(int genLv)
+	{
+		if (source.tag.Contains("boss"))
+		{
+			bossText = true;
+		}
+		int num = ((bp.lv != -999) ? bp.lv : base.LV);
+		if (trait.AdvType == TraitChara.Adv_Type.Adv || trait.AdvType == TraitChara.Adv_Type.Adv_Fairy)
+		{
+			if (ListAdvRace.Count == 0)
+			{
+				ListAdvRace = EClass.sources.races.rows.Where((SourceRace.Row a) => a.playable <= 1 && a.id != "fairy").ToList();
+				ListAdvJob = EClass.sources.jobs.rows.Where((SourceJob.Row a) => a.playable <= 4).ToList();
+			}
+			if (trait.AdvType == TraitChara.Adv_Type.Adv)
+			{
+				base.c_idRace = ListAdvRace.RandomItem().id;
+			}
+			base.c_idJob = ListAdvJob.RandomItem().id;
+			_race = null;
+			_job = null;
+			num = 10 + EClass.rnd(40);
+		}
+		bio = new Biography();
+		bio.Generate(this);
+		if (source.idActor.Length != 0 && source.idActor[0] == "pcc" && pccData == null)
+		{
+			pccData = PCCData.Create(IDPCCBodySet);
+			if (source.idActor.Length > 2)
+			{
+				pccData.SetPart("body", IDPCCBodySet, source.idActor[2]);
+			}
+			else
+			{
+				pccData.Randomize(IDPCCBodySet);
+			}
+		}
+		if (source.mainElement.Length != 0)
+		{
+			List<Tuple<string, int, int>> list = new List<Tuple<string, int, int>>();
+			string[] mainElement = source.mainElement;
+			for (int i = 0; i < mainElement.Length; i++)
+			{
+				string[] array = mainElement[i].Split('/');
+				SourceElement.Row row = EClass.sources.elements.alias["ele" + array[0]];
+				int num2 = source.LV * row.eleP / 100 + base.LV - source.LV;
+				if (list.Count == 0 || num2 < genLv)
+				{
+					list.Add(new Tuple<string, int, int>(array[0], (array.Length > 1) ? int.Parse(array[1]) : 0, num2));
+				}
+			}
+			Tuple<string, int, int> tuple = list.RandomItemWeighted((Tuple<string, int, int> a) => 10000 / (100 + (genLv - a.Item3) * 25));
+			if (!bp.idEle.IsEmpty())
+			{
+				tuple = list.Where((Tuple<string, int, int> a) => a.Item1 == bp.idEle).First();
+			}
+			SetMainElement(tuple.Item1, (tuple.Item2 == 0) ? 10 : tuple.Item2, elemental: true);
+			if (list.Count >= 2)
+			{
+				num = tuple.Item3;
+			}
+		}
+		if (source.name == "*r")
+		{
+			base.c_altName = NameGen.getRandomName();
+		}
+		if (source.GetText("aka") == "*r" || trait.UseRandomAlias)
+		{
+			_alias = AliasGen.GetRandomAlias();
+		}
+		happiness = EClass.rnd(100);
+		contribution = EClass.rnd(100);
+		RerollHobby();
+		_idTimeTable = ((EClass.rnd(5) == 0) ? 1 : 0);
+		ApplyRace();
+		ApplyJob();
+		if (num != source.LV)
+		{
+			SetLv(num);
+		}
+		if (base.LV > 5 && race.id == "mutant")
+		{
+			for (int j = 0; j < Mathf.Min(1 + base.LV / 5, 22); j++)
+			{
+				SetFeat(1644, j + 1);
+			}
+		}
+		InitStats();
+		body.SetOwner(this);
+		hostility = OriginalHostility;
+		if (race.EQ.Length != 0)
+		{
+			TryRestock(onCreate: true);
+		}
+		switch (id)
+		{
+		case "dodo":
+			base.idSkin = EClass.rnd(4);
+			break;
+		case "putty_snow":
+			if (EClass.rnd(100) == 0 || EClass.debug.enable)
+			{
+				base.idSkin = EClass.rnd(4);
+			}
+			break;
+		case "snail":
+			base.idSkin = 5;
+			break;
+		case "olderyoungersister":
+			base.idSkin = 1;
+			break;
+		case "sister_undead":
+		case "dog":
+		case "cat":
+			base.idSkin = EClass.rnd(sourceCard.tiles.Length);
+			if (id == "sister_undead" && EClass.rnd(10) == 0)
+			{
+				SourceBacker.Row row2 = EClass.sources.backers.listSister.NextItem(ref BackerContent.indexSister);
+				if (row2 != null && (!EClass.player.doneBackers.Contains(row2.id) || EClass.core.config.test.ignoreBackerDestoryFlag))
+				{
+					ApplyBacker(row2.id);
+				}
+			}
+			break;
+		}
+		if (source.tag.Contains("random_color"))
+		{
+			DyeRandom();
+		}
+		SetAI(new NoGoal());
+		if (!source.faith.IsEmpty())
+		{
+			SetFaith(source.faith);
+		}
+		else if (EClass.game.activeZone != null && EClass.game.activeZone.id == "foxtown")
+		{
+			SetFaith(EClass.game.religions.Trickery);
+		}
+		else if (EClass.game.activeZone != null && EClass.game.activeZone.id == "foxtown_nefu")
+		{
+			SetFaith(EClass.game.religions.MoonShadow);
+		}
+		else
+		{
+			SetFaith(EClass.game.religions.GetRandomReligion(onlyJoinable: true, EClass.rnd(10) == 0));
+		}
+		_affinity = 0;
+		interest = 100;
+		CalculateMaxStamina();
+		Refresh();
+		stamina.value = stamina.max;
+		mana.value = mana.max;
+		isCreated = true;
+	}
+
+	public void SetFaith(string id)
+	{
+		SetFaith(EClass.game.religions.dictAll[id]);
+	}
+
+	public void SetFaith(Religion r)
+	{
+		faith = r;
+		RefreshFaithElement();
+	}
+
+	public void HealAll()
+	{
+		Cure(CureType.Death);
+		base.hp = MaxHP;
+		mana.value = mana.max;
+		stamina.value = stamina.max;
+		Refresh();
+	}
+
+	public void Refresh(bool calledRecursive = false)
+	{
+		if (ride != null)
+		{
+			ride.Refresh(calledRecursive: true);
+		}
+		hasTelepathy = false;
+		isWet = false;
+		_isLevitating = HasElement(401) || (ride != null && ride._isLevitating);
+		canSeeInvisible = HasElement(416);
+		base.isHidden = HasElement(415);
+		foreach (Condition condition in conditions)
+		{
+			condition.OnRefresh();
+		}
+		if (isWet)
+		{
+			base.isHidden = false;
+		}
+		SetDirtySpeed();
+		if (host != null && !calledRecursive)
+		{
+			host.Refresh(calledRecursive: true);
+		}
+	}
+
+	public Chara Duplicate()
+	{
+		Chara chara = CharaGen.Create(id);
+		chara.mana.value = mana.value;
+		chara.stamina.value = stamina.value;
+		foreach (KeyValuePair<int, Element> item in elements.dict)
+		{
+			Element element = chara.elements.GetElement(item.Key);
+			if (element != null)
+			{
+				element.vBase = item.Value.ValueWithoutLink - element.vSource;
+			}
+		}
+		chara.SetFaith(faith);
+		chara.bio = IO.DeepCopy(bio);
+		chara.hp = Mathf.Max(0, (int)((float)chara.MaxHP * ((float)base.hp / (float)MaxHP) * 0.99f));
+		chara.LV = base.LV;
+		chara.isCopy = true;
+		if (HaveFur())
+		{
+			chara.c_fur = -1;
+		}
+		return chara;
+	}
+
+	public int GetBurden(Card t = null, int num = -1)
+	{
+		int num2 = (base.ChildrenWeight + ((t != null) ? ((num == -1) ? t.ChildrenAndSelfWeight : (t.SelfWeight * num)) : 0)) * 100 / WeightLimit;
+		if (num2 < 0)
+		{
+			num2 = 1000;
+		}
+		if (EClass.debug.ignoreWeight && IsPC)
+		{
+			num2 = 0;
+		}
+		int num3 = ((num2 >= 100) ? ((num2 - 100) / 10 + 1) : 0);
+		if (num3 > 9)
+		{
+			num3 = 9;
+		}
+		return num3;
+	}
+
+	public void CalcBurden()
+	{
+		int num = base.ChildrenWeight * 100 / WeightLimit;
+		if (num < 0)
+		{
+			num = 1000;
+		}
+		if (EClass.debug.ignoreWeight && IsPC)
+		{
+			num = 0;
+		}
+		burden.Set(num);
+		SetDirtySpeed();
+	}
+
+	public void Stumble(int mtp = 100)
+	{
+		bool flag = EClass._map.FindThing((Thing t) => t.IsInstalled && t.pos.Equals(EClass.pc.pos) && t.trait is TraitStairsUp) != null;
+		Say(flag ? "dmgBurdenStairs" : "dmgBurdenFallDown", this);
+		int num = MaxHP;
+		if (Evalue(1421) > 0)
+		{
+			num = mana.max;
+		}
+		int num2 = (num * (base.ChildrenWeight * 100 / WeightLimit) / (flag ? 100 : 200) + 1) * mtp / 100;
+		if (base.hp <= 0)
+		{
+			num2 *= 2;
+		}
+		DamageHP(num2, flag ? AttackSource.BurdenStairs : AttackSource.BurdenFallDown);
+	}
+
+	public void SetDirtySpeed()
+	{
+		dirtySpeed = true;
+		if (host != null)
+		{
+			host.SetDirtySpeed();
+		}
+	}
+
+	public void RefreshSpeed(Element.BonusInfo info = null)
+	{
+		if (ride != null && !ride.IsDeadOrSleeping)
+		{
+			ride.RefreshSpeed();
+			_Speed = ride._Speed;
+		}
+		else if (host != null)
+		{
+			if (host.ride == this)
+			{
+				_Speed = Evalue(79);
+				_Speed = _Speed * 100 / Mathf.Clamp(100 + _Speed * ((!race.tag.Contains("noRide")) ? 1 : 5) - base.STR - host.EvalueRiding() * 2 - (race.tag.Contains("ride") ? 50 : 0), 100, 1000);
+			}
+			else
+			{
+				_Speed = (Evalue(79) + host.Evalue(79)) / 2;
+			}
+		}
+		else
+		{
+			_Speed = Evalue(79) + Evalue(407) / 2;
+		}
+		if (body.GetSlot(37, onlyEmpty: false)?.thing != null && HasElement(1209))
+		{
+			_Speed -= 25;
+		}
+		int num = 100;
+		if (parasite != null)
+		{
+			_Speed = _Speed * 100 / Mathf.Clamp(120 + parasite.LV * 2 - base.STR - Evalue(227) * 2, 100, 1000);
+		}
+		if (IsPCFaction)
+		{
+			switch (burden.GetPhase())
+			{
+			case 1:
+				num -= 10;
+				info?.AddFix(-10, burden.GetPhaseStr());
+				break;
+			case 2:
+				num -= 20;
+				info?.AddFix(-20, burden.GetPhaseStr());
+				break;
+			case 3:
+				num -= 30;
+				info?.AddFix(-30, burden.GetPhaseStr());
+				break;
+			case 4:
+				num -= (IsPC ? 50 : 100);
+				info?.AddFix(IsPC ? (-50) : (-100), burden.GetPhaseStr());
+				break;
+			}
+			if (IsPC)
+			{
+				switch (stamina.GetPhase())
+				{
+				case 1:
+					num -= 10;
+					info?.AddFix(-10, stamina.GetPhaseStr());
+					break;
+				case 0:
+					num -= 20;
+					info?.AddFix(-20, stamina.GetPhaseStr());
+					break;
+				}
+				switch (sleepiness.GetPhase())
+				{
+				case 2:
+					num -= 10;
+					info?.AddFix(-10, sleepiness.GetPhaseStr());
+					break;
+				case 3:
+					num -= 20;
+					info?.AddFix(-20, sleepiness.GetPhaseStr());
+					break;
+				}
+				switch (hunger.GetPhase())
+				{
+				case 3:
+				case 4:
+					num -= 10;
+					info?.AddFix(-10, hunger.GetPhaseStr());
+					break;
+				case 5:
+					num -= 30;
+					info?.AddFix(-30, hunger.GetPhaseStr());
+					break;
+				}
+				num += EClass.player.lastEmptyAlly * Evalue(1646);
+				info?.AddFix(EClass.player.lastEmptyAlly * Evalue(1646), EClass.sources.elements.map[1646].GetName());
+			}
+			if (IsPCParty && EClass.player.lastEmptyAlly < 0)
+			{
+				num += EClass.player.lastEmptyAlly * 10 - 10;
+				info?.AddFix(EClass.player.lastEmptyAlly * 10 - 10, "exceedParty".lang());
+			}
+		}
+		if (HasCondition<ConGravity>())
+		{
+			num -= 30;
+			info?.AddFix(-30, GetCondition<ConGravity>().Name);
+		}
+		_Speed = _Speed * num / 100;
+		if (_Speed < 10)
+		{
+			_Speed = 10;
+		}
+		dirtySpeed = false;
+	}
+
+	public void CalculateMaxStamina()
+	{
+		int num = base.END;
+		int num2 = 0;
+		foreach (Element value in elements.dict.Values)
+		{
+			if (value.source.category == "skill")
+			{
+				num = ((!IsPC) ? (num + Mathf.Max(value.ValueWithoutLink, 0)) : (num + Mathf.Max(value.vBase, 0)));
+			}
+		}
+		num2 = EClass.curve(num, 30, 10, 60);
+		if (num2 < 10)
+		{
+			num2 = 10;
+		}
+		_maxStamina = num2 + 15;
+	}
+
+	public override void ApplyEditorTags(EditorTag tag)
+	{
+		switch (tag)
+		{
+		case EditorTag.HostilityNeutral:
+		{
+			Hostility hostility2 = (base.c_originalHostility = Hostility.Neutral);
+			this.hostility = hostility2;
+			break;
+		}
+		case EditorTag.HostilityEnemy:
+		{
+			Hostility hostility2 = (base.c_originalHostility = Hostility.Enemy);
+			this.hostility = hostility2;
+			break;
+		}
+		case EditorTag.HostilityFriend:
+		{
+			Hostility hostility2 = (base.c_originalHostility = Hostility.Friend);
+			this.hostility = hostility2;
+			break;
+		}
+		case EditorTag.Male:
+			bio.SetGender(2);
+			base.c_idPortrait = Portrait.GetRandomPortrait(2, GetIdPortraitCat());
+			break;
+		case EditorTag.Female:
+			bio.SetGender(1);
+			base.c_idPortrait = Portrait.GetRandomPortrait(1, GetIdPortraitCat());
+			break;
+		}
+		base.ApplyEditorTags(tag);
+	}
+
+	public override void SetSource()
+	{
+		source = EClass.sources.charas.map.TryGetValue(id);
+		if (source == null)
+		{
+			Debug.LogWarning("Chara " + id + " not found");
+			id = "begger";
+			source = EClass.sources.charas.map[id];
+		}
+		path.walker = this;
+	}
+
+	public void SetMainElement(string id, int v = 0, bool elemental = false)
+	{
+		if (!id.StartsWith("ele"))
+		{
+			id = "ele" + id;
+		}
+		SetMainElement(EClass.sources.elements.alias[id].id, v, elemental);
+	}
+
+	public void SetMainElement(int id, int v = 0, bool elemental = false)
+	{
+		if (base.c_idMainElement != 0)
+		{
+			elements.SetBase(base.c_idMainElement, 0);
+			elements.ModBase(EClass.sources.elements.alias[EClass.sources.elements.map[base.c_idMainElement].aliasRef].id, -20);
+			base.c_idMainElement = 0;
+		}
+		if (id != 0)
+		{
+			SourceElement.Row row = EClass.sources.elements.map[id];
+			base.c_idMainElement = id;
+			elements.ModBase(id, (v == 0) ? 10 : v);
+			elements.ModBase(EClass.sources.elements.alias[row.aliasRef].id, 20);
+			if (elemental)
+			{
+				base.isElemental = true;
+				_colorInt = 0;
+				Color colorSprite = EClass.setting.elements[MainElement.source.alias].colorSprite;
+				base.c_lightColor = (byte)Mathf.Clamp(colorSprite.r * 3f, 1f, 31f) * 1024 + (byte)Mathf.Clamp(colorSprite.g * 3f, 1f, 31f) * 32 + (byte)Mathf.Clamp(colorSprite.b * 3f, 1f, 31f);
+			}
+			_ability = null;
+		}
+	}
+
+	public void ApplyJob(bool remove = false)
+	{
+		elements.ApplyElementMap(base.uid, SourceValueType.Chara, job.elementMap, base.DefaultLV, remove, applyFeat: true);
+		if (IsPCC)
+		{
+			EClass.game.uniforms.Apply(pccData, job.id, base.IsMale, canUseOtherGender: true);
+		}
+	}
+
+	public void ChangeJob(string idNew)
+	{
+		ApplyJob(remove: true);
+		base.c_idJob = idNew;
+		_job = null;
+		ApplyJob();
+		if (IsPCC)
+		{
+			PCC.Get(pccData).Build();
+		}
+	}
+
+	private int ParseBodySlot(string s)
+	{
+		return s switch
+		{
+			"頭" => 30, 
+			"首" => 31, 
+			"体" => 32, 
+			"背" => 33, 
+			"手" => 35, 
+			"指" => 36, 
+			"腕" => 34, 
+			"腰" => 37, 
+			"足" => 39, 
+			_ => -1, 
+		};
+	}
+
+	public void AddRandomBodyPart(bool msg = false)
+	{
+		int ele = new int[9] { 30, 31, 33, 35, 35, 36, 34, 37, 39 }.RandomItem();
+		body.AddBodyPart(ele);
+		if (msg)
+		{
+			Say("gain_bodyparts", this, Element.Get(ele).GetName().ToLower());
+			PlaySound("offering");
+		}
+	}
+
+	public void ApplyRace(bool remove = false)
+	{
+		string[] array = race.figure.Split('|');
+		foreach (string s in array)
+		{
+			int num = ParseBodySlot(s);
+			if (num != -1)
+			{
+				if (remove)
+				{
+					body.RemoveBodyPart(num);
+				}
+				else
+				{
+					body.AddBodyPart(num);
+				}
+			}
+		}
+		elements.ApplyElementMap(base.uid, SourceValueType.Chara, race.elementMap, base.DefaultLV, remove, applyFeat: true);
+	}
+
+	public void ChangeRace(string idNew)
+	{
+		ApplyRace(remove: true);
+		base.c_idRace = idNew;
+		_race = null;
+		ApplyRace();
+		ChangeMaterial(race.material);
+	}
+
+	public void MakePartyMemeber()
+	{
+		_MakeAlly();
+		EClass.pc.party.AddMemeber(this);
+	}
+
+	public void MakeAlly(bool msg = true)
+	{
+		if (IsLocalChara && !base.IsUnique)
+		{
+			Debug.Log("Creating Replacement NPC for:" + this);
+			EClass._map.deadCharas.Add(CreateReplacement());
+		}
+		_MakeAlly();
+		if (msg)
+		{
+			EClass.pc.Say("hire", this);
+			EClass.Sound.Play("good");
+		}
+		EClass.pc.party.AddMemeber(this);
+		if (EClass._zone.IsTown)
+		{
+			EClass._zone.RefreshListCitizen();
+		}
+	}
+
+	public void _MakeAlly()
+	{
+		if (EClass.pc.homeBranch != null)
+		{
+			EClass.pc.homeBranch.AddMemeber(this);
+		}
+		else
+		{
+			SetGlobal();
+			SetFaction(EClass.Home);
+		}
+		Hostility hostility2 = (base.c_originalHostility = Hostility.Ally);
+		this.hostility = hostility2;
+		orgPos = null;
+		base.c_summonDuration = 0;
+		base.isSummon = false;
+		ReleaseMinion();
+		SetInt(32);
+		Refresh();
+	}
+
+	public bool CanBeTempAlly(Chara c)
+	{
+		if (IsPCFaction || IsGlobal || IsMinion || IsMultisize || EClass._zone.CountMinions(c) > c.MaxSummon || base.rarity >= Rarity.Legendary)
+		{
+			return false;
+		}
+		if (HasElement(1222))
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public void MakeMinion(Chara _master, MinionType type = MinionType.Default)
+	{
+		ReleaseMinion();
+		Hostility hostility2 = (base.c_originalHostility = (_master.IsPCFaction ? Hostility.Ally : _master.hostility));
+		this.hostility = hostility2;
+		base.c_uidMaster = _master.uid;
+		base.c_minionType = type;
+		master = _master;
+		Refresh();
+	}
+
+	public void ReleaseMinion()
+	{
+		Debug.Log("released:" + this);
+		base.c_uidMaster = 0;
+		master = null;
+		enemy = null;
+		foreach (Chara chara in EClass._map.charas)
+		{
+			if (chara.enemy == this)
+			{
+				chara.SetEnemy();
+				chara.ai.Cancel();
+			}
+		}
+		ai.Cancel();
+		Refresh();
+	}
+
+	public void SetSummon(int duration)
+	{
+		base.c_summonDuration = duration;
+		base.isSummon = true;
+	}
+
+	public Chara FindMaster()
+	{
+		if (IsMinion)
+		{
+			master = EClass._map.FindChara(base.c_uidMaster);
+		}
+		return master;
+	}
+
+	public bool IsEscorted()
+	{
+		if (!IsPCPartyMinion)
+		{
+			return false;
+		}
+		foreach (Quest item in EClass.game.quests.list)
+		{
+			if (item is QuestEscort questEscort && questEscort.uidChara == base.uid)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool CanDestroyPath()
+	{
+		if (!IsMultisize)
+		{
+			if (base.rarity >= Rarity.Superior && !base.IsPCFactionOrMinion && ai is GoalCombat && !EClass._zone.IsPCFaction)
+			{
+				return !(EClass._zone is Zone_Town);
+			}
+			return false;
+		}
+		return true;
+	}
+
+	public bool CanMoveTo(Point p, bool allowDestroyPath = true)
+	{
+		if (!p.IsValid)
+		{
+			return false;
+		}
+		int num = ((p.z >= pos.z) ? ((p.x > pos.x) ? 1 : ((p.z > pos.z) ? 2 : 3)) : 0);
+		if (allowDestroyPath && CanDestroyPath())
+		{
+			if (!p.IsInBounds)
+			{
+				return false;
+			}
+		}
+		else
+		{
+			if (EClass._map.cells[p.x, p.z].blocked || EClass._map.cells[pos.x, pos.z].weights[num] == 0)
+			{
+				return false;
+			}
+			if (p.x != pos.x && p.z != pos.z)
+			{
+				Cell[,] cells = EClass._map.cells;
+				int x = p.x;
+				int z = pos.z;
+				int num2 = ((z >= pos.z) ? ((x > pos.x) ? 1 : ((z > pos.z) ? 2 : 3)) : 0);
+				if (cells[pos.x, pos.z].weights[num2] == 0)
+				{
+					return false;
+				}
+				if (cells[x, z].blocked)
+				{
+					return false;
+				}
+				num2 = ((z >= p.z) ? ((x > p.x) ? 1 : ((z > p.z) ? 2 : 3)) : 0);
+				if (cells[p.x, p.z].weights[num2] == 0)
+				{
+					return false;
+				}
+				x = pos.x;
+				z = p.z;
+				num2 = ((z >= pos.z) ? ((x > pos.x) ? 1 : ((z > pos.z) ? 2 : 3)) : 0);
+				if (cells[pos.x, pos.z].weights[num2] == 0)
+				{
+					return false;
+				}
+				if (cells[x, z].blocked)
+				{
+					return false;
+				}
+				num2 = ((z >= p.z) ? ((x > p.x) ? 1 : ((z > p.z) ? 2 : 3)) : 0);
+				if (cells[p.x, p.z].weights[num2] == 0)
+				{
+					return false;
+				}
+			}
+		}
+		if (IsPC)
+		{
+			if (IsEnemyOnPath(p))
+			{
+				return false;
+			}
+		}
+		else if (p.HasChara && !IsMultisize && !CanReplace(p.FirstChara))
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public bool IsEnemyOnPath(Point p, bool cancelAI = true)
+	{
+		if (!currentZone.IsRegion && p.IsValid)
+		{
+			CellDetail detail = p.detail;
+			if (detail != null && detail.charas.Count > 0)
+			{
+				foreach (Chara chara in p.detail.charas)
+				{
+					if (chara.IsHostile(this) || !chara.trait.CanBePushed)
+					{
+						if (cancelAI && EClass.pc.ai is GoalManualMove)
+						{
+							EClass.pc.ai.Cancel();
+						}
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	public bool CanInteractTo(Card c)
+	{
+		return CanInteractTo(c.pos);
+	}
+
+	public bool CanInteractTo(Point p)
+	{
+		if (!p.IsValid)
+		{
+			return false;
+		}
+		if (EClass._map.cells[p.x, p.z].blocked)
+		{
+			return true;
+		}
+		int num = ((p.z >= pos.z) ? ((p.x > pos.x) ? 1 : ((p.z > pos.z) ? 2 : 3)) : 0);
+		if (EClass._map.cells[pos.x, pos.z].weights[num] == 0)
+		{
+			return false;
+		}
+		if (p.x != pos.x && p.z != pos.z)
+		{
+			Cell[,] cells = EClass._map.cells;
+			int x = p.x;
+			int z = pos.z;
+			int num2 = ((z >= pos.z) ? ((x > pos.x) ? 1 : ((z > pos.z) ? 2 : 3)) : 0);
+			if (cells[pos.x, pos.z].weights[num2] == 0)
+			{
+				return false;
+			}
+			num2 = ((z >= p.z) ? ((x > p.x) ? 1 : ((z > p.z) ? 2 : 3)) : 0);
+			if (cells[p.x, p.z].weights[num2] == 0)
+			{
+				return false;
+			}
+			x = pos.x;
+			z = p.z;
+			num2 = ((z >= pos.z) ? ((x > pos.x) ? 1 : ((z > pos.z) ? 2 : 3)) : 0);
+			if (cells[pos.x, pos.z].weights[num2] == 0)
+			{
+				return false;
+			}
+			num2 = ((z >= p.z) ? ((x > p.x) ? 1 : ((z > p.z) ? 2 : 3)) : 0);
+			if (cells[p.x, p.z].weights[num2] == 0)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public Point GetFirstStep(Point newPoint, PathManager.MoveType moveType = PathManager.MoveType.Default)
+	{
+		return PathManager.Instance.GetFirstStep(pos, newPoint, this, IsPC ? 40 : 10, (!IsMultisize) ? moveType : PathManager.MoveType.Default);
+	}
+
+	public bool MoveRandom()
+	{
+		Point randomNeighbor = pos.GetRandomNeighbor();
+		if (!randomNeighbor.Equals(pos) && !randomNeighbor.HasChara && HasAccess(randomNeighbor))
+		{
+			return TryMove(randomNeighbor) == MoveResult.Success;
+		}
+		return false;
+	}
+
+	public bool MoveNeighborDefinitely()
+	{
+		List<Point> list = new List<Point>();
+		pos.ForeachNeighbor(delegate(Point p)
+		{
+			list.Add(p.Copy());
+		});
+		list.Shuffle();
+		foreach (Point item in list)
+		{
+			if (!item.Equals(pos) && !item.HasChara && TryMove(item) == MoveResult.Success)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void MoveByForce(Point newPoint, Card c = null, bool checkWall = false)
+	{
+		if (!newPoint.sourceBlock.tileType.IsBlockPass && (!checkWall || (Dist(newPoint) <= 1 && CanMoveTo(newPoint, allowDestroyPath: false))) && _Move(newPoint, MoveType.Force) == MoveResult.Success && ai.Current.CancelWhenMoved)
+		{
+			ai.Current.TryCancel(c);
+		}
+	}
+
+	public MoveResult TryMoveTowards(Point p)
+	{
+		if (p.Equals(pos))
+		{
+			return MoveResult.Success;
+		}
+		if (IsPC && EClass.player.TooHeavyToMove())
+		{
+			return MoveResult.Fail;
+		}
+		bool flag = true;
+		Point point = null;
+		_sharedPos.Set(p);
+		if (CanDestroyPath() && TryMove(pos.GetPointTowards(_sharedPos)) == MoveResult.Success)
+		{
+			return MoveResult.Success;
+		}
+		int num = pos.Distance(p);
+		PathProgress pathProgress = PathManager.Instance.RequestPathImmediate(pos, p, this, PathManager.MoveType.Default, num + 4, 1);
+		if (pathProgress.HasPath && pathProgress.nodes.Count < num + 4)
+		{
+			PathFinderNode pathFinderNode = pathProgress.nodes[pathProgress.nodes.Count - 1];
+			if (TryMove(new Point(pathFinderNode.X, pathFinderNode.Z)) == MoveResult.Success)
+			{
+				return MoveResult.Success;
+			}
+		}
+		pathProgress = PathManager.Instance.RequestPathImmediate(pos, p, this, PathManager.MoveType.Combat, num + 4, 1);
+		if (pathProgress.HasPath && pathProgress.nodes.Count < num + 4)
+		{
+			PathFinderNode pathFinderNode2 = pathProgress.nodes[pathProgress.nodes.Count - 1];
+			if (TryMove(new Point(pathFinderNode2.X, pathFinderNode2.Z)) == MoveResult.Success)
+			{
+				return MoveResult.Success;
+			}
+		}
+		pathProgress = PathManager.Instance.RequestPathImmediate(pos, p, this, PathManager.MoveType.Default, num + 25, 2);
+		if (pathProgress.HasPath && pathProgress.nodes.Count < num + 25)
+		{
+			PathFinderNode pathFinderNode3 = pathProgress.nodes[pathProgress.nodes.Count - 1];
+			if (TryMove(new Point(pathFinderNode3.X, pathFinderNode3.Z)) == MoveResult.Success)
+			{
+				return MoveResult.Success;
+			}
+		}
+		pathProgress = PathManager.Instance.RequestPathImmediate(pos, p, this, PathManager.MoveType.Combat, num + 25, 2);
+		if (pathProgress.HasPath && pathProgress.nodes.Count < num + 25)
+		{
+			PathFinderNode pathFinderNode4 = pathProgress.nodes[pathProgress.nodes.Count - 1];
+			if (TryMove(new Point(pathFinderNode4.X, pathFinderNode4.Z)) == MoveResult.Success)
+			{
+				return MoveResult.Success;
+			}
+		}
+		return MoveResult.Fail;
+	}
+
+	public MoveResult TryMoveFrom(Point p)
+	{
+		if (IsPC && EClass.player.TooHeavyToMove())
+		{
+			return MoveResult.Fail;
+		}
+		Point point = p.Copy();
+		int num = p.x - pos.x;
+		int num2 = p.z - pos.z;
+		if (num > 1)
+		{
+			num = 1;
+		}
+		else if (num < -1)
+		{
+			num = -1;
+		}
+		if (num2 > 1)
+		{
+			num2 = 1;
+		}
+		else if (num2 < -1)
+		{
+			num2 = -1;
+		}
+		if (num == 0 && num2 == 0)
+		{
+			num = EClass.rnd(3) - 1;
+			num2 = EClass.rnd(3) - 1;
+		}
+		point.Set(pos);
+		point.x -= num;
+		point.z -= num2;
+		if (point.IsValid && !point.HasChara)
+		{
+			return TryMove(point, allowDestroyPath: false);
+		}
+		return MoveResult.Fail;
+	}
+
+	public MoveResult TryMove(Point newPoint, bool allowDestroyPath = true)
+	{
+		foreach (Condition condition in conditions)
+		{
+			if (!condition.TryMove(newPoint))
+			{
+				return MoveResult.Fail;
+			}
+		}
+		if (base.isRestrained)
+		{
+			if (!IsPC)
+			{
+				return MoveResult.Fail;
+			}
+			base.isRestrained = false;
+		}
+		if (!CanMoveTo(newPoint, allowDestroyPath))
+		{
+			return MoveResult.Fail;
+		}
+		return _Move(newPoint);
+	}
+
+	public override MoveResult _Move(Point newPoint, MoveType type = MoveType.Walk)
+	{
+		if (isDead)
+		{
+			return MoveResult.Fail;
+		}
+		if (IsPC)
+		{
+			float num = EClass.setting.defaultActPace;
+			switch (burden.GetPhase())
+			{
+			case 3:
+				num *= 1.5f;
+				break;
+			case 4:
+				num *= 2f;
+				break;
+			}
+			if (currentZone.IsRegion)
+			{
+				int num2 = 30;
+				if (!EClass.pc.HasElement(408))
+				{
+					switch (EClass.world.weather.CurrentCondition)
+					{
+					case Weather.Condition.Rain:
+						num2 += 5;
+						break;
+					case Weather.Condition.RainHeavy:
+						num2 += 10;
+						num *= 1.5f;
+						break;
+					case Weather.Condition.Snow:
+						num2 += 10;
+						break;
+					case Weather.Condition.SnowHeavy:
+						num2 += 15;
+						num *= 1.5f;
+						break;
+					}
+				}
+				if (newPoint.matFloor.id == 48)
+				{
+					num2 += 20;
+					num *= 1.8f;
+				}
+				num2 = num2 * 100 / (100 + Evalue(240) + Evalue(407) * 5);
+				EClass.world.date.AdvanceMin(num2 * 6);
+				EClass.player.lastZonePos = null;
+				EClass.player.distanceTravel++;
+				int num3 = base.hp;
+				for (int i = 0; i < num2 * 4; i++)
+				{
+					EClass.pc.party.members.ForeachReverse(delegate(Chara m)
+					{
+						if (!m.isDead)
+						{
+							m.TickConditions();
+						}
+					});
+					if (base.hp < MaxHP / 5 && base.hp < num3 && !EClass.player.regionMoveWarned)
+					{
+						EClass.player.regionMoveWarned = true;
+						Msg.Say("regionAbortMove");
+						EInput.Consume(consumeAxis: true);
+						SetAI(new NoGoal());
+						return MoveResult.Fail;
+					}
+				}
+				if (newPoint.cell.CanSuffocate())
+				{
+					AddCondition<ConSuffocation>((EClass.pc.Evalue(200) > 0) ? (2000 / (100 + Evalue(200) * 10)) : 30);
+					int num4 = GetCondition<ConSuffocation>()?.GetPhase() ?? 0;
+					if (num4 >= 2)
+					{
+						DamageHP(EClass.rndHalf(10 + MaxHP / 5), AttackSource.Condition);
+					}
+					if (!isDead && !HasElement(429))
+					{
+						ModExp(200, 8 + num4 * 12);
+					}
+				}
+				EClass.player.regionMoveWarned = false;
+				if (isDead)
+				{
+					return MoveResult.Fail;
+				}
+			}
+			if (num > EClass.setting.defaultActPace * 3f)
+			{
+				num = EClass.setting.defaultActPace * 3f;
+			}
+			actTime = num;
+		}
+		Chara chara = ((ride == null) ? this : ride);
+		if (!EClass._zone.IsRegion || chara.IsPC)
+		{
+			bool flag = (chara.isConfused && EClass.rnd(2) == 0) || (chara.isDrunk && EClass.rnd(IsIdle ? 2 : 8) == 0 && !chara.HasElement(1215));
+			if (host != null && host.ride == this && ((host.isConfused && EClass.rnd(2) == 0) || (host.isDrunk && EClass.rnd(IsIdle ? 2 : 8) == 0 && !host.HasElement(1215))))
+			{
+				flag = true;
+			}
+			if (flag && newPoint.Distance(pos) <= 1)
+			{
+				Point randomNeighbor = pos.GetRandomNeighbor();
+				if (CanMoveTo(randomNeighbor, allowDestroyPath: false))
+				{
+					newPoint = randomNeighbor;
+					if (isDrunk)
+					{
+						Talk("drunk");
+					}
+				}
+			}
+		}
+		if (newPoint.x != pos.x || newPoint.z != pos.z)
+		{
+			LookAt(newPoint);
+		}
+		CellEffect effect = base.Cell.effect;
+		if (effect != null && effect.id == 7)
+		{
+			CellEffect effect2 = base.Cell.effect;
+			if (race.height < 500 && !race.tag.Contains("webfree") && EClass.rnd(effect2.power + 25) > EClass.rnd(base.STR + base.DEX + 1))
+			{
+				Say("abWeb_caught", this);
+				PlaySound("web");
+				effect2.power = effect2.power * 3 / 4;
+				renderer.PlayAnime(AnimeID.Shiver);
+				return MoveResult.Fail;
+			}
+			Say("abWeb_pass", this);
+			EClass._map.SetEffect(base.Cell.x, base.Cell.z);
+		}
+		if (IsPC)
+		{
+			if (EClass._zone.IsRegion)
+			{
+				actTime *= EClass.setting.render.anime.regionSpeed;
+			}
+			else if ((newPoint.x > pos.x && newPoint.z > pos.z) || (newPoint.x < pos.x && newPoint.z < pos.z))
+			{
+				actTime += actTime * EClass.setting.render.anime.diagonalSpeed;
+			}
+		}
+		if (newPoint.cell.hasDoor)
+		{
+			foreach (Thing thing in pos.Things)
+			{
+				if (thing.trait is TraitDoor traitDoor && traitDoor.owner.c_lockLv > 0)
+				{
+					if (base.INT < 10)
+					{
+						return MoveResult.Fail;
+					}
+					traitDoor.TryOpenLock(this);
+					return MoveResult.Door;
+				}
+			}
+		}
+		Cell cell = newPoint.cell;
+		Cell cell2 = pos.cell;
+		bool flag2 = cell.HasLiquid && !IsLevitating;
+		bool hasBridge = cell.HasBridge;
+		bool hasRamp = cell.HasRamp;
+		bool flag3 = EClass._zone.IsSnowCovered && !cell.HasRoof && !cell.isClearSnow;
+		TileRow tileRow = (hasRamp ? ((TileRow)cell.sourceBlock) : ((TileRow)(hasBridge ? cell.sourceBridge : cell.sourceFloor)));
+		SourceMaterial.Row row = (hasRamp ? cell.matBlock : (hasBridge ? cell.matBridge : cell.matFloor));
+		bool flag4 = cell.IsTopWater && !cell.isFloating;
+		if (!EClass._zone.IsRegion)
+		{
+			if (cell.hasDoorBoat)
+			{
+				tileRow = FLOOR.sourceWood;
+				row = MATERIAL.sourceOak;
+				flag4 = false;
+			}
+			else if (flag3 && !tileRow.ignoreSnow)
+			{
+				if (tileRow.tileType.IsWater)
+				{
+					tileRow = FLOOR.sourceIce;
+					row = MATERIAL.sourceIce;
+				}
+				else
+				{
+					tileRow = FLOOR.sourceSnow;
+					row = MATERIAL.sourceSnow;
+				}
+				flag4 = false;
+			}
+		}
+		if ((pos.sourceFloor.isBeach || cell2.IsSnowTile) && !pos.HasObj)
+		{
+			EClass._map.SetFoormark(pos, 1, (int)Util.GetAngle(pos.x - newPoint.x, pos.z - newPoint.z), cell2.IsSnowTile ? 312 : 304);
+		}
+		if (isSynced)
+		{
+			string text = ((flag2 || flag4) ? "water" : tileRow.soundFoot.IsEmpty(row.soundFoot.IsEmpty("default")));
+			if (cell.obj != 0 && cell.sourceObj.tileType.IsPlayFootSound && !cell.matObj.soundFoot.IsEmpty())
+			{
+				text = cell.matObj.soundFoot;
+			}
+			if (!text.IsEmpty())
+			{
+				SoundManager.altLastData = IsPC;
+				PlaySound("Footstep/" + text, IsPC ? 1f : 0.9f);
+			}
+			if (!flag4)
+			{
+				Scene scene = EClass.scene;
+				PCOrbit pcOrbit = EClass.screen.pcOrbit;
+				bool flag5 = scene.actionMode.gameSpeed > 1f;
+				scene.psFoot.transform.position = renderer.position + pcOrbit.footPos;
+				scene.psFoot.startColor = row.matColor;
+				scene.psFoot.Emit(pcOrbit.emitFoot * ((!flag5) ? 1 : 2));
+				if (flag5 && IsPC)
+				{
+					scene.psSmoke.transform.position = renderer.position + pcOrbit.smokePos;
+					scene.psSmoke.Emit(pcOrbit.emitSmoke);
+				}
+			}
+			if (flag2 || flag4)
+			{
+				Effect.Get("ripple").Play(0.4f * actTime * EClass.scene.actionMode.gameSpeed, newPoint);
+			}
+		}
+		lastPos.Set(pos);
+		if (type != MoveType.Force)
+		{
+			if (newPoint.HasChara && ai.Current.PushChara)
+			{
+				TryPush(newPoint);
+			}
+			if (newPoint.HasChara && newPoint.Charas.Count == 1)
+			{
+				Chara chara2 = newPoint.Charas[0];
+				if (CanReplace(chara2))
+				{
+					chara2.MoveByForce(lastPos, this);
+					if (chara.IsPC)
+					{
+						Say("replace_pc", chara, chara2);
+					}
+				}
+			}
+		}
+		if (cell.hasDoor)
+		{
+			foreach (Thing thing2 in newPoint.Things)
+			{
+				if (thing2.trait is TraitDoor traitDoor2)
+				{
+					traitDoor2.TryOpen(this);
+				}
+			}
+		}
+		EClass._zone.map.MoveCard(newPoint, this);
+		SyncRide();
+		if (IsPC && EClass._zone.PetFollow && (!EClass._zone.KeepAllyDistance || !EClass.game.config.tactics.allyKeepDistance) && !EClass._zone.IsRegion)
+		{
+			foreach (Chara member in EClass.pc.party.members)
+			{
+				if (member.isLeashed && !member.IsPC && member.host == null && !member.IsDisabled && !member.HasCondition<ConEntangle>() && !member.IsInCombat && member.Dist(EClass.pc) > 1)
+				{
+					member.TryMoveTowards(EClass.pc.pos);
+				}
+			}
+		}
+		if (EClass.core.config.test.animeFramePCC == 0 && isSynced && renderer.hasActor && renderer.actor.isPCC)
+		{
+			renderer.NextFrame();
+		}
+		if (IsPC)
+		{
+			PlaySound("Footstep/Extra/pcfootstep");
+			if (pos.HasThing)
+			{
+				foreach (Card item in pos.ListCards())
+				{
+					if (!item.isThing || item.placeState != 0 || item.ignoreAutoPick)
+					{
+						continue;
+					}
+					if (EClass.core.config.game.advancedMenu)
+					{
+						Window.SaveData dataPick = EClass.player.dataPick;
+						ContainerFlag containerFlag = item.category.GetRoot().id.ToEnum<ContainerFlag>();
+						if (containerFlag == ContainerFlag.none)
+						{
+							containerFlag = ContainerFlag.other;
+						}
+						if ((dataPick.noRotten && item.IsDecayed) || (dataPick.onlyRottable && item.trait.Decay == 0) || (dataPick.userFilter && !dataPick.IsFilterPass(item.GetName(NameStyle.Full, 1))))
+						{
+							continue;
+						}
+						if (dataPick.advDistribution)
+						{
+							foreach (int cat in dataPick.cats)
+							{
+								if (item.category.uid == cat)
+								{
+									Pick(item.Thing);
+								}
+							}
+						}
+						else if (!dataPick.flag.HasFlag(containerFlag))
+						{
+							Pick(item.Thing);
+						}
+					}
+					else
+					{
+						Pick(item.Thing);
+					}
+				}
+			}
+			if (EClass._zone.IsRegion)
+			{
+				EloMap.Cell cell3 = EClass.scene.elomap.GetCell(EClass.pc.pos);
+				if (cell3?.zone != null && !cell3.zone.HiddenInRegionMap && (!(cell3.zone is Zone_Field) || cell3.zone.children.Count > 0 || cell3.zone.IsPCFaction))
+				{
+					Msg.Say((!cell3.zone.source.GetText("textFlavor").IsEmpty()) ? cell3.zone.source.GetText("textFlavor") : (cell3.zone.ShowDangerLv ? "seeZoneDanger" : "seeZone"), cell3.zone.Name, cell3.zone.DangerLv.ToString() ?? "");
+				}
+				if (pos.matFloor.alias == "snow" && EClass.rnd(3) == 0)
+				{
+					Msg.SetColor(Msg.colors.Ono);
+					Msg.Say(Lang.GetList("walk_snow").RandomItem());
+				}
+				else if (EClass.world.weather.CurrentCondition == Weather.Condition.RainHeavy && EClass.rnd(3) == 0)
+				{
+					Msg.SetColor(Msg.colors.Ono);
+					Msg.Say(Lang.GetList("walk_storm").RandomItem());
+				}
+			}
+			ActWait.Search(EClass.pc);
+		}
+		if (IsPCC)
+		{
+			int num5 = Mathf.Abs(cell2.topHeight - cell.topHeight);
+			if ((num5 >= 3 && lastPos.sourceBlock.tileType.slopeHeight == 0 && newPoint.sourceBlock.tileType.slopeHeight == 0) || cell2.hasDoorBoat || cell.hasDoorBoat)
+			{
+				renderer.PlayAnime((cell2.topHeight >= cell.topHeight) ? AnimeID.JumpDown : ((num5 >= 6) ? AnimeID.Jump : AnimeID.JumpSmall));
+			}
+			else
+			{
+				float surfaceHeight = cell2.GetSurfaceHeight();
+				float surfaceHeight2 = cell.GetSurfaceHeight();
+				num5 = (int)Mathf.Abs((surfaceHeight - surfaceHeight2) * 100f);
+				if (num5 >= 15)
+				{
+					renderer.PlayAnime((surfaceHeight >= surfaceHeight2) ? AnimeID.JumpDown : ((num5 >= 40) ? AnimeID.Jump : AnimeID.JumpSmall));
+				}
+			}
+		}
+		lastPos.Things.ForeachReverse(delegate(Thing t)
+		{
+			t.trait.OnSteppedOut(this);
+		});
+		if (!IsPC)
+		{
+			pos.Things.ForeachReverse(delegate(Thing t)
+			{
+				t.trait.OnStepped(this);
+			});
+		}
+		if (CanDestroyPath())
+		{
+			DestroyPath(pos);
+		}
+		if (IsPC)
+		{
+			if (renderer.anime == null && renderer.replacer != null)
+			{
+				renderer.PlayAnime(AnimeID.Hop);
+			}
+			if (EClass.player.flags.isShoesOff)
+			{
+				if (!FLOOR.IsTatami(pos.cell.sourceSurface.id) && pos.cell.room == null)
+				{
+					EClass.player.flags.isShoesOff = false;
+					EClass.pc.Say("shoes_on", EClass.pc);
+					EClass.pc.SetPCCState(PCCState.Normal);
+				}
+			}
+			else if (FLOOR.IsTatami(pos.cell.sourceSurface.id) && pos.cell.room != null)
+			{
+				EClass.player.flags.isShoesOff = true;
+				EClass.pc.Say("shoes_off", EClass.pc);
+				EClass.pc.SetPCCState(PCCState.ShoesOff);
+			}
+		}
+		hasMovedThisTurn = true;
+		return MoveResult.Success;
+	}
+
+	public void DestroyPath(Point pos)
+	{
+		bool broke = false;
+		pos.ForeachMultiSize(base.W, base.H, delegate(Point _p, bool main)
+		{
+			if (_p.IsValid)
+			{
+				if (_p.HasBlock)
+				{
+					EClass._map.MineBlock(_p, recoverBlock: false, this);
+					if (_p.HasObj)
+					{
+						EClass._map.MineObj(_p, null, this);
+					}
+					broke = true;
+				}
+				if (_p.HasObj && _p.IsBlocked)
+				{
+					EClass._map.MineObj(_p, null, this);
+					broke = true;
+				}
+				_p.Things.ForeachReverse(delegate(Thing t)
+				{
+					if (t.IsInstalled && (t.trait.IsBlockPath || t.trait.IsDoor))
+					{
+						if (t.isNPCProperty && t.trait.CanBeDestroyed)
+						{
+							t.Destroy();
+						}
+						else
+						{
+							t.SetPlaceState(PlaceState.roaming);
+						}
+					}
+				});
+			}
+		});
+		if (broke)
+		{
+			Msg.Say("stomp");
+			Shaker.ShakeCam("stomp");
+		}
+	}
+
+	public void TryPush(Point point)
+	{
+		point.Charas.ForeachReverse(delegate(Chara c)
+		{
+			if (!c.ai.IsMoveAI && !c.IsPC && c.trait.CanBePushed && c != this && !c.noMove && (!EClass._zone.IsRegion || c.IsPCFactionOrMinion))
+			{
+				List<Point> list = new List<Point>();
+				for (int i = point.x - 1; i <= point.x + 1; i++)
+				{
+					for (int j = point.z - 1; j <= point.z + 1; j++)
+					{
+						if (i != point.x || j != point.z)
+						{
+							Point point2 = new Point(i, j);
+							if (point2.IsValid && !point2.HasChara && !point2.IsBlocked && !point2.cell.hasDoor && !point2.IsBlockByHeight(point))
+							{
+								list.Add(point2);
+							}
+						}
+					}
+				}
+				if (list.Count > 0)
+				{
+					if (list.Count > 1)
+					{
+						list.ForeachReverse(delegate(Point p)
+						{
+							if (p.Equals(new Point(point.x + point.x - pos.x, point.z + point.z - pos.z)))
+							{
+								list.Remove(p);
+							}
+						});
+					}
+					Point newPoint = list.RandomItem();
+					if (IsPC)
+					{
+						Say("displace", this, c);
+						PlaySound("push");
+					}
+					else if (c.isSynced)
+					{
+						c.PlayEffect("push");
+					}
+					c.MoveByForce(newPoint, this, checkWall: true);
+					if (IsPC && !c.IsPCParty && !c.IsUnique && c.IsHuman && EClass.rnd(5) == 0)
+					{
+						c.Talk("pushed");
+					}
+				}
+			}
+		});
+	}
+
+	public bool CanReplace(Chara c)
+	{
+		if (c.IsMultisize || !c.trait.CanBePushed || c.noMove || IsHostile(c) || IsMinion || (EClass._zone.IsRegion && !c.IsPCFactionOrMinion))
+		{
+			return false;
+		}
+		if (IsPC)
+		{
+			return true;
+		}
+		if (c.IsPC || c.pos.Equals(EClass.pc.pos) || c.host != null)
+		{
+			return false;
+		}
+		if (!IsHostile(c))
+		{
+			if (c.c_uidMaster != 0 || c.isSummon || base.IsPowerful || IsEscorted())
+			{
+				return true;
+			}
+			if (DestDist < c.DestDist)
+			{
+				return true;
+			}
+			if (IsPCParty && !c.IsPCParty)
+			{
+				return true;
+			}
+			if (IsPCFaction && !c.IsPCParty)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void MoveZone(string alias)
+	{
+		MoveZone(EClass.game.spatials.Find(alias));
+	}
+
+	public void MoveZone(Zone z, ZoneTransition.EnterState state = ZoneTransition.EnterState.Auto)
+	{
+		MoveZone(z, new ZoneTransition
+		{
+			state = state
+		});
+	}
+
+	public void MoveZone(Zone z, ZoneTransition transition)
+	{
+		if (z == currentZone)
+		{
+			return;
+		}
+		if (HasCondition<ConInvulnerable>())
+		{
+			RemoveCondition<ConInvulnerable>();
+		}
+		if (IsPC)
+		{
+			EClass.player.nextZone = z;
+			if (IsInActiveZone && !EClass.player.simulatingZone)
+			{
+				if (held != null && held.trait.CanOnlyCarry)
+				{
+					DropHeld();
+				}
+				if (z.instance == null && currentZone.instance == null && !EClass.player.deathZoneMove && !EClass.pc.isDead && (z.IsPCFaction || z.WillAutoSave) && z.GetTopZone() != EClass._zone.GetTopZone())
+				{
+					if (EClass.player.returnInfo != null)
+					{
+						EClass.player.returnInfo.turns += 5;
+					}
+					if (!EClass.debug.ignoreAutoSave)
+					{
+						EClass.game.Save(isAutoSave: true);
+					}
+				}
+				EClass.player.deathZoneMove = false;
+			}
+			currentZone.events.OnLeaveZone();
+			if (currentZone.instance != null)
+			{
+				ZoneInstance instance = currentZone.instance;
+				z = EClass.game.spatials.Find(instance.uidZone);
+				transition = new ZoneTransition
+				{
+					state = instance.ReturnState,
+					x = instance.x,
+					z = instance.z
+				};
+				instance.OnLeaveZone();
+				Debug.Log(z);
+			}
+			EInput.Consume(consumeAxis: true);
+			EClass.player.uidLastZone = currentZone.uid;
+			if (!EClass.player.simulatingZone)
+			{
+				if (currentZone.IsRegion)
+				{
+					Msg.Say("enterZone", z.Name);
+				}
+				else
+				{
+					if (z.IsRegion)
+					{
+						Msg.Say("leaveZone", currentZone.Name);
+					}
+					else if (z.id != currentZone.id)
+					{
+						Msg.Say("enterZone", z.Name);
+					}
+					EClass.player.lastZonePos = pos.Copy();
+				}
+				EClass.player.lastTransition = transition;
+			}
+			foreach (Chara item in EClass._map.charas.Where((Chara c) => c.IsPCPartyMinion && c.master != EClass.pc).ToList())
+			{
+				EClass._zone.RemoveCard(item);
+			}
+			EClass.player.listSummon = EClass._map.charas.Where((Chara c) => c.c_uidMaster != 0 && c.FindMaster() == EClass.pc && c.c_minionType == MinionType.Default).ToList();
+			foreach (Chara item2 in EClass.player.listSummon)
+			{
+				EClass._zone.RemoveCard(item2);
+			}
+		}
+		if (party != null && party.leader == this)
+		{
+			foreach (Chara member in party.members)
+			{
+				if (member != this && !member.isDead && member.parent is Zone)
+				{
+					member.MoveZone(z);
+				}
+			}
+		}
+		if (global == null)
+		{
+			Debug.Log(base.Name);
+			return;
+		}
+		transition.uidLastZone = currentZone?.uid ?? 0;
+		global.transition = transition;
+		if (z.IsActiveZone)
+		{
+			Point spawnPos = z.GetSpawnPos(this);
+			global.transition = null;
+			if (IsPC)
+			{
+				EClass.player.lastTransition = null;
+			}
+			z.AddCard(this, spawnPos);
+			if (IsBranchMember())
+			{
+				EClass._map.rooms.AssignCharas();
+			}
+		}
+		else
+		{
+			z.AddCard(this);
+		}
+	}
+
+	public void MoveHome(string id, int x = -1, int z = -1)
+	{
+		MoveHome(EClass.game.world.FindZone(id), x, z);
+	}
+
+	public void MoveHome(Zone zone, int x = -1, int z = -1)
+	{
+		if (isDead)
+		{
+			Revive();
+		}
+		else
+		{
+			Cure(CureType.Death);
+		}
+		CureCondition<ConSuspend>();
+		if (IsPCParty)
+		{
+			EClass.pc.party.RemoveMember(this);
+		}
+		FactionBranch factionBranch = homeBranch;
+		if (x == -1)
+		{
+			x = 50;
+		}
+		if (z == -1)
+		{
+			z = 50;
+		}
+		Point point = new Point(x, z);
+		if (zone.IsActiveZone)
+		{
+			point = point.GetNearestPoint(allowBlock: false, allowChara: false);
+		}
+		zone.AddCard(this, point);
+		SetHomeZone(zone);
+		global.transition = new ZoneTransition
+		{
+			state = ZoneTransition.EnterState.Dead,
+			x = point.x,
+			z = point.z
+		};
+		orgPos = new Point(x, z);
+		if (factionBranch != null)
+		{
+			RefreshWorkElements();
+			factionBranch.policies.Validate();
+		}
+	}
+
+	public void FallFromZone()
+	{
+		Msg.Say("skyFall", EClass.pc, EClass._zone.Name);
+		Zone zone = (EClass._zone.isExternalZone ? null : EClass._zone.GetTopZone().FindZone(EClass._zone.lv - 1));
+		zone = zone ?? EClass.world.region;
+		MoveZone(zone ?? EClass.world.region, new ZoneTransition
+		{
+			state = ZoneTransition.EnterState.Fall,
+			x = pos.x,
+			z = pos.z
+		});
+	}
+
+	public override void SetDir(int d)
+	{
+		base.dir = d;
+		UpdateAngle();
+		renderer.RefreshSprite();
+	}
+
+	public override void Rotate(bool reverse = false)
+	{
+		if (renderer.hasActor)
+		{
+			base.dir = (base.dir + ((!reverse) ? 1 : (-1))).Clamp(0, 3, loop: true);
+		}
+		else
+		{
+			base.dir = ((base.dir == 0) ? 1 : 0);
+		}
+		UpdateAngle();
+		renderer.RefreshSprite();
+	}
+
+	public override void LookAt(Card c)
+	{
+		LookAt(c.pos);
+	}
+
+	public override void LookAt(Point p)
+	{
+		angle = Util.GetAngle(p.x - pos.x, p.z - pos.z);
+		if (EClass._zone.IsRegion)
+		{
+			if (angle > 100f && angle < 170f)
+			{
+				base.dir = 2;
+			}
+			else if (angle > 170f && angle < 190f)
+			{
+				base.dir = 0;
+			}
+			else if (angle > 190f || (angle < -10f && angle > -100f))
+			{
+				base.dir = 3;
+			}
+			else
+			{
+				base.dir = 1;
+			}
+			angle -= 45f;
+		}
+		else if (angle > 170f && angle < 235f)
+		{
+			base.dir = 0;
+		}
+		else if (angle > 80f && angle < 145f)
+		{
+			base.dir = 1;
+		}
+		else if (angle > -100f && angle < -35f)
+		{
+			base.dir = 3;
+		}
+		else if (angle > -10f && angle < 55f)
+		{
+			base.dir = 2;
+		}
+		renderer.RefreshSprite();
+	}
+
+	public void UpdateAngle()
+	{
+		if (IsPCC)
+		{
+			if (base.dir == 0)
+			{
+				angle = 225f;
+			}
+			else if (base.dir == 1)
+			{
+				angle = 135f;
+			}
+			else if (base.dir == 2)
+			{
+				angle = 45f;
+			}
+			else if (base.dir == 3)
+			{
+				angle = -45f;
+			}
+		}
+		else if (base.dir == 0)
+		{
+			angle = 165f;
+		}
+		else if (base.dir == 1)
+		{
+			angle = 300f;
+		}
+		else if (base.dir == 2)
+		{
+			angle = 0f;
+		}
+		else if (base.dir == 3)
+		{
+			angle = 120f;
+		}
+	}
+
+	public int GetCurrentDir()
+	{
+		Debug.Log(angle);
+		if (!renderer.hasActor)
+		{
+			if (angle == 0f || angle == 45f || angle == 90f)
+			{
+				return 2;
+			}
+			if (angle == -135f || angle == 180f || angle == -90f)
+			{
+				return 1;
+			}
+			if (angle == 135f)
+			{
+				return 0;
+			}
+			return 3;
+		}
+		return renderer.actor.currentDir;
+	}
+
+	public void UpdateSight()
+	{
+		int num = 4;
+		for (int i = -num; i < num + 1; i++)
+		{
+			for (int j = -num; j < num + 1; j++)
+			{
+				shared.Set(pos.x + i, pos.z + j);
+				if (shared.IsValid && !shared.cell.isSeen && i >= -1 && i <= 1 && j >= -1)
+				{
+					_ = 1;
+				}
+			}
+		}
+	}
+
+	public bool WillConsumeTurn()
+	{
+		for (int num = conditions.Count - 1; num >= 0; num--)
+		{
+			if (conditions[num].ConsumeTurn)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void TickConditions()
+	{
+		if (_cooldowns != null)
+		{
+			TickCooldown();
+		}
+		turn++;
+		consumeTurn = false;
+		preventRegen = false;
+		emoIcon = Emo2.none;
+		if (base.isSummon)
+		{
+			base.c_summonDuration--;
+			if (base.c_summonDuration <= 0)
+			{
+				Die();
+				return;
+			}
+		}
+		if (EClass.world.weather.IsRaining && !EClass._map.IsIndoor && !pos.cell.HasRoof)
+		{
+			AddCondition<ConWet>(20);
+		}
+		switch (turn % 50)
+		{
+		case 0:
+			happiness = (hunger.value + stamina.value + depression.value + bladder.value + hygiene.value) / 5;
+			break;
+		case 1:
+			if (!IsPC || !EClass.debug.godMode)
+			{
+				if (EClass.rnd(2) == 0)
+				{
+					sleepiness.Mod(1);
+				}
+				if (EClass.rnd(3) == 0)
+				{
+					hunger.Mod(1);
+				}
+				if (IsPC && (sleepiness.GetPhase() != 0 || stamina.GetPhase() <= 1))
+				{
+					Tutorial.Play("sleep");
+				}
+			}
+			break;
+		case 2:
+			if (parasite != null)
+			{
+				ModExp(227, (EClass._zone.IsRegion ? 5 : 40) * 100 / Mathf.Max(100, 100 + (elements.Base(227) - parasite.LV) * 25));
+			}
+			if (ride != null)
+			{
+				ModExp(226, (EClass._zone.IsRegion ? 5 : 40) * 100 / Mathf.Max(100, 100 + (elements.Base(226) - ride.LV) * 25));
+			}
+			break;
+		}
+		if (turn % 500 == 0)
+		{
+			DiminishTempElements();
+		}
+		if (IsPCParty)
+		{
+			if (dirtyWeight)
+			{
+				CalcBurden();
+			}
+			int phase = burden.GetPhase();
+			int phase2 = hunger.GetPhase();
+			if (phase2 >= 4)
+			{
+				preventRegen = true;
+			}
+			if (EClass.rnd(EClass._zone.IsRegion ? 100 : 30) == 0 && phase >= 3)
+			{
+				Say("dmgBurden", this);
+				DamageHP(MaxHP * (base.ChildrenWeight * 100 / WeightLimit) / 1000 + 1, AttackSource.Burden);
+				if (isDead)
+				{
+					return;
+				}
+			}
+			if (EClass.rnd(12) == 0)
+			{
+				if (IsPC)
+				{
+					if (phase > 0)
+					{
+						ModExp(207, 1 + phase * phase);
+					}
+				}
+				else
+				{
+					ModExp(207, 4);
+				}
+			}
+			if (IsPC)
+			{
+				if (phase2 >= 5 && !(ai is AI_Eat) && EClass.rnd(5) == 0)
+				{
+					DamageHP(1 + EClass.rnd(2) + MaxHP / 50, AttackSource.Hunger);
+				}
+				if (isDead)
+				{
+					return;
+				}
+				phase2 = stamina.GetPhase();
+				if (phase2 <= 0)
+				{
+					preventRegen = true;
+				}
+				if (currentZone.IsRegion && EClass.world.weather.CurrentCondition == Weather.Condition.RainHeavy && !EClass.pc.HasElement(408))
+				{
+					if (EClass.rnd(100) == 0 && !isConfused)
+					{
+						Msg.Say("rain_confuse");
+						AddCondition<ConConfuse>(500);
+					}
+					if (EClass.rnd(300) == 0 && !isBlind)
+					{
+						Msg.Say("rain_confuse");
+						AddCondition<ConBlind>(200);
+					}
+				}
+				if (turn % (2000 * (100 + Evalue(412) * 2) / (100 + Evalue(409) * 10)) == 0)
+				{
+					ModCorruption(1);
+				}
+			}
+		}
+		if (!IsPC)
+		{
+			int num = Evalue(409);
+			if (num > 0 && turn % 2000 * (100 + Evalue(412) * 2) / (100 + num * 10) == 0)
+			{
+				ModCorruption(1);
+			}
+		}
+		for (int num2 = conditions.Count - 1; num2 >= 0; num2--)
+		{
+			if (num2 < conditions.Count)
+			{
+				Condition condition = conditions[num2];
+				if (!condition.TimeBased)
+				{
+					condition.Tick();
+				}
+				if (!condition.IsKilled)
+				{
+					if (condition.ConsumeTurn)
+					{
+						consumeTurn = true;
+					}
+					if (condition.PreventRegen)
+					{
+						preventRegen = true;
+					}
+					if (condition.EmoIcon != 0 && condition.EmoIcon > emoIcon)
+					{
+						emoIcon = condition.EmoIcon;
+					}
+				}
+				if (isDead)
+				{
+					return;
+				}
+			}
+		}
+		if (!preventRegen)
+		{
+			if (EClass.rnd(25) == 0 && base.hp < MaxHP)
+			{
+				HealHP(EClass.rnd(Evalue(300) / 3 + 1) + 1);
+				elements.ModExp(300, 8);
+			}
+			if (EClass.rnd(8) == 0 && mana.value < mana.max)
+			{
+				mana.Mod(EClass.rnd(Evalue(301) / 2 + 1) + 1);
+				elements.ModExp(301, 8);
+			}
+			if (EClass.rnd(20) == 0 && !IsPC && stamina.value < stamina.max)
+			{
+				stamina.Mod(EClass.rnd(5) + 1);
+			}
+		}
+	}
+
+	public void SyncRide()
+	{
+		if (host != null)
+		{
+			host.SyncRide();
+		}
+		if (ride != null)
+		{
+			SyncRide(ride);
+		}
+		if (parasite != null)
+		{
+			SyncRide(parasite);
+		}
+	}
+
+	public void SyncRide(Chara c)
+	{
+		if (!c.pos.Equals(pos))
+		{
+			if (!pos.IsValid)
+			{
+				Debug.LogError("exception: pos is not valid:" + pos?.ToString() + "/" + this);
+				pos = new Point();
+			}
+			EClass._map.MoveCard(pos, c);
+		}
+	}
+
+	public override void Tick()
+	{
+		SyncRide();
+		combatCount--;
+		if (IsPC)
+		{
+			if (hasMovedThisTurn)
+			{
+				pos.Things.ForeachReverse(delegate(Thing t)
+				{
+					t.trait.OnStepped(this);
+				});
+				if (isDead)
+				{
+					return;
+				}
+				hasMovedThisTurn = false;
+				if (EClass.player.haltMove)
+				{
+					EClass.player.haltMove = false;
+					ActionMode.Adv.TryCancelInteraction(sound: false);
+					EInput.Consume(1);
+					return;
+				}
+				if (EClass._zone.IsRegion)
+				{
+					if (EClass.game.config.preference.autoEat)
+					{
+						foreach (Chara member in EClass.pc.party.members)
+						{
+							if (member.hunger.value > 65)
+							{
+								member.InstantEat(null, sound: false);
+							}
+						}
+					}
+					Chara chara = null;
+					EloMap.Cell cell = EClass.scene.elomap.GetCell(EClass.pc.pos);
+					if (cell != null && (cell.zone == null || (cell.zone is Zone_Field && !cell.zone.IsPCFaction)))
+					{
+						foreach (Chara chara2 in EClass._map.charas)
+						{
+							if (!chara2.IsPCFactionOrMinion && !chara2.IsGlobal && chara2.pos.Equals(EClass.pc.pos))
+							{
+								chara = chara2;
+								break;
+							}
+						}
+					}
+					if (chara != null)
+					{
+						if (!EClass.pc.HasCondition<ConDrawMonster>())
+						{
+							EClass.player.safeTravel = 5 + EClass.rnd(5);
+						}
+						EClass._zone.RemoveCard(chara);
+						Msg.Say("encounter");
+						EClass.player.EnterLocalZone(encounter: true, chara);
+					}
+					else if (EClass.player.safeTravel <= 0)
+					{
+						if (cell != null && cell.zone == null && !EClass.debug.ignoreEncounter)
+						{
+							EloMap.TileInfo tileInfo = EClass.scene.elomap.GetTileInfo(EClass.pc.pos.eloX, EClass.pc.pos.eloY);
+							if (!tileInfo.shore)
+							{
+								bool num = EClass.pc.HasCondition<ConWardMonster>();
+								bool flag = EClass.pc.HasCondition<ConDrawMonster>();
+								bool flag2 = EClass.game.quests.Get<QuestEscort>() != null;
+								int num2 = (tileInfo.isRoad ? 22 : 12);
+								if (flag2)
+								{
+									num2 = (tileInfo.isRoad ? 16 : 10);
+								}
+								if (num)
+								{
+									num2 *= (flag2 ? 2 : 20);
+								}
+								if (flag)
+								{
+									num2 /= 2;
+								}
+								if (EClass.rnd(num2) == 0)
+								{
+									Msg.Say("encounter");
+									if (!flag)
+									{
+										EClass.player.safeTravel = 5 + EClass.rnd(5);
+									}
+									EClass.player.EnterLocalZone(encounter: true);
+								}
+							}
+						}
+					}
+					else
+					{
+						EClass.player.safeTravel--;
+					}
+				}
+			}
+			EClass.player.pickupDelay = 0f;
+			if (EClass.player.returnInfo != null)
+			{
+				EClass.player.returnInfo.turns--;
+				if (EClass.player.returnInfo.turns <= 0)
+				{
+					if (EClass.pc.burden.GetPhase() != 4 || EClass.debug.ignoreWeight)
+					{
+						int uidDest = EClass.player.returnInfo.uidDest;
+						Zone zone = null;
+						if (uidDest != 0)
+						{
+							zone = EClass.game.spatials.map.TryGetValue(uidDest) as Zone;
+						}
+						if (zone == null || zone.destryoed)
+						{
+							zone = EClass.world.region;
+						}
+						if (zone == EClass.game.activeZone || EClass.game.activeZone.IsRegion)
+						{
+							Msg.Say("returnFail");
+						}
+						else
+						{
+							Msg.Say("returnComplete");
+							EClass.player.uidLastTravelZone = 0;
+							EClass.pc.MoveZone(zone, ZoneTransition.EnterState.Return);
+							EClass.player.lastZonePos = null;
+						}
+						EClass.player.returnInfo = null;
+						return;
+					}
+					EClass.player.returnInfo = null;
+					Msg.Say("returnOverweight");
+				}
+			}
+			if ((HasNoGoal || !ai.IsRunning) && !WillConsumeTurn())
+			{
+				SetAI(_NoGoalPC);
+				return;
+			}
+			EClass.player.stats.turns++;
+			if (EClass.core.config.game.alwaysUpdateRecipe)
+			{
+				RecipeUpdater.dirty = true;
+			}
+			actTime = EClass.player.baseActTime;
+		}
+		else
+		{
+			actTime = EClass.player.baseActTime * Mathf.Max(0.1f, (float)EClass.pc.Speed / (float)Speed);
+			hasMovedThisTurn = false;
+		}
+		TickConditions();
+		if (!IsAliveInCurrentZone)
+		{
+			return;
+		}
+		renderer.RefreshStateIcon();
+		if (host != null && !consumeTurn)
+		{
+			if (host.ride == this && ((host.hasMovedThisTurn && IsInCombat) || (enemy != null && turn % 3 != 0)))
+			{
+				consumeTurn = true;
+			}
+			if (host.parasite == this && enemy != null && EClass.rnd(10) > EClass.rnd(host.Evalue(227) + 10))
+			{
+				if (Dist(enemy) < 3 && EClass.rnd(2) == 0)
+				{
+					Say("parasite_fail", this, host);
+					if (EClass.rnd(2) == 0 && GetInt(106) == 0)
+					{
+						Talk("parasite_fail");
+					}
+				}
+				consumeTurn = true;
+			}
+		}
+		if (consumeTurn)
+		{
+			if (IsPC)
+			{
+				ActionMode.Adv.SetTurbo();
+			}
+		}
+		else
+		{
+			if (base.isRestrained)
+			{
+				TryUnrestrain();
+			}
+			if (enemy != null)
+			{
+				if (!enemy.IsAliveInCurrentZone || EClass._zone.IsRegion)
+				{
+					enemy = null;
+				}
+				else if (!IsPC && ((!(ai is GoalCombat) && !(ai is AI_Trolley)) || !ai.IsRunning))
+				{
+					SetAIAggro();
+				}
+			}
+			if (HasNoGoal || !ai.IsRunning)
+			{
+				ChooseNewGoal();
+			}
+			ai.Tick();
+		}
+		Cell cell2 = base.Cell;
+		if (cell2.IsTopWaterAndNoSnow && !cell2.isFloating)
+		{
+			AddCondition<ConWet>(50);
+		}
+		if (IsPC && !EClass._zone.IsRegion && cell2.CanSuffocate())
+		{
+			AddCondition<ConSuffocation>(800 / (100 + Evalue(200) * 10));
+		}
+		CellEffect e;
+		if (cell2.effect != null)
+		{
+			e = cell2.effect;
+			switch (e.id)
+			{
+			case 1:
+			case 2:
+			case 4:
+				if (IsLevitating)
+				{
+					Say("levitating");
+					break;
+				}
+				AddCondition<ConWet>(50);
+				ProcEffect();
+				break;
+			case 3:
+				PlaySound("fire_step");
+				AddCondition<ConBurning>(30);
+				break;
+			case 5:
+				if (!isWet)
+				{
+					PlaySound("bubble");
+					AddCondition<ConWet>(30);
+					ProcEffect();
+				}
+				break;
+			case 6:
+				if (hasMovedThisTurn)
+				{
+					Say("abMistOfDarkness_step", this);
+				}
+				break;
+			}
+		}
+		if (IsPC)
+		{
+			if (EClass.player.currentHotItem.Thing != null)
+			{
+				EClass.player.currentHotItem.Thing.trait.OnTickHeld();
+			}
+			EClass.screen.OnEndPlayerTurn();
+		}
+		void ClearEffect()
+		{
+			EClass._map.SetLiquid(cell2.x, cell2.z, 0, 0);
+		}
+		void ProcEffect()
+		{
+			if (e.idEffect != 0)
+			{
+				ActEffect.ProcAt(e.idEffect, e.power, e.isBlessed ? BlessedState.Blessed : (e.isCursed ? BlessedState.Cursed : BlessedState.Normal), this, this, new Point(pos), e.isHostileAct, new ActRef
+				{
+					aliasEle = EClass.sources.elements.map[e.idEle].alias,
+					n1 = e.n1
+				});
+				ClearEffect();
+			}
+		}
+	}
+
+	public bool CanLift(Card c)
+	{
+		return true;
+	}
+
+	public bool CanAutoPick(Card c)
+	{
+		return true;
+	}
+
+	public bool CanPick(Card c)
+	{
+		if (c.isDestroyed)
+		{
+			return false;
+		}
+		Card rootCard = c.GetRootCard();
+		if (rootCard.isDestroyed || (rootCard.ExistsOnMap && rootCard.pos.Distance(pos) > 1))
+		{
+			return false;
+		}
+		if (rootCard != this && things.IsFull(c.Thing))
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public void PickOrDrop(Point p, string idThing, int idMat = -1, int num = 1, bool msg = true)
+	{
+		if (num != 0)
+		{
+			PickOrDrop(p, ThingGen.Create(idThing, idMat).SetNum(num), msg);
+		}
+	}
+
+	public void PickOrDrop(Point p, Thing t, bool msg = true)
+	{
+		if (things.GetDest(t).IsValid)
+		{
+			Pick(t, msg);
+		}
+		else
+		{
+			EClass._zone.AddCard(t, p);
+		}
+	}
+
+	public Thing Pick(Thing t, bool msg = true, bool tryStack = true)
+	{
+		if (t.trait is TraitCard && t.isNew && EClass.game.config.autoCollectCard)
+		{
+			ContentCodex.Collect(t);
+			return t;
+		}
+		if (t.parent == this)
+		{
+			return t;
+		}
+		ThingContainer.DestData dest = things.GetDest(t, tryStack);
+		if (!dest.IsValid)
+		{
+			if (t.parent != EClass._zone)
+			{
+				if (IsPC)
+				{
+					Say("backpack_full_drop", t);
+					SE.Drop();
+				}
+				return EClass._zone.AddCard(t, pos).Thing;
+			}
+			if (IsPC)
+			{
+				Say("backpack_full", t);
+			}
+			return t;
+		}
+		if (dest.stack != null)
+		{
+			if (msg)
+			{
+				PlaySound("pick_thing");
+				Say("pick_thing", this, t);
+			}
+			t.TryStackTo(dest.stack);
+			return dest.stack;
+		}
+		TryAbsorbRod(t);
+		if (t.trait is TraitPotion && t.id != "1165" && !t.source.tag.Contains("neg") && EClass.rnd(2) == 0 && HasElement(1565))
+		{
+			string text = EClass.sources.things.rows.Where((SourceThing.Row a) => a._origin == "potion" && a.tag.Contains("neg")).ToList().RandomItemWeighted((SourceThing.Row a) => a.chance)
+				.id;
+			Say("poisonDrip", this);
+			int num = t.Num;
+			t.Destroy();
+			t = ThingGen.Create(text).SetNum(num);
+		}
+		if (msg)
+		{
+			PlaySound("pick_thing");
+			Say("pick_thing", this, t);
+		}
+		TryReservePickupTutorial(t);
+		return dest.container.AddThing(t, tryStack);
+	}
+
+	public void TryAbsorbRod(Thing t)
+	{
+		if (!IsPC || !(t.trait is TraitRod) || t.c_charges <= 0 || !HasElement(1564))
+		{
+			return;
+		}
+		Say("absorbRod", this, t);
+		TraitRod rod = t.trait as TraitRod;
+		bool flag = false;
+		if (rod.source != null)
+		{
+			using IEnumerator<SourceElement.Row> enumerator = EClass.sources.elements.rows.Where((SourceElement.Row a) => a.id == rod.source.id).GetEnumerator();
+			if (enumerator.MoveNext())
+			{
+				SourceElement.Row current = enumerator.Current;
+				if (IsPC)
+				{
+					GainAbility(current.id, t.c_charges * 100);
+					flag = true;
+				}
+			}
+		}
+		if (!flag)
+		{
+			mana.Mod(-50 * t.c_charges);
+		}
+		t.c_charges = 0;
+		LayerInventory.SetDirty(t);
+	}
+
+	public void TryReservePickupTutorial(Thing t)
+	{
+		if (t.id == "axe")
+		{
+			Tutorial.Reserve("tool");
+		}
+		if (t.category.id == "mushroom")
+		{
+			Tutorial.Reserve("food");
+		}
+		if (t.category.id == "herb")
+		{
+			Tutorial.Reserve("herb");
+		}
+		if (t.id == "pasture")
+		{
+			Tutorial.Reserve("pasture");
+		}
+		if (t.id == "log")
+		{
+			Tutorial.Reserve("process");
+		}
+	}
+
+	public void TryPickGroundItem()
+	{
+		foreach (Card item in pos.ListCards())
+		{
+			if ((IsPC || !(EClass.pc.ai is AI_UseCrafter aI_UseCrafter) || !aI_UseCrafter.ings.Contains(item)) && item.isThing && item.placeState == PlaceState.roaming && CanPick(item))
+			{
+				Thing thing = Pick(item.Thing);
+				if (thing != null && !IsPC)
+				{
+					thing.isNPCProperty = true;
+				}
+				break;
+			}
+		}
+	}
+
+	public void TryPutShared(Thing t, List<Thing> containers = null, bool dropIfFail = true)
+	{
+		if (!EClass._zone.TryAddThingInSharedContainer(t, containers) && dropIfFail)
+		{
+			EClass._zone.AddCard(t, pos);
+		}
+	}
+
+	public bool TryHoldCard(Card t, int num = -1, bool pickHeld = false)
+	{
+		if (held == t)
+		{
+			return true;
+		}
+		if (t.isDestroyed || t.Num <= 0)
+		{
+			return false;
+		}
+		if (!CanPick(t))
+		{
+			if (t.parent == null)
+			{
+				EClass._zone.AddCard(t, pos);
+			}
+			return false;
+		}
+		HoldCard(t, num);
+		return true;
+	}
+
+	public void HoldCard(Card t, int num = -1)
+	{
+		if (held == t || t.isDestroyed || t.Num <= 0)
+		{
+			return;
+		}
+		if (IsPC && t.isNPCProperty)
+		{
+			t.isNPCProperty = false;
+			EClass.player.ModKarma(-1);
+			pos.TryWitnessCrime(this);
+		}
+		PickHeld();
+		if (t.isChara)
+		{
+			if (t.IsAliveInCurrentZone)
+			{
+				t.ShowEmo(Emo.love);
+			}
+			EClass.player.altHeldPos = t.renderer.data.ForceAltHeldPosition || EClass.rnd(2) == 0;
+		}
+		else
+		{
+			if (num == -1 || num > t.Num)
+			{
+				num = t.Num;
+			}
+			if (num < t.Num)
+			{
+				t = t.Split(num);
+			}
+		}
+		if (t.GetRootCard() != this)
+		{
+			t = Pick(t.Thing, msg: false);
+			if (t.GetRootCard() != this)
+			{
+				return;
+			}
+		}
+		held = t;
+		if (held.GetLightRadius() > 0)
+		{
+			RecalculateFOV();
+		}
+		if (IsPC)
+		{
+			LayerInventory.SetDirty(t.Thing);
+			WidgetHotbar.dirtyCurrentItem = true;
+		}
+	}
+
+	public void PickHeld(bool msg = false)
+	{
+		if (held == null)
+		{
+			return;
+		}
+		Card card = held;
+		if (IsPC && held.invY == 1)
+		{
+			WidgetHotbar.dirtyCurrentItem = true;
+			LayerInventory.SetDirty(held.Thing);
+			held = null;
+			return;
+		}
+		if (held.isChara)
+		{
+			DropHeld();
+			return;
+		}
+		if (IsPC && !held.IsHotItem && held.trait.CanOnlyCarry)
+		{
+			Say("canOnlyCarry", held);
+			DropHeld();
+			return;
+		}
+		bool flag = held != things.TryStack(held.Thing);
+		if (!flag && things.IsOverflowing())
+		{
+			if (IsPC)
+			{
+				Say("backpack_full_drop", held);
+				SE.Drop();
+			}
+			DropHeld();
+			return;
+		}
+		if (msg)
+		{
+			PlaySound("pick_thing");
+			Say("pick_held", this, card);
+			if (IsPC && card.id == "statue_weird")
+			{
+				Say("statue_pick");
+			}
+		}
+		if (IsPC)
+		{
+			WidgetHotbar.dirtyCurrentItem = true;
+			if (!flag)
+			{
+				LayerInventory.SetDirty(held.Thing);
+				if (held.GetRootCard() != EClass.pc)
+				{
+					Pick(held.Thing, msg: false);
+				}
+			}
+		}
+		held = null;
+	}
+
+	public Card SplitHeld(int a)
+	{
+		return held.Split(a);
+	}
+
+	public Card DropHeld(Point dropPos = null)
+	{
+		if (held == null)
+		{
+			return null;
+		}
+		if (IsPC)
+		{
+			WidgetHotbar.dirtyCurrentItem = true;
+			LayerInventory.SetDirty(held.Thing);
+		}
+		Card card = EClass._zone.AddCard(held, dropPos ?? pos);
+		card.OnLand();
+		if (card.trait.CanOnlyCarry)
+		{
+			card.SetPlaceState(PlaceState.installed);
+		}
+		return card;
+	}
+
+	public void DropThing(Thing t, int num = -1)
+	{
+		if (t.c_isImportant)
+		{
+			Msg.Say("markedImportant");
+			return;
+		}
+		if (!t.trait.CanBeDropped)
+		{
+			Msg.Say("cantDrop", t);
+			return;
+		}
+		if (t.trait is TraitAbility)
+		{
+			SE.Trash();
+			t.Destroy();
+			return;
+		}
+		Msg.Say("dropItem", t.Name);
+		t.ignoreAutoPick = true;
+		PlaySound("drop");
+		EClass._zone.AddCard(t, pos);
+	}
+
+	public AttackStyle GetFavAttackStyle()
+	{
+		int num = Evalue(131);
+		int num2 = Evalue(130);
+		int num3 = Evalue(123);
+		if (num > num2 && num > num3)
+		{
+			return AttackStyle.TwoWield;
+		}
+		if (num2 > num && num2 > num3)
+		{
+			return AttackStyle.TwoHand;
+		}
+		if (num3 > num && num3 > num2)
+		{
+			return AttackStyle.Shield;
+		}
+		return AttackStyle.Default;
+	}
+
+	public Element GetFavWeaponSkill()
+	{
+		return elements.ListElements((Element e) => e.source.categorySub == "weapon" && !e.HasTag("ranged")).FindMax((Element a) => a.Value);
+	}
+
+	public Element GetFavArmorSkill()
+	{
+		if (elements.Value(122) > elements.Value(120))
+		{
+			return elements.GetElement(122);
+		}
+		return elements.GetElement(120);
+	}
+
+	public void TryRestock(bool onCreate)
+	{
+		isOnCreate = onCreate;
+		if (onCreate || (!IsPCFaction && (base.IsUnique || trait is TraitAdventurer || trait is TraitGuard)))
+		{
+			RestockEquip((!EClass.core.IsGameStarted || !(EClass._zone is Zone_Music)) && onCreate);
+		}
+		RestockInventory(onCreate);
+	}
+
+	public void RestockEquip(bool onCreate)
+	{
+		string equip = source.equip;
+		if (equip.IsEmpty())
+		{
+			equip = job.equip;
+		}
+		switch (id)
+		{
+		case "kettle":
+		case "quru":
+		case "loytel":
+		case "shojo":
+			EQ_ID("staff_long", 1);
+			EQ_CAT("head");
+			EQ_CAT("torso");
+			EQ_CAT("arm");
+			return;
+		case "adv_kiria":
+			if (onCreate)
+			{
+				EQ_ID("sword_zephir");
+			}
+			break;
+		case "adv_mesherada":
+			if (onCreate)
+			{
+				EQ_ID("dagger_hathaway");
+			}
+			break;
+		case "adv_verna":
+			if (onCreate)
+			{
+				EQ_ID("staff_long", -1, Rarity.Legendary);
+			}
+			if (onCreate)
+			{
+				EQ_ID("cloak_wing", -1, Rarity.Mythical);
+			}
+			break;
+		case "big_sister":
+			if (onCreate)
+			{
+				EQ_ID("sword_muramasa");
+			}
+			break;
+		case "adv_gaki":
+			if (onCreate)
+			{
+				EQ_ID("dagger_gaki");
+			}
+			if (onCreate)
+			{
+				EQ_ID("dagger_ninto");
+			}
+			break;
+		case "adv_ivory":
+			EQ_ID("dagger", -1, Rarity.Legendary);
+			AddThing("60");
+			break;
+		case "adv_wini":
+			if (onCreate)
+			{
+				EQ_ID("staff_Cat", -1, Rarity.Mythical);
+			}
+			AddCard(ThingGen.CreateSpellbook(9150));
+			if (onCreate)
+			{
+				AddThing("1071");
+			}
+			break;
+		case "seeker":
+			if (onCreate)
+			{
+				EQ_ID("helm_seeker");
+			}
+			EQ_ID("robe_pope");
+			EQ_ID("sword_katana");
+			EQ_ID("staff");
+			EQ_ID("sword_katana");
+			if (onCreate)
+			{
+				EQ_ID("boots_seven");
+			}
+			if (onCreate)
+			{
+				for (int i = 0; i < 20; i++)
+				{
+					AddThing(ThingGen.CreateFromCategory("book", 50));
+				}
+				EQ_Item("panty");
+				AddThing("plat").SetNum(6);
+			}
+			break;
+		case "ephrond":
+			if (onCreate)
+			{
+				AddThing("guitar_efrond");
+			}
+			break;
+		case "ashland":
+			if (onCreate)
+			{
+				AddThing("guitar_ash");
+			}
+			break;
+		case "swordkeeper":
+			if (onCreate)
+			{
+				EQ_ID("EtherDagger");
+			}
+			break;
+		}
+		switch (equip)
+		{
+		case "archer":
+			if (onCreate || !TryEquipRanged())
+			{
+				EQ_CAT((EClass.rnd(4) == 0) ? "crossbow" : "bow");
+			}
+			break;
+		case "inquisitor":
+		case "gunner":
+			if (onCreate || !TryEquipRanged())
+			{
+				EQ_CAT("gun");
+			}
+			break;
+		}
+		int num = ((base.rarity >= Rarity.Mythical) ? (base.LV * 3) : ((base.rarity >= Rarity.Legendary) ? (base.LV * 2) : base.LV));
+		if (trait is TraitAdventurer)
+		{
+			num *= 3;
+		}
+		if (race.id == "asura")
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				EQ_CAT(job.weapon.RandomItem());
+			}
+		}
+		for (int k = 0; k < ((!(race.id == "mutant")) ? 1 : (2 + base.LV / 30)); k++)
+		{
+			if (!job.weapon.IsEmpty())
+			{
+				if (race.id == "mutant" || (body.slotMainHand != null && body.slotMainHand.thing == null))
+				{
+					EQ_CAT(job.weapon.RandomItem());
+				}
+				if (race.id == "mutant" || (Evalue(131) > 0 && EClass.rnd(2) == 0))
+				{
+					EQ_CAT(job.weapon.RandomItem());
+				}
+			}
+			EQ_CAT("torso");
+			if (EClass.rnd(num) > 5)
+			{
+				EQ_CAT("arm");
+			}
+			if (EClass.rnd(num) > 10)
+			{
+				EQ_CAT("head");
+			}
+			if (EClass.rnd(num) > 15)
+			{
+				EQ_CAT("back");
+			}
+			if (EClass.rnd(num) > 20)
+			{
+				EQ_CAT("ring");
+			}
+			if (EClass.rnd(num) > 25)
+			{
+				EQ_CAT("amulet");
+			}
+			if (EClass.rnd(num) > 30)
+			{
+				EQ_CAT("foot");
+			}
+			if (EClass.rnd(num) > 35)
+			{
+				EQ_CAT("waist");
+			}
+			if (EClass.rnd(num) > 40)
+			{
+				EQ_CAT("ring");
+			}
+		}
+		if (trait is TraitBard)
+		{
+			AddThing(ThingGen.Create("lute"));
+		}
+	}
+
+	public void RestockInventory(bool onCreate)
+	{
+		switch (id)
+		{
+		case "fiama":
+			Restock("book_story", 1);
+			break;
+		case "rock_thrower":
+			Restock("stone", 10 + EClass.rnd(10));
+			break;
+		case "giant":
+			Restock("rock", 2 + EClass.rnd(10));
+			break;
+		case "farris":
+			Restock("lute", 1);
+			break;
+		case "begger":
+			break;
+		}
+		void Restock(string id, int num)
+		{
+			if (things.Find(id) == null)
+			{
+				AddCard(ThingGen.Create(id).SetNum(num));
+			}
+		}
+	}
+
+	private void SetEQQuality()
+	{
+		CardBlueprint.Set(CardBlueprint.CharaGenEQ);
+		Rarity rarity = Rarity.Normal;
+		int num = ((base.LV >= 1000) ? 7 : ((base.LV >= 500) ? 5 : ((base.LV >= 250) ? 3 : ((base.LV >= 100) ? 2 : ((base.LV >= 50) ? 1 : 0)))));
+		Rarity rarity2 = base.rarity;
+		if (id == "big_sister")
+		{
+			num = (isOnCreate ? 8 : 4);
+		}
+		if (!isOnCreate && EClass.rnd(10) != 0)
+		{
+			num /= 2;
+		}
+		if (rarity2 == Rarity.Superior && EClass.rnd(10) <= num)
+		{
+			rarity = Rarity.Superior;
+		}
+		else if (rarity2 == Rarity.Legendary)
+		{
+			rarity = ((EClass.rnd(10) <= num) ? Rarity.Legendary : ((EClass.rnd(5) <= num) ? Rarity.Superior : Rarity.Normal));
+		}
+		else if (rarity2 >= Rarity.Mythical)
+		{
+			rarity = ((EClass.rnd(30) <= num) ? Rarity.Mythical : ((EClass.rnd(10) > num) ? Rarity.Superior : Rarity.Legendary));
+		}
+		if (rarity == Rarity.Normal && EClass.rnd(1000) == 0)
+		{
+			rarity = Rarity.Legendary;
+		}
+		CardBlueprint.current.rarity = rarity;
+	}
+
+	public Thing EQ_ID(string s, int mat = -1, Rarity r = Rarity.Random)
+	{
+		SetEQQuality();
+		if (r != Rarity.Random)
+		{
+			CardBlueprint.current.rarity = r;
+		}
+		Thing thing = ThingGen.Create(s, mat, base.LV);
+		if (body.GetSlot(thing, onlyEmpty: true) == null)
+		{
+			return thing;
+		}
+		AddThing(thing);
+		if (!body.Equip(thing))
+		{
+			thing.Destroy();
+		}
+		return thing;
+	}
+
+	public void EQ_CAT(string s)
+	{
+		int slot = EClass.sources.categories.map[s].slot;
+		BodySlot bodySlot = ((slot == 0) ? null : body.GetSlot(slot));
+		if ((slot == 0 || bodySlot != null) && (slot != 37 || !HasElement(1209)))
+		{
+			SetEQQuality();
+			Thing thing = ThingGen.CreateFromCategory(s, base.LV);
+			AddThing(thing);
+			if (bodySlot != null && !body.Equip(thing, bodySlot))
+			{
+				thing.Destroy();
+			}
+		}
+	}
+
+	public void EQ_Item(string s, int num = 1)
+	{
+		SetEQQuality();
+		Thing t = ThingGen.Create(s, -1, base.LV).SetNum(num);
+		AddThing(t);
+	}
+
+	public void Drink(Card t)
+	{
+		Say("drink", this, t.Duplicate(1));
+		Say("quaff");
+		PlaySound("drink");
+		hunger.Mod(-2);
+		t.ModNum(-1);
+		t.trait.OnDrink(this);
+		_ = IsPC;
+	}
+
+	public void GetRevived()
+	{
+		Revive(EClass.pc.pos.GetNearestPoint(allowBlock: false, allowChara: false), msg: true);
+		if (!IsPCFaction)
+		{
+			return;
+		}
+		if (!IsPC && !trait.CanJoinPartyResident)
+		{
+			if (homeZone != null && EClass._zone != homeZone)
+			{
+				Msg.Say("returnHome", this, homeZone.Name);
+				MoveZone(homeZone);
+			}
+		}
+		else if (!EClass._zone.IsPCFaction || homeBranch != EClass.Branch || GetInt(103) != 0)
+		{
+			EClass.pc.party.AddMemeber(this);
+		}
+	}
+
+	public void Revive(Point p = null, bool msg = false)
+	{
+		if (!isDead)
+		{
+			return;
+		}
+		isDead = false;
+		base.hp = MaxHP / 3;
+		mana.value = 0;
+		stamina.value = 0;
+		hunger.value = 30;
+		sleepiness.value = 0;
+		hostility = OriginalHostility;
+		if (IsPC)
+		{
+			if (EClass.player.preventDeathPenalty)
+			{
+				Msg.Say("noDeathPenalty2", this);
+			}
+			else if (EClass.player.stats.days <= 90 && !EClass.debug.enable)
+			{
+				Msg.Say("noDeathPenalty", this);
+			}
+			else
+			{
+				EClass.pc.ApplyDeathPenalty();
+			}
+			List<Thing> dropList = new List<Thing>();
+			EClass.pc.things.Foreach(delegate(Thing t)
+			{
+				if (!t.IsContainer && t.SelfWeight > EClass.pc.WeightLimit && t.trait.CanBeDropped && (t.parentCard.c_lockLv == 0 || t.parentCard.trait is TraitChestPractice))
+				{
+					t.ignoreAutoPick = true;
+					dropList.Add(t);
+				}
+			}, onlyAccessible: false);
+			foreach (Thing item in dropList)
+			{
+				EClass._zone.AddCard(item, EClass.pc.pos);
+				Msg.Say("backpack_full_drop", item);
+			}
+			EClass.player.preventDeathPenalty = false;
+		}
+		if (IsPCFaction && homeBranch != null)
+		{
+			homeBranch.Log("bRevive", this);
+		}
+		if (p != null)
+		{
+			if (!p.IsInBounds)
+			{
+				p.Set(EClass._map.GetCenterPos().GetNearestPoint() ?? EClass._map.GetCenterPos());
+			}
+			EClass._zone.AddCard(this, p);
+			if (msg)
+			{
+				SE.Play("revive");
+				Msg.Say("revive", this);
+				PlayEffect("revive");
+			}
+		}
+	}
+
+	public void MakeGrave(string lastword)
+	{
+		if (!EClass._zone.IsRegion)
+		{
+			List<string> list = new List<string> { "930", "931", "947", "948", "949", "950", "951", "952" };
+			if (IsPC && EClass.rnd(2) == 0 && EClass.pc.things.Find("letter_will") != null)
+			{
+				list = new List<string> { "944", "946", "backerGrave", "backerGrave2" };
+			}
+			Thing thing = ThingGen.Create(list.RandomItem());
+			thing.MakeRefFrom(this);
+			if (!lastword.IsEmpty())
+			{
+				thing.c_note = lastword;
+			}
+			thing.isModified = true;
+			EClass._zone.AddCard(thing, pos).Install();
+		}
+	}
+
+	public void ApplyDeathPenalty()
+	{
+		if (!IsPC)
+		{
+			return;
+		}
+		int currency = GetCurrency();
+		if (currency <= 0)
+		{
+			return;
+		}
+		int num = currency / 3 + EClass.rnd(currency / 3 + 1);
+		if (num <= 0)
+		{
+			num = 1;
+		}
+		Msg.Say("panaltyMoney", this, Lang._currency(num));
+		ModCurrency(-num);
+		EClass._zone.AddCard(ThingGen.CreateCurrency(num), EClass.pc.pos);
+		foreach (Element value in EClass.pc.elements.dict.Values)
+		{
+			if (EClass.rnd(5) == 0 && value.IsMainAttribute)
+			{
+				EClass.pc.elements.ModExp(value.id, -500);
+			}
+		}
+	}
+
+	public void Vomit()
+	{
+		base.c_vomit++;
+		Say("vomit", this);
+		PlaySound("vomit");
+		if (!EClass._zone.IsRegion)
+		{
+			Thing thing = ThingGen.Create("731");
+			if (!EClass._zone.IsPCFaction)
+			{
+				thing.MakeRefFrom(this);
+			}
+			EClass._zone.AddCard(thing, pos);
+		}
+		if (HasCondition<ConAnorexia>())
+		{
+			ModExp(70, -50);
+			ModExp(71, -75);
+			ModExp(77, -100);
+		}
+		else if (base.c_vomit > 10)
+		{
+			AddCondition<ConAnorexia>();
+		}
+		AddCondition<ConDim>();
+		if (HasCondition<ConAnorexia>())
+		{
+			ModWeight(-1 * (1 + EClass.rnd(5)));
+		}
+		if (hunger.GetPhase() >= 4)
+		{
+			DamageHP(9999, AttackSource.Hunger);
+		}
+		hunger.Mod(30);
+	}
+
+	public override void Die(Element e = null, Card origin = null, AttackSource attackSource = AttackSource.None)
+	{
+		combatCount = 0;
+		if (isDead || host != null)
+		{
+			return;
+		}
+		bool isInActiveZone = IsInActiveZone;
+		if (isInActiveZone)
+		{
+			if (IsPC)
+			{
+				EClass._zone.ResetHostility();
+			}
+			if (base.isSummon)
+			{
+				Say("summon_vanish", this);
+				pos.PlayEffect("vanish");
+				pos.PlaySound("vanish");
+				Destroy();
+				return;
+			}
+			if (attackSource == AttackSource.DeathSentense)
+			{
+				if (trait is TraitLittleOne)
+				{
+					MakeEgg();
+				}
+				PlayEffect("revive");
+				PlaySound("chime_angel");
+			}
+			else
+			{
+				Effect.Get("blood").Play((parent is Chara) ? (parent as Chara).pos : pos).SetParticleColor(EClass.Colors.matColors[base.material.alias].main)
+					.Emit(50);
+				AddBlood(2 + EClass.rnd(2));
+				PlaySound(base.material.GetSoundDead(source));
+			}
+			renderer.RefreshSprite();
+			renderer.RefreshStateIcon();
+			ClearFOV();
+		}
+		string text = "";
+		"dead_in".langGame(EClass._zone.Name);
+		string text2 = ((origin == null) ? "" : origin.GetName(NameStyle.Full));
+		if (LangGame.Has("dead_" + attackSource))
+		{
+			text = "dead_" + attackSource;
+		}
+		else
+		{
+			if (e != Element.Void && e != null)
+			{
+				text = "dead_" + e.source.alias;
+			}
+			if (text == "" || !LangGame.Has(text))
+			{
+				text = "dead";
+			}
+		}
+		if (IsPC)
+		{
+			EClass._zone.isDeathLocation = true;
+			string s = ((origin == null) ? text : "dead_by");
+			Msg.thirdPerson1.Set(EClass.pc);
+			if (attackSource == AttackSource.Wrath)
+			{
+				text2 = Religion.recentWrath.NameShort;
+			}
+			EClass.player.deathMsg = GameLang.Parse(s.langGame(), thirdPerson: true, EClass.pc.NameBraced, "dead_in".langGame(EClass._zone.Name), text2);
+			Debug.Log(EClass.player.deathMsg);
+			if (EClass._zone.instance is ZoneInstanceRandomQuest zoneInstanceRandomQuest)
+			{
+				zoneInstanceRandomQuest.status = ZoneInstance.Status.Fail;
+			}
+			AI_PlayMusic.keepPlaying = false;
+		}
+		if (isInActiveZone)
+		{
+			if (attackSource == AttackSource.DeathSentense)
+			{
+				Msg.Say("goto_heaven", this);
+			}
+			else
+			{
+				if (origin == null || !origin.isSynced || (attackSource != AttackSource.Melee && attackSource != AttackSource.Range))
+				{
+					Msg.Say(text, this, "", text2);
+				}
+				string text3 = TalkTopic("dead");
+				if (!text3.IsEmpty())
+				{
+					text3 = text3.StripBrackets();
+				}
+				bool flag = base.rarity >= Rarity.Legendary && !IsPCFaction;
+				if (!IsPC && flag)
+				{
+					MakeGrave(text3);
+				}
+				Msg.SetColor();
+				SpawnLoot(origin);
+			}
+			if (held != null && held.trait.CanOnlyCarry)
+			{
+				DropHeld();
+			}
+		}
+		if (IsPCFaction)
+		{
+			if (homeBranch != null)
+			{
+				homeBranch.Log(text, this, "");
+			}
+			WidgetPopText.Say("popDead".lang(base.Name), FontColor.Bad);
+			if (!IsPC)
+			{
+				if (EClass.player.stats.allyDeath == 0)
+				{
+					Tutorial.Reserve("death_pet");
+				}
+				EClass.player.stats.allyDeath++;
+			}
+		}
+		if (id == "mandrake")
+		{
+			Say("a_scream", this);
+			ActEffect.ProcAt(EffectId.Scream, base.LV * 3 + 200, BlessedState.Normal, this, this, pos, isNeg: true);
+		}
+		daysStarved = 0;
+		isDead = true;
+		enemy = null;
+		_cooldowns = null;
+		base.isSale = false;
+		EClass._map.props.sales.Remove(this);
+		Cure(CureType.Death);
+		SetAI(new NoGoal());
+		TryDropBossLoot();
+		if (isInActiveZone && EClass._zone.HasLaw && IsHuman && OriginalHostility >= Hostility.Neutral)
+		{
+			pos.TalkWitnesses(origin?.Chara, "witness", 3, WitnessType.crime, (Chara c) => !c.IsPCParty && !c.IsUnique);
+		}
+		if (IsPC)
+		{
+			EClass.player.returnInfo = null;
+			EClass.player.uidLastTravelZone = 0;
+			foreach (Chara chara2 in EClass._map.charas)
+			{
+				if (chara2.IsHostile())
+				{
+					chara2.hostility = chara2.OriginalHostility;
+				}
+				if (chara2.enemy == EClass.pc)
+				{
+					chara2.enemy = null;
+				}
+			}
+			if (EClass.pc.things.Find("letter_will") != null && EClass.rnd(10) == 0)
+			{
+				EClass.player.preventDeathPenalty = true;
+			}
+		}
+		else
+		{
+			bool flag2 = currentZone.IsActiveZone && IsLocalChara && !currentZone.IsPCFaction;
+			if (currentZone is Zone_LittleGarden && id == "littleOne")
+			{
+				flag2 = false;
+			}
+			if (flag2)
+			{
+				EClass._map.deadCharas.Add(this);
+			}
+			currentZone.RemoveCard(this);
+		}
+		string text4;
+		if ((origin != null && origin.IsPCParty) || IsPCFaction)
+		{
+			int a = -10;
+			if (IsPCFaction && !IsPCParty && (origin == null || !origin.IsPCParty))
+			{
+				a = -5;
+			}
+			ModAffinity(EClass.pc, a, show: false);
+			text4 = id;
+			if (!(text4 == "quru"))
+			{
+				if (text4 == "corgon")
+				{
+					EClass.game.cards.globalCharas.Find("quru")?.ModAffinity(EClass.pc, -20, show: false);
+				}
+			}
+			else
+			{
+				EClass.game.cards.globalCharas.Find("corgon")?.ModAffinity(EClass.pc, -20, show: false);
+			}
+		}
+		if (origin != null)
+		{
+			if (origin.IsPCParty || origin.IsPCPartyMinion)
+			{
+				int num = 0;
+				if (OriginalHostility >= Hostility.Friend && IsHuman && !base.IsPCFactionOrMinion)
+				{
+					num = -5;
+				}
+				else if (race.id == "cat" && OriginalHostility >= Hostility.Neutral)
+				{
+					EClass.pc.Say("killcat");
+					num = -1;
+				}
+				if (EClass.pc.party.HasElement(1563) && num < 0)
+				{
+					num = num * 30 / 100;
+				}
+				if (num != 0)
+				{
+					EClass.player.ModKarma(num);
+				}
+			}
+			if (origin == EClass.pc)
+			{
+				EClass.pc.faith.Revelation("kill", 10);
+			}
+			else if (origin.IsPCFaction)
+			{
+				origin.Chara.ModAffinity(EClass.pc, 1, show: false);
+				origin.Chara.ShowEmo(Emo.love);
+			}
+		}
+		if (base.sourceBacker != null && origin != null && origin.IsPCParty)
+		{
+			EClass.player.doneBackers.Add(base.sourceBacker.id);
+		}
+		SetInt(103, IsPCParty ? 1 : 0);
+		if (IsPCParty)
+		{
+			if (!IsPC)
+			{
+				EClass.pc.party.RemoveMember(this);
+				EClass.pc.Say("allyDead");
+				if (EClass.game.config.autoCombat.abortOnAllyDead && EClass.player.TryAbortAutoCombat())
+				{
+					Msg.Say("abort_allyDead");
+				}
+			}
+		}
+		else if (EClass.game.config.autoCombat.abortOnEnemyDead && EClass.player.TryAbortAutoCombat())
+		{
+			Msg.Say("abort_enemyDead");
+		}
+		text4 = id;
+		if (!(text4 == "littleOne"))
+		{
+			if (text4 == "big_daddy" && !IsPCFaction)
+			{
+				Chara t = CharaGen.Create("littleOne");
+				EClass._zone.AddCard(t, pos.Copy());
+				Msg.Say("little_pop");
+			}
+		}
+		else if (attackSource != AttackSource.DeathSentense)
+		{
+			EClass.player.flags.little_killed = true;
+			EClass.player.little_dead++;
+		}
+		if (attackSource == AttackSource.Finish && origin != null && origin.Evalue(665) > 0)
+		{
+			Chara chara = CharaGen.CreateFromFilter("c_plant", base.LV);
+			EClass._zone.AddCard(chara, pos.Copy());
+			if (chara.LV < base.LV)
+			{
+				chara.SetLv(base.LV);
+			}
+			chara.MakeMinion((origin.IsPCParty || origin.IsPCPartyMinion) ? EClass.pc : origin.Chara, MinionType.Friend);
+			Msg.Say("plant_pop", this, chara);
+		}
+		foreach (ZoneEvent item in EClass._zone.events.list)
+		{
+			item.OnCharaDie(this);
+		}
+	}
+
+	public void TryDropBossLoot()
+	{
+		if (IsPCFaction || IsPCFactionMinion)
+		{
+			return;
+		}
+		int num = 0;
+		bool flag = false;
+		bool flag2 = false;
+		Point point = pos.GetNearestPoint(allowBlock: true, allowChara: false, allowInstalled: false, ignoreCenter: true) ?? pos;
+		TreasureType type = TreasureType.BossQuest;
+		if (EClass._zone.Boss == this)
+		{
+			type = TreasureType.BossNefia;
+			num = 2 + EClass.rnd(2);
+			flag = (flag2 = true);
+			EClass._zone.Boss = null;
+			Msg.Say("boss_win", EClass._zone.Name);
+			if (EClass._zone is Zone_Void && (!EClass.player.flags.KilledBossInVoid || EClass.debug.enable))
+			{
+				Msg.Say("boss_win_void", EClass._zone.Name);
+				EClass.player.flags.KilledBossInVoid = true;
+			}
+			if (EClass._zone.IsNefia)
+			{
+				EClass._zone.GetTopZone().isConquered = true;
+				EClass.Sound.StopBGM(2f);
+				SE.Play("Jingle/fanfare2");
+				EClass._zone.SetBGM(114);
+			}
+			EClass.player.ModFame(EClass.rndHalf(30 + EClass._zone.DangerLv * 2));
+			EClass.player.ModKarma(5);
+		}
+		switch (id)
+		{
+		case "vernis_boss":
+			num = 5;
+			flag = (flag2 = true);
+			EClass.Sound.StopBGM(3f);
+			EClass._zone.SetBGM(1, refresh: false);
+			if (EClass.game.quests.GetPhase<QuestVernis>() == 8)
+			{
+				EClass.game.quests.Get<QuestVernis>().UpdateOnTalk();
+			}
+			break;
+		case "melilith_boss":
+			num = 5;
+			flag = (flag2 = true);
+			EClass.Sound.StopBGM(3f);
+			EClass._zone.SetBGM(1, refresh: false);
+			break;
+		case "isygarad":
+		{
+			num = 5;
+			flag = (flag2 = true);
+			QuestExploration questExploration = EClass.game.quests.Get<QuestExploration>();
+			if (questExploration != null)
+			{
+				SE.Play("kill_boss");
+				questExploration.ChangePhase(3);
+				EClass.Sound.StopBGM(3f);
+				EClass._zone.SetBGM(1, refresh: false);
+			}
+			break;
+		}
+		case "swordkeeper":
+			num = 10;
+			flag = true;
+			SE.Play("kill_boss");
+			SoundManager.ForceBGM();
+			LayerDrama.Activate("_event", "event", "swordkeeper_defeat");
+			break;
+		}
+		if (flag)
+		{
+			SE.Play("kill_boss");
+		}
+		if (num != 0)
+		{
+			EClass.player.willAutoSave = true;
+			Thing thing = ThingGen.CreateTreasure("chest_boss", base.LV, type);
+			point.SetBlock();
+			point.SetObj();
+			EClass._zone.AddCard(thing, point).Install();
+			ThingGen.TryLickChest(thing);
+		}
+		if (flag2)
+		{
+			EClass._zone.AddCard(ThingGen.CreateScroll(8221), pos);
+		}
+	}
+
+	public void Kick(Point p, bool ignoreSelf = false)
+	{
+		foreach (Chara item in p.ListCharas())
+		{
+			Kick(item, ignoreSelf);
+		}
+	}
+
+	public void Kick(Chara t, bool ignoreSelf = false, bool karmaLoss = true)
+	{
+		if (!IsAliveInCurrentZone)
+		{
+			return;
+		}
+		if (t.IsPC)
+		{
+			ActionMode.Adv.ClearPlans();
+		}
+		if (t.host != null)
+		{
+			return;
+		}
+		if (t == this)
+		{
+			if (!ignoreSelf)
+			{
+				Debug.Log(t.pos.GetNearestPoint());
+				if (TryMove(t.pos.GetNearestPoint()) != MoveResult.Success)
+				{
+					t.MoveImmediate(pos.GetNearestPoint() ?? t.pos);
+				}
+			}
+			return;
+		}
+		Say("kick", this, t);
+		PlaySound("kick");
+		if ((t.conSuspend == null || t.conSuspend.uidMachine != 0) && t.trait.CanBePushed && (!t.IsHostile() || EClass.rnd(2) == 0) && !t.noMove && !t.isRestrained)
+		{
+			t.MoveByForce(t.pos.GetNearestPoint(allowBlock: false, allowChara: false, allowInstalled: true, ignoreCenter: true), this, !t.pos.IsBlocked);
+		}
+		if (t.conSleep != null)
+		{
+			t.conSleep.Kill();
+		}
+		if (IsPC && t.IsFriendOrAbove() && !t.IsPCFactionOrMinion && karmaLoss)
+		{
+			EClass.player.ModKarma(-1);
+		}
+		t.PlayEffect("kick");
+	}
+
+	public bool UseAbility(string idAct, Card tc = null, Point pos = null, bool pt = false)
+	{
+		return UseAbility(elements.GetElement(idAct)?.act ?? ACT.Create(idAct), tc, pos, pt);
+	}
+
+	public bool UseAbility(Act a, Card tc = null, Point pos = null, bool pt = false)
+	{
+		if (!IsPC && HasCooldown(a.id))
+		{
+			return false;
+		}
+		int num = 1;
+		Act.Cost cost = a.GetCost(this);
+		a.GetPower(this);
+		int n = 1;
+		int num2 = 0;
+		if (IsPC && HasCondition<StanceManaCost>())
+		{
+			num2 = Evalue(1657);
+		}
+		_pts.Clear();
+		if (a.TargetType.ForceParty)
+		{
+			pt = true;
+		}
+		if (pt)
+		{
+			n = 0;
+			ForeachParty(delegate
+			{
+				n++;
+			});
+		}
+		if (a is Spell && IsPC && a.vPotential < n)
+		{
+			n = 1;
+			_pts.Clear();
+			_pts.Add(this);
+			pt = false;
+		}
+		int num3 = 100;
+		if (!a.TargetType.ForceParty && n > 1)
+		{
+			num3 = (IsPC ? (n * 100) : (50 + n * 50));
+		}
+		int num4 = cost.cost * num3 / 100;
+		if (cost.type == Act.CostType.MP && Evalue(483) > 0)
+		{
+			num4 = num4 * 100 / (100 + (int)Mathf.Sqrt(Evalue(483) * 10) * 3);
+		}
+		if (n == 0)
+		{
+			if (IsPC)
+			{
+				Msg.SayNothingHappen();
+			}
+			return false;
+		}
+		if (!IsPC && cost.type == Act.CostType.MP && mana.value < 0 && (EClass.rnd(4) != 0 || IsPCFaction || (base.IsPowerful && mana.value < -20)))
+		{
+			return false;
+		}
+		if (IsPC)
+		{
+			if (!Dialog.warned && cost.type == Act.CostType.MP && cost.cost > 0 && mana.value < num4 && !EClass.debug.godMode)
+			{
+				ActPlan.warning = true;
+				Dialog.TryWarnMana(delegate
+				{
+					if (UseAbility(a, tc, pos, pt))
+					{
+						EClass.player.EndTurn();
+					}
+				});
+				return false;
+			}
+			EClass.ui.CloseLayers();
+		}
+		if ((isConfused && EClass.rnd(4) == 0) || (isBlind && (pt || (pos != null && !pos.Equals(base.pos)) || (tc != null && tc.pos != null && !tc.pos.Equals(base.pos))) && EClass.rnd(2) == 0))
+		{
+			Say("shakeHead", this);
+			return true;
+		}
+		if (tc != null && tc != this)
+		{
+			LookAt(tc.pos);
+		}
+		if (pos != null && !base.pos.Equals(pos))
+		{
+			LookAt(pos);
+		}
+		if (a.CanRapidFire && HasElement(1648))
+		{
+			num = 1 + Evalue(1648);
+		}
+		if (IsPC && cost.cost > 0 && a.Value == 0)
+		{
+			Msg.SayNothingHappen();
+			return false;
+		}
+		if (a is Spell)
+		{
+			string s = (isConfused ? "_cast_confuse" : (HasCondition<ConDim>() ? "_cast_dim" : ""));
+			if (!a.source.tag.Contains("useHand"))
+			{
+				Say(race.castStyle.IsEmpty("cast"), this, a.source.GetName().ToLower(), s.lang());
+			}
+			if (IsPC)
+			{
+				_ = (n + 1) / 2;
+				if (a.vPotential < n)
+				{
+					Msg.Say("noSpellStock");
+					EInput.Consume();
+					return false;
+				}
+				if (num2 > 0 && a.vPotential >= n * 2)
+				{
+					a.vPotential -= n * 2;
+					num4 = num4 * (100 - num2 * 20) / 100;
+				}
+				else
+				{
+					a.vPotential -= n;
+				}
+				LayerAbility.SetDirty(a);
+			}
+		}
+		else if (a.source.langAct.Length != 0 && tc != null)
+		{
+			string text = a.source.langAct[0];
+			string text2 = ((a.source.langAct.Length >= 2) ? a.source.langAct[1] : "");
+			if (text == "spell_hand")
+			{
+				string[] list = Lang.GetList("attack" + race.meleeStyle.IsEmpty("Touch"));
+				string @ref = text2.lang(list[4]);
+				Say(tc.IsPCParty ? "cast_hand_ally" : "cast_hand", this, tc, @ref, tc.IsPCParty ? list[1] : list[2]);
+			}
+			else
+			{
+				Say(text, this, tc, text2.IsEmpty() ? "" : text2.lang());
+			}
+			if (a.source.id == 6630)
+			{
+				Talk("insult_" + (base.IsMale ? "m" : "f"));
+			}
+		}
+		switch (cost.type)
+		{
+		case Act.CostType.MP:
+			if (Evalue(1421) >= 2 && base.hp <= MaxHP / (9 - Evalue(1421) * 2))
+			{
+				num4 /= 2;
+			}
+			PlayEffect("cast");
+			mana.Mod(-num4);
+			if (isDead)
+			{
+				return true;
+			}
+			elements.ModExp(304, Mathf.Clamp(num4 * 2, 1, 200));
+			break;
+		case Act.CostType.SP:
+			stamina.Mod(-num4);
+			break;
+		}
+		if (a is Spell && GetCondition<ConSilence>() != null)
+		{
+			Say("cast_silence", this);
+			return true;
+		}
+		if (isDead)
+		{
+			return true;
+		}
+		int spellExp = elements.GetSpellExp(this, a, num3);
+		if (EClass.rnd(100) >= CalcCastingChance(a, n) && !EClass.debug.godMode)
+		{
+			Say("fizzle", this);
+			PlayEffect("fizzle");
+			PlaySound("fizzle");
+			if (cost.cost > 0 && a.source.lvFactor > 0)
+			{
+				ModExp(a.id, spellExp / 5);
+			}
+			RemoveCondition<ConInvisibility>();
+			return true;
+		}
+		bool flag = true;
+		if (pt)
+		{
+			Act.forcePt = true;
+			ForeachParty(delegate(Chara c)
+			{
+				a.Perform(this, c, c.pos);
+			});
+			Act.forcePt = false;
+		}
+		else
+		{
+			for (int i = 0; i < num; i++)
+			{
+				if (a.TargetType != TargetType.SelfParty && tc != null && !tc.IsAliveInCurrentZone)
+				{
+					break;
+				}
+				ActEffect.RapidCount = i;
+				ActEffect.RapidDelay = a.RapidDelay;
+				flag = a.Perform(this, tc, pos);
+			}
+		}
+		if (flag && !isDead && cost.cost > 0 && a.source.lvFactor > 0)
+		{
+			ModExp(a.id, spellExp);
+		}
+		ActEffect.RapidCount = 0;
+		if (!IsPC && a.source.cooldown > 0)
+		{
+			AddCooldown(a.id, a.source.cooldown);
+		}
+		if (flag && !a.source.tag.Contains("keepInvisi") && EClass.rnd(2) == 0)
+		{
+			RemoveCondition<ConInvisibility>();
+		}
+		return flag;
+		void ForeachParty(Action<Chara> action)
+		{
+			if (_pts.Count == 0)
+			{
+				if (IsPCParty)
+				{
+					for (int num5 = EClass.pc.party.members.Count - 1; num5 >= 0; num5--)
+					{
+						Chara chara = EClass.pc.party.members[num5];
+						if (chara == this || chara.host != null || CanSeeLos(chara))
+						{
+							_pts.Add(chara);
+						}
+					}
+				}
+				else
+				{
+					for (int num6 = EClass._map.charas.Count - 1; num6 >= 0; num6--)
+					{
+						Chara chara2 = EClass._map.charas[num6];
+						if ((chara2 == this || (chara2.IsFriendOrAbove(this) && CanSeeLos(chara2))) && (chara2 == tc || _pts.Count < 3 || EClass.rnd(_pts.Count * _pts.Count) > 6))
+						{
+							_pts.Add(chara2);
+						}
+					}
+				}
+			}
+			for (int num7 = _pts.Count - 1; num7 >= 0; num7--)
+			{
+				action(_pts[num7]);
+			}
+		}
+	}
+
+	public int EvalueRiding()
+	{
+		if (ride != null && ride.HasCondition<ConTransmuteBroom>() && HasElement(1417))
+		{
+			return 25 + Evalue(226) * 125 / 100;
+		}
+		return Evalue(226);
+	}
+
+	public int CalcCastingChance(Element e, int num = 1)
+	{
+		if (!(e is Spell))
+		{
+			return 100;
+		}
+		if (!IsPC)
+		{
+			int num2 = 95;
+			if (host != null)
+			{
+				if (host.ride == this)
+				{
+					return num2 * 100 / (100 + 300 / Mathf.Max(5, 10 + host.EvalueRiding()));
+				}
+				if (host.parasite == this)
+				{
+					return num2 * 100 / (100 + 300 / Mathf.Max(5, 10 + host.Evalue(227)));
+				}
+			}
+			return num2;
+		}
+		int num3 = Evalue(304);
+		if (!IsPCFaction)
+		{
+			num3 = Mathf.Max(num3, base.LV + 5);
+		}
+		int num4 = 0;
+		int num5 = 0;
+		bool num6 = GetArmorSkill() == 122;
+		AttackStyle attackStyle = body.GetAttackStyle();
+		if (num6)
+		{
+			num4 = 20 - Evalue(122) / 5;
+			num5 += 10 - Evalue(1654) * 4;
+		}
+		else
+		{
+			num4 = 10 - Evalue(120) / 5;
+		}
+		if (num4 < 5)
+		{
+			num4 = 5;
+		}
+		if (ride != null)
+		{
+			num4 += 5;
+		}
+		if (parasite != null)
+		{
+			num4 += 10;
+		}
+		if (attackStyle == AttackStyle.TwoWield)
+		{
+			num4 += 5;
+		}
+		if (attackStyle == AttackStyle.Shield)
+		{
+			num4 += 5;
+			num5 += 10 - Evalue(1654) * 4;
+		}
+		if (isConfused)
+		{
+			num4 += 10000;
+		}
+		if (HasCondition<ConDim>())
+		{
+			num4 += ((Evalue(1654) >= 3) ? 1500 : 2500);
+		}
+		if (num > 1)
+		{
+			num4 += 5 * num;
+		}
+		if (num5 < 0)
+		{
+			num5 = 0;
+		}
+		return Mathf.Clamp(100 + e.Value - 10 - e.source.LV * e.source.cost[0] * num4 / (10 + num3 * 10), 0, 100 - num5);
+	}
+
+	public void DoAI(int wait, Action onPerform)
+	{
+		SetAI(new DynamicAIAct("", delegate
+		{
+			onPerform();
+			return true;
+		})
+		{
+			wait = wait
+		});
+	}
+
+	public void Cuddle(Chara c, bool headpat = false)
+	{
+		Talk("goodBoy");
+		Say(headpat ? "headpat" : "cuddle", this, c);
+		c.ShowEmo(Emo.love);
+		if (EClass.rnd(IsPC ? 100 : 5000) == 0)
+		{
+			c.MakeEgg();
+		}
+		if (!headpat || this == c)
+		{
+			return;
+		}
+		if (c.interest > 0)
+		{
+			c.ModAffinity(EClass.pc, 1 + EClass.rnd(3));
+			c.interest -= 20 + EClass.rnd(10);
+		}
+		if (faith != EClass.game.religions.MoonShadow || !c.IsPCParty)
+		{
+			return;
+		}
+		foreach (Chara member in party.members)
+		{
+			if (!member.IsPC && CanSeeLos(member))
+			{
+				member.AddCondition<ConEuphoric>(100 + Evalue(6904) * 5);
+			}
+		}
+	}
+
+	public Chara SetEnemy(Chara c = null)
+	{
+		enemy = c;
+		if (c != null)
+		{
+			calmCheckTurn = 10 + EClass.rnd(30);
+		}
+		return c;
+	}
+
+	public void TrySetEnemy(Chara c)
+	{
+		if ((!IsPC || !EClass.game.config.autoCombat.bDontChangeTarget) && (enemy == null || (EClass.rnd(5) == 0 && Dist(c) <= 1)) && ((!IsPCFaction && !IsPCFactionMinion) || (!c.IsPCFaction && !c.IsPCFactionMinion)) && (hostility != Hostility.Enemy || c.hostility != Hostility.Enemy) && (!c.IsPC || hostility < Hostility.Neutral))
+		{
+			SetEnemy(c);
+		}
+	}
+
+	private void GoHostile(Card _tg)
+	{
+		if (enemy == null && !IsPC)
+		{
+			if (GetInt(106) == 0)
+			{
+				TalkTopic("aggro");
+			}
+			if (OriginalHostility != Hostility.Enemy)
+			{
+				ShowEmo(Emo.angry);
+			}
+			SetEnemy(_tg.Chara);
+		}
+		if (!IsPCFaction && !IsPCFactionMinion && (_tg.IsPCFaction || _tg.IsPCFactionMinion))
+		{
+			if (hostility >= Hostility.Neutral)
+			{
+				Say("angry", this);
+			}
+			hostility = Hostility.Enemy;
+		}
+	}
+
+	public void DoHostileAction(Card _tg, bool immediate = false)
+	{
+		if (_tg == null || !_tg.isChara)
+		{
+			return;
+		}
+		Chara chara = _tg.Chara;
+		if (chara.IsPC)
+		{
+			EClass.pc.combatCount = 10;
+		}
+		if (!chara.IsAliveInCurrentZone || !IsAliveInCurrentZone || chara == this)
+		{
+			return;
+		}
+		if ((IsPCFaction || IsPCFactionMinion) && (chara.IsPCFaction || chara.IsPCFactionMinion))
+		{
+			chara.Say("frown", this, chara);
+		}
+		else
+		{
+			if (EClass._zone.IsRegion)
+			{
+				return;
+			}
+			if (IsPC)
+			{
+				if (chara.IsFriendOrAbove() && !immediate)
+				{
+					chara.Say("frown", this, chara);
+					chara.ShowEmo(Emo.sad);
+					chara.hostility = Hostility.Neutral;
+					return;
+				}
+				if (!chara.IsPCFaction && chara.hostility >= Hostility.Neutral && !EClass._zone.IsPCFaction)
+				{
+					bool flag = chara.id == "fanatic";
+					if (EClass.rnd(4) == 0 || flag)
+					{
+						chara.Say("callHelp", chara);
+						chara.CallHelp(this, flag);
+					}
+				}
+				if (chara.hostility <= Hostility.Enemy)
+				{
+					foreach (Chara member in EClass.pc.party.members)
+					{
+						if (member != EClass.pc && member.enemy == null)
+						{
+							member.SetEnemy(chara);
+						}
+					}
+				}
+			}
+			else if (chara.IsPC && hostility <= Hostility.Enemy)
+			{
+				foreach (Chara member2 in EClass.pc.party.members)
+				{
+					if (member2 != EClass.pc && member2.enemy == null)
+					{
+						member2.SetEnemy(this);
+					}
+				}
+			}
+			if (chara.calmCheckTurn <= 0 || IsPC)
+			{
+				chara.calmCheckTurn = (IsPC ? (20 + EClass.rnd(30)) : (10 + EClass.rnd(10)));
+			}
+			if (hostility != Hostility.Enemy || chara.hostility != Hostility.Enemy)
+			{
+				GoHostile(chara);
+				chara.GoHostile(this);
+				if (base.isHidden && !chara.CanSee(this) && !chara.IsDisabled && !chara.IsPCParty && !chara.IsPCPartyMinion && EClass.rnd(6) == 0)
+				{
+					Thing t = ThingGen.Create("49");
+					ActThrow.Throw(chara, pos, t);
+				}
+			}
+		}
+	}
+
+	public void CallHelp(Chara tg, bool fanatic = false)
+	{
+		foreach (Chara chara in EClass._map.charas)
+		{
+			if (!chara.IsPCFaction && chara.OriginalHostility == OriginalHostility && (fanatic || Dist(chara) <= 6) && (EClass.rnd(3) != 0 || fanatic))
+			{
+				chara.GoHostile(tg);
+			}
+		}
+	}
+
+	public bool FindNewEnemy()
+	{
+		if (EClass._zone.isPeace && base.IsPCFactionOrMinion)
+		{
+			return false;
+		}
+		if (enemy != null && !enemy.IsAliveInCurrentZone)
+		{
+			enemy = null;
+		}
+		if (enemy != null)
+		{
+			return false;
+		}
+		bool flag = enemy != null || ai is GoalCombat;
+		int num = (base.PER + Evalue(210) * 2) * ((!flag) ? 1 : 2);
+		bool flag2 = IsPCParty && !IsPC && EClass.game.config.tactics.dontWander;
+		bool flag3 = !IsPCParty;
+		for (int i = 0; i < EClass._map.charas.Count; i++)
+		{
+			Chara chara = EClass._map.charas[i];
+			if (chara == this || !IsHostile(chara) || !CanSee(chara))
+			{
+				continue;
+			}
+			int num2 = Dist(chara);
+			int num3 = GetSightRadius() + (flag ? 1 : 0);
+			if (num2 > num3)
+			{
+				continue;
+			}
+			if (flag3 && EClass.rnd(chara.Evalue(152) + 5) * (100 + num2 * num2 * 10) / 100 > EClass.rnd(num))
+			{
+				if (this == pos.FirstChara)
+				{
+					chara.ModExp(152, Mathf.Clamp((num - chara.Evalue(152)) / 2, 1, Mathf.Max(30 - stealthSeen * 2, 1)));
+				}
+				stealthSeen++;
+			}
+			else if (Los.IsVisible(pos.x, chara.pos.x, pos.z, chara.pos.z) && (!flag2 || EClass.pc.isBlind || EClass.pc.CanSeeLos(chara)) && (!IsPCFaction || !(EClass.pc.ai is AI_Shear aI_Shear) || aI_Shear.target != chara))
+			{
+				DoHostileAction(chara);
+				enemy = chara;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool FindNearestNewEnemy()
+	{
+		for (int i = 0; i < EClass._map.charas.Count; i++)
+		{
+			Chara chara = EClass._map.charas[i];
+			if (chara != this && chara != enemy && IsHostile(chara) && Dist(chara) <= 1 && CanInteractTo(chara.pos))
+			{
+				DoHostileAction(chara);
+				enemy = chara;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool IsHostile()
+	{
+		return hostility <= Hostility.Enemy;
+	}
+
+	public bool IsHostile(Chara c)
+	{
+		if (c == null)
+		{
+			return false;
+		}
+		if (base.IsPCFactionOrMinion)
+		{
+			if ((c == EClass.pc.enemy && !c.IsPCFactionOrMinion) || c.hostility <= Hostility.Enemy)
+			{
+				return true;
+			}
+		}
+		else
+		{
+			if (trait is TraitGuard && c.IsPCParty && EClass.player.IsCriminal && EClass._zone.instance == null)
+			{
+				return true;
+			}
+			if (OriginalHostility >= Hostility.Friend)
+			{
+				if (c.hostility <= Hostility.Enemy && c.OriginalHostility == Hostility.Enemy)
+				{
+					return true;
+				}
+			}
+			else if (OriginalHostility <= Hostility.Enemy && (c.IsPCFactionOrMinion || (c.OriginalHostility != Hostility.Enemy && c.hostility >= Hostility.Friend)))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool IsNeutral()
+	{
+		return hostility == Hostility.Neutral;
+	}
+
+	public bool IsNeutralOrAbove()
+	{
+		return hostility >= Hostility.Neutral;
+	}
+
+	public bool IsBranchMember()
+	{
+		if (faction == EClass.Home)
+		{
+			return homeZone == EClass.game.activeZone;
+		}
+		return false;
+	}
+
+	public bool IsHomeMember()
+	{
+		return faction == EClass.Home;
+	}
+
+	public bool IsInHomeZone()
+	{
+		return EClass.game.activeZone == currentZone;
+	}
+
+	public bool IsInSpot<T>() where T : TraitSpot
+	{
+		foreach (T item in EClass._map.props.installed.traits.List<T>())
+		{
+			foreach (Point item2 in item.ListPoints())
+			{
+				if (pos.Equals(item2))
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public bool IsGuest()
+	{
+		return memberType == FactionMemberType.Guest;
+	}
+
+	public bool IsFriendOrAbove()
+	{
+		return hostility >= Hostility.Friend;
+	}
+
+	public bool IsFriendOrAbove(Chara c)
+	{
+		if (base.IsPCFactionOrMinion || IsFriendOrAbove())
+		{
+			if (c.IsPCFactionOrMinion || c.IsFriendOrAbove())
+			{
+				return true;
+			}
+		}
+		else if (IsHostile() && c.IsHostile())
+		{
+			return true;
+		}
+		return race == c.race;
+	}
+
+	public override CardRenderer _CreateRenderer()
+	{
+		CharaRenderer charaRenderer = new CharaRenderer();
+		if (source.moveAnime == "hop")
+		{
+			charaRenderer.hopCurve = EClass.setting.render.anime.hop;
+		}
+		if (host != null)
+		{
+			charaRenderer.pccData = PCCData.Create("ride");
+			string idPart = base.c_idRidePCC.IsEmpty(EClass.core.pccs.sets["ride"].map["body"].map.Keys.First());
+			charaRenderer.pccData.SetPart("body", "ride", idPart);
+			charaRenderer.pccData.ride = EClass.core.pccs.GetRideData(idPart);
+		}
+		else
+		{
+			foreach (Condition condition in conditions)
+			{
+				RendererReplacer rendererReplacer = condition.GetRendererReplacer();
+				if (rendererReplacer != null)
+				{
+					charaRenderer.replacer = rendererReplacer;
+					charaRenderer.data = rendererReplacer.data;
+					break;
+				}
+			}
+			if (charaRenderer.replacer == null)
+			{
+				charaRenderer.pccData = pccData;
+			}
+		}
+		renderer = charaRenderer;
+		renderer.SetOwner(this);
+		return charaRenderer;
+	}
+
+	public void SetPCCState(PCCState state)
+	{
+		if (IsPCC)
+		{
+			PCC.Get(pccData).Build(state);
+		}
+	}
+
+	public override Sprite GetSprite(int dir = 0)
+	{
+		if (IsPCC)
+		{
+			PCC pCC = PCC.Get(pccData);
+			pCC.Build();
+			return pCC.variation.idle[0, 0];
+		}
+		return sourceCard.GetSprite((sourceCard._tiles.Length > 1) ? ((base.idSkin != 0 || source.staticSkin) ? base.idSkin : (base.uid % sourceCard._tiles.Length / 2 * 2 + ((!base.IsMale) ? 1 : 0))) : 0);
+	}
+
+	public void SetTempHand(int right = 0, int left = 0)
+	{
+		if (IsPC && !IsPC)
+		{
+			pccData.tempRight = EClass.scene.screenElin.renderTempEQ.ConvertTile(right);
+			pccData.tempLeft = EClass.scene.screenElin.renderTempEQ.ConvertTile(left);
+		}
+	}
+
+	public override SubPassData GetSubPassData()
+	{
+		if (IsPCC && (IsDeadOrSleeping || (!EClass.player.altHeldPos && parent is Chara)))
+		{
+			return EClass.setting.pass.subDeadPCC;
+		}
+		return SubPassData.Default;
+	}
+
+	public override void SetRenderParam(RenderParam p)
+	{
+		p.mat = base.material;
+		p.matColor = base.colorInt;
+		if (!renderer.usePass)
+		{
+			return;
+		}
+		if (renderer.replacer != null)
+		{
+			p.tile = renderer.replacer.tile * ((!flipX) ? 1 : (-1));
+		}
+		else if (source._tiles_snow.Length != 0 && EClass._zone.IsSnowCovered)
+		{
+			if (source._tiles_snow.Length > 1)
+			{
+				int num = ((base.idSkin != 0 || source.staticSkin) ? base.idSkin : (base.uid % source._tiles_snow.Length / 2 * 2 + ((!base.IsMale) ? 1 : 0)));
+				p.tile = source._tiles_snow[(num < source._tiles_snow.Length) ? num : 0] * ((!flipX) ? 1 : (-1));
+			}
+			else
+			{
+				p.tile = source._tiles_snow[0] * ((!flipX) ? 1 : (-1));
+			}
+		}
+		else if (sourceCard._tiles.Length > 1)
+		{
+			int num2 = ((base.idSkin != 0 || source.staticSkin) ? base.idSkin : (base.uid % sourceCard._tiles.Length / 2 * 2 + ((!base.IsMale) ? 1 : 0)));
+			p.tile = sourceCard._tiles[(num2 < sourceCard._tiles.Length) ? num2 : 0] * ((!flipX) ? 1 : (-1));
+		}
+		else
+		{
+			p.tile = sourceCard._tiles[0] * ((!flipX) ? 1 : (-1));
+		}
+		p.dir = base.dir;
+	}
+
+	public override string GetHoverText()
+	{
+		string text = base.Name;
+		if (IsFriendOrAbove())
+		{
+			text = text.TagColor(EClass.Colors.colorFriend);
+		}
+		else if (IsHostile())
+		{
+			text = text.TagColor(EClass.Colors.colorHostile);
+		}
+		int num = 2;
+		int lV = EClass.pc.LV;
+		if (base.LV >= lV * 5)
+		{
+			num = 0;
+		}
+		else if (base.LV >= lV * 2)
+		{
+			num = 1;
+		}
+		else if (base.LV <= lV / 4)
+		{
+			num = 4;
+		}
+		else if (base.LV <= lV / 2)
+		{
+			num = 3;
+		}
+		string text2 = Lang.GetList("lvComparison")[num];
+		text2 = (" (" + text2 + ") ").TagSize(14).TagColor(EClass.Colors.gradientLVComparison.Evaluate(0.25f * (float)num));
+		string s = (IsFriendOrAbove() ? "HostilityAlly" : (IsNeutral() ? "HostilityNeutral" : "HostilityEnemy"));
+		s = (" (" + s.lang() + ") ").TagSize(14);
+		if (!EClass.pc.IsMoving)
+		{
+			if (EClass.pc.HasHigherGround(this))
+			{
+				text2 += "lowerGround".lang();
+			}
+			else if (HasHigherGround(EClass.pc))
+			{
+				text2 += "higherGround".lang();
+			}
+		}
+		if (Evalue(1232) > 0)
+		{
+			text2 = "milkBaby".lang().TagSize(14) + text2;
+		}
+		if (Guild.Fighter.ShowBounty(this) && Guild.Fighter.HasBounty(this))
+		{
+			text2 = "hasBounty".lang().TagSize(14) + text2;
+		}
+		if (EClass.pc.HasElement(481))
+		{
+			text2 += ("( " + faith.Name + ")").TagSize(14);
+		}
+		return text + text2;
+	}
+
+	public override string GetHoverText2()
+	{
+		string text = "";
+		if (knowFav)
+		{
+			text += Environment.NewLine;
+			text = text + "<size=14>" + "favgift".lang(GetFavCat().GetName().ToLower(), GetFavFood().GetName()) + "</size>";
+		}
+		string text2 = "";
+		if (EClass.debug.showExtra)
+		{
+			text2 += Environment.NewLine;
+			text2 = text2 + "Lv:" + base.LV + "  HP:" + base.hp + "/" + MaxHP + "  MP:" + mana.value + "/" + mana.max + "  DV:" + DV + "  PV:" + PV + "  Hunger:" + hunger.value;
+			text2 += Environment.NewLine;
+			text2 = text2 + "Global:" + IsGlobal + "  AI:" + ai?.ToString() + " " + source.tactics.IsEmpty(EClass.sources.tactics.map.TryGetValue(id)?.id ?? EClass.sources.tactics.map.TryGetValue(job.id)?.id ?? "predator");
+			text2 += Environment.NewLine;
+			text2 = text2 + base.uid + IsMinion + "/" + base.c_uidMaster + "/" + master;
+		}
+		string text3 = "";
+		IEnumerable<BaseStats> enumerable = conditions.Concat((!IsPCFaction) ? new BaseStats[0] : new BaseStats[2] { hunger, stamina });
+		if (enumerable.Count() > 0)
+		{
+			text = "";
+			text3 += Environment.NewLine;
+			text3 += "<size=14>";
+			foreach (BaseStats item in enumerable)
+			{
+				string text4 = item.GetPhaseStr();
+				if (text4.IsEmpty() || text4 == "#")
+				{
+					continue;
+				}
+				Color c = Color.white;
+				switch (item.source.group)
+				{
+				case "Bad":
+				case "Debuff":
+				case "Disease":
+					c = EClass.Colors.colorDebuff;
+					break;
+				case "Buff":
+					c = EClass.Colors.colorBuff;
+					break;
+				}
+				if (EClass.debug.showExtra)
+				{
+					text4 = text4 + "(" + item.GetValue() + ")";
+					if (resistCon != null && resistCon.ContainsKey(item.id))
+					{
+						text4 = text4 + "{" + resistCon[item.id] + "}";
+					}
+				}
+				text3 = text3 + text4.TagColor(c) + ", ";
+			}
+			text3 = text3.TrimEnd(", ".ToCharArray()) + "</size>";
+		}
+		return text + text2 + text3;
+	}
+
+	public string GetTopicText(string topic = "calm")
+	{
+		string key = source.idText.IsEmpty(id);
+		if (id == "littleOne" && EClass._zone is Zone_LittleGarden)
+		{
+			key = "littleOne2";
+		}
+		SourceCharaText.Row row = EClass.sources.charaText.map.TryGetValue(key);
+		if (row == null)
+		{
+			return null;
+		}
+		string text = row.GetText(topic, returnNull: true);
+		if (text.IsEmpty())
+		{
+			return null;
+		}
+		if (text.StartsWith("@"))
+		{
+			row = EClass.sources.charaText.map.TryGetValue(text.Replace("@", ""));
+			if (row == null)
+			{
+				return null;
+			}
+			text = row.GetText(topic, returnNull: true);
+			if (text.IsEmpty())
+			{
+				return null;
+			}
+		}
+		return text.Split(Environment.NewLine.ToCharArray()).RandomItem();
+	}
+
+	public string TalkTopic(string topic = "calm")
+	{
+		if (host == null && !IsInActiveZone)
+		{
+			return null;
+		}
+		if (!isSynced && (host == null || !host.isSynced) && topic != "dead")
+		{
+			return null;
+		}
+		if (IsPCParty)
+		{
+			int num = EClass.pc.party.members.Count - 1;
+			switch (topic)
+			{
+			case "calm":
+				if (EClass.rnd(num * 5) != 0)
+				{
+					return null;
+				}
+				break;
+			case "aggro":
+				if (EClass.rnd(num * 10) != 0)
+				{
+					return null;
+				}
+				break;
+			case "kill":
+				if (EClass.rnd(num * 3) != 0)
+				{
+					return null;
+				}
+				break;
+			case "fov":
+				return null;
+			}
+		}
+		string topicText = GetTopicText(topic);
+		if (topicText.IsEmpty())
+		{
+			return null;
+		}
+		string text = "_bracketTalk".lang();
+		bool flag = topicText.StartsWith("*");
+		bool flag2 = topicText.StartsWith("(");
+		bool flag3 = topicText.StartsWith(text) || (topicText.Length > 0 && topicText[0] == text[0]) || topicText[0] == '“';
+		topicText = ApplyTone(topicText);
+		topicText = topicText.Replace("~", "*");
+		Msg.SetColor(flag2 ? Msg.colors.Thinking : (flag3 ? Msg.colors.Talk : Msg.colors.Ono));
+		Msg.Say(topicText.Replace("&", ""));
+		if (topic == "dead")
+		{
+			EClass.ui.popGame.PopText(ApplyNewLine(topicText.StripBrackets()), null, "PopTextDead", default(Color), pos.Position() + EClass.setting.render.tc.textPosDead);
+		}
+		else if (flag || flag3 || flag2)
+		{
+			(host ?? this).renderer.Say(ApplyNewLine(topicText.StripBrackets()), default(Color), IsPCParty ? 0.6f : 0f);
+		}
+		return topicText;
+	}
+
+	public override Sprite GetImageSprite()
+	{
+		return GetSprite();
+	}
+
+	public void ChangeMemberType(FactionMemberType type)
+	{
+		memberType = type;
+	}
+
+	public void ShowDialog()
+	{
+		Zone_Nymelle zone_Nymelle = EClass._zone as Zone_Nymelle;
+		if (IsDeadOrSleeping)
+		{
+			ShowDialog("_chara", "sleep");
+		}
+		else if (base.isRestrained)
+		{
+			ShowDialog("_chara", "strain");
+		}
+		else if (EClass.pc.isHidden && !CanSee(EClass.pc))
+		{
+			ShowDialog("_chara", "invisible");
+		}
+		else if (IsEscorted())
+		{
+			ShowDialog("_chara", "escort");
+		}
+		else if (EClass._zone is Zone_Music)
+		{
+			ShowDialog("_chara", "party");
+		}
+		else
+		{
+			if (LayerDrama.forceJump == null && EClass.game.quests.OnShowDialog(this))
+			{
+				return;
+			}
+			switch (id)
+			{
+			case "loytel":
+			{
+				if (EClass.player.flags.loytelEscaped)
+				{
+					EClass.game.quests.Get("pre_debt_runaway").Complete();
+					EClass.player.flags.loytelEscaped = false;
+					EClass.game.quests.Add("debt", "loytel");
+					ShowDialog("loytel", "loytelEscaped");
+					return;
+				}
+				QuestDebt questDebt = EClass.game.quests.Get<QuestDebt>();
+				if (questDebt != null && questDebt.paid)
+				{
+					questDebt.stage++;
+					if (questDebt.stage > 6)
+					{
+						questDebt.stage = 1;
+					}
+					ShowDialog("loytel", "debt" + questDebt.stage);
+					return;
+				}
+				break;
+			}
+			case "farris":
+				if (EClass._zone.id == "startVillage" || EClass._zone.id == "startVillage3")
+				{
+					ShowDialog("_chara");
+					return;
+				}
+				switch (EClass.game.quests.GetPhase<QuestExploration>())
+				{
+				case -1:
+					ShowDialog("farris", "nymelle_noQuest");
+					break;
+				case 0:
+					ShowDialog("farris", "nymelle_first");
+					break;
+				case 1:
+					ShowDialog("farris", "home_first");
+					break;
+				default:
+					ShowDialog("_chara");
+					break;
+				}
+				return;
+			case "ashland":
+				if (zone_Nymelle != null && zone_Nymelle.IsCrystalLv)
+				{
+					SoundManager.ForceBGM();
+					LayerDrama.ActivateMain("mono", "nymelle_crystal");
+				}
+				else
+				{
+					ShowDialog("ashland");
+				}
+				return;
+			case "fiama":
+				if (zone_Nymelle != null && zone_Nymelle.IsCrystalLv)
+				{
+					SoundManager.ForceBGM();
+					LayerDrama.ActivateMain("mono", "nymelle_crystal");
+				}
+				else if (EClass.player.EnableDreamStory)
+				{
+					if (!EClass.player.flags.fiamaFirstDream && EClass.player.flags.storyFiama >= 10)
+					{
+						EClass.player.flags.fiamaFirstDream = true;
+						ShowDialog("fiama", "firstDream");
+					}
+					else if (!EClass.player.flags.fiamaStoryBookGiven && EClass.player.flags.storyFiama >= 30)
+					{
+						ShowDialog("fiama", "giveStoryBook").SetOnKill(delegate
+						{
+							EClass.player.flags.fiamaStoryBookGiven = true;
+							EClass.player.DropReward(ThingGen.Create("book_story"));
+						});
+					}
+					else
+					{
+						ShowDialog("fiama");
+					}
+				}
+				else
+				{
+					ShowDialog("fiama");
+				}
+				return;
+			case "big_sister":
+				if (EClass.player.flags.little_saved)
+				{
+					ShowDialog("big_sister", "little_saved");
+					EClass.player.flags.little_saved = false;
+					return;
+				}
+				if (EClass.player.flags.little_killed)
+				{
+					ShowDialog("big_sister", "little_dead");
+					EClass.player.flags.little_killed = false;
+					return;
+				}
+				break;
+			}
+			if (trait is TraitGuildDoorman)
+			{
+				string tag = ((trait is TraitDoorman_Fighter) ? "fighter" : ((trait is TraitDoorman_Mage) ? "mage" : "thief"));
+				ShowDialog("guild_doorman", "main", tag);
+			}
+			else if (trait is TraitGuildClerk)
+			{
+				string tag2 = ((trait is TraitClerk_Fighter) ? "fighter" : ((trait is TraitClerk_Mage) ? "mage" : "thief"));
+				ShowDialog("guild_clerk", "main", tag2);
+			}
+			else if (File.Exists(CorePath.DramaData + id + ".xlsx"))
+			{
+				ShowDialog(id);
+			}
+			else
+			{
+				ShowDialog("_chara");
+			}
+		}
+	}
+
+	public LayerDrama ShowDialog(string book, string step = "main", string tag = "")
+	{
+		return _ShowDialog(book, null, step, tag);
+	}
+
+	private LayerDrama _ShowDialog(string book, string sheet, string step = "main", string tag = "")
+	{
+		EClass.Sound.Play("pop_drama");
+		if (book == "_chara" && IsPC)
+		{
+			step = "pc";
+		}
+		return LayerDrama.Activate(book, sheet, step, this, null, tag);
+	}
+
+	public Point GetDestination()
+	{
+		return (ai.IsRunning ? ai.GetDestination() : pos).Copy();
+	}
+
+	public int GetHireCost()
+	{
+		return base.LV / 2 + 4;
+	}
+
+	public int GetHappiness()
+	{
+		int num = 50;
+		if (FindBed() != null)
+		{
+			num += 50;
+		}
+		return num;
+	}
+
+	public string GetTextHappiness()
+	{
+		return GetHappiness().ToString() ?? "";
+	}
+
+	public string GetActionText()
+	{
+		string result = "?????";
+		if (ai != null)
+		{
+			result = ai.GetCurrentActionText();
+		}
+		return result;
+	}
+
+	public override void WriteNote(UINote n, Action<UINote> onWriteNote = null, IInspect.NoteMode mode = IInspect.NoteMode.Default, Recipe recipe = null)
+	{
+		n.Clear();
+		UIItem uIItem = n.AddHeaderCard(base.Name.ToTitleCase());
+		SetImage(uIItem.image2);
+		uIItem.text2.SetText(race.GetText().ToTitleCase(wholeText: true) + " " + job.GetText().ToTitleCase(wholeText: true));
+		n.AddText("");
+		n.Build();
+	}
+
+	public override void SetSortVal(UIList.SortMode m, CurrencyType currency = CurrencyType.Money)
+	{
+		switch (m)
+		{
+		case UIList.SortMode.ByJob:
+			sortVal = job._index * 10000 + sourceCard._index;
+			break;
+		case UIList.SortMode.ByRace:
+			sortVal = race._index * 10000 * ((!IsHuman) ? 1 : (-1)) + sourceCard._index;
+			break;
+		case UIList.SortMode.ByFeat:
+			sortVal = -GetTotalFeat();
+			break;
+		default:
+			sortVal = sourceCard._index * ((!IsHuman) ? 1 : (-1));
+			break;
+		case UIList.SortMode.ByWorkk:
+			break;
+		}
+	}
+
+	public void ClearBed(Map map = null)
+	{
+		if (map == null)
+		{
+			map = EClass._map;
+		}
+		foreach (Card value in map.props.installed.all.Values)
+		{
+			if (value.trait is TraitBed traitBed && traitBed.IsHolder(this))
+			{
+				traitBed.RemoveHolder(this);
+			}
+		}
+	}
+
+	public TraitBed FindBed()
+	{
+		foreach (Card value in EClass._map.props.installed.all.Values)
+		{
+			if (value.trait is TraitBed traitBed && traitBed.IsHolder(this))
+			{
+				return traitBed;
+			}
+		}
+		return null;
+	}
+
+	public TraitBed TryAssignBed()
+	{
+		if (memberType == FactionMemberType.Livestock || (!IsPCFaction && !IsGuest()))
+		{
+			return null;
+		}
+		foreach (Card value in EClass._map.props.installed.all.Values)
+		{
+			if (value.trait is TraitBed traitBed && traitBed.CanAssign(this))
+			{
+				traitBed.AddHolder(this);
+				Msg.Say("claimBed", this);
+				return traitBed;
+			}
+		}
+		return null;
+	}
+
+	public void TryPutSharedItems(IEnumerable<Thing> containers, bool msg = true)
+	{
+		if (GetInt(113) != 0)
+		{
+			return;
+		}
+		_ListItems.Clear();
+		Thing bestRangedWeapon = GetBestRangedWeapon();
+		foreach (Thing thing in things)
+		{
+			if (!thing.IsAmmo)
+			{
+				if (thing.category.slot != 0 && !thing.isEquipped && !thing.HasTag(CTAG.gift))
+				{
+					_ListItems.Add(thing);
+				}
+				else if (thing.IsRangedWeapon && thing.category.slot == 0 && bestRangedWeapon != thing)
+				{
+					_ListItems.Add(thing);
+				}
+			}
+		}
+		if (_ListItems.Count == 0)
+		{
+			return;
+		}
+		List<Thing> containers2 = containers.ToList();
+		foreach (Thing listItem in _ListItems)
+		{
+			EClass._zone.TryAddThingInSharedContainer(listItem, containers2, add: true, msg: true, this);
+		}
+	}
+
+	public void TryPutSharedItems(bool msg = true)
+	{
+		TryPutSharedItems(EClass._map.props.installed.containers);
+	}
+
+	public void TryTakeSharedItems(bool msg = true)
+	{
+		TryTakeSharedItems(EClass._map.props.installed.containers);
+	}
+
+	public void TryTakeSharedItems(IEnumerable<Thing> containers, bool msg = true, bool shouldEat = true)
+	{
+		if (base.isSummon)
+		{
+			return;
+		}
+		int num = 2;
+		int num2 = 2;
+		bool flag = GetInt(113) == 0;
+		int num3 = 2;
+		int num4 = 2;
+		int num5 = 2;
+		foreach (Thing thing3 in things)
+		{
+			if (CanEat(thing3, shouldEat))
+			{
+				num -= thing3.Num;
+			}
+			if (thing3.trait.GetHealAction(this) != null)
+			{
+				num2 -= thing3.Num;
+			}
+			if (thing3.id == "polish_powder")
+			{
+				num3 -= thing3.Num;
+			}
+			if (thing3.trait is TraitBlanketColdproof)
+			{
+				num4 -= thing3.Num;
+			}
+			if (thing3.trait is TraitBlanketFireproof)
+			{
+				num5 -= thing3.Num;
+			}
+		}
+		_ListItems.Clear();
+		foreach (Thing container in containers)
+		{
+			if (!container.IsSharedContainer)
+			{
+				continue;
+			}
+			foreach (Thing thing4 in container.things)
+			{
+				if (!thing4.c_isImportant)
+				{
+					if (num3 > 0 && thing4.id == "polish_powder")
+					{
+						_ListItems.Add(thing4);
+						num3 -= thing4.Num;
+					}
+					else if (num4 > 0 && thing4.trait is TraitBlanketColdproof)
+					{
+						_ListItems.Add(thing4);
+						num4 -= thing4.Num;
+					}
+					else if (num5 > 0 && thing4.trait is TraitBlanketFireproof)
+					{
+						_ListItems.Add(thing4);
+						num5 -= thing4.Num;
+					}
+					else if (num > 0 && CanEat(thing4, shouldEat))
+					{
+						_ListItems.Add(thing4);
+						num -= thing4.Num;
+					}
+					else if (num2 > 0 && thing4.trait.GetHealAction(this) != null)
+					{
+						_ListItems.Add(thing4);
+						num2 -= thing4.Num;
+					}
+					else if (flag && thing4.IsEquipmentOrRanged && !thing4.HasTag(CTAG.gift) && ShouldEquip(thing4, useFav: true))
+					{
+						_ListItems.Add(thing4);
+					}
+				}
+			}
+		}
+		if (_ListItems.Count == 0)
+		{
+			return;
+		}
+		_ListItems.ForeachReverse(delegate(Thing t)
+		{
+			if (t.IsEquipmentOrRanged)
+			{
+				bool flag2 = false;
+				int slot = t.category.slot;
+				int equipValue = t.GetEquipValue();
+				foreach (Thing listItem in _ListItems)
+				{
+					if (listItem.category.slot == slot && listItem.GetEquipValue() > equipValue)
+					{
+						flag2 = true;
+						break;
+					}
+				}
+				if (flag2)
+				{
+					_ListItems.Remove(t);
+				}
+			}
+		});
+		bool flag3 = false;
+		foreach (Thing listItem2 in _ListItems)
+		{
+			Thing thing = listItem2;
+			if (things.IsFull(thing))
+			{
+				break;
+			}
+			Thing thing2 = listItem2.parent as Thing;
+			if (thing.Num > 2)
+			{
+				thing = thing.Split(2);
+			}
+			if (msg)
+			{
+				Say("takeSharedItem", this, thing, thing2.GetName(NameStyle.Full));
+			}
+			AddCard(thing);
+			if (ShouldEquip(thing, useFav: true) && thing.category.slot != 0)
+			{
+				TryEquip(thing, useFav: true);
+				flag3 = true;
+			}
+		}
+		if (flag3 && flag)
+		{
+			TryPutSharedItems(containers);
+		}
+	}
+
+	public void InstantEat(Thing t = null, bool sound = true)
+	{
+		if (t == null)
+		{
+			t = things.Find((Thing a) => CanEat(a, shouldEat: true));
+		}
+		if (t == null)
+		{
+			t = things.Find((Thing a) => CanEat(a));
+		}
+		if (t != null)
+		{
+			Say("eat_start", this, t.Duplicate(1));
+			if (sound)
+			{
+				PlaySound("eat");
+			}
+			FoodEffect.Proc(this, t);
+			t.ModNum(-1);
+		}
+	}
+
+	public bool CanEat(Thing t, bool shouldEat = false)
+	{
+		if (t.IsDecayed && !HasElement(480))
+		{
+			return false;
+		}
+		if (shouldEat && !(t.trait is TraitFoodPrepared))
+		{
+			return false;
+		}
+		if (!t.IsNegativeGift && !t.HasTag(CTAG.ignoreUse) && !t.isEquipped)
+		{
+			return t.trait.CanEat(this);
+		}
+		return false;
+	}
+
+	public bool ShouldEquip(Thing t, bool useFav = false)
+	{
+		if (t.IsRangedWeapon && t.category.slot == 0)
+		{
+			if (!CanEquipRanged(t))
+			{
+				return false;
+			}
+			int num = 0;
+			foreach (Thing thing in things)
+			{
+				if (thing.IsRangedWeapon)
+				{
+					if (thing.category.slot != 0 && thing.isEquipped)
+					{
+						return false;
+					}
+					if (CanEquipRanged(thing) && thing.GetEquipValue() > num)
+					{
+						num = thing.GetEquipValue();
+					}
+				}
+			}
+			if (t.GetEquipValue() > num)
+			{
+				return true;
+			}
+			return false;
+		}
+		BodySlot bodySlot = body.GetSlot(t);
+		if (bodySlot == null)
+		{
+			return false;
+		}
+		if (useFav)
+		{
+			switch (GetFavAttackStyle())
+			{
+			case AttackStyle.Default:
+			case AttackStyle.TwoHand:
+				if (t.IsMeleeWeapon)
+				{
+					bodySlot = body.slotMainHand;
+				}
+				else if (bodySlot.elementId == 35)
+				{
+					return false;
+				}
+				break;
+			case AttackStyle.Shield:
+				if (t.IsMeleeWeapon)
+				{
+					bodySlot = body.slotMainHand;
+				}
+				else if (bodySlot.elementId == 35 && t.IsMeleeWeapon)
+				{
+					return false;
+				}
+				break;
+			case AttackStyle.TwoWield:
+				if (bodySlot.elementId == 35 && !t.IsMeleeWeapon)
+				{
+					return false;
+				}
+				break;
+			}
+		}
+		if (!body.IsEquippable(t, bodySlot, text: false))
+		{
+			return false;
+		}
+		if (bodySlot.thing != null && (bodySlot.thing.blessedState <= BlessedState.Cursed || bodySlot.thing.GetEquipValue() >= t.GetEquipValue()))
+		{
+			return false;
+		}
+		if (t.HasTag(CTAG.gift))
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public bool TryEquip(Thing t, bool useFav = false)
+	{
+		if (!ShouldEquip(t, useFav))
+		{
+			return false;
+		}
+		if (t.category.slot == 0)
+		{
+			return false;
+		}
+		if (useFav)
+		{
+			BodySlot slot = body.GetSlot(t);
+			switch (GetFavAttackStyle())
+			{
+			case AttackStyle.Default:
+			case AttackStyle.TwoHand:
+				if (t.IsMeleeWeapon)
+				{
+					slot = body.slotMainHand;
+				}
+				break;
+			case AttackStyle.Shield:
+				if (t.IsMeleeWeapon)
+				{
+					slot = body.slotMainHand;
+				}
+				break;
+			}
+			body.Equip(t, slot);
+		}
+		else
+		{
+			body.Equip(t);
+		}
+		Say("equip", this, t);
+		return true;
+	}
+
+	public bool CanEquipRanged(Thing t)
+	{
+		return !body.IsTooHeavyToEquip(t);
+	}
+
+	public Thing TryGetThrowable()
+	{
+		Thing dest = null;
+		if (IsPC)
+		{
+			if (EClass.game.config.autoCombat.bUseHotBar)
+			{
+				return FindThrowable(hotbar: true);
+			}
+			return null;
+		}
+		things.Foreach(delegate(Thing t)
+		{
+			if (t.HasTag(CTAG.throwWeapon) || (!base.IsPCFactionOrMinion && t.HasTag(CTAG.throwWeaponEnemy)))
+			{
+				dest = t;
+			}
+		});
+		return dest;
+		Thing FindThrowable(bool hotbar)
+		{
+			things.Foreach(delegate(Thing t)
+			{
+				if (dest == null)
+				{
+					if (t.IsHotItem)
+					{
+						if (!hotbar)
+						{
+							return;
+						}
+					}
+					else if (hotbar)
+					{
+						return;
+					}
+					if (t.HasTag(CTAG.throwWeapon))
+					{
+						dest = t;
+					}
+				}
+			});
+			return dest;
+		}
+	}
+
+	public Thing FindAmmo(Thing weapon)
+	{
+		TraitToolRange ranged = weapon.trait as TraitToolRange;
+		Thing thing = (IsPC ? EClass.pc.things.Find<TraitQuiver>() : null);
+		if (thing != null)
+		{
+			Thing thing2 = thing.things.Find((Thing t) => ranged.IsAmmo(t));
+			if (thing2 != null)
+			{
+				return thing2;
+			}
+		}
+		return things.Find((Thing t) => ranged.IsAmmo(t));
+	}
+
+	public Thing GetBestRangedWeapon()
+	{
+		Thing result = null;
+		int num = 0;
+		foreach (Thing thing in things)
+		{
+			if (thing.IsRangedWeapon && CanEquipRanged(thing) && thing.GetEquipValue() > num)
+			{
+				num = thing.GetEquipValue();
+				result = thing;
+			}
+		}
+		return result;
+	}
+
+	public bool TryEquipRanged()
+	{
+		if (IsPC)
+		{
+			Thing thing = EClass.player.currentHotItem.Thing;
+			if (thing?.trait is TraitToolRange && CanEquipRanged(thing))
+			{
+				ranged = thing;
+				return true;
+			}
+			return false;
+		}
+		if (ranged != null && ranged.parent == this)
+		{
+			return true;
+		}
+		ranged = GetBestRangedWeapon();
+		return ranged != null;
+	}
+
+	public override int GetArmorSkill()
+	{
+		if (body.GetWeight(armorOnly: true) <= 30000)
+		{
+			return 120;
+		}
+		return 122;
+	}
+
+	public bool TryUse(Thing t)
+	{
+		if (t.id == "338")
+		{
+			Thing thing = things.Find((Thing a) => a.IsEquipmentOrRanged && !a.isAcidproof);
+			if (thing != null)
+			{
+				Say("dip", this, thing, t.GetName(NameStyle.Full, 1));
+				SE.Change();
+				t.trait.OnBlend(thing, this);
+				return true;
+			}
+			return false;
+		}
+		if (t.IsNegativeGift || t.source.HasTag(CTAG.ignoreUse))
+		{
+			return false;
+		}
+		if (t.trait.CanEat(this) && hunger.GetPhase() > ((IsPCFaction || IsPCFactionMinion) ? 2 : 0))
+		{
+			SetAIImmediate(new AI_Eat
+			{
+				target = t
+			});
+			return true;
+		}
+		if (t.trait.CanDrink(this))
+		{
+			Drink(t);
+			return true;
+		}
+		if (t.trait.CanRead(this))
+		{
+			SetAIImmediate(new AI_Read
+			{
+				target = t
+			});
+			return true;
+		}
+		return false;
+	}
+
+	public Room FindRoom()
+	{
+		return FindBed()?.owner.pos.cell.room;
+	}
+
+	public void ModAffinity(Chara c, int a, bool show = true)
+	{
+		if (c == this)
+		{
+			return;
+		}
+		if (IsPC)
+		{
+			c.ModAffinity(EClass.pc, a, show);
+			return;
+		}
+		if (c.IsPC)
+		{
+			a = affinity.Mod(a);
+		}
+		bool flag = a > 0;
+		if (show)
+		{
+			if (a == 0)
+			{
+				Say("affinityNone", this, c);
+				return;
+			}
+			ShowEmo((!flag) ? Emo.angry : Emo.love);
+			c.ShowEmo(flag ? Emo.love : Emo.sad);
+			Say(flag ? "affinityPlus" : "affinityMinus", this, c);
+		}
+	}
+
+	public bool TryIdentify(Thing t, int count = 1, bool show = true)
+	{
+		int num = Evalue(289);
+		if (num == 0)
+		{
+			return false;
+		}
+		int lV = t.LV;
+		if (EClass.rnd(num * num + 5) > EClass.rnd(lV * lV) * 20)
+		{
+			t.Identify(show, (num >= 20) ? IDTSource.SkillHigh : IDTSource.Skill);
+			int num2 = 50;
+			if (lV > num)
+			{
+				num2 += (lV - num) * 10;
+			}
+			elements.ModExp(289, Mathf.Min(num2, 1000));
+			return true;
+		}
+		return false;
+	}
+
+	public Chara CreateReplacement()
+	{
+		Chara chara = CharaGen.Create(id);
+		chara.c_originalHostility = base.c_originalHostility;
+		if (chara.c_originalHostility != 0)
+		{
+			chara.hostility = chara.c_originalHostility;
+		}
+		if (orgPos != null)
+		{
+			chara.orgPos = orgPos.Copy();
+		}
+		chara.pos = pos.Copy();
+		chara.isImported = true;
+		chara.c_editorTags = base.c_editorTags;
+		chara.c_editorTraitVal = base.c_editorTraitVal;
+		chara.c_idTrait = base.c_idTrait;
+		chara.homeZone = homeZone;
+		return chara;
+	}
+
+	public SourceThing.Row GetFavFood()
+	{
+		if (_listFavFood.Count == 0)
+		{
+			foreach (SourceThing.Row row in EClass.sources.things.rows)
+			{
+				if (row._origin == "dish" && row.value != 0)
+				{
+					_listFavFood.Add(row);
+				}
+			}
+		}
+		SourceThing.Row r = null;
+		Rand.UseSeed(base.uid + EClass.game.seed, delegate
+		{
+			r = _listFavFood.RandomItem();
+		});
+		return r;
+	}
+
+	public SourceCategory.Row GetFavCat()
+	{
+		SourceCategory.Row r = null;
+		if (_listFavCat.Count == 0)
+		{
+			foreach (SourceCategory.Row row in EClass.sources.categories.rows)
+			{
+				if (row.gift > 0)
+				{
+					_listFavCat.Add(row);
+				}
+			}
+		}
+		Rand.UseSeed(base.uid + EClass.game.seed, delegate
+		{
+			r = _listFavCat.RandomItem();
+		});
+		return r;
+	}
+
+	public int GetTotalFeat()
+	{
+		int num = 0;
+		if (base.c_upgrades != null)
+		{
+			num += base.c_upgrades.spent;
+		}
+		if (base.c_genes != null)
+		{
+			num += base.c_genes.GetTotalCost();
+		}
+		return num + base.feat;
+	}
+
+	public bool CanInsult()
+	{
+		foreach (ActList.Item item in ability.list.items)
+		{
+			if (item.act.id == 6630)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public string GetIdPortraitCat()
+	{
+		string text = race.id;
+		if ((text == "mifu" || text == "nefu") && EClass.rnd(2) == 0)
+		{
+			return "foxfolk";
+		}
+		if (trait is TraitGuard)
+		{
+			return "guard";
+		}
+		return "";
+	}
+
+	public string GetIdPortrait()
+	{
+		if (id == "olderyoungersister")
+		{
+			if (base.idSkin != 2)
+			{
+				return "UN_olderyoungersister";
+			}
+			return "UN_olderyoungersister_alt";
+		}
+		if (Portrait.allIds.Contains("UN_" + id + ".png"))
+		{
+			return "UN_" + id;
+		}
+		return base.c_idPortrait;
+	}
+
+	public Thing GiveBirth(Thing t, bool effect)
+	{
+		EClass.player.forceTalk = true;
+		Talk("giveBirth");
+		EClass._zone.TryAddThing(t, pos);
+		if (effect)
+		{
+			PlayEffect("revive");
+			PlaySound("egg");
+			PlayAnime(AnimeID.Shiver);
+			AddCondition<ConDim>(200);
+		}
+		return t;
+	}
+
+	public Thing MakeGene(DNA.Type? type = null)
+	{
+		return DNA.GenerateGene(this, type);
+	}
+
+	public Thing MakeBraineCell()
+	{
+		return DNA.GenerateGene(this, DNA.Type.Brain);
+	}
+
+	public Thing MakeMilk(bool effect = true, int num = 1, bool addToZone = true)
+	{
+		Thing thing = ThingGen.Create("milk").SetNum(num);
+		thing.MakeRefFrom(this);
+		int num2 = base.LV - source.LV;
+		if (EClass._zone.IsUserZone && !base.IsPCFactionOrMinion)
+		{
+			num2 = 0;
+		}
+		if (num2 >= 10)
+		{
+			thing.SetEncLv(num2 / 10);
+		}
+		if (!addToZone)
+		{
+			return thing;
+		}
+		return GiveBirth(thing, effect);
+	}
+
+	public Thing MakeEgg(bool effect = true, int num = 1, bool addToZone = true)
+	{
+		Thing thing = ThingGen.Create((EClass.rnd(EClass.debug.enable ? 1 : 20) == 0) ? "egg_fertilized" : "_egg").SetNum(num);
+		thing.MakeFoodFrom(this);
+		thing.c_idMainElement = base.c_idMainElement;
+		if (!addToZone)
+		{
+			return thing;
+		}
+		return GiveBirth(thing, effect);
+	}
+
+	public void OnInsulted()
+	{
+		if (!isDead)
+		{
+			if (HasElement(1231))
+			{
+				Talk("insulted");
+				AddCondition<ConEuphoric>();
+			}
+			else if (EClass.rnd(20) == 0)
+			{
+				SetFeat(1231, 1, msg: true);
+			}
+		}
+	}
+
+	public bool IsValidGiftWeight(Card t, int num = -1)
+	{
+		int num2 = ((!HasElement(1411)) ? 1 : 3);
+		if (GetBurden(t, num) >= num2)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public bool CanAcceptItem(Card t, int num = -1)
+	{
+		if (EClass.debug.enable)
+		{
+			return true;
+		}
+		if (!IsValidGiftWeight(t, num))
+		{
+			return false;
+		}
+		if (t.c_isImportant)
+		{
+			return false;
+		}
+		if ((t.category.IsChildOf("furniture") || t.category.IsChildOf("junk")) && !HasElement(1411))
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public bool CanAcceptGift(Chara c, Card t)
+	{
+		if (things.IsFull())
+		{
+			return false;
+		}
+		if (t.c_isImportant)
+		{
+			return false;
+		}
+		if (t.id == "1084")
+		{
+			return true;
+		}
+		if (t.trait is TraitBookSecret)
+		{
+			return true;
+		}
+		if (t.trait.CanOnlyCarry || !t.trait.CanBeDestroyed || t.trait.CanExtendBuild || t.rarity == Rarity.Artifact || t.IsContainer)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public void GiveGift(Chara c, Thing t)
+	{
+		if (c.IsHostile() || c.IsDeadOrSleeping)
+		{
+			Msg.Say("affinityNone", c, this);
+			return;
+		}
+		if (t.IsCursed && t.IsEquipmentOrRanged && c.HasElement(1414))
+		{
+			bool num = t.blessedState == BlessedState.Doomed;
+			int num2 = 200 + t.LV * 3;
+			if (t.rarity == Rarity.Legendary)
+			{
+				num2 *= 3;
+			}
+			if (t.rarity >= Rarity.Mythical)
+			{
+				num2 *= 5;
+			}
+			if (num)
+			{
+				num2 *= 2;
+			}
+			EClass.pc.PlayEffect("identify");
+			EClass.pc.PlaySound("identify");
+			c.PlayEffect("mutation");
+			c.Say("draw_curse", c, t);
+			t.Destroy();
+			List<Element> list = new List<Element>();
+			foreach (Element value in EClass.pc.elements.dict.Values)
+			{
+				if (value is Spell)
+				{
+					list.Add(value);
+				}
+			}
+			if (list.Count == 0)
+			{
+				EClass.pc.SayNothingHappans();
+				return;
+			}
+			Element element = list.RandomItem();
+			EClass.pc.ModExp(element.id, num2);
+			EClass.pc.Say("draw_curse2", EClass.pc, element.Name);
+			return;
+		}
+		if ((t.id == "lovepotion" || t.id == "dreambug") && !Application.isEditor)
+		{
+			GiveLovePotion(c, t);
+			return;
+		}
+		if (t.trait is TraitErohon && c.id == t.c_idRefName)
+		{
+			c.OnGiveErohon(t);
+			return;
+		}
+		if (t.trait is TraitTicketMassage)
+		{
+			t.ModNum(-1);
+			c.Talk("ticket");
+			switch (t.id)
+			{
+			case "ticket_massage":
+				c.ModAffinity(EClass.pc, 10);
+				EClass.pc.SetAI(new AI_Massage
+				{
+					target = c
+				});
+				break;
+			case "ticket_armpillow":
+				c.ModAffinity(EClass.pc, 20);
+				EClass.pc.AddCondition<ConSleep>(300, force: true);
+				c.SetAI(new AI_ArmPillow
+				{
+					target = EClass.pc
+				});
+				break;
+			case "ticket_champagne":
+				c.ModAffinity(EClass.pc, 10);
+				c.AddCondition<ConChampagne>();
+				break;
+			}
+			return;
+		}
+		if (t.id == "flyer")
+		{
+			stamina.Mod(-1);
+			if (c.things.Find((Thing a) => a.id == "flyer") != null)
+			{
+				c.Talk("flyer_miss");
+				DoHostileAction(c);
+				return;
+			}
+			if (EClass.rnd(20) != 0 && c.CHA > EClass.rnd(base.CHA + Evalue(291) * 3 + 10))
+			{
+				Msg.Say("affinityNone", c, this);
+				t.Destroy();
+				elements.ModExp(291, 10);
+				return;
+			}
+			elements.ModExp(291, 50);
+		}
+		if (t.id == "statue_weird")
+		{
+			EClass.pc.Say("statue_sell");
+		}
+		t.isGifted = true;
+		c.nextUse = c.affinity.OnGift(t);
+		if (!t.isDestroyed)
+		{
+			EClass.game.quests.list.ForeachReverse(delegate(Quest q)
+			{
+				q.OnGiveItem(c, t);
+			});
+			if (c.TryEquip(t))
+			{
+				c.nextUse = null;
+			}
+		}
+	}
+
+	public void OnGiveErohon(Thing t)
+	{
+		Say("give_erohon", this);
+		AddCondition<ConParalyze>(50, force: true);
+		AddCondition<ConConfuse>(50, force: true);
+		AddCondition<ConFear>(1000, force: true);
+		ModAffinity(EClass.pc, 100);
+		t.Destroy();
+		Talk("pervert");
+	}
+
+	public void GiveLovePotion(Chara c, Thing t)
+	{
+		c.Say("give_love", c, t);
+		c.PlaySound(t.material.GetSoundDead());
+		c.ShowEmo(Emo.angry);
+		c.ModAffinity(EClass.pc, -20, show: false);
+		c.Talk("pervert");
+		t.Destroy();
+	}
+
+	public void RequestProtection(Chara attacker, Action<Chara> action)
+	{
+		if (HasCondition<StanceTaunt>() || base.isRestrained || attacker == this || (host != null && host.isRestrained) || (IsPCFaction && attacker.IsPCFaction))
+		{
+			return;
+		}
+		bool flag = false;
+		foreach (Chara chara in EClass._map.charas)
+		{
+			if (chara == attacker || chara.enemy == this || chara == this || chara.host != null || chara.IsDisabled || !chara.IsFriendOrAbove(this) || chara.conSuspend != null || (chara.IsPCParty && !IsPCParty) || (IsPCFaction && !chara.IsPCFaction))
+			{
+				continue;
+			}
+			bool flag2 = chara.HasElement(1225);
+			if ((!flag2 && (flag || EClass.rnd(2) == 0 || !chara.HasCondition<StanceTaunt>())) || chara.HasCooldown(1225))
+			{
+				continue;
+			}
+			int num = Mathf.Max(chara.Evalue(1649), (!chara.IsPC) ? ((!flag2) ? 1 : 3) : 0);
+			int num2 = Dist(chara);
+			if (num2 > 25)
+			{
+				continue;
+			}
+			if (num2 > num || !chara.CanSeeLos(pos, num2))
+			{
+				if (!flag2)
+				{
+					continue;
+				}
+				if (Dist(chara) < 5)
+				{
+					chara.GoHostile(attacker);
+					chara.SetEnemy(attacker);
+					attacker.SetEnemy(chara);
+					continue;
+				}
+				Point nearestPoint = pos.GetNearestPoint(allowBlock: false, allowChara: false, allowInstalled: true, ignoreCenter: true);
+				if (!nearestPoint.IsValid)
+				{
+					continue;
+				}
+				chara.Teleport(nearestPoint);
+				chara.AddCooldown(1225, 10);
+				num2 = Dist(chara);
+				Say("intercept_loyal", chara, this);
+				chara.SetEnemy(attacker);
+				attacker.SetEnemy(chara);
+				if (num2 > num || !chara.CanSeeLos(pos, num2))
+				{
+					continue;
+				}
+			}
+			if (!flag && !HasElement(1225))
+			{
+				Say("intercept", chara, this);
+				if (EClass.rnd(10) == 0)
+				{
+					chara.Talk("intercept", base.NameSimple);
+				}
+				if (attacker.enemy == this)
+				{
+					attacker.SetEnemy(chara);
+				}
+				action(chara);
+				flag = true;
+			}
+		}
+	}
+
+	public bool ShouldThrowAway(Thing t, ClearInventoryType type)
+	{
+		if (IsPCFaction)
+		{
+			if (t.IsFood && t.category.id != "fish" && !t.IsDecayed)
+			{
+				return false;
+			}
+			if (t.trait.GetHealAction(this) != null)
+			{
+				return false;
+			}
+			if (t.IsThrownWeapon || t.IsRangedWeapon || t.IsAmmo)
+			{
+				return false;
+			}
+			if (t.trait is TraitBlanket || t.trait is TraitItemProc || t.trait is TraitBookSkill)
+			{
+				return false;
+			}
+		}
+		if (t.isEquipped || t.rarity >= Rarity.Legendary || !t.trait.CanBeDestroyed)
+		{
+			return false;
+		}
+		if (trait is TraitBard && t.trait is TraitToolMusic)
+		{
+			return false;
+		}
+		if (t.trait is TraitCurrency)
+		{
+			return false;
+		}
+		switch (type)
+		{
+		case ClearInventoryType.SellAtTown:
+			if (!t.isGifted && !t.isNPCProperty)
+			{
+				return false;
+			}
+			break;
+		case ClearInventoryType.Purge:
+			switch (t.category.id)
+			{
+			case "fish":
+				if (EClass.rnd(3) == 0)
+				{
+					return true;
+				}
+				break;
+			case "junk":
+			case "garbage":
+				if (EClass.rnd(3) != 0)
+				{
+					return true;
+				}
+				break;
+			}
+			if (t.id == "flyer")
+			{
+				return true;
+			}
+			if (!t.IsDecayed && EClass.rnd(3) == 0)
+			{
+				return false;
+			}
+			if (t.IsRangedWeapon && !things.IsFull())
+			{
+				return false;
+			}
+			break;
+		}
+		return true;
+	}
+
+	public void ClearInventory(ClearInventoryType type)
+	{
+		int num = 0;
+		for (int num2 = things.Count - 1; num2 >= 0; num2--)
+		{
+			Thing thing = things[num2];
+			if (ShouldThrowAway(thing, type))
+			{
+				num += thing.GetPrice(CurrencyType.Money, sell: true, PriceType.Default, this) * thing.Num;
+				thing.Destroy();
+			}
+		}
+		if (num > 0)
+		{
+			ModCurrency(num);
+			if (type == ClearInventoryType.SellAtTown)
+			{
+				Msg.Say("party_sell", this, num.ToString() ?? "");
+				PlaySound("pay");
+			}
+		}
+	}
+
+	public void ResetUpgrade()
+	{
+		_ = base.c_upgrades;
+	}
+
+	public void TryUpgrade(bool msg = true)
+	{
+		if (!EClass.debug.enable || IsPC || !IsGlobal || !IsPCFaction)
+		{
+			return;
+		}
+		for (int i = 0; i < 100; i++)
+		{
+			if (base.feat == 0)
+			{
+				break;
+			}
+			if (base.c_upgrades == null)
+			{
+				base.c_upgrades = new CharaUpgrade();
+			}
+			if (base.c_upgrades.halt)
+			{
+				break;
+			}
+			Rand.SetSeed(base.uid + base.c_upgrades.count);
+			int num = EClass.rnd(100);
+			int num2 = 0;
+			int num3 = 1;
+			int num4 = 0;
+			bool flag = false;
+			IEnumerable<SourceElement.Row> ie = EClass.sources.elements.rows.Where((SourceElement.Row a) => !elements.Has(a) && a.category == "skill" && !a.tag.Contains("noPet"));
+			List<Element> list = ListAvailabeFeats(pet: true);
+			if (num >= 90 && list.Count > 0)
+			{
+				Element element = list.RandomItem();
+				num2 = element.id;
+				num4 = element.CostLearn;
+			}
+			else if (num >= 60 && ie.Any())
+			{
+				num2 = ie.RandomItem().id;
+				num4 = 3;
+			}
+			else
+			{
+				num2 = Element.List_MainAttributesMajor.RandomItem();
+				num4 = 1;
+				num3 = 2;
+				flag = true;
+			}
+			Rand.SetSeed();
+			if (num4 > base.feat)
+			{
+				break;
+			}
+			base.feat -= num4;
+			base.c_upgrades.count++;
+			base.c_upgrades.spent += num4;
+			bool flag2 = false;
+			if (flag)
+			{
+				foreach (CharaUpgrade.Item item in base.c_upgrades.items)
+				{
+					if (item.idEle == num2)
+					{
+						item.value += num3;
+						item.cost += num4;
+						flag2 = true;
+						break;
+					}
+				}
+			}
+			if (!flag2)
+			{
+				base.c_upgrades.items.Add(new CharaUpgrade.Item
+				{
+					idEle = num2,
+					value = num3,
+					cost = num4
+				});
+			}
+			SourceElement.Row row = EClass.sources.elements.map[num2];
+			if (row.category == "feat")
+			{
+				SetFeat(num2, elements.ValueWithoutLink(num2) + 1, msg: true);
+			}
+			else if (elements.ValueWithoutLink(row.id) == 0)
+			{
+				elements.Learn(row.id);
+			}
+			else
+			{
+				elements.ModBase(num2, num3);
+			}
+		}
+	}
+
+	public void AddCooldown(int idEle, int turns = 0)
+	{
+		if (_cooldowns == null)
+		{
+			_cooldowns = new List<int>();
+		}
+		if (turns != 0)
+		{
+			_cooldowns.Add(idEle * 1000 + turns);
+			return;
+		}
+		SourceElement.Row row = EClass.sources.elements.map[idEle];
+		if (row.cooldown > 0)
+		{
+			_cooldowns.Add(idEle * 1000 + row.cooldown);
+		}
+	}
+
+	public bool HasCooldown(int idEle)
+	{
+		if (_cooldowns != null)
+		{
+			for (int i = 0; i < _cooldowns.Count; i++)
+			{
+				if (_cooldowns[i] / 1000 == idEle)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public void TickCooldown()
+	{
+		for (int num = _cooldowns.Count - 1; num >= 0; num--)
+		{
+			if (_cooldowns[num] % 1000 == 1)
+			{
+				_cooldowns.RemoveAt(num);
+			}
+			else
+			{
+				_cooldowns[num]--;
+			}
+		}
+		if (_cooldowns.Count == 0)
+		{
+			_cooldowns = null;
+		}
+	}
+
+	public void ChooseNewGoal()
+	{
+		if (IsPC && EClass.AdvMode)
+		{
+			SetNoGoal();
+			return;
+		}
+		if (IsPCParty || base.noMove)
+		{
+			SetAI(new GoalIdle());
+			return;
+		}
+		if ((IsHomeMember() && IsInHomeZone()) || IsGuest())
+		{
+			Goal goalFromTimeTable = GetGoalFromTimeTable(EClass.world.date.hour);
+			if (goalFromTimeTable != null)
+			{
+				SetAI(goalFromTimeTable);
+				if (goalFromTimeTable is GoalWork)
+				{
+					goalFromTimeTable.Tick();
+				}
+				return;
+			}
+		}
+		if (goalList.index == -2)
+		{
+			goalList.Refresh(this, goalListType);
+		}
+		SetAI(goalList.Next());
+	}
+
+	public Goal GetGoalFromTimeTable(int hour)
+	{
+		if (IsPC)
+		{
+			return null;
+		}
+		switch (TimeTable.GetSpan(idTimeTable, hour))
+		{
+		case TimeTable.Span.Sleep:
+			if (sleepiness.value > 10 || EClass._zone.isSimulating)
+			{
+				return new GoalSleep();
+			}
+			break;
+		case TimeTable.Span.Eat:
+			return new GoalIdle();
+		case TimeTable.Span.Work:
+			if (IsGuest())
+			{
+				return new GoalIdle();
+			}
+			return GetGoalWork();
+		case TimeTable.Span.Free:
+			if (IsGuest())
+			{
+				return new GoalIdle();
+			}
+			return GetGoalHobby();
+		}
+		return null;
+	}
+
+	public Goal GetGoalWork()
+	{
+		if (IsPrisoner)
+		{
+			return new GoalIdle();
+		}
+		if (memberType == FactionMemberType.Livestock)
+		{
+			return new GoalGraze();
+		}
+		return new GoalWork();
+	}
+
+	public Goal GetGoalHobby()
+	{
+		if (IsPrisoner)
+		{
+			return new GoalIdle();
+		}
+		if (memberType == FactionMemberType.Livestock)
+		{
+			return new GoalGraze();
+		}
+		return new GoalHobby();
+	}
+
+	public void SetAIIdle()
+	{
+	}
+
+	public void SetAIAggro()
+	{
+		SetAI(new GoalCombat());
+	}
+
+	public AIAct SetNoGoal()
+	{
+		return SetAI(_NoGoalPC);
+	}
+
+	public AIAct SetAI(AIAct g)
+	{
+		if (IsPC)
+		{
+			EClass.player.queues.OnSetGoal(g);
+		}
+		if (ai.IsRunning)
+		{
+			if (ai == g && ai.IsNoGoal)
+			{
+				return g;
+			}
+			ai.Cancel();
+			if (ai == g)
+			{
+				Debug.Log("goal is g:" + ai?.ToString() + "/" + this);
+				return g;
+			}
+		}
+		if (HasCondition<ConWait>())
+		{
+			RemoveCondition<ConWait>();
+		}
+		ai = g;
+		ai.SetOwner(this);
+		if (IsPC)
+		{
+			renderer.RefreshStateIcon();
+		}
+		return g;
+	}
+
+	public void SetAIImmediate(AIAct g)
+	{
+		bool hasNoGoal = HasNoGoal;
+		SetAI(g);
+		if ((EClass.scene.actionMode != ActionMode.Sim || !EClass.scene.paused) && hasNoGoal && !(renderer as CharaRenderer).IsMoving)
+		{
+			Tick();
+		}
+	}
+
+	public List<Hobby> ListWorks(bool useMemberType = true)
+	{
+		listHobby.Clear();
+		if (useMemberType && memberType == FactionMemberType.Livestock)
+		{
+			listHobby.Add(new Hobby
+			{
+				id = 45
+			});
+		}
+		else
+		{
+			if (_works == null)
+			{
+				RerollHobby();
+			}
+			foreach (int work in _works)
+			{
+				listHobby.Add(new Hobby
+				{
+					id = work
+				});
+			}
+		}
+		return listHobby;
+	}
+
+	public List<Hobby> ListHobbies(bool useMemberType = true)
+	{
+		listHobby.Clear();
+		if (!useMemberType || memberType != FactionMemberType.Livestock)
+		{
+			if (_hobbies == null)
+			{
+				RerollHobby();
+			}
+			foreach (int hobby in _hobbies)
+			{
+				listHobby.Add(new Hobby
+				{
+					id = hobby
+				});
+			}
+		}
+		return listHobby;
+	}
+
+	public Hobby GetWork(string id)
+	{
+		foreach (Hobby item in ListWorks())
+		{
+			if (item.source.alias == id)
+			{
+				return item;
+			}
+		}
+		foreach (Hobby item2 in ListHobbies())
+		{
+			if (item2.source.alias == id)
+			{
+				return item2;
+			}
+		}
+		return null;
+	}
+
+	public void RefreshWorkElements(ElementContainer parent = null)
+	{
+		if (workElements != null)
+		{
+			workElements.SetParent();
+		}
+		workElements = null;
+		if (IsPCParty || homeBranch == null || homeBranch.owner == null)
+		{
+			return;
+		}
+		foreach (Hobby item in ListHobbies())
+		{
+			TryAdd(item);
+		}
+		foreach (Hobby item2 in ListWorks())
+		{
+			TryAdd(item2);
+		}
+		if (workElements != null)
+		{
+			workElements.SetParent(parent);
+		}
+		void TryAdd(Hobby h)
+		{
+			if (!h.source.elements.IsEmpty())
+			{
+				if (workElements == null)
+				{
+					workElements = new ElementContainer();
+				}
+				for (int i = 0; i < h.source.elements.Length; i += 2)
+				{
+					int num = h.source.elements[i];
+					int num2 = h.source.elements[i + 1];
+					int num3 = 100;
+					if (num != 2115 && num != 2207)
+					{
+						num3 = h.GetEfficiency(this) * homeBranch.efficiency / 100;
+						if (num3 <= 0)
+						{
+							continue;
+						}
+					}
+					workElements.ModBase(num, (num2 < 0) ? (num2 / 10) : Mathf.Max(1, h.source.elements[i + 1] * num3 / 1000));
+				}
+			}
+		}
+	}
+
+	public string GetTextHobby(bool simple = false)
+	{
+		string text = (simple ? "" : ("hobby".lang() + ":"));
+		foreach (Hobby item in ListHobbies())
+		{
+			text = text + " " + item.Name.TagColor((item.GetEfficiency(this) > 0) ? FontColor.Good : FontColor.Warning) + ",";
+		}
+		return text.TrimEnd(',');
+	}
+
+	public string GetTextWork(bool simple = false)
+	{
+		string text = (simple ? "" : ("work".lang() + ":"));
+		foreach (Hobby item in ListWorks())
+		{
+			text = text + " " + item.Name.TagColor((item.GetEfficiency(this) > 0) ? FontColor.Good : FontColor.Warning) + ",";
+		}
+		return text.TrimEnd(',');
+	}
+
+	public void AddHobby(int id)
+	{
+		foreach (int hobby in _hobbies)
+		{
+			if (hobby == id)
+			{
+				return;
+			}
+		}
+		_hobbies.Add(id);
+	}
+
+	public void AddWork(int id)
+	{
+		foreach (int work in _works)
+		{
+			if (work == id)
+			{
+				return;
+			}
+		}
+		_works.Add(id);
+	}
+
+	public void RerollHobby(bool extraSlotChance = true)
+	{
+		if (_hobbies != null && _works != null)
+		{
+			_hobbies.Clear();
+			_works.Clear();
+		}
+		else
+		{
+			_hobbies = new List<int>();
+			_works = new List<int>();
+		}
+		if (source.hobbies.IsEmpty())
+		{
+			AddHobby(EClass.sources.hobbies.listHobbies.RandomItem().id);
+		}
+		else
+		{
+			string[] hobbies = source.hobbies;
+			foreach (string key in hobbies)
+			{
+				AddHobby(EClass.sources.hobbies.alias[key].id);
+			}
+		}
+		if (source.works.IsEmpty())
+		{
+			AddWork(EClass.sources.hobbies.listWorks.RandomItem().id);
+		}
+		else
+		{
+			string[] hobbies = source.works;
+			foreach (string key2 in hobbies)
+			{
+				AddWork(EClass.sources.hobbies.alias[key2].id);
+			}
+		}
+		GetWorkSummary().Reset();
+	}
+
+	public WorkSummary GetWorkSummary()
+	{
+		if (_workSummary == null)
+		{
+			_workSummary = new WorkSummary();
+		}
+		return _workSummary;
+	}
+
+	public void TickWork(VirtualDate date)
+	{
+		TimeTable.Span span = TimeTable.GetSpan(idTimeTable, date.hour);
+		if (span != TimeTable.Span.Work && span != 0)
+		{
+			return;
+		}
+		WorkSummary workSummary = GetWorkSummary();
+		if (span == TimeTable.Span.Work)
+		{
+			if (workSummary.work != null)
+			{
+				PerformWork(workSummary.work, isHobby: false, date.IsRealTime);
+			}
+		}
+		else if (workSummary.hobbies.Count > 0)
+		{
+			PerformWork(workSummary.hobbies.RandomItem(), isHobby: true, date.IsRealTime);
+		}
+	}
+
+	public bool TryWorkOutside(SourceHobby.Row sourceWork)
+	{
+		if (EClass.world.date.IsExpired(GetInt(51)))
+		{
+			Expedition expedition = Expedition.Create(this, sourceWork.expedition.ToEnum<ExpeditionType>());
+			SetInt(51, EClass.world.date.GetRaw() + 60 * (expedition.hours + 24));
+			homeBranch.expeditions.Add(expedition);
+			return true;
+		}
+		return false;
+	}
+
+	public void PerformWork(WorkSession session, bool isHobby = false, bool IsRealTime = false)
+	{
+		Hobby hobby = new Hobby();
+		hobby.id = session.id;
+		WorkSummary workSummary = _workSummary;
+		hobby.GetAI(this).OnPerformWork(IsRealTime);
+		if (!isHobby)
+		{
+			workSummary.progress += EClass.rnd(5) + 5;
+		}
+		int num = PerformWork(hobby, 0, isHobby);
+		int num2 = PerformWork(hobby, 1, isHobby);
+		int num3 = PerformWork(hobby, 2, isHobby);
+		int num4 = PerformWork(hobby, 3, isHobby);
+		workSummary.money += num;
+		workSummary.food += num2;
+		workSummary.knowledge += num3;
+		workSummary.material += num4;
+		int PerformWork(Hobby work, int idx, bool isHobby)
+		{
+			if (idx >= work.source.resources.Length)
+			{
+				return 0;
+			}
+			int num5 = work.source.resources[idx];
+			int num6 = num5;
+			num5 = Rand.Range(num5 * (100 - work.source.resources[idx]) / 100, num5);
+			num5 = num5 * (isHobby ? 50 : 100) * session.efficiency / 10000;
+			if (num6 > 0 && num5 <= 0)
+			{
+				num5 = 1;
+			}
+			return num5;
+		}
+	}
+
+	public void ValidateWorks()
+	{
+		_goalWork.FindWork(this, setAI: false);
+		_goalHobby.ValidateHobby(this);
+	}
+
+	public void InitStats(bool onDeserialize = false)
+	{
+		if (!onDeserialize)
+		{
+			_cints[10] = 20;
+			_cints[11] = 70;
+			_cints[13] = 70;
+			_cints[14] = 70;
+			_cints[15] = 70;
+			_cints[17] = 0;
+		}
+		foreach (Condition condition in conditions)
+		{
+			condition.SetOwner(this, onDeserialize);
+		}
+	}
+
+	public Condition AddCondition<T>(int p = 100, bool force = false) where T : Condition
+	{
+		return AddCondition(typeof(T).Name, p, force);
+	}
+
+	public Condition AddCondition(string id, int p = 100, bool force = false)
+	{
+		return AddCondition(Condition.Create(id, p), force);
+	}
+
+	public Condition AddCondition(Condition c, bool force = false)
+	{
+		c.owner = this;
+		if (!(c is ConBurning))
+		{
+			if (c is ConBleed && ResistLv(964) >= 3)
+			{
+				return null;
+			}
+		}
+		else if (ResistLv(950) >= 3)
+		{
+			return null;
+		}
+		if (c.GainResistFactor > 0 && CanGainConResist)
+		{
+			if (c.GainResistFactor >= 400)
+			{
+				c.power /= 2;
+			}
+			ResistCon(c);
+			if (c.power <= 0)
+			{
+				return null;
+			}
+		}
+		if (!force)
+		{
+			if (c.source.negate.Length != 0)
+			{
+				string[] negate = c.source.negate;
+				foreach (string text in negate)
+				{
+					if (HasElement(text))
+					{
+						return null;
+					}
+				}
+			}
+			Element defenseAttribute = c.GetDefenseAttribute(this);
+			if (defenseAttribute != null)
+			{
+				c.power = 100 * c.power / (100 + defenseAttribute.Value);
+			}
+			if (c.source.resistance.Length != 0)
+			{
+				int num = ResistLv(EClass.sources.elements.alias[c.source.resistance[0]].id);
+				if (num > 0)
+				{
+					c.power /= num * num + 1;
+					if (c.power <= 40)
+					{
+						return null;
+					}
+				}
+			}
+			c.power = c.EvaluatePower(c.power);
+			if (c.power <= 0)
+			{
+				return null;
+			}
+		}
+		for (int j = 0; j < conditions.Count; j++)
+		{
+			if (conditions[j].id != c.id)
+			{
+				continue;
+			}
+			if (c.Type == ConditionType.Stance || c.IsToggle)
+			{
+				conditions[j].Kill();
+				return null;
+			}
+			if (conditions[j].CanStack(c))
+			{
+				if (conditions[j].WillOverride)
+				{
+					conditions[j].Kill(silent: true);
+					continue;
+				}
+				if (CanGainConResist)
+				{
+					AddResistCon(c);
+				}
+				conditions[j].OnStacked(c.power);
+				conditions[j].OnStartOrStack();
+				conditions[j].PlayEffect();
+			}
+			if (!conditions[j].AllowMultipleInstance)
+			{
+				return null;
+			}
+		}
+		foreach (Condition condition in conditions)
+		{
+			if (condition.TryNullify(c))
+			{
+				return null;
+			}
+		}
+		int num2 = c.EvaluateTurn(c.power);
+		if (num2 == 0)
+		{
+			return null;
+		}
+		c.value = num2;
+		conditions.Add(c);
+		if (CanGainConResist)
+		{
+			AddResistCon(c);
+		}
+		c.SetOwner(this);
+		c.Start();
+		SetDirtySpeed();
+		if (c.ShouldRefresh)
+		{
+			Refresh();
+		}
+		if (IsPC && c.ConsumeTurn && !EClass.pc.isRestrained)
+		{
+			EClass.player.EndTurn();
+		}
+		if (c.SyncRide && (ride != null || parasite != null))
+		{
+			if (ride != null)
+			{
+				ride.AddCondition(Condition.Create(c.source.alias, c.power));
+			}
+			if (parasite != null)
+			{
+				parasite.AddCondition(Condition.Create(c.source.alias, c.power));
+			}
+		}
+		return c;
+	}
+
+	public override bool HasCondition<T>()
+	{
+		for (int i = 0; i < conditions.Count; i++)
+		{
+			if (conditions[i] is T)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool HasCondition(string alias)
+	{
+		for (int i = 0; i < conditions.Count; i++)
+		{
+			if (conditions[i].source.alias == alias)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public Element GetBuffStats(string alias)
+	{
+		return GetBuffStats(EClass.sources.elements.alias[alias].id);
+	}
+
+	public Element GetBuffStats(int ele)
+	{
+		for (int i = 0; i < conditions.Count; i++)
+		{
+			if (conditions[i] is ConBuffStats conBuffStats && conBuffStats.refVal == ele)
+			{
+				return conBuffStats.elements.GetElement(ele);
+			}
+		}
+		return null;
+	}
+
+	public void CureCondition<T>(int v = 99999) where T : Condition
+	{
+		T condition = GetCondition<T>();
+		if (condition != null)
+		{
+			condition.value -= v;
+			if (condition.value <= 0)
+			{
+				condition.Kill();
+			}
+		}
+	}
+
+	public T GetCondition<T>() where T : Condition
+	{
+		for (int i = 0; i < conditions.Count; i++)
+		{
+			if (conditions[i] is T)
+			{
+				return conditions[i] as T;
+			}
+		}
+		return null;
+	}
+
+	public void RemoveCondition<T>() where T : Condition
+	{
+		for (int num = conditions.Count - 1; num >= 0; num--)
+		{
+			if (conditions[num] is T)
+			{
+				conditions[num].Kill();
+				break;
+			}
+		}
+	}
+
+	public void CureHost(CureType type, int p = 100, BlessedState state = BlessedState.Normal)
+	{
+		if (parasite != null)
+		{
+			parasite.Cure(type, p, state);
+		}
+		if (ride != null)
+		{
+			ride.Cure(type, p, state);
+		}
+		Cure(type, p, state);
+	}
+
+	public void Cure(CureType type, int p = 100, BlessedState state = BlessedState.Normal)
+	{
+		bool flag = state == BlessedState.Blessed;
+		switch (type)
+		{
+		case CureType.Heal:
+		case CureType.Prayer:
+			CureCondition<ConFear>();
+			CureCondition<ConBlind>(2 * p / 100 + 5);
+			CureCondition<ConPoison>(5 * p / 100 + 5);
+			CureCondition<ConConfuse>(10 * p / 100 + 10);
+			CureCondition<ConDim>(p / 100 + 5);
+			CureCondition<ConBleed>(2 * p / 100 + 10);
+			if (flag)
+			{
+				SAN.Mod(-5);
+			}
+			break;
+		case CureType.CureBody:
+			CureCondition<ConBlind>(5 * p / 100 + 15);
+			CureCondition<ConPoison>(10 * p / 100 + 15);
+			CureCondition<ConBleed>(5 * p / 100 + 20);
+			CureTempElements(p, body: true, mind: false);
+			break;
+		case CureType.CureMind:
+			CureCondition<ConFear>();
+			CureCondition<ConDim>(3 * p / 100 + 10);
+			CureTempElements(p, body: false, mind: true);
+			break;
+		case CureType.Sleep:
+		{
+			for (int num2 = conditions.Count - 1; num2 >= 0; num2--)
+			{
+				Condition condition2 = conditions[num2];
+				if (!(condition2 is ConSleep) && !(condition2 is ConFaint))
+				{
+					if (condition2.isPerfume)
+					{
+						condition2.Mod(-1, force: true);
+					}
+					else if (condition2.Type == ConditionType.Bad || condition2.Type == ConditionType.Debuff)
+					{
+						condition2.Kill();
+					}
+				}
+			}
+			CureCondition<ConWait>();
+			CureCondition<ConDisease>((EClass.rnd(20) + 10) * p / 100);
+			bool flag2 = HasCondition<ConAnorexia>();
+			base.c_vomit -= (flag2 ? 3 : 2) * p / 100;
+			if (base.c_vomit < 0)
+			{
+				base.c_vomit = 0;
+				if (flag2)
+				{
+					RemoveCondition<ConAnorexia>();
+				}
+			}
+			break;
+		}
+		case CureType.HealComplete:
+		case CureType.Death:
+		case CureType.Jure:
+		case CureType.Boss:
+		{
+			CureTempElements(p * 100, body: true, mind: true);
+			for (int num = conditions.Count - 1; num >= 0; num--)
+			{
+				Condition condition = conditions[num];
+				if (condition.Type == ConditionType.Bad || condition.Type == ConditionType.Debuff || condition.Type == ConditionType.Disease)
+				{
+					condition.Kill();
+				}
+				else if (type == CureType.Death && condition.isPerfume)
+				{
+					condition.Kill();
+				}
+			}
+			CureCondition<ConWait>();
+			CureCondition<ConSleep>();
+			if (type == CureType.Death)
+			{
+				hunger.value = 30;
+			}
+			if (type == CureType.Jure)
+			{
+				SAN.Mod(-999);
+				if (HasElement(1206))
+				{
+					SetFeat(1206, 0, msg: true);
+				}
+			}
+			break;
+		}
+		}
+	}
+
+	public bool TryNeckHunt(Chara TC, int power, bool harvest = false)
+	{
+		if (TC == null || TC.HasCondition<ConInvulnerable>() || TC.Evalue(1421) > 0 || !TC.ExistsOnMap)
+		{
+			return false;
+		}
+		if (TC.hp > TC.MaxHP * Mathf.Min(5 + (int)Mathf.Sqrt(power), harvest ? 35 : 25) / 100)
+		{
+			return false;
+		}
+		if (TC.HasElement(427))
+		{
+			return false;
+		}
+		PlaySound("hit_finish");
+		Say("finish");
+		Say("finish2", this, TC);
+		TC.DamageHP(TC.MaxHP, AttackSource.Finish, this);
+		return false;
+	}
+
+	public void AddResistCon(Condition con)
+	{
+		if (con.power > 0 && con.GainResistFactor > 0)
+		{
+			int key = con.id;
+			if (resistCon == null)
+			{
+				resistCon = new Dictionary<int, int>();
+			}
+			if (resistCon.ContainsKey(key))
+			{
+				resistCon[key] += con.power * con.GainResistFactor / 100;
+			}
+			else
+			{
+				resistCon[key] = con.power * con.GainResistFactor / 100;
+			}
+		}
+	}
+
+	public void ResistCon(Condition con)
+	{
+		if (con.power > 0 && resistCon != null)
+		{
+			int a = resistCon.TryGetValue(con.id, 0);
+			if (1000 < EClass.rnd(a))
+			{
+				con.power = 0;
+			}
+			else if (500 < EClass.rnd(a))
+			{
+				con.power /= 5;
+			}
+			else if (200 < EClass.rnd(a))
+			{
+				con.power /= 2;
+			}
+		}
+	}
+
+	public void Sleep(Thing bed = null, Thing pillow = null, bool pickup = false, ItemPosition posBed = null, ItemPosition posPillow = null)
+	{
+		AddCondition(Condition.Create(100, delegate(ConSleep con)
+		{
+			con.pcSleep = 15;
+			con.pcBed = bed;
+			con.pcPillow = pillow;
+			con.pickup = pickup;
+			con.posBed = posBed;
+			con.posPillow = posPillow;
+		}), force: true);
+	}
+
+	public void OnSleep(Thing bed = null, int days = 1)
+	{
+		TraitPillow traitPillow = pos.FindThing<TraitPillow>();
+		int num = bed?.Power ?? 20;
+		if (traitPillow != null)
+		{
+			num += traitPillow.owner.Power / 2;
+		}
+		num += Evalue(750) * 5;
+		OnSleep(num, days);
+	}
+
+	public void OnSleep(int power, int days = 1)
+	{
+		if (days < 1)
+		{
+			days = 1;
+		}
+		int num = power * days;
+		if (stamina.value < 0)
+		{
+			stamina.Set(1);
+		}
+		HealHP(num);
+		stamina.Mod(10 + 25 * num / 100 * (100 + elements.GetFeatRef(1642)) / 100);
+		mana.Mod(num);
+		if (IsPCFaction)
+		{
+			hunger.Mod(20);
+		}
+		sleepiness.Set(0);
+		interest = 100;
+		Cure(CureType.Sleep, power);
+	}
+
+	public void ModHeight(int a)
+	{
+		int height = bio.height;
+		height = height * (100 + a) / 100 + ((a > 0) ? 1 : (-1));
+		if (height < 1)
+		{
+			height = 1;
+		}
+		if (height != bio.height)
+		{
+			bio.height = height;
+			Say((a > 0) ? "height_gain" : "height_lose", this);
+		}
+	}
+
+	public void ModWeight(int a, bool ignoreLimit = false)
+	{
+		if (a == 0)
+		{
+			return;
+		}
+		int weight = bio.weight;
+		int height = bio.height;
+		int num = height * height * 18 / 25000;
+		int num2 = height * height * 24 / 10000;
+		if (ignoreLimit || (weight > num && weight < num2))
+		{
+			weight = weight * (100 + a) / 100 + ((a > 0) ? 1 : (-1));
+			if (weight < 1)
+			{
+				weight = 1;
+			}
+			if (weight != bio.weight)
+			{
+				bio.weight = weight;
+				Say((a > 0) ? "weight_gain" : "weight_lose", this);
+			}
+		}
+	}
+
+	public void ModCorruption(int a)
+	{
+		if (a > 0 && ResistLv(962) > 0 && EClass.rnd(ResistLv(962) + 1) != 0)
+		{
+			return;
+		}
+		int num = (corruption + a) / 100 - corruption / 100;
+		for (int i = 0; i < Mathf.Abs(num); i++)
+		{
+			if (!MutateRandom((num > 0) ? 1 : (-1), 100, ether: true))
+			{
+				break;
+			}
+		}
+		corruption += a;
+		int num2 = 0;
+		foreach (Element value in elements.dict.Values)
+		{
+			if (value.source.category == "ether")
+			{
+				num2 += value.Value;
+			}
+		}
+		if (num2 > 0 && IsPC)
+		{
+			Tutorial.Reserve("ether");
+		}
+		corruption = num2 * 100 + corruption % 100;
+	}
+
+	public List<Element> ListAvailabeFeats(bool pet = false)
+	{
+		List<Element> list = new List<Element>();
+		foreach (SourceElement.Row item in EClass.sources.elements.rows.Where((SourceElement.Row a) => a.group == "FEAT" && a.cost[0] != -1 && !a.categorySub.IsEmpty()))
+		{
+			Feat feat = elements.GetOrCreateElement(item.id) as Feat;
+			int num = ((feat.ValueWithoutLink <= 0) ? 1 : (feat.ValueWithoutLink + 1));
+			if (num <= feat.source.max && !feat.HasTag("class") && !feat.HasTag("hidden") && !feat.HasTag("innate") && (!pet || !feat.HasTag("noPet")) && feat.IsAvailable(elements, feat.Value))
+			{
+				list.Add(Element.Create(feat.id, num) as Feat);
+			}
+		}
+		return list;
+	}
+
+	public void SetFeat(int id, int value = 1, bool msg = false)
+	{
+		Feat feat = elements.GetElement(id) as Feat;
+		int num = 0;
+		if (feat != null && feat.Value > 0)
+		{
+			if (value == feat.Value)
+			{
+				return;
+			}
+			num = feat.Value;
+			feat.Apply(-feat.Value, elements);
+		}
+		if (value > 0)
+		{
+			feat = elements.SetBase(id, value - (feat?.vSource ?? 0)) as Feat;
+			feat.Apply(feat.Value, elements);
+		}
+		else
+		{
+			elements.Remove(id);
+		}
+		if (EClass.core.IsGameStarted)
+		{
+			Refresh();
+			CalculateMaxStamina();
+		}
+		if (!msg)
+		{
+			return;
+		}
+		if (feat.source.textInc.IsEmpty())
+		{
+			PlaySound("ding_skill");
+			Msg.SetColor(Msg.colors.Ding);
+			Say("gainFeat", this, feat.FullName);
+		}
+		else
+		{
+			bool flag = value < num;
+			if (feat.source.tag.Contains("neg"))
+			{
+				flag = !flag;
+			}
+			PlaySound("mutation");
+			Msg.SetColor(flag ? Msg.colors.Negative : Msg.colors.Ding);
+			Say((value > num) ? feat.source.GetText("textInc") : feat.source.GetText("textDec"), this, feat.FullName);
+		}
+		elements.CheckSkillActions();
+	}
+
+	public bool MutateRandom(int vec = 0, int tries = 100, bool ether = false, BlessedState state = BlessedState.Normal)
+	{
+		if (!ether && vec >= 0 && HasElement(406) && EClass.rnd(5) != 0)
+		{
+			Say("resistMutation", this);
+			return false;
+		}
+		IEnumerable<SourceElement.Row> ie = EClass.sources.elements.rows.Where((SourceElement.Row a) => a.category == (ether ? "ether" : "mutation"));
+		for (int i = 0; i < tries; i++)
+		{
+			SourceElement.Row row = ie.RandomItem();
+			if (i == 0 && vec < 0 && ether && base.c_corruptionHistory != null && base.c_corruptionHistory.Count > 0)
+			{
+				row = EClass.sources.elements.map[base.c_corruptionHistory.LastItem()];
+				base.c_corruptionHistory.RemoveAt(base.c_corruptionHistory.Count - 1);
+				if (base.c_corruptionHistory.Count == 0)
+				{
+					base.c_corruptionHistory = null;
+				}
+			}
+			Element element = elements.GetElement(row.id);
+			int num = 1;
+			if ((vec > 0 && ((row.id == 1563 && corruption < 300) || (row.id == 1562 && corruption < 1000 && base.IsPowerful))) || (vec < 0 && (element == null || element.Value <= 0)) || (vec > 0 && element != null && element.Value >= row.max))
+			{
+				continue;
+			}
+			if (element == null && !row.aliasParent.IsEmpty() && elements.Has(row.aliasParent))
+			{
+				row = EClass.sources.elements.alias[row.aliasParent];
+				element = elements.GetElement(row.id);
+			}
+			bool flag = row.tag.Contains("neg");
+			if (vec > 0)
+			{
+				if ((state >= BlessedState.Blessed && flag) || (state <= BlessedState.Cursed && !flag))
+				{
+					continue;
+				}
+			}
+			else if (vec < 0 && ((state >= BlessedState.Blessed && !flag) || (state <= BlessedState.Cursed && flag)))
+			{
+				continue;
+			}
+			bool flag2 = true;
+			if (element != null)
+			{
+				num = element.Value + ((vec != 0) ? vec : ((EClass.rnd(2) == 0) ? 1 : (-1)));
+				if (num > element.source.max)
+				{
+					num = element.source.max - 1;
+				}
+				flag = (flag && num > element.Value) || (!flag && num < element.Value);
+				flag2 = num > element.Value;
+				if (vec > 0 && !flag2)
+				{
+					continue;
+				}
+			}
+			Say(flag2 ? "mutation_gain" : "mutation_loose", this);
+			SetFeat(row.id, num);
+			if (flag2 && ether)
+			{
+				if (base.c_corruptionHistory == null)
+				{
+					base.c_corruptionHistory = new List<int>();
+				}
+				base.c_corruptionHistory.Add(row.id);
+				if (IsPCFaction)
+				{
+					Element element2 = elements.GetElement(row.id);
+					WidgetPopText.Say("popEther".lang(element2.Name, base.Name));
+				}
+				if (IsPC && !EClass.player.flags.gotEtherDisease)
+				{
+					EClass.player.flags.gotEtherDisease = true;
+					Thing thing = ThingGen.Create("parchment");
+					thing.SetStr(53, "letter_ether");
+					Thing thing2 = ThingGen.Create("1165");
+					thing2.SetBlessedState(BlessedState.Normal);
+					Thing p = ThingGen.CreateParcel(null, thing2, thing);
+					EClass.world.SendPackage(p);
+				}
+			}
+			if (EClass.core.IsGameStarted && pos != null)
+			{
+				PlaySound(ether ? "mutation_ether" : "mutation");
+				PlayEffect("mutation");
+				Msg.SetColor(flag ? Msg.colors.MutateBad : Msg.colors.MutateGood);
+				Say(row.GetText(flag ? "textDec" : "textInc", returnNull: true) ?? row.alias, this);
+			}
+			return true;
+		}
+		Say("nothingHappens");
+		return false;
+	}
+
+	public void GainAbility(int ele, int mtp = 100)
+	{
+		Element orCreateElement = elements.GetOrCreateElement(ele);
+		if (orCreateElement.ValueWithoutLink == 0)
+		{
+			elements.ModBase(orCreateElement.id, 1);
+		}
+		if (orCreateElement is Spell)
+		{
+			int num = mtp * orCreateElement.source.charge * (100 + Evalue(307) + (HasElement(307) ? 20 : 0)) / 100 / 100;
+			if (orCreateElement.source.charge == 1)
+			{
+				num = 1;
+			}
+			orCreateElement.vPotential += Mathf.Max(1, num / 2 + EClass.rnd(num / 2 + 1));
+		}
+		Say("spell_gain", this, orCreateElement.Name);
+		LayerAbility.SetDirty(orCreateElement);
+	}
+
+	public bool TryNullifyCurse()
+	{
+		if (IsPCParty)
+		{
+			foreach (Chara member in EClass.pc.party.members)
+			{
+				if (member.HasElement(1641) && EClass.rnd(3) != 0)
+				{
+					Msg.Say("curse_nullify", member);
+					return true;
+				}
+			}
+		}
+		else if (HasElement(1641) && EClass.rnd(3) != 0)
+		{
+			Say("curse_nullify", this);
+			return true;
+		}
+		if (GetCondition<ConHolyVeil>() != null && EClass.rnd(5) != 0)
+		{
+			Say("curse_nullify", this);
+			return true;
+		}
+		return false;
+	}
+
+	public int GetPietyValue()
+	{
+		if (base._IsPC)
+		{
+			return 10 + (int)(Mathf.Sqrt(base.c_daysWithGod) * 2f + (float)Evalue(85)) / 2;
+		}
+		return 10 + (int)(Mathf.Sqrt(base.LV) * 5f + (float)Evalue(306)) / 2;
+	}
+
+	public void RefreshFaithElement()
+	{
+		if (faithElements != null)
+		{
+			faithElements.SetParent();
+		}
+		faithElements = new ElementContainer();
+		if (idFaith == "eyth" && !HasElement(1228))
+		{
+			return;
+		}
+		SourceReligion.Row row = EClass.sources.religions.map.TryGetValue(idFaith);
+		if (row == null)
+		{
+			return;
+		}
+		faithElements = new ElementContainer();
+		SourceElement.Row row2 = EClass.sources.elements.alias.TryGetValue("featGod_" + row.id + "1");
+		if (row2 != null)
+		{
+			faithElements.SetBase(row2.id, 1);
+		}
+		if (!HasCondition<ConExcommunication>())
+		{
+			int[] array = row.elements;
+			int num = GetPietyValue() * (120 + Evalue(1407) * 15) / 100;
+			for (int i = 0; i < array.Length; i += 2)
+			{
+				int num2 = array[i + 1] * num / 50;
+				if (array[i] == 79)
+				{
+					num2 = EClass.curve(num2, 100, 20, 60);
+				}
+				if (num2 >= 20 && array[i] >= 950 && array[i] < 970)
+				{
+					num2 = 20;
+				}
+				faithElements.SetBase(array[i], Mathf.Max(num2, 1));
+			}
+		}
+		faithElements.SetParent(this);
+	}
+
+	public void ModTempElement(int ele, int a, bool naturalDecay = false)
+	{
+		if (a < 0 && !naturalDecay && HasElement(EClass.sources.elements.alias["sustain_" + EClass.sources.elements.map[ele].alias]?.id ?? 0))
+		{
+			return;
+		}
+		if (tempElements == null)
+		{
+			tempElements = new ElementContainer();
+			tempElements.SetParent(this);
+		}
+		if (a > 0 && tempElements.Base(ele) > a)
+		{
+			a = a * 100 / (200 + (tempElements.Base(ele) - a) * 10);
+		}
+		Element element = tempElements.ModBase(ele, a);
+		if (element.vBase == 0)
+		{
+			tempElements.Remove(element.id);
+			if (tempElements.dict.Count == 0)
+			{
+				tempElements = null;
+			}
+		}
+	}
+
+	public void DamageTempElements(int p, bool body, bool mind)
+	{
+		if (body)
+		{
+			DamageTempElement(Element.List_Body.RandomItem(), p);
+		}
+		if (mind)
+		{
+			DamageTempElement(Element.List_Mind.RandomItem(), p);
+		}
+	}
+
+	public void DamageTempElement(int ele, int p)
+	{
+		ModTempElement(ele, -(p / 100 + EClass.rnd(p / 100 + 1) + 1));
+	}
+
+	public void EnhanceTempElements(int p, bool body, bool mind)
+	{
+		if (body)
+		{
+			EnhanceTempElement(Element.List_Body.RandomItem(), p);
+		}
+		if (mind)
+		{
+			EnhanceTempElement(Element.List_Mind.RandomItem(), p);
+		}
+	}
+
+	public void EnhanceTempElement(int ele, int p)
+	{
+		ModTempElement(ele, p / 100 + EClass.rnd(p / 100 + 1));
+	}
+
+	public void DiminishTempElements(int a = 1)
+	{
+		if (tempElements == null)
+		{
+			return;
+		}
+		foreach (Element item in tempElements.dict.Values.ToList())
+		{
+			if (item.vBase > 0)
+			{
+				ModTempElement(item.id, -Mathf.Min(a, item.vBase), naturalDecay: true);
+			}
+		}
+	}
+
+	public void CureTempElements(int p, bool body, bool mind)
+	{
+		if (tempElements != null)
+		{
+			if (body)
+			{
+				Cure(Element.List_Body);
+			}
+			if (mind)
+			{
+				Cure(Element.List_Mind);
+			}
+		}
+		void Cure(int[] eles)
+		{
+			foreach (int ele in eles)
+			{
+				if (tempElements == null)
+				{
+					break;
+				}
+				Element element = tempElements.GetElement(ele);
+				if (element != null && element.vBase < 0)
+				{
+					ModTempElement(ele, Mathf.Clamp(p / 20 + EClass.rnd(p / 20), 1, -element.vBase));
+				}
+			}
+		}
+	}
 }

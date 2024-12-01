@@ -1,96 +1,7 @@
-﻿using System;
 using UnityEngine;
 
 public class TargetType : EClass
 {
-	public virtual TargetRange Range
-	{
-		get
-		{
-			return TargetRange.Self;
-		}
-	}
-
-	public virtual bool CanOnlyTargetEnemy
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool CanTargetGround
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool RequireChara
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool ShowMapHighlight
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public virtual bool RequireLos
-	{
-		get
-		{
-			return true;
-		}
-	}
-
-	public virtual bool CanSelectSelf
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool CanSelectParty
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual bool ForceParty
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public virtual Sprite IconType
-	{
-		get
-		{
-			return null;
-		}
-	}
-
-	public virtual int LimitDist
-	{
-		get
-		{
-			return 999;
-		}
-	}
-
 	public static TargetTypeAny Any = new TargetTypeAny();
 
 	public static TargetTypeSelf Self = new TargetTypeSelf();
@@ -110,4 +21,26 @@ public class TargetType : EClass
 	public static TargetTypeCard Card = new TargetTypeCard();
 
 	public static TargetTypeParty Party = new TargetTypeParty();
+
+	public virtual TargetRange Range => TargetRange.Self;
+
+	public virtual bool CanOnlyTargetEnemy => false;
+
+	public virtual bool CanTargetGround => false;
+
+	public virtual bool RequireChara => false;
+
+	public virtual bool ShowMapHighlight => true;
+
+	public virtual bool RequireLos => true;
+
+	public virtual bool CanSelectSelf => false;
+
+	public virtual bool CanSelectParty => false;
+
+	public virtual bool ForceParty => false;
+
+	public virtual Sprite IconType => null;
+
+	public virtual int LimitDist => 999;
 }

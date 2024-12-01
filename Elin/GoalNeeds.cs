@@ -1,31 +1,27 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class GoalNeeds : Goal
 {
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		int num;
-		for (int i = 0; i < 5; i = num + 1)
+		for (int i = 0; i < 5; i++)
 		{
 			switch (EClass.rnd(5))
 			{
 			case 0:
-				if (this.owner.hunger.value > 70)
+				if (owner.hunger.value > 70)
 				{
-					yield return base.Do(new AI_Eat(), null);
+					yield return Do(new AI_Eat());
 				}
 				break;
 			case 3:
-				if (this.owner.bladder.value < 40)
+				if (owner.bladder.value < 40)
 				{
-					yield return base.Do(new AI_Bladder(), null);
+					yield return Do(new AI_Bladder());
 				}
 				break;
 			}
-			yield return AIAct.Status.Running;
-			num = i;
+			yield return Status.Running;
 		}
-		yield break;
 	}
 }

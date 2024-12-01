@@ -1,45 +1,37 @@
-﻿using System;
-
 public class ConSuffocation : Condition
 {
-	public override bool PreventRegen
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool PreventRegen => true;
 
 	public override int GetPhase()
 	{
-		if (base.value < 50)
+		if (base.value >= 50)
 		{
-			return 0;
+			if (base.value >= 100)
+			{
+				return 2;
+			}
+			return 1;
 		}
-		if (base.value >= 100)
-		{
-			return 2;
-		}
-		return 1;
+		return 0;
 	}
 
 	public override void OnStart()
 	{
-		if (this.owner.IsPC)
+		if (owner.IsPC)
 		{
 			Tutorial.Reserve("water", delegate
 			{
 				EClass.player.haltMove = true;
-				EInput.Consume(true, 1);
+				EInput.Consume(consumeAxis: true);
 			});
 		}
 	}
 
 	public override void Tick()
 	{
-		if (this.owner.HasElement(429, 1))
+		if (owner.HasElement(429))
 		{
-			base.Kill(false);
+			Kill();
 			return;
 		}
 		if (base.value >= 200)
@@ -48,20 +40,18 @@ public class ConSuffocation : Condition
 		}
 		if (base.value >= 100 && !EClass._zone.IsRegion)
 		{
-			this.owner.DamageHP(10 + this.owner.MaxHP / 20, AttackSource.Condition, null);
+			owner.DamageHP(10 + owner.MaxHP / 20, AttackSource.Condition);
 		}
-		if (this.owner == null || !this.owner.IsAliveInCurrentZone)
+		if (owner != null && owner.IsAliveInCurrentZone)
 		{
-			return;
-		}
-		if (!this.owner.Cell.CanSuffocate())
-		{
-			base.Mod(-20, false);
-			return;
-		}
-		if (!EClass._zone.IsRegion)
-		{
-			this.owner.ModExp(200, 4 + this.phase * 4);
+			if (!owner.Cell.CanSuffocate())
+			{
+				Mod(-20);
+			}
+			else if (!EClass._zone.IsRegion)
+			{
+				owner.ModExp(200, 4 + phase * 4);
+			}
 		}
 	}
 }

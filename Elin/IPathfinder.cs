@@ -1,4 +1,3 @@
-﻿using System;
 using Algorithms;
 
 public interface IPathfinder

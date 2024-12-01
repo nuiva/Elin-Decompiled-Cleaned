@@ -1,80 +1,96 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public class WidgetMainText : Widget
 {
+	public class Extra
+	{
+		public int maxLine;
+
+		public int bg;
+
+		public int width;
+
+		public bool fadeLines;
+	}
+
+	public static WidgetMainText Instance;
+
+	public static MsgBox boxBk;
+
+	public MsgBox box;
+
+	private UIItem currentItem;
+
+	public UIItem moldLine;
+
+	public int visibleLines;
+
+	public Transform layout;
+
+	public Sprite spriteElin;
+
+	public Sprite spriteDestroy;
+
+	public Sprite spriteEther;
+
+	[NonSerialized]
+	public bool newLine = true;
+
+	public Extra extra => base.config.extra as Extra;
+
+	public override bool ShowStyleMenu => false;
+
+	public override bool AlwaysTop => true;
+
 	public override object CreateExtra()
 	{
-		return new WidgetMainText.Extra();
-	}
-
-	public WidgetMainText.Extra extra
-	{
-		get
-		{
-			return base.config.extra as WidgetMainText.Extra;
-		}
-	}
-
-	public override bool ShowStyleMenu
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public override bool AlwaysTop
-	{
-		get
-		{
-			return true;
-		}
+		return new Extra();
 	}
 
 	public override void OnActivate()
 	{
 		bool flag = true;
-		if (WidgetMainText.boxBk)
+		if ((bool)boxBk)
 		{
-			UnityEngine.Object.DestroyImmediate(this.box.gameObject);
-			this.box = WidgetMainText.boxBk;
-			WidgetMainText.boxBk.transform.SetParent(base.transform, false);
-			WidgetMainText.boxBk.GetComponentInChildren<UIDragPanel>(true).SetTarget(this.Rect());
-			WidgetMainText.boxBk = null;
+			UnityEngine.Object.DestroyImmediate(box.gameObject);
+			box = boxBk;
+			boxBk.transform.SetParent(base.transform, worldPositionStays: false);
+			boxBk.GetComponentInChildren<UIDragPanel>(includeInactive: true).SetTarget(this.Rect());
+			boxBk = null;
 			flag = false;
 		}
-		this.dragPanel = this.box.dragPanel;
-		this.imageBG = this.box.imageBg;
-		WidgetMainText.Instance = this;
-		this.box.maxBlock = this.extra.maxLine;
-		this.box.fadeLines = this.extra.fadeLines;
+		dragPanel = box.dragPanel;
+		imageBG = box.imageBg;
+		Instance = this;
+		box.maxBlock = extra.maxLine;
+		box.fadeLines = extra.fadeLines;
 		if (base.config.skin.bgColor.Equals(new Color(0f, 0f, 0f, 0f)))
 		{
-			base.config.skin.bgColor = EMono.core.refs.bg_msg[this.extra.bg].color;
+			base.config.skin.bgColor = EMono.core.refs.bg_msg[extra.bg].color;
 		}
-		this.RefreshBG();
-		this.OnChangeResolution();
-		this.box.Init();
+		RefreshBG();
+		OnChangeResolution();
+		box.Init();
 		if (flag)
 		{
-			this.Append("welcome_intro".langGame(EMono.core.version.GetText(), null, null, null), null);
-			this.Append(this.spriteElin);
-			this.NewLine();
-			this.Append("welcome".langGame(EInput.keys.report.key.ToString() ?? "", null, null, null), null);
-			this.NewLine();
+			Append("welcome_intro".langGame(EMono.core.version.GetText()));
+			Append(spriteElin);
+			NewLine();
+			Append("welcome".langGame(EInput.keys.report.key.ToString() ?? ""));
+			NewLine();
 		}
-		this._Refresh();
+		_Refresh();
 	}
 
 	public void RefreshBG()
 	{
-		this.box.SetBG(EMono.core.refs.bg_msg[this.extra.bg], base.config.skin.bgColor);
+		box.SetBG(EMono.core.refs.bg_msg[extra.bg], base.config.skin.bgColor);
 	}
 
 	public void Append(string s, Point pos = null)
 	{
-		this.Append(s, Msg.colors.Default, pos);
+		Append(s, Msg.colors.Default, pos);
 	}
 
 	public void Append(string s, Color col, Point pos = null)
@@ -85,7 +101,7 @@ public class WidgetMainText : Widget
 		}
 		if (pos != null)
 		{
-			this.box.Load("MsgFocus").button1.onClick.AddListener(delegate()
+			box.Load("MsgFocus").button1.onClick.AddListener(delegate
 			{
 				EMono.screen.Focus(pos);
 			});
@@ -118,78 +134,77 @@ public class WidgetMainText : Widget
 				{
 					text = text.Substring(0, text.IndexOf("(x"));
 				}
-				txt.text = text + "(x" + (lastBlock.repeat + 1).ToString() + ")  ";
+				txt.text = text + "(x" + (lastBlock.repeat + 1) + ")  ";
 				if (lastBlock.repeat == 1)
 				{
-					txt.RebuildLayout(false);
-					this.box.RebuildLayout(true);
+					txt.RebuildLayout();
+					box.RebuildLayout(recursive: true);
 				}
 				return;
 			}
 		}
-		this.box.Append(s, col);
-		this._Refresh();
+		box.Append(s, col);
+		_Refresh();
 	}
 
 	public void Append(Sprite sprite)
 	{
-		this.box.Append(sprite, false);
-		this._Refresh();
+		box.Append(sprite);
+		_Refresh();
 	}
 
 	public static void HideLog()
 	{
-		if (!WidgetMainText.Instance || !WidgetMainText.Instance.box.isShowingLog)
+		if ((bool)Instance && Instance.box.isShowingLog)
 		{
-			return;
+			Instance._ToggleLog();
 		}
-		WidgetMainText.Instance._ToggleLog();
 	}
 
 	public static void ToggleLog()
 	{
-		if (!WidgetMainText.Instance)
+		if (!Instance)
 		{
 			EMono.ui.widgets.Activate("MainText");
 		}
-		WidgetMainText.Instance._ToggleLog();
+		Instance._ToggleLog();
 		SE.ClickGeneral();
 	}
 
 	public void _ToggleLog()
 	{
-		this.box.ToggleLog();
-		this._Refresh();
-		if (this.box.isShowingLog)
+		box.ToggleLog();
+		_Refresh();
+		if (box.isShowingLog)
 		{
-			if (WidgetFeed.Instance)
+			if ((bool)WidgetFeed.Instance)
 			{
-				WidgetFeed.Instance.pop.KillAll(false);
+				WidgetFeed.Instance.pop.KillAll();
 			}
-			this.box.RebuildLayout(true);
+			box.RebuildLayout(recursive: true);
 		}
 	}
 
 	public void NewLine()
 	{
-		this.box.MarkNewBlock();
+		box.MarkNewBlock();
 	}
 
 	public static void Refresh()
 	{
-		if (WidgetMainText.Instance)
+		if ((bool)Instance)
 		{
-			WidgetMainText.Instance._Refresh();
+			Instance._Refresh();
 		}
 	}
 
 	private void _Refresh()
 	{
-		this.box.SetActive(this.box.isShowingLog || !WidgetFeed.Intercept, delegate(bool enabled)
+		box.SetActive(box.isShowingLog || !WidgetFeed.Intercept, delegate(bool enabled)
 		{
 			if (enabled)
 			{
-				this.box.RebuildLayout(true);
+				box.RebuildLayout(recursive: true);
 			}
 		});
 	}
@@ -197,89 +212,44 @@ public class WidgetMainText : Widget
 	public override void OnSetContextMenu(UIContextMenu m)
 	{
 		SkinConfig cfg = base.config.skin;
-		UIContextMenu uicontextMenu = m.AddChild("setting");
-		uicontextMenu.AddSlider("msgLines", (float n) => n.ToString() ?? "", (float)this.box.maxBlock, delegate(float a)
+		UIContextMenu uIContextMenu = m.AddChild("setting");
+		uIContextMenu.AddSlider("msgLines", (float n) => n.ToString() ?? "", box.maxBlock, delegate(float a)
 		{
-			this.box.maxBlock = (int)a;
-			this.extra.maxLine = (int)a;
-		}, 2f, 10f, true, false, false);
-		uicontextMenu.AddSlider("width", (float a) => a.ToString() ?? "", (float)this.extra.width, delegate(float a)
+			box.maxBlock = (int)a;
+			extra.maxLine = (int)a;
+		}, 2f, 10f, isInt: true, hideOther: false);
+		uIContextMenu.AddSlider("width", (float a) => a.ToString() ?? "", extra.width, delegate(float a)
 		{
-			this.extra.width = (int)a;
-			this.OnChangeResolution();
-		}, 30f, 100f, true, true, false);
-		UIContextMenu uicontextMenu2 = m.AddChild("style");
-		uicontextMenu2.AddToggle("fadeLines", this.extra.fadeLines, delegate(bool a)
+			extra.width = (int)a;
+			OnChangeResolution();
+		}, 30f, 100f, isInt: true);
+		UIContextMenu uIContextMenu2 = m.AddChild("style");
+		uIContextMenu2.AddToggle("fadeLines", extra.fadeLines, delegate(bool a)
 		{
-			WidgetMainText.Extra extra = this.extra;
-			this.box.fadeLines = a;
-			extra.fadeLines = a;
-			this.box.RefreshAlpha();
+			extra.fadeLines = (box.fadeLines = a);
+			box.RefreshAlpha();
 		});
-		uicontextMenu2.AddSlider("changeBG", (float n) => n.ToString() + "/" + (EMono.core.refs.bg_msg.Count - 1).ToString(), (float)this.extra.bg, delegate(float a)
+		uIContextMenu2.AddSlider("changeBG", (float n) => n + "/" + (EMono.core.refs.bg_msg.Count - 1), extra.bg, delegate(float a)
 		{
-			this.extra.bg = (int)a;
-			cfg.bgColor = EMono.core.refs.bg_msg[this.extra.bg].color;
-			this.RefreshBG();
-		}, 0f, (float)(EMono.core.refs.bg_msg.Count - 1), true, true, false);
-		Action<PickerState, Color> <>9__8;
-		uicontextMenu2.AddButton("colorBG", delegate()
+			extra.bg = (int)a;
+			cfg.bgColor = EMono.core.refs.bg_msg[extra.bg].color;
+			RefreshBG();
+		}, 0f, EMono.core.refs.bg_msg.Count - 1, isInt: true);
+		uIContextMenu2.AddButton("colorBG", delegate
 		{
-			LayerColorPicker layerColorPicker = EMono.ui.AddLayer<LayerColorPicker>();
-			Color bgColor = cfg.bgColor;
-			Color color = EMono.ui.skins.skinSets[cfg.id].bgs[cfg.bg].color;
-			Action<PickerState, Color> onChangeColor;
-			if ((onChangeColor = <>9__8) == null)
+			EMono.ui.AddLayer<LayerColorPicker>().SetColor(cfg.bgColor, EMono.ui.skins.skinSets[cfg.id].bgs[cfg.bg].color, delegate(PickerState state, Color _c)
 			{
-				onChangeColor = (<>9__8 = delegate(PickerState state, Color _c)
-				{
-					cfg.bgColor = _c;
-					this.RefreshBG();
-				});
-			}
-			layerColorPicker.SetColor(bgColor, color, onChangeColor);
-		}, true);
-		base.SetBaseContextMenu(m);
+				cfg.bgColor = _c;
+				RefreshBG();
+			});
+		});
+		SetBaseContextMenu(m);
 	}
 
 	public override void OnChangeResolution()
 	{
 		base.OnChangeResolution();
 		RectTransform rectTransform = this.Rect();
-		rectTransform.sizeDelta = new Vector2(0.01f * (float)Screen.width * (float)this.extra.width, rectTransform.sizeDelta.y);
-	}
-
-	public static WidgetMainText Instance;
-
-	public static MsgBox boxBk;
-
-	public MsgBox box;
-
-	private UIItem currentItem;
-
-	public UIItem moldLine;
-
-	public int visibleLines;
-
-	public Transform layout;
-
-	public Sprite spriteElin;
-
-	public Sprite spriteDestroy;
-
-	public Sprite spriteEther;
-
-	[NonSerialized]
-	public bool newLine = true;
-
-	public class Extra
-	{
-		public int maxLine;
-
-		public int bg;
-
-		public int width;
-
-		public bool fadeLines;
+		rectTransform.sizeDelta = new Vector2(0.01f * (float)Screen.width * (float)extra.width, rectTransform.sizeDelta.y);
 	}
 }

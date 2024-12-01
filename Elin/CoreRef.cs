@@ -1,194 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 public class CoreRef : ScriptableObject
 {
-	public void Init()
-	{
-		if (this.bgms.Count == 0)
-		{
-			this.RebuildBGMList();
-		}
-		this.RefreshBGM();
-	}
-
-	public void RefreshBGM()
-	{
-		this.dictBGM = new Dictionary<int, BGMData>();
-		int num = 0;
-		foreach (BGMData bgmdata in this.bgms)
-		{
-			this.dictBGM.Add(bgmdata.id, bgmdata);
-			num++;
-		}
-	}
-
-	public void RebuildBGMList()
-	{
-		this.bgms.Clear();
-		BGMData[] array = Resources.LoadAll<BGMData>("Media/Sound/BGM/");
-		List<AudioClip> list = Resources.LoadAll<AudioClip>("Media/Sound/BGM/").ToList<AudioClip>();
-		foreach (BGMData bgmdata in array)
-		{
-			if (bgmdata.id != 0)
-			{
-				this.bgms.Add(bgmdata);
-				foreach (AudioClip audioClip in list)
-				{
-					if (bgmdata.clip == audioClip)
-					{
-						list.Remove(audioClip);
-						break;
-					}
-				}
-			}
-		}
-		foreach (AudioClip audioClip2 in list)
-		{
-			Debug.Log("Unused:" + audioClip2.name);
-		}
-		this.RefreshBGM();
-		Debug.Log("Rebuild BGM Done.");
-	}
-
-	public void RebuildSketchList()
-	{
-		this.dictSketches.Clear();
-		for (int i = 0; i < 10; i++)
-		{
-			foreach (Sprite sprite in Resources.LoadAll<Sprite>("Media/Gallery/" + CoreRef.GetArtDir(i * 100)))
-			{
-				int key = sprite.name.Split('_', StringSplitOptions.None)[0].ToInt();
-				this.dictSketches[key] = sprite.name;
-				Debug.Log(key.ToString() + " " + sprite.name);
-			}
-		}
-		Debug.Log("Sketches rebuilt:" + this.dictSketches.Count<KeyValuePair<int, string>>().ToString());
-	}
-
-	public static string GetArtDir(int a)
-	{
-		return CoreRef.ArtDirs[a / 100];
-	}
-
-	public void RebuildBiomeList()
-	{
-		this.biomes.dict.Clear();
-		BiomeProfile[] array = Resources.LoadAll<BiomeProfile>("World/Map/Biome/");
-		foreach (BiomeProfile biomeProfile in array)
-		{
-			this.biomes.dict.Add(biomeProfile.name, biomeProfile);
-			Debug.Log(biomeProfile.name);
-		}
-		Debug.Log("Biomes rebuilt:" + array.Length.ToString());
-	}
-
-	public void RebuildFireworks()
-	{
-		this.fireworks.Clear();
-		Effect[] array = Resources.LoadAll<Effect>("Media/Effect/General/Firework/");
-		foreach (Effect effect in array)
-		{
-			this.fireworks.Add(effect);
-			Debug.Log(effect.name);
-		}
-		Debug.Log("Fireworks rebuilt:" + array.Length.ToString());
-	}
-
-	public CoreRef.Biomes biomes;
-
-	public CoreRef.Crawlers crawlers;
-
-	public CoreRef.StateIcons stateIcons;
-
-	public CoreRef.OrbitIcons orbitIcons;
-
-	public CoreRef.ButtonAssets buttonAssets;
-
-	public CoreRef.PopperSprites popperSprites;
-
-	public CoreRef.TCs tcs;
-
-	public CoreRef.Icons icons;
-
-	public CoreRef.Renderers renderers;
-
-	public CoreRef.TextureDatas textureData;
-
-	public CoreRef.Rects rects;
-
-	public List<Effect> fireworks;
-
-	public List<Sprite> spritesCorner;
-
-	public List<Sprite> icon_HotItem;
-
-	public List<SpriteAsset> bg_msg;
-
-	public List<Sprite> spritesHighlight;
-
-	public List<Sprite> spritesHighlightSpeed;
-
-	public List<Sprite> spritesPotential;
-
-	public List<Sprite> spritesEmo;
-
-	public List<Sprite> spritesContainerIcon;
-
-	public List<BGMData> bgms;
-
-	public List<CoreRef.DefaultRoof> defaultRoofs;
-
-	public Dictionary<int, BGMData> dictBGM;
-
-	public CoreRef.UDInvStyle invStyle;
-
-	public Sprite spriteRecipe;
-
-	public Sprite spriteNull;
-
-	public Sprite spriteArea;
-
-	public Sprite spriteNoIng;
-
-	public Sprite spriteButtonGrid;
-
-	public Sprite spriteButtonGridBad;
-
-	public Sprite spriteThingActor;
-
-	public Sprite spriteDefaultCondition;
-
-	public Material matUIObj;
-
-	public Material matUIPortraitChara;
-
-	public MsgColors msgColors;
-
-	public GameObject debugText;
-
-	public UD_Int_String dictSketches;
-
-	public float testColor;
-
-	public float testColor2;
-
-	public static string[] ArtDirs = new string[]
-	{
-		"000-099",
-		"100-199 Elin",
-		"200-299 Elin Chara",
-		"300-399 Ylva Illust",
-		"400-499 Ylva Other",
-		"500-599 Ylva Wall",
-		"600-699 Kickstarter",
-		"700-799 Goods",
-		"800-899 Etc",
-		"900-999 MT"
-	};
-
 	[Serializable]
 	public class UDIconWeather : UDictionary<Weather.Condition, Sprite>
 	{
@@ -200,7 +16,7 @@ public class CoreRef : ScriptableObject
 	}
 
 	[Serializable]
-	public class UDInvStyle : UDictionary<string, CoreRef.InventoryStyle>
+	public class UDInvStyle : UDictionary<string, InventoryStyle>
 	{
 	}
 
@@ -275,9 +91,9 @@ public class CoreRef : ScriptableObject
 
 		public Sprite personal;
 
-		public CoreRef.UDInvTab invTab;
+		public UDInvTab invTab;
 
-		public CoreRef.UDIconWeather weather;
+		public UDIconWeather weather;
 
 		public List<Sprite> quality;
 	}
@@ -456,5 +272,182 @@ public class CoreRef : ScriptableObject
 		public int idBlock;
 
 		public int idRamp;
+	}
+
+	public Biomes biomes;
+
+	public Crawlers crawlers;
+
+	public StateIcons stateIcons;
+
+	public OrbitIcons orbitIcons;
+
+	public ButtonAssets buttonAssets;
+
+	public PopperSprites popperSprites;
+
+	public TCs tcs;
+
+	public Icons icons;
+
+	public Renderers renderers;
+
+	public TextureDatas textureData;
+
+	public Rects rects;
+
+	public List<Effect> fireworks;
+
+	public List<Sprite> spritesCorner;
+
+	public List<Sprite> icon_HotItem;
+
+	public List<SpriteAsset> bg_msg;
+
+	public List<Sprite> spritesHighlight;
+
+	public List<Sprite> spritesHighlightSpeed;
+
+	public List<Sprite> spritesPotential;
+
+	public List<Sprite> spritesEmo;
+
+	public List<Sprite> spritesContainerIcon;
+
+	public List<BGMData> bgms;
+
+	public List<DefaultRoof> defaultRoofs;
+
+	public Dictionary<int, BGMData> dictBGM;
+
+	public UDInvStyle invStyle;
+
+	public Sprite spriteRecipe;
+
+	public Sprite spriteNull;
+
+	public Sprite spriteArea;
+
+	public Sprite spriteNoIng;
+
+	public Sprite spriteButtonGrid;
+
+	public Sprite spriteButtonGridBad;
+
+	public Sprite spriteThingActor;
+
+	public Sprite spriteDefaultCondition;
+
+	public Material matUIObj;
+
+	public Material matUIPortraitChara;
+
+	public MsgColors msgColors;
+
+	public GameObject debugText;
+
+	public UD_Int_String dictSketches;
+
+	public float testColor;
+
+	public float testColor2;
+
+	public static string[] ArtDirs = new string[10] { "000-099", "100-199 Elin", "200-299 Elin Chara", "300-399 Ylva Illust", "400-499 Ylva Other", "500-599 Ylva Wall", "600-699 Kickstarter", "700-799 Goods", "800-899 Etc", "900-999 MT" };
+
+	public void Init()
+	{
+		if (bgms.Count == 0)
+		{
+			RebuildBGMList();
+		}
+		RefreshBGM();
+	}
+
+	public void RefreshBGM()
+	{
+		dictBGM = new Dictionary<int, BGMData>();
+		int num = 0;
+		foreach (BGMData bgm in bgms)
+		{
+			dictBGM.Add(bgm.id, bgm);
+			num++;
+		}
+	}
+
+	public void RebuildBGMList()
+	{
+		bgms.Clear();
+		BGMData[] array = Resources.LoadAll<BGMData>("Media/Sound/BGM/");
+		List<AudioClip> list = Resources.LoadAll<AudioClip>("Media/Sound/BGM/").ToList();
+		BGMData[] array2 = array;
+		foreach (BGMData bGMData in array2)
+		{
+			if (bGMData.id == 0)
+			{
+				continue;
+			}
+			bgms.Add(bGMData);
+			foreach (AudioClip item in list)
+			{
+				if (bGMData.clip == item)
+				{
+					list.Remove(item);
+					break;
+				}
+			}
+		}
+		foreach (AudioClip item2 in list)
+		{
+			Debug.Log("Unused:" + item2.name);
+		}
+		RefreshBGM();
+		Debug.Log("Rebuild BGM Done.");
+	}
+
+	public void RebuildSketchList()
+	{
+		dictSketches.Clear();
+		for (int i = 0; i < 10; i++)
+		{
+			Sprite[] array = Resources.LoadAll<Sprite>("Media/Gallery/" + GetArtDir(i * 100));
+			foreach (Sprite sprite in array)
+			{
+				int key = sprite.name.Split('_')[0].ToInt();
+				dictSketches[key] = sprite.name;
+				Debug.Log(key + " " + sprite.name);
+			}
+		}
+		Debug.Log("Sketches rebuilt:" + dictSketches.Count());
+	}
+
+	public static string GetArtDir(int a)
+	{
+		return ArtDirs[a / 100];
+	}
+
+	public void RebuildBiomeList()
+	{
+		biomes.dict.Clear();
+		BiomeProfile[] array = Resources.LoadAll<BiomeProfile>("World/Map/Biome/");
+		BiomeProfile[] array2 = array;
+		foreach (BiomeProfile biomeProfile in array2)
+		{
+			biomes.dict.Add(biomeProfile.name, biomeProfile);
+			Debug.Log(biomeProfile.name);
+		}
+		Debug.Log("Biomes rebuilt:" + array.Length);
+	}
+
+	public void RebuildFireworks()
+	{
+		fireworks.Clear();
+		Effect[] array = Resources.LoadAll<Effect>("Media/Effect/General/Firework/");
+		Effect[] array2 = array;
+		foreach (Effect effect in array2)
+		{
+			fireworks.Add(effect);
+			Debug.Log(effect.name);
+		}
+		Debug.Log("Fireworks rebuilt:" + array.Length);
 	}
 }

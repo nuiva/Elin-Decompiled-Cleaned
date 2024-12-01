@@ -1,52 +1,24 @@
-﻿using System;
-
 public class Zone_RandomDungeon : Zone_Dungeon
 {
-	public override bool AlwaysLowblock
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool AlwaysLowblock => true;
 
-	public override bool IsNefia
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsNefia => true;
 
-	public override bool AddPrefix
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool AddPrefix => true;
 
-	public override bool LockExit
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool LockExit => false;
 
-	public override int MinLv
-	{
-		get
-		{
-			return this.LvBoss;
-		}
-	}
+	public override int MinLv => LvBoss;
 
 	public override bool ScaleMonsterLevel
 	{
 		get
 		{
-			return (EClass.player.flags.KilledBossInVoid && this.DangerLv >= 50) || this.DangerLv >= 200;
+			if (!EClass.player.flags.KilledBossInVoid || DangerLv < 50)
+			{
+				return DangerLv >= 200;
+			}
+			return true;
 		}
 	}
 
@@ -54,7 +26,7 @@ public class Zone_RandomDungeon : Zone_Dungeon
 	{
 		get
 		{
-			if (base.lv != this.LvBoss)
+			if (base.lv != LvBoss)
 			{
 				return base.IDPlayList;
 			}
@@ -66,28 +38,11 @@ public class Zone_RandomDungeon : Zone_Dungeon
 	{
 		get
 		{
-			Rand.SetSeed(base.GetTopZone().uid);
+			Rand.SetSeed(GetTopZone().uid);
 			int result = -2 - EClass.rnd(4);
-			Rand.SetSeed(-1);
+			Rand.SetSeed();
 			return result;
 		}
-	}
-
-	public override void OnGenerateMap()
-	{
-		if (base.lv == this.LvBoss)
-		{
-			base.Boss = base.SpawnMob(null, SpawnSetting.Boss(this.DangerLv, this.DangerLv));
-			base.Boss.hostility = (base.Boss.c_originalHostility = Hostility.Enemy);
-			foreach (Chara chara in EClass._map.charas)
-			{
-				if (chara.IsHostile())
-				{
-					chara.enemy = EClass.pc.party.members.RandomItem<Chara>();
-				}
-			}
-		}
-		base.OnGenerateMap();
 	}
 
 	public override string TextWidgetDate
@@ -98,7 +53,26 @@ public class Zone_RandomDungeon : Zone_Dungeon
 			{
 				return "";
 			}
-			return "bossLevel".lang(base.Boss.Name, null, null, null, null);
+			return "bossLevel".lang(base.Boss.Name);
 		}
+	}
+
+	public override void OnGenerateMap()
+	{
+		if (base.lv == LvBoss)
+		{
+			base.Boss = SpawnMob(null, SpawnSetting.Boss(DangerLv, DangerLv));
+			Chara boss = base.Boss;
+			Hostility hostility2 = (base.Boss.c_originalHostility = Hostility.Enemy);
+			boss.hostility = hostility2;
+			foreach (Chara chara in EClass._map.charas)
+			{
+				if (chara.IsHostile())
+				{
+					chara.enemy = EClass.pc.party.members.RandomItem();
+				}
+			}
+		}
+		base.OnGenerateMap();
 	}
 }

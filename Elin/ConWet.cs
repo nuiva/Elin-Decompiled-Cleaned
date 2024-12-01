@@ -1,14 +1,6 @@
-﻿using System;
-
 public class ConWet : Condition
 {
-	public override bool ShouldRefresh
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool ShouldRefresh => true;
 
 	public override int GetPhase()
 	{
@@ -17,7 +9,7 @@ public class ConWet : Condition
 
 	public override void OnRefresh()
 	{
-		this.owner.isWet = true;
+		owner.isWet = true;
 	}
 
 	public override void Tick()
@@ -26,9 +18,9 @@ public class ConWet : Condition
 		{
 			base.value = 100;
 		}
-		if ((!this.owner.Cell.IsTopWaterAndNoSnow && !this.owner.Cell.HasLiquid) || this.owner.IsLevitating)
+		if ((!owner.Cell.IsTopWaterAndNoSnow && !owner.Cell.HasLiquid) || owner.IsLevitating)
 		{
-			base.Mod(-1, false);
+			Mod(-1);
 		}
 	}
 }

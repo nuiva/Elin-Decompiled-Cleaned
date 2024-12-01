@@ -1,20 +1,6 @@
-﻿using System;
-
 public class TraitGuildClerk : TraitGuildPersonnel
 {
-	public override ShopType ShopType
-	{
-		get
-		{
-			return ShopType.Guild;
-		}
-	}
+	public override ShopType ShopType => ShopType.Guild;
 
-	public override bool CanGuide
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanGuide => true;
 }

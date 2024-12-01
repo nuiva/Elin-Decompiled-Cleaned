@@ -1,20 +1,6 @@
-﻿using System;
-
 public class TraitSpot : Trait
 {
-	public override bool CanBeMasked
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanBeMasked => true;
 
-	public override int radius
-	{
-		get
-		{
-			return 4;
-		}
-	}
+	public override int radius => 4;
 }

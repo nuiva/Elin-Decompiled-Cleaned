@@ -1,72 +1,57 @@
-﻿using System;
-using UnityEngine;
-
 public class TraitFertilizer : Trait
 {
-	public override bool CanExtendBuild
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanExtendBuild => true;
 
-	public bool Defertilize
-	{
-		get
-		{
-			return this is TraitDefertilizer;
-		}
-	}
+	public bool Defertilize => this is TraitDefertilizer;
 
 	public override void OnSimulateHour(VirtualDate date)
 	{
-		if (!this.owner.IsInstalled)
+		if (!owner.IsInstalled)
 		{
 			return;
 		}
-		PlantData plantData = EClass._map.TryGetPlant(this.owner.Cell);
+		PlantData plantData = EClass._map.TryGetPlant(owner.Cell);
 		bool flag = false;
-		if (this.Defertilize)
+		if (Defertilize)
 		{
 			if (plantData == null)
 			{
-				plantData = EClass._map.AddPlant(this.owner.pos, null);
+				plantData = EClass._map.AddPlant(owner.pos, null);
 			}
 			plantData.fert = -1;
 		}
 		else
 		{
-			foreach (Card card in this.owner.pos.ListCards(false))
+			foreach (Card item in owner.pos.ListCards())
 			{
-				if (card.trait is TraitSeed && !card.isSale)
+				if (item.trait is TraitSeed && !item.isSale)
 				{
 					flag = true;
-					(card.trait as TraitSeed).TrySprout(true, true, null);
+					(item.trait as TraitSeed).TrySprout(force: true, sucker: true);
 					break;
 				}
 			}
-			if (!this.owner.pos.HasObj)
+			if (!owner.pos.HasObj)
 			{
 				if (flag)
 				{
 					return;
 				}
-				EClass._map.SetObj(this.owner.pos.x, this.owner.pos.z, 5, 1, 0);
+				EClass._map.SetObj(owner.pos.x, owner.pos.z, 5);
 			}
 			else if (plantData == null)
 			{
-				if (this.owner.pos.growth == null)
+				if (owner.pos.growth == null)
 				{
 					return;
 				}
-				this.owner.pos.growth.TryGrow(date);
+				owner.pos.growth.TryGrow(date);
 			}
-			else if (plantData.fert == 0 && this.owner.pos.growth != null)
+			else if (plantData.fert == 0 && owner.pos.growth != null)
 			{
-				this.owner.pos.growth.TryGrow(date);
+				owner.pos.growth.TryGrow(date);
 			}
-			plantData = EClass._map.TryGetPlant(this.owner.Cell);
+			plantData = EClass._map.TryGetPlant(owner.Cell);
 			if (plantData != null)
 			{
 				plantData.fert++;
@@ -74,9 +59,9 @@ public class TraitFertilizer : Trait
 		}
 		if (date.IsRealTime)
 		{
-			this.owner.PlaySound("mutation", 1f, true);
-			this.owner.PlayEffect("mutation", true, 0f, default(Vector3));
+			owner.PlaySound("mutation");
+			owner.PlayEffect("mutation");
 		}
-		this.owner.Destroy();
+		owner.Destroy();
 	}
 }

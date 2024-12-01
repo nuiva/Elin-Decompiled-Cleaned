@@ -1,32 +1,13 @@
-﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class TraitFigure : Trait
 {
-	public override bool CanBeHallucinated
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeHallucinated => false;
 
-	public CardRow source
-	{
-		get
-		{
-			return EClass.sources.cards.map.TryGetValue(this.owner.c_idRefCard, null);
-		}
-	}
+	public CardRow source => EClass.sources.cards.map.TryGetValue(owner.c_idRefCard);
 
-	public virtual bool ShowShadow
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public virtual bool ShowShadow => true;
 
 	public virtual int GetMatColor()
 	{
@@ -35,21 +16,20 @@ public class TraitFigure : Trait
 
 	public override void OnSetCardGrid(ButtonGrid b)
 	{
-		if (this.owner.c_idRefCard.IsEmpty())
+		if (!owner.c_idRefCard.IsEmpty())
 		{
-			return;
+			SourceChara.Row obj = EClass.sources.charas.map.TryGetValue(owner.c_idRefCard) ?? EClass.sources.charas.map["putty"];
+			Transform transform = b.Attach<Transform>("figure", rightAttach: false);
+			obj.SetImage(transform.GetChild(0).GetComponent<Image>(), null, 0, setNativeSize: false);
 		}
-		RenderRow renderRow = EClass.sources.charas.map.TryGetValue(this.owner.c_idRefCard, null) ?? EClass.sources.charas.map["putty"];
-		Transform transform = b.Attach<Transform>("figure", false);
-		renderRow.SetImage(transform.GetChild(0).GetComponent<Image>(), null, 0, false, 0, 0);
 	}
 
 	public override int GetValue()
 	{
-		if (this.source == null)
+		if (source == null)
 		{
 			return base.GetValue();
 		}
-		return (base.GetValue() + this.source.LV * 50) * (this.source.multisize ? 2 : 1) * ((this.source.quality >= 4) ? 2 : 1);
+		return (base.GetValue() + source.LV * 50) * ((!source.multisize) ? 1 : 2) * ((source.quality < 4) ? 1 : 2);
 	}
 }

@@ -1,114 +1,98 @@
-﻿using System;
-
 public class LogicalFire : LogicalPoint
 {
-	public int fireAmount
-	{
-		get
-		{
-			CellEffect effect = base.cell.effect;
-			if (effect == null)
-			{
-				return 0;
-			}
-			return effect.FireAmount;
-		}
-	}
+	public int fireAmount => base.cell.effect?.FireAmount ?? 0;
 
-	public override LogicalPointManager manager
-	{
-		get
-		{
-			return Point.map.effectManager;
-		}
-	}
+	public override LogicalPointManager manager => Point.map.effectManager;
 
 	public override void Update()
 	{
-		this.manager.refreshList.Add(this);
+		manager.refreshList.Add(this);
 		bool flag = false;
-		foreach (XY xy in Point.Surrounds)
+		XY[] surrounds = Point.Surrounds;
+		for (int i = 0; i < surrounds.Length; i++)
 		{
-			Point.shared.Set(this.x + xy.x, this.z + xy.y);
-			if (Point.shared.IsValid)
+			XY xY = surrounds[i];
+			Point.shared.Set(x + xY.x, z + xY.y);
+			if (!Point.shared.IsValid)
 			{
-				Cell cell = Point.shared.cell;
-				if (cell.fireAmount != this.fireAmount)
+				continue;
+			}
+			Cell cell = Point.shared.cell;
+			if (cell.fireAmount == fireAmount)
+			{
+				continue;
+			}
+			if (cell.fireAmount > fireAmount)
+			{
+				manager.GetOrCreate(Point.shared);
+				continue;
+			}
+			if (fireAmount <= 0)
+			{
+				base.cell.effect = null;
+				continue;
+			}
+			byte b = (byte)(fireAmount - cell.fireAmount);
+			if (cell.fireAmount == 0)
+			{
+				if (fireAmount >= 2 && b >= 2)
 				{
-					if (cell.fireAmount > this.fireAmount)
+					if (EClass.rnd(2) == 0)
 					{
-						this.manager.GetOrCreate(Point.shared);
+						Transfer(Point.shared, 1);
 					}
-					else if (this.fireAmount <= 0)
-					{
-						base.cell.effect = null;
-					}
-					else
-					{
-						byte b = (byte)(this.fireAmount - cell.fireAmount);
-						if (cell.fireAmount == 0)
-						{
-							if (this.fireAmount >= 2 && b >= 2)
-							{
-								if (EClass.rnd(2) == 0)
-								{
-									this.Transfer(Point.shared, 1);
-								}
-								base.ModFire(-1);
-								flag = true;
-							}
-						}
-						else if (b == 1)
-						{
-							if (this.life < 2)
-							{
-								base.ModFire(-1);
-							}
-							else if (EClass.rnd(3) == 0)
-							{
-								this.Transfer(Point.shared, 1);
-								base.ModFire(1);
-								flag = true;
-							}
-						}
-						else
-						{
-							if (b > 6)
-							{
-								b = 6;
-							}
-							this.Transfer(Point.shared, b - 1);
-							flag = true;
-						}
-					}
+					ModFire(-1);
+					flag = true;
 				}
 			}
+			else if (b == 1)
+			{
+				if (life < 2)
+				{
+					ModFire(-1);
+				}
+				else if (EClass.rnd(3) == 0)
+				{
+					Transfer(Point.shared, 1);
+					ModFire(1);
+					flag = true;
+				}
+			}
+			else
+			{
+				if (b > 6)
+				{
+					b = 6;
+				}
+				Transfer(Point.shared, (byte)(b - 1));
+				flag = true;
+			}
 		}
-		if (this.fireAmount == 0)
+		if (fireAmount == 0)
 		{
 			base.cell.effect = null;
 		}
 		else
 		{
-			EClass._map.Burn(this.x, this.z, false);
+			EClass._map.Burn(x, z);
 		}
 		if (!flag)
 		{
-			this.life--;
+			life--;
 		}
-		if (this.life < 0)
+		if (life < 0)
 		{
-			this.Kill();
+			Kill();
 		}
 	}
 
 	public void Transfer(Point p, byte amount = 1)
 	{
-		base.ModFire((int)(-(int)amount));
+		ModFire(-amount);
 		if (!p.cell.HasFire)
 		{
 			SE.Play("fire");
 		}
-		p.ModFire((int)amount);
+		p.ModFire(amount);
 	}
 }

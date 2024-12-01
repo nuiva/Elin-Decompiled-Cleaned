@@ -1,126 +1,126 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class GoalManualMove : Goal
 {
-	public override bool CancelWhenDamaged
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public static Point dest = new Point();
 
-	public override bool UseTurbo
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public static Point lastPoint = new Point();
 
-	public override IEnumerable<AIAct.Status> Run()
+	public static Point lastlastPoint = new Point();
+
+	public static Vector2 lastMove;
+
+	public static bool hasMoved;
+
+	public override bool CancelWhenDamaged => false;
+
+	public override bool UseTurbo => false;
+
+	public override IEnumerable<Status> Run()
 	{
-		GoalManualMove.hasMoved = false;
+		hasMoved = false;
 		bool willEnd = false;
-		for (;;)
+		while (true)
 		{
 			if (EClass.player.TooHeavyToMove())
 			{
-				yield return this.Cancel();
+				yield return Cancel();
 			}
 			if (EClass.player.nextMove == Vector2.zero)
 			{
 				if (!EClass.core.config.test.extraMoveCancel)
 				{
 					willEnd = true;
-					EClass.player.nextMove = GoalManualMove.lastMove;
+					EClass.player.nextMove = lastMove;
 				}
 				else
 				{
-					yield return base.Success(null);
+					yield return Success();
 				}
 			}
-			if (EClass.player.nextMove != GoalManualMove.lastMove)
+			if (EClass.player.nextMove != lastMove)
 			{
-				GoalManualMove.lastMove = EClass.player.nextMove;
-				GoalManualMove.lastPoint.Set(Point.Invalid);
-				GoalManualMove.lastlastPoint.Set(Point.Invalid);
+				lastMove = EClass.player.nextMove;
+				lastPoint.Set(Point.Invalid);
+				lastlastPoint.Set(Point.Invalid);
 			}
-			GoalManualMove.dest.Set(EClass.pc.pos);
-			GoalManualMove.dest.x += (int)EClass.player.nextMove.x;
-			GoalManualMove.dest.z += (int)EClass.player.nextMove.y;
-			if (!GoalManualMove.dest.IsValid)
+			dest.Set(EClass.pc.pos);
+			dest.x += (int)EClass.player.nextMove.x;
+			dest.z += (int)EClass.player.nextMove.y;
+			if (!dest.IsValid)
 			{
 				EClass.player.nextMove = Vector2.zero;
 				EClass.pc.ai.Cancel();
-				yield return base.Success(null);
+				yield return Success();
 			}
-			if (!GoalManualMove.TryMove((int)EClass.player.nextMove.x, (int)EClass.player.nextMove.y) && !GoalManualMove.TryAltMove())
+			if (!TryMove((int)EClass.player.nextMove.x, (int)EClass.player.nextMove.y) && !TryAltMove())
 			{
 				EClass.player.nextMove = Vector2.zero;
 				EClass.pc.ai.Cancel();
-				yield return base.Success(null);
+				yield return Success();
 			}
-			GoalManualMove.dest.Set(EClass.pc.pos);
-			GoalManualMove.dest.x += (int)EClass.player.nextMove.x;
-			GoalManualMove.dest.z += (int)EClass.player.nextMove.y;
-			GoalManualMove.dest.Set(EClass.pc.GetFirstStep(GoalManualMove.dest, PathManager.MoveType.Default));
-			if (GoalManualMove.dest.IsInBounds && !GoalManualMove.dest.Equals(EClass.pc.pos))
+			dest.Set(EClass.pc.pos);
+			dest.x += (int)EClass.player.nextMove.x;
+			dest.z += (int)EClass.player.nextMove.y;
+			dest.Set(EClass.pc.GetFirstStep(dest));
+			if (dest.IsInBounds && !dest.Equals(EClass.pc.pos))
 			{
-				EClass.pc.TryMove(GoalManualMove.dest, true);
+				EClass.pc.TryMove(dest);
 				if (willEnd)
 				{
-					yield return base.Success(null);
+					yield return Success();
 				}
-				GoalManualMove.hasMoved = true;
+				hasMoved = true;
 			}
 			else
 			{
 				EClass.player.nextMove = Vector2.zero;
 				EClass.pc.ai.Cancel();
-				yield return base.Success(null);
+				yield return Success();
 			}
-			if (!EClass.pc.pos.Equals(GoalManualMove.lastPoint))
+			if (!EClass.pc.pos.Equals(lastPoint))
 			{
-				GoalManualMove.lastlastPoint.Set(GoalManualMove.lastPoint);
-				GoalManualMove.lastPoint.Set(EClass.pc.pos);
+				lastlastPoint.Set(lastPoint);
+				lastPoint.Set(EClass.pc.pos);
 			}
-			yield return AIAct.Status.Running;
+			yield return Status.Running;
 		}
-		yield break;
 	}
 
 	public static bool CanMove()
 	{
 		Vector2 nextMove = EClass.player.nextMove;
-		Vector2 vector = GoalManualMove.lastMove;
-		Point point = GoalManualMove.lastPoint.Copy();
-		Point point2 = GoalManualMove.lastlastPoint.Copy();
-		if (EClass.player.nextMove != GoalManualMove.lastMove)
+		Vector2 vector = lastMove;
+		Point point = lastPoint.Copy();
+		Point point2 = lastlastPoint.Copy();
+		if (EClass.player.nextMove != lastMove)
 		{
-			GoalManualMove.lastMove = EClass.player.nextMove;
-			GoalManualMove.lastPoint.Set(Point.Invalid);
-			GoalManualMove.lastlastPoint.Set(Point.Invalid);
+			lastMove = EClass.player.nextMove;
+			lastPoint.Set(Point.Invalid);
+			lastlastPoint.Set(Point.Invalid);
 		}
-		if (!GoalManualMove.TryMove((int)EClass.player.nextMove.x, (int)EClass.player.nextMove.y) && !GoalManualMove.TryAltMove())
+		if (!TryMove((int)EClass.player.nextMove.x, (int)EClass.player.nextMove.y) && !TryAltMove())
 		{
-			GoalManualMove.lastMove = vector;
-			GoalManualMove.lastPoint.Set(point);
-			GoalManualMove.lastlastPoint.Set(point2);
+			lastMove = vector;
+			lastPoint.Set(point);
+			lastlastPoint.Set(point2);
 			EClass.player.nextMove = nextMove;
 			return false;
 		}
-		GoalManualMove.dest.Set(EClass.pc.pos);
-		GoalManualMove.dest.x += (int)EClass.player.nextMove.x;
-		GoalManualMove.dest.z += (int)EClass.player.nextMove.y;
-		GoalManualMove.dest.Set(EClass.pc.GetFirstStep(GoalManualMove.dest, PathManager.MoveType.Default));
-		GoalManualMove.lastMove = vector;
-		GoalManualMove.lastPoint.Set(point);
-		GoalManualMove.lastlastPoint.Set(point2);
+		dest.Set(EClass.pc.pos);
+		dest.x += (int)EClass.player.nextMove.x;
+		dest.z += (int)EClass.player.nextMove.y;
+		dest.Set(EClass.pc.GetFirstStep(dest));
+		lastMove = vector;
+		lastPoint.Set(point);
+		lastlastPoint.Set(point2);
 		EClass.player.nextMove = nextMove;
-		return GoalManualMove.dest.IsInBounds && !GoalManualMove.dest.Equals(EClass.pc.pos) && !EClass.pc.IsEnemyOnPath(GoalManualMove.dest, false);
+		if (dest.IsInBounds && !dest.Equals(EClass.pc.pos) && !EClass.pc.IsEnemyOnPath(dest, cancelAI: false))
+		{
+			return true;
+		}
+		return false;
 	}
 
 	public static bool TryAltMove()
@@ -132,34 +132,127 @@ public class GoalManualMove : Goal
 		{
 			if (x == 1f)
 			{
-				return GoalManualMove.TryMove(1, 0) || GoalManualMove.TryMove(0, 1) || (extraTurnaround && (GoalManualMove.TryMove(1, -1) || GoalManualMove.TryMove(-1, 1)));
+				if (!TryMove(1, 0) && !TryMove(0, 1))
+				{
+					if (extraTurnaround)
+					{
+						if (!TryMove(1, -1))
+						{
+							return TryMove(-1, 1);
+						}
+						return true;
+					}
+					return false;
+				}
+				return true;
 			}
 			if (x == 0f)
 			{
-				return GoalManualMove.TryMove(1, 1) || GoalManualMove.TryMove(-1, 1) || (extraTurnaround && (GoalManualMove.TryMove(1, 0) || GoalManualMove.TryMove(-1, 0)));
+				if (!TryMove(1, 1) && !TryMove(-1, 1))
+				{
+					if (extraTurnaround)
+					{
+						if (!TryMove(1, 0))
+						{
+							return TryMove(-1, 0);
+						}
+						return true;
+					}
+					return false;
+				}
+				return true;
 			}
-			return GoalManualMove.TryMove(0, 1) || GoalManualMove.TryMove(-1, 0) || (extraTurnaround && (GoalManualMove.TryMove(1, 1) || GoalManualMove.TryMove(-1, -1)));
+			if (!TryMove(0, 1) && !TryMove(-1, 0))
+			{
+				if (extraTurnaround)
+				{
+					if (!TryMove(1, 1))
+					{
+						return TryMove(-1, -1);
+					}
+					return true;
+				}
+				return false;
+			}
+			return true;
 		}
-		else if (y == 0f)
+		if (y == 0f)
 		{
 			if (x == 1f)
 			{
-				return GoalManualMove.TryMove(1, -1) || GoalManualMove.TryMove(1, 1) || (extraTurnaround && (GoalManualMove.TryMove(0, -1) || GoalManualMove.TryMove(0, 1)));
+				if (!TryMove(1, -1) && !TryMove(1, 1))
+				{
+					if (extraTurnaround)
+					{
+						if (!TryMove(0, -1))
+						{
+							return TryMove(0, 1);
+						}
+						return true;
+					}
+					return false;
+				}
+				return true;
 			}
-			return GoalManualMove.TryMove(-1, 1) || GoalManualMove.TryMove(-1, -1) || (extraTurnaround && (GoalManualMove.TryMove(0, 1) || GoalManualMove.TryMove(0, -1)));
+			if (!TryMove(-1, 1) && !TryMove(-1, -1))
+			{
+				if (extraTurnaround)
+				{
+					if (!TryMove(0, 1))
+					{
+						return TryMove(0, -1);
+					}
+					return true;
+				}
+				return false;
+			}
+			return true;
 		}
-		else
+		if (x == 1f)
 		{
-			if (x == 1f)
+			if (!TryMove(0, -1) && !TryMove(1, 0))
 			{
-				return GoalManualMove.TryMove(0, -1) || GoalManualMove.TryMove(1, 0) || (extraTurnaround && (GoalManualMove.TryMove(-1, -1) || GoalManualMove.TryMove(1, 1)));
+				if (extraTurnaround)
+				{
+					if (!TryMove(-1, -1))
+					{
+						return TryMove(1, 1);
+					}
+					return true;
+				}
+				return false;
 			}
-			if (x == 0f)
-			{
-				return GoalManualMove.TryMove(-1, -1) || GoalManualMove.TryMove(1, -1) || (extraTurnaround && (GoalManualMove.TryMove(-1, 0) || GoalManualMove.TryMove(1, 0)));
-			}
-			return GoalManualMove.TryMove(-1, 0) || GoalManualMove.TryMove(0, -1) || (extraTurnaround && (GoalManualMove.TryMove(-1, 1) || GoalManualMove.TryMove(1, -1)));
+			return true;
 		}
+		if (x == 0f)
+		{
+			if (!TryMove(-1, -1) && !TryMove(1, -1))
+			{
+				if (extraTurnaround)
+				{
+					if (!TryMove(-1, 0))
+					{
+						return TryMove(1, 0);
+					}
+					return true;
+				}
+				return false;
+			}
+			return true;
+		}
+		if (!TryMove(-1, 0) && !TryMove(0, -1))
+		{
+			if (extraTurnaround)
+			{
+				if (!TryMove(-1, 1))
+				{
+					return TryMove(1, -1);
+				}
+				return true;
+			}
+			return false;
+		}
+		return true;
 	}
 
 	public static bool TryMove(int x, int z)
@@ -167,23 +260,13 @@ public class GoalManualMove : Goal
 		Point.shared.Set(EClass.pc.pos);
 		Point.shared.x += x;
 		Point.shared.z += z;
-		Point.shared.Set(EClass.pc.GetFirstStep(Point.shared, PathManager.MoveType.Default));
-		if (Point.shared.IsInBounds && !Point.shared.Equals(GoalManualMove.lastlastPoint))
+		Point.shared.Set(EClass.pc.GetFirstStep(Point.shared));
+		if (Point.shared.IsInBounds && !Point.shared.Equals(lastlastPoint))
 		{
-			EClass.player.nextMove.x = (float)x;
-			EClass.player.nextMove.y = (float)z;
+			EClass.player.nextMove.x = x;
+			EClass.player.nextMove.y = z;
 			return true;
 		}
 		return false;
 	}
-
-	public static Point dest = new Point();
-
-	public static Point lastPoint = new Point();
-
-	public static Point lastlastPoint = new Point();
-
-	public static Vector2 lastMove;
-
-	public static bool hasMoved;
 }

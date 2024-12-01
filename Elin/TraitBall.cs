@@ -1,20 +1,6 @@
-﻿using System;
-
 public class TraitBall : Trait
 {
-	public override bool IsThrowMainAction
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsThrowMainAction => true;
 
-	public override ThrowType ThrowType
-	{
-		get
-		{
-			return ThrowType.Ball;
-		}
-	}
+	public override ThrowType ThrowType => ThrowType.Ball;
 }

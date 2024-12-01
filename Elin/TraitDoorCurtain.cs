@@ -1,5 +1,3 @@
-﻿using System;
-
 public class TraitDoorCurtain : TraitDoor
 {
 	public override bool IsOpen()

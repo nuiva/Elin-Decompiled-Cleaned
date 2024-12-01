@@ -1,64 +1,30 @@
-﻿using System;
-
 public class TraitShippingChest : TraitContainer
 {
-	public override bool IsHomeItem
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsHomeItem => true;
 
-	public override bool IsSpecialContainer
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsSpecialContainer => true;
 
 	public override bool CanOpenContainer
 	{
 		get
 		{
-			return EClass._zone.IsPCFaction && this.owner.IsInstalled;
-		}
-	}
-
-	public override bool ShowOpenActAsCrime
-	{
-		get
-		{
+			if (EClass._zone.IsPCFaction)
+			{
+				return owner.IsInstalled;
+			}
 			return false;
 		}
 	}
 
-	public override bool ShowChildrenNumber
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool ShowOpenActAsCrime => false;
 
-	public override bool UseAltTiles
-	{
-		get
-		{
-			return EClass.game.cards.container_shipping.things.Count > 0;
-		}
-	}
+	public override bool ShowChildrenNumber => false;
+
+	public override bool UseAltTiles => EClass.game.cards.container_shipping.things.Count > 0;
+
+	public override bool CanBeShipped => false;
 
 	public override void Prespawn(int lv)
 	{
-	}
-
-	public override bool CanBeShipped
-	{
-		get
-		{
-			return false;
-		}
 	}
 }

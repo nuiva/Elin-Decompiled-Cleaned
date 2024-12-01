@@ -1,18 +1,10 @@
-﻿using System;
-
 public class TraitRecipeBook : TraitScroll
 {
+	public override string langNote => "traitRecipeBook";
+
 	public override int GetActDuration(Chara c)
 	{
 		return 10;
-	}
-
-	public override string langNote
-	{
-		get
-		{
-			return "traitRecipeBook";
-		}
 	}
 
 	public override void OnRead(Chara c)

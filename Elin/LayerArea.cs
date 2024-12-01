@@ -1,50 +1,9 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class LayerArea : ELayer
 {
-	public override void OnInit()
-	{
-		BuildMenu.Hide();
-		this.moldButton = this.layout.CreateMold(null);
-	}
-
-	public void SetArea(Area a)
-	{
-		this.area = a;
-		this.ShowPage();
-	}
-
-	public override void OnKill()
-	{
-		BuildMenu.Show();
-	}
-
-	public void ShowPage()
-	{
-		this.transMenu.position = Input.mousePosition + this.offset;
-		this.layout.DestroyChildren(false, true);
-		this.AddButton();
-		this.AddButton();
-		this.AddButton();
-		this.layout.RebuildLayout(true);
-		this.layout.enabled = false;
-		List<UIButton> componentsInDirectChildren = this.layout.GetComponentsInDirectChildren(true);
-		for (int i = 0; i < componentsInDirectChildren.Count; i++)
-		{
-			UIButton uibutton = componentsInDirectChildren[i];
-			uibutton.transform.position = uibutton.transform.position + this.modPos * (float)i;
-			this.animeButton.Play(uibutton.transform, null, -1f, 0f);
-		}
-	}
-
-	public void AddButton()
-	{
-		Util.Instantiate<UIButton>(this.moldButton, this.layout);
-	}
-
 	public Area area;
 
 	public Anime animeButton;
@@ -58,4 +17,44 @@ public class LayerArea : ELayer
 	public Vector3 offset;
 
 	public Vector3 modPos;
+
+	public override void OnInit()
+	{
+		BuildMenu.Hide();
+		moldButton = layout.CreateMold<UIButton>();
+	}
+
+	public void SetArea(Area a)
+	{
+		area = a;
+		ShowPage();
+	}
+
+	public override void OnKill()
+	{
+		BuildMenu.Show();
+	}
+
+	public void ShowPage()
+	{
+		transMenu.position = Input.mousePosition + offset;
+		layout.DestroyChildren();
+		AddButton();
+		AddButton();
+		AddButton();
+		layout.RebuildLayout(recursive: true);
+		layout.enabled = false;
+		List<UIButton> componentsInDirectChildren = layout.GetComponentsInDirectChildren<UIButton>();
+		for (int i = 0; i < componentsInDirectChildren.Count; i++)
+		{
+			UIButton uIButton = componentsInDirectChildren[i];
+			uIButton.transform.position = uIButton.transform.position + modPos * i;
+			animeButton.Play(uIButton.transform);
+		}
+	}
+
+	public void AddButton()
+	{
+		Util.Instantiate(moldButton, layout);
+	}
 }

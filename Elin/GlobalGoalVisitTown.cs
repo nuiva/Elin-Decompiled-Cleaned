@@ -1,14 +1,12 @@
-﻿using System;
-
 public class GlobalGoalVisitTown : GlobalGoalVisitAndStay
 {
 	public override Zone GetDestZone()
 	{
-		foreach (Zone zone in EClass.world.region.ListTowns().Shuffle<Zone>())
+		foreach (Zone item in EClass.world.region.ListTowns().Shuffle())
 		{
-			if (this.owner.currentZone != zone)
+			if (owner.currentZone != item)
 			{
-				return zone;
+				return item;
 			}
 		}
 		return base.GetDestZone();

@@ -1,12 +1,8 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class Schedule
 {
-	[JsonProperty]
-	public List<Schedule.Item> list = new List<Schedule.Item>();
-
 	public class Item
 	{
 		[JsonProperty]
@@ -14,4 +10,7 @@ public class Schedule
 
 		public string Name = "tempSchedule".lang();
 	}
+
+	[JsonProperty]
+	public List<Item> list = new List<Item>();
 }

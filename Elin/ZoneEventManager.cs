@@ -1,22 +1,30 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class ZoneEventManager : EClass
 {
+	public Zone zone;
+
+	[JsonProperty]
+	public List<ZoneEvent> list = new List<ZoneEvent>();
+
+	[JsonProperty]
+	public List<ZonePreEnterEvent> listPreEnter = new List<ZonePreEnterEvent>();
+
 	public void OnLoad(Zone _zone)
 	{
-		this.zone = _zone;
-		foreach (ZoneEvent zoneEvent in this.list)
+		zone = _zone;
+		foreach (ZoneEvent item in list)
 		{
-			zoneEvent.OnLoad(this.zone);
+			item.OnLoad(zone);
 		}
 	}
 
 	public void Add<T>(bool allowDuplicate = false) where T : ZoneEvent
 	{
-		this.Add(Activator.CreateInstance<T>(), allowDuplicate);
+		Add(Activator.CreateInstance<T>(), allowDuplicate);
 	}
 
 	public void Add(ZoneEvent e, bool allowDuplicate = false)
@@ -27,68 +35,68 @@ public class ZoneEventManager : EClass
 		}
 		if (!allowDuplicate)
 		{
-			foreach (ZoneEvent zoneEvent in this.list)
+			foreach (ZoneEvent item in list)
 			{
-				if (e.GetType() == zoneEvent.GetType())
+				if (e.GetType() == item.GetType())
 				{
 					return;
 				}
 			}
 		}
-		this.list.Add(e);
-		e.zone = this.zone;
+		list.Add(e);
+		e.zone = zone;
 		e.Init();
-		string str = "#game zone event ";
-		Type type = e.GetType();
-		Debug.Log(str + ((type != null) ? type.ToString() : null) + " added.");
+		Debug.Log("#game zone event " + e.GetType()?.ToString() + " added.");
 	}
 
 	public void AddPreEnter(ZonePreEnterEvent e, bool executeIfActiveZone = true)
 	{
-		if (this.zone.IsActiveZone && executeIfActiveZone)
+		if (zone.IsActiveZone && executeIfActiveZone)
 		{
 			e.Execute();
-			return;
 		}
-		this.listPreEnter.Add(e);
+		else
+		{
+			listPreEnter.Add(e);
+		}
 	}
 
 	public T GetEvent<T>() where T : ZoneEvent
 	{
-		foreach (ZoneEvent zoneEvent in this.list)
+		foreach (ZoneEvent item in list)
 		{
-			if (zoneEvent is T)
+			if (item is T)
 			{
-				return zoneEvent as T;
+				return item as T;
 			}
 		}
-		return default(T);
+		return null;
 	}
 
 	public void Remove<T>() where T : ZoneEvent
 	{
-		for (int i = this.list.Count - 1; i >= 0; i--)
+		for (int num = list.Count - 1; num >= 0; num--)
 		{
-			if (this.list[i] is T)
+			if (list[num] is T)
 			{
-				this.list[i].Kill();
+				list[num].Kill();
 			}
 		}
 	}
 
 	public void Remove(ZoneEvent e)
 	{
-		this.list.Remove(e);
+		list.Remove(e);
 	}
 
 	public void Clear()
 	{
-		this.list.Clear();
+		list.Clear();
 	}
 
 	public void Tick(float delta)
 	{
-		this.list.ForeachReverse(delegate(ZoneEvent e)
+		list.ForeachReverse(delegate(ZoneEvent e)
 		{
 			e.Tick(delta);
 		});
@@ -96,37 +104,29 @@ public class ZoneEventManager : EClass
 
 	public void OnVisit()
 	{
-		foreach (ZoneEvent zoneEvent in this.list)
+		foreach (ZoneEvent item in list)
 		{
-			zoneEvent.OnVisit();
+			item.OnVisit();
 		}
 	}
 
 	public void OnLeaveZone()
 	{
-		foreach (ZoneEvent zoneEvent in this.list)
+		foreach (ZoneEvent item in list)
 		{
-			zoneEvent.OnLeaveZone();
+			item.OnLeaveZone();
 		}
 	}
 
 	public void OnSimulateHour()
 	{
-		if (this.list.Count == 0)
+		if (list.Count == 0)
 		{
 			return;
 		}
-		foreach (ZoneEvent zoneEvent in this.list.Copy<ZoneEvent>())
+		foreach (ZoneEvent item in list.Copy())
 		{
-			zoneEvent.OnSimulateHour();
+			item.OnSimulateHour();
 		}
 	}
-
-	public Zone zone;
-
-	[JsonProperty]
-	public List<ZoneEvent> list = new List<ZoneEvent>();
-
-	[JsonProperty]
-	public List<ZonePreEnterEvent> listPreEnter = new List<ZonePreEnterEvent>();
 }

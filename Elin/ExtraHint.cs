@@ -1,30 +1,22 @@
-﻿using System;
-
 public class ExtraHint : EMono
 {
-	public ActionMode mode
-	{
-		get
-		{
-			return EMono.scene.actionMode;
-		}
-	}
+	public UINote note;
+
+	public ActionMode mode => EMono.scene.actionMode;
 
 	public void OnChangeActionMode()
 	{
-		this.SetActive(this.mode.ShowExtraHint);
-		if (this.mode.ShowExtraHint)
+		this.SetActive(mode.ShowExtraHint);
+		if (mode.ShowExtraHint)
 		{
-			this.Refresh();
+			Refresh();
 		}
 	}
 
 	public void Refresh()
 	{
-		this.note.Clear();
-		this.mode.OnShowExtraHint(this.note);
-		this.note.Build();
+		note.Clear();
+		mode.OnShowExtraHint(note);
+		note.Build();
 	}
-
-	public UINote note;
 }

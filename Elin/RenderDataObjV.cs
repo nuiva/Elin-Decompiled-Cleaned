@@ -1,35 +1,30 @@
-﻿using System;
 using UnityEngine;
 
 public class RenderDataObjV : RenderDataObj
 {
-	public override bool ForceAltHeldPosition
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public bool topOnly;
+
+	public override bool ForceAltHeldPosition => true;
 
 	public override void Draw(RenderParam p)
 	{
 		bool flag = false;
-		MeshPass meshPass = (this.hasSubPass && SubPassData.Current.enable) ? this.pass.subPass : this.pass;
+		MeshPass meshPass = ((hasSubPass && SubPassData.Current.enable) ? pass.subPass : pass);
 		MeshBatch meshBatch = meshPass.batches[meshPass.batchIdx];
-		int num = (p.tile > 0f) ? 1 : -1;
-		if (meshPass == this.pass.subPass)
+		int num = ((p.tile > 0f) ? 1 : (-1));
+		if (meshPass == pass.subPass)
 		{
 			meshBatch.colors[meshPass.idx] = p.color - 1572864f;
-			meshBatch.matrices[meshPass.idx].SetTRS(p.NewVector3 + this.offset + SubPassData.Current.offset, SubPassData.Current.rotation, SubPassData.Current.scale);
+			meshBatch.matrices[meshPass.idx].SetTRS(p.NewVector3 + offset + SubPassData.Current.offset, SubPassData.Current.rotation, SubPassData.Current.scale);
 		}
 		else
 		{
 			meshBatch.colors[meshPass.idx] = p.color;
-			meshBatch.matrices[meshPass.idx].m03 = p.x + this.offset.x * (float)num;
-			meshBatch.matrices[meshPass.idx].m13 = p.y + this.offset.y;
-			meshBatch.matrices[meshPass.idx].m23 = p.z + this.offset.z;
+			meshBatch.matrices[meshPass.idx].m03 = p.x + offset.x * (float)num;
+			meshBatch.matrices[meshPass.idx].m13 = p.y + offset.y;
+			meshBatch.matrices[meshPass.idx].m23 = p.z + offset.z;
 		}
-		meshBatch.tiles[meshPass.idx] = p.tile + ((this.multiSize && flag) ? meshPass.pmesh.tiling.x : 0f) + (float)(p.liquidLv * 10000 * num);
+		meshBatch.tiles[meshPass.idx] = p.tile + ((multiSize && flag) ? meshPass.pmesh.tiling.x : 0f) + (float)(p.liquidLv * 10000 * num);
 		meshBatch.matColors[meshPass.idx] = p.matColor;
 		meshPass.idx++;
 		if (meshPass.idx == meshPass.batchSize)
@@ -37,21 +32,21 @@ public class RenderDataObjV : RenderDataObj
 			meshPass.NextBatch();
 			meshBatch = meshPass.batches[meshPass.batchIdx];
 		}
-		if (this.multiSize && !flag)
+		if (multiSize && !flag)
 		{
 			meshBatch.tiles[meshPass.idx] = p.tile - meshPass.pmesh.tiling.x * (float)num;
 			meshBatch.matColors[meshPass.idx] = p.matColor;
-			if (meshPass == this.pass.subPass)
+			if (meshPass == pass.subPass)
 			{
 				meshBatch.colors[meshPass.idx] = p.color - 1572864f;
-				meshBatch.matrices[meshPass.idx].SetTRS(p.NewVector3 + this.offset + new Vector3(0f, meshPass.pmesh.size.y * SubPassData.Current.scale.y, 0f) + SubPassData.Current.offset, SubPassData.Current.rotation, SubPassData.Current.scale);
+				meshBatch.matrices[meshPass.idx].SetTRS(p.NewVector3 + offset + new Vector3(0f, meshPass.pmesh.size.y * SubPassData.Current.scale.y, 0f) + SubPassData.Current.offset, SubPassData.Current.rotation, SubPassData.Current.scale);
 			}
 			else
 			{
 				meshBatch.colors[meshPass.idx] = p.color;
-				meshBatch.matrices[meshPass.idx].m03 = p.x + this.offset.x * (float)num;
-				meshBatch.matrices[meshPass.idx].m13 = p.y + this.offset.y + meshPass.pmesh.size.y;
-				meshBatch.matrices[meshPass.idx].m23 = p.z + this.offset.z + RenderData.renderSetting.vFix.z;
+				meshBatch.matrices[meshPass.idx].m03 = p.x + offset.x * (float)num;
+				meshBatch.matrices[meshPass.idx].m13 = p.y + offset.y + meshPass.pmesh.size.y;
+				meshBatch.matrices[meshPass.idx].m23 = p.z + offset.z + RenderData.renderSetting.vFix.z;
 			}
 			meshPass.idx++;
 			if (meshPass.idx == meshPass.batchSize)
@@ -59,43 +54,42 @@ public class RenderDataObjV : RenderDataObj
 				meshPass.NextBatch();
 			}
 		}
-		if (this.hasSnowPass && p.snow && meshPass == this.pass)
+		if (!hasSnowPass || !p.snow || !(meshPass == pass))
 		{
-			meshPass = this.pass.snowPass;
+			return;
+		}
+		meshPass = pass.snowPass;
+		meshBatch = meshPass.batches[meshPass.batchIdx];
+		meshBatch.colors[meshPass.idx] = p.color;
+		meshBatch.matrices[meshPass.idx].m03 = p.x + offset.x * (float)num;
+		meshBatch.matrices[meshPass.idx].m13 = p.y + offset.y;
+		meshBatch.matrices[meshPass.idx].m23 = p.z + offset.z + snowZ;
+		meshBatch.tiles[meshPass.idx] = p.tile + ((multiSize && flag) ? meshPass.pmesh.tiling.x : 0f) + (float)(p.liquidLv * 10000 * num);
+		meshBatch.matColors[meshPass.idx] = 104025f;
+		meshPass.idx++;
+		if (meshPass.idx == meshPass.batchSize)
+		{
+			meshPass.NextBatch();
 			meshBatch = meshPass.batches[meshPass.batchIdx];
-			meshBatch.colors[meshPass.idx] = p.color;
-			meshBatch.matrices[meshPass.idx].m03 = p.x + this.offset.x * (float)num;
-			meshBatch.matrices[meshPass.idx].m13 = p.y + this.offset.y;
-			meshBatch.matrices[meshPass.idx].m23 = p.z + this.offset.z + this.snowZ;
-			meshBatch.tiles[meshPass.idx] = p.tile + ((this.multiSize && flag) ? meshPass.pmesh.tiling.x : 0f) + (float)(p.liquidLv * 10000 * num);
+		}
+		if (multiSize && !flag)
+		{
+			meshBatch.tiles[meshPass.idx] = p.tile - meshPass.pmesh.tiling.x * (float)num;
 			meshBatch.matColors[meshPass.idx] = 104025f;
+			meshBatch.colors[meshPass.idx] = p.color;
+			meshBatch.matrices[meshPass.idx].m03 = p.x + offset.x * (float)num;
+			meshBatch.matrices[meshPass.idx].m13 = p.y + offset.y + meshPass.pmesh.size.y;
+			meshBatch.matrices[meshPass.idx].m23 = p.z + offset.z + RenderData.renderSetting.vFix.z + snowZ;
 			meshPass.idx++;
 			if (meshPass.idx == meshPass.batchSize)
 			{
 				meshPass.NextBatch();
-				meshBatch = meshPass.batches[meshPass.batchIdx];
-			}
-			if (this.multiSize && !flag)
-			{
-				meshBatch.tiles[meshPass.idx] = p.tile - meshPass.pmesh.tiling.x * (float)num;
-				meshBatch.matColors[meshPass.idx] = 104025f;
-				meshBatch.colors[meshPass.idx] = p.color;
-				meshBatch.matrices[meshPass.idx].m03 = p.x + this.offset.x * (float)num;
-				meshBatch.matrices[meshPass.idx].m13 = p.y + this.offset.y + meshPass.pmesh.size.y;
-				meshBatch.matrices[meshPass.idx].m23 = p.z + this.offset.z + RenderData.renderSetting.vFix.z + this.snowZ;
-				meshPass.idx++;
-				if (meshPass.idx == meshPass.batchSize)
-				{
-					meshPass.NextBatch();
-				}
 			}
 		}
 	}
 
 	private void OnValidate()
 	{
-		this._offset = this.offset;
+		_offset = offset;
 	}
-
-	public bool topOnly;
 }

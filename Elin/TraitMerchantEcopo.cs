@@ -1,20 +1,6 @@
-﻿using System;
-
 public class TraitMerchantEcopo : TraitMerchant
 {
-	public override ShopType ShopType
-	{
-		get
-		{
-			return ShopType.Ecopo;
-		}
-	}
+	public override ShopType ShopType => ShopType.Ecopo;
 
-	public override CurrencyType CurrencyType
-	{
-		get
-		{
-			return CurrencyType.Ecopo;
-		}
-	}
+	public override CurrencyType CurrencyType => CurrencyType.Ecopo;
 }

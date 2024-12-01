@@ -1,35 +1,33 @@
-﻿using System;
-
 public class LayerMapList : ELayer
 {
+	public UIList list;
+
 	public override void OnInit()
 	{
-		this.RefreshList();
+		RefreshList();
 	}
 
 	public void RefreshList()
 	{
-		this.list.sortMode = ELayer.player.pref.sortResearch;
-		BaseList baseList = this.list;
-		UIList.Callback<Zone, ItemGeneral> callback = new UIList.Callback<Zone, ItemGeneral>();
-		callback.onInstantiate = delegate(Zone a, ItemGeneral b)
+		list.sortMode = ELayer.player.pref.sortResearch;
+		list.callbacks = new UIList.Callback<Zone, ItemGeneral>
 		{
-			b.SetMainText(a.Name, null, true);
-			b.Build();
-		};
-		callback.onList = delegate(UIList.SortMode m)
-		{
-			foreach (Zone zone in ELayer.game.spatials.Zones)
+			onInstantiate = delegate(Zone a, ItemGeneral b)
 			{
-				if (zone.isKnown)
+				b.SetMainText(a.Name);
+				b.Build();
+			},
+			onList = delegate
+			{
+				foreach (Zone zone in ELayer.game.spatials.Zones)
 				{
-					this.list.Add(zone);
+					if (zone.isKnown)
+					{
+						list.Add(zone);
+					}
 				}
 			}
 		};
-		baseList.callbacks = callback;
-		this.list.List(false);
+		list.List();
 	}
-
-	public UIList list;
 }

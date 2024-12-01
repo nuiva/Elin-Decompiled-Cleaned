@@ -1,31 +1,19 @@
-﻿using System;
-
 public class ActWater : Act
 {
-	public override CursorInfo CursorIcon
-	{
-		get
-		{
-			return CursorSystem.Hand;
-		}
-	}
+	public TraitToolWaterCan waterCan;
 
-	public override TargetType TargetType
-	{
-		get
-		{
-			return TargetType.SelfAndNeighbor;
-		}
-	}
+	public override CursorInfo CursorIcon => CursorSystem.Hand;
+
+	public override TargetType TargetType => TargetType.SelfAndNeighbor;
 
 	public override bool CanPerform()
 	{
-		return this.IsWaterCanValid(false);
+		return IsWaterCanValid(msg: false);
 	}
 
 	public override bool Perform()
 	{
-		Act.CC.Say("water_ground", Act.CC, null, null);
+		Act.CC.Say("water_ground", Act.CC);
 		if (!Act.TP.cell.IsTopWater && !Act.TP.cell.IsSnowTile)
 		{
 			Act.TP.cell.isWatered = true;
@@ -34,35 +22,32 @@ public class ActWater : Act
 		{
 			if (chara.HasCondition<ConBurning>())
 			{
-				chara.Talk("thanks", null, null, false);
+				chara.Talk("thanks");
 			}
 			else if (!chara.IsPCParty && EClass.rnd(2) == 0)
 			{
-				chara.Say("water_evade", chara, null, null);
+				chara.Say("water_evade", chara);
 				if (!chara.IsHostile())
 				{
-					chara.Talk("scold", null, null, false);
-					continue;
+					chara.Talk("scold");
 				}
 				continue;
 			}
-			chara.AddCondition<ConWet>(100, false);
-			Act.CC.DoHostileAction(chara, false);
+			chara.AddCondition<ConWet>();
+			Act.CC.DoHostileAction(chara);
 		}
-		Act.CC.PlaySound("water_farm", 1f, true);
-		this.waterCan.owner.ModCharge(-1, false);
+		Act.CC.PlaySound("water_farm");
+		waterCan.owner.ModCharge(-1);
 		return base.Perform();
 	}
 
 	public bool IsWaterCanValid(bool msg = true)
 	{
-		bool flag = this.waterCan != null && this.waterCan.owner.c_charges > 0;
-		if (!flag && msg)
+		bool num = waterCan != null && waterCan.owner.c_charges > 0;
+		if (!num && msg)
 		{
 			Msg.Say("water_deplete");
 		}
-		return flag;
+		return num;
 	}
-
-	public TraitToolWaterCan waterCan;
 }

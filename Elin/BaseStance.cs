@@ -1,14 +1,6 @@
-﻿using System;
-
 public class BaseStance : Condition
 {
-	public override bool CanManualRemove
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanManualRemove => true;
 
 	public override int GetPhase()
 	{

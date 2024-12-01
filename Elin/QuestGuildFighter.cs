@@ -1,18 +1,10 @@
-﻿using System;
-
 public class QuestGuildFighter : QuestGuild
 {
-	public override Guild guild
-	{
-		get
-		{
-			return Guild.Fighter;
-		}
-	}
+	public override Guild guild => Guild.Fighter;
 
 	public override void OnInit()
 	{
-		base.SetTask(new QuestTaskHunt
+		SetTask(new QuestTaskHunt
 		{
 			setup = QuestTaskHunt.Setup.FighterGuild
 		});
@@ -20,5 +12,6 @@ public class QuestGuildFighter : QuestGuild
 
 	public override void OnChangePhase(int a)
 	{
+		_ = 10;
 	}
 }

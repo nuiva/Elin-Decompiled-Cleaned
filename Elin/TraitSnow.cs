@@ -1,28 +1,8 @@
-﻿using System;
-
 public class TraitSnow : Trait
 {
-	public override bool IsThrowMainAction
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsThrowMainAction => true;
 
-	public override ThrowType ThrowType
-	{
-		get
-		{
-			return ThrowType.Snow;
-		}
-	}
+	public override ThrowType ThrowType => ThrowType.Snow;
 
-	public override EffectDead EffectDead
-	{
-		get
-		{
-			return EffectDead.None;
-		}
-	}
+	public override EffectDead EffectDead => EffectDead.None;
 }

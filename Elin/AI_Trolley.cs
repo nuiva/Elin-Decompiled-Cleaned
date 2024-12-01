@@ -1,104 +1,110 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class AI_Trolley : AIAct
 {
-	public int dir
+	public static int[][] DirList = new int[4][]
+	{
+		new int[4] { 0, 1, 3, 2 },
+		new int[4] { 1, 0, 2, 3 },
+		new int[4] { 2, 1, 3, 0 },
+		new int[4] { 3, 2, 0, 1 }
+	};
+
+	public static Vector2Int[] VecList = new Vector2Int[4]
+	{
+		new Vector2Int(0, -1),
+		new Vector2Int(1, 0),
+		new Vector2Int(0, 1),
+		new Vector2Int(-1, 0)
+	};
+
+	public TraitTrolley trolley;
+
+	public bool running;
+
+	public int dir => trolley.owner.dir;
+
+	public override bool CancelWhenDamaged
 	{
 		get
 		{
-			return this.trolley.owner.dir;
+			if (owner != null)
+			{
+				if (owner.IsPC)
+				{
+					return owner.hp < owner.MaxHP / 3;
+				}
+				return true;
+			}
+			return false;
 		}
 	}
+
+	public override bool CancelWhenMoved => true;
+
+	public override bool ShowCursor => false;
 
 	public override bool CanManualCancel()
 	{
 		return true;
 	}
 
-	public override bool CancelWhenDamaged
+	public override IEnumerable<Status> Run()
 	{
-		get
+		owner.Say("ride", owner, trolley.owner);
+		if (!trolley.HideChara)
 		{
-			return this.owner != null && (!this.owner.IsPC || this.owner.hp < this.owner.MaxHP / 3);
+			owner.Talk("ride2");
 		}
-	}
-
-	public override bool CancelWhenMoved
-	{
-		get
+		while (true)
 		{
-			return true;
-		}
-	}
-
-	public override bool ShowCursor
-	{
-		get
-		{
-			return false;
-		}
-	}
-
-	public override IEnumerable<AIAct.Status> Run()
-	{
-		this.owner.Say("ride", this.owner, this.trolley.owner, null, null);
-		if (!this.trolley.HideChara)
-		{
-			this.owner.Talk("ride2", null, null, false);
-		}
-		for (;;)
-		{
-			int nextDir = this.GetNextDir();
-			if (!this.trolley.owner.ExistsOnMap || nextDir == -1)
+			int nextDir = GetNextDir();
+			if (!trolley.owner.ExistsOnMap || nextDir == -1)
 			{
-				yield return this.Stop(null);
+				yield return Stop();
 			}
-			this.trolley.owner.dir = nextDir;
-			Point point = this.GetPoint(this.dir, true);
-			this.owner.SetDir(nextDir);
-			this.owner.PlayAnime(AnimeID.Truck, false);
-			string idSound = this.trolley.GetIdSound();
-			if (this.owner.IsPC)
+			trolley.owner.dir = nextDir;
+			Point point = GetPoint(dir);
+			owner.SetDir(nextDir);
+			owner.PlayAnime(AnimeID.Truck);
+			string idSound = trolley.GetIdSound();
+			if (owner.IsPC)
 			{
-				this.owner.PlaySound(idSound, 1f, true);
+				owner.PlaySound(idSound);
 			}
 			else if (!(EClass.pc.ai is AI_Trolley))
 			{
-				this.owner.PlaySound(idSound, 1f, true);
-				EClass.Sound.Stop(idSound, Mathf.Max(1f, this.trolley.FadeDuration));
+				owner.PlaySound(idSound);
+				EClass.Sound.Stop(idSound, Mathf.Max(1f, trolley.FadeDuration));
 			}
-			foreach (Chara t in point.ListCharas())
+			foreach (Chara item in point.ListCharas())
 			{
-				this.owner.Kick(t, true, false);
+				owner.Kick(item, ignoreSelf: true, karmaLoss: false);
 			}
-			EClass._map.MoveCard(point, this.owner);
-			this.trolley.owner.MoveImmediate(point, true, true);
-			this.trolley.owner.PlayAnime(AnimeID.Truck, false);
-			this.running = true;
-			yield return base.KeepRunning();
+			EClass._map.MoveCard(point, owner);
+			trolley.owner.MoveImmediate(point);
+			trolley.owner.PlayAnime(AnimeID.Truck);
+			running = true;
+			yield return KeepRunning();
 		}
-		yield break;
 	}
 
 	public Point GetPoint(int d, bool onlyValid = true)
 	{
 		Point point = new Point();
-		Point pos = this.trolley.owner.pos;
-		point.Set(pos.x + AI_Trolley.VecList[d].x, pos.z + AI_Trolley.VecList[d].y);
+		Point pos = trolley.owner.pos;
+		point.Set(pos.x + VecList[d].x, pos.z + VecList[d].y);
 		if (!point.IsValid || !point.IsInBounds || !point.HasRail || point.IsBlocked)
 		{
 			return null;
 		}
-		using (List<Thing>.Enumerator enumerator = point.Things.GetEnumerator())
+		foreach (Thing thing in point.Things)
 		{
-			while (enumerator.MoveNext())
+			if (!thing.IsMultisize)
 			{
-				if (!enumerator.Current.IsMultisize)
-				{
-					return null;
-				}
+				return null;
 			}
 		}
 		if (EClass.pc.pos.Equals(point))
@@ -110,11 +116,11 @@ public class AI_Trolley : AIAct
 
 	public int GetNextDir()
 	{
-		int[] array = AI_Trolley.DirList[this.dir];
-		for (int i = 0; i < 3 + (this.running ? 0 : 1); i++)
+		int[] array = DirList[dir];
+		for (int i = 0; i < 3 + ((!running) ? 1 : 0); i++)
 		{
 			int num = array[i];
-			if (this.GetPoint(num, true) != null)
+			if (GetPoint(num) != null)
 			{
 				return num;
 			}
@@ -122,62 +128,18 @@ public class AI_Trolley : AIAct
 		return -1;
 	}
 
-	public AIAct.Status Stop(Action action = null)
+	public Status Stop(Action action = null)
 	{
-		EClass.Sound.Stop(this.trolley.GetIdSound(), this.trolley.FadeDuration);
-		if (this.owner != null)
+		EClass.Sound.Stop(trolley.GetIdSound(), trolley.FadeDuration);
+		if (owner != null)
 		{
-			this.owner.Say("ride_unride", this.owner, this.trolley.owner, null, null);
+			owner.Say("ride_unride", owner, trolley.owner);
 		}
-		return base.Success(null);
+		return Success();
 	}
 
 	public override void OnCancel()
 	{
-		this.Stop(null);
+		Stop();
 	}
-
-	public static int[][] DirList = new int[][]
-	{
-		new int[]
-		{
-			0,
-			1,
-			3,
-			2
-		},
-		new int[]
-		{
-			1,
-			0,
-			2,
-			3
-		},
-		new int[]
-		{
-			2,
-			1,
-			3,
-			0
-		},
-		new int[]
-		{
-			3,
-			2,
-			0,
-			1
-		}
-	};
-
-	public static Vector2Int[] VecList = new Vector2Int[]
-	{
-		new Vector2Int(0, -1),
-		new Vector2Int(1, 0),
-		new Vector2Int(0, 1),
-		new Vector2Int(-1, 0)
-	};
-
-	public TraitTrolley trolley;
-
-	public bool running;
 }

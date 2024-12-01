@@ -1,30 +1,8 @@
-﻿using System;
 using UnityEngine;
 
 [ExecuteInEditMode]
 public class LightControl : MonoBehaviour
 {
-	private void Start()
-	{
-	}
-
-	private void OnEnable()
-	{
-		this.partcleMain = this.Haze.GetComponent<ParticleSystem>().main;
-		this.lightPart = this.particleLight.transform.parent.gameObject.GetComponent<ParticleSystem>().lights;
-	}
-
-	private void Update()
-	{
-		this.Haze.SetActive(this.enableHaze);
-		this.lightPart.enabled = this.enableLight;
-		this.particleLight.range = this.lightRange;
-		this.particleLight.intensity = this.lightIntensity;
-		Color color = this.partcleMain.startColor.color;
-		color.a = this.hazeLevel / 255f;
-		this.partcleMain.startColor = color;
-	}
-
 	public bool enableLight = true;
 
 	public bool enableHaze = true;
@@ -45,4 +23,25 @@ public class LightControl : MonoBehaviour
 	private ParticleSystem.MainModule partcleMain;
 
 	private ParticleSystem.LightsModule lightPart;
+
+	private void Start()
+	{
+	}
+
+	private void OnEnable()
+	{
+		partcleMain = Haze.GetComponent<ParticleSystem>().main;
+		lightPart = particleLight.transform.parent.gameObject.GetComponent<ParticleSystem>().lights;
+	}
+
+	private void Update()
+	{
+		Haze.SetActive(enableHaze);
+		lightPart.enabled = enableLight;
+		particleLight.range = lightRange;
+		particleLight.intensity = lightIntensity;
+		Color color = partcleMain.startColor.color;
+		color.a = hazeLevel / 255f;
+		partcleMain.startColor = color;
+	}
 }

@@ -1,22 +1,20 @@
-﻿using System;
-
 public class QueueList<T> : TaskList<T> where T : Task
 {
 	public override Task GetTask(Chara chara, int radius = -1)
 	{
-		if (this.items.Count == 0)
+		if (items.Count == 0)
 		{
 			return null;
 		}
-		foreach (T t in this.items)
+		foreach (T item in items)
 		{
-			if (t.IsRunning)
+			if (item.IsRunning)
 			{
 				return null;
 			}
-			if (t.nextTry <= EClass.game.sessionMin && t.CanPerformTask(chara, radius))
+			if (item.nextTry <= EClass.game.sessionMin && item.CanPerformTask(chara, radius))
 			{
-				return t;
+				return item;
 			}
 		}
 		return null;

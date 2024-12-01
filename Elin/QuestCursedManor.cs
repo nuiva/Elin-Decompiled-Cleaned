@@ -1,28 +1,8 @@
-﻿using System;
-
 public class QuestCursedManor : QuestSequence
 {
-	public override string TitlePrefix
-	{
-		get
-		{
-			return "☆";
-		}
-	}
+	public override string TitlePrefix => "☆";
 
-	public override bool HasDLC
-	{
-		get
-		{
-			return Steam.HasDLC(ID_DLC.CursedManor);
-		}
-	}
+	public override bool HasDLC => Steam.HasDLC(ID_DLC.CursedManor);
 
-	public override bool CanAutoAdvance
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanAutoAdvance => false;
 }

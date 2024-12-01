@@ -1,38 +1,24 @@
-﻿using System;
-
 public class TraitStairsLocked : TraitItem
 {
-	public override bool CanBeHeld
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeHeld => false;
 
-	public override bool CanBeDestroyed
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanBeDestroyed => false;
 
 	public override bool OnUse(Chara c)
 	{
 		if (!EClass._zone.CanUnlockExit && !EClass.debug.godMode)
 		{
 			Msg.Say("stairs_locked");
-			this.owner.PlaySound("lock", 1f, true);
+			owner.PlaySound("lock");
 			return true;
 		}
-		Msg.Say("stairs_open", this.owner, null, null, null);
-		this.owner.PlaySound("lock_open", 1f, true);
-		this.owner.Destroy();
-		Thing thing = ThingGen.Create(EClass._zone.biome.style.GetIdStairs(false), EClass._zone.biome.style.matStairs, -1);
+		Msg.Say("stairs_open", owner);
+		owner.PlaySound("lock_open");
+		owner.Destroy();
+		Thing thing = ThingGen.Create(EClass._zone.biome.style.GetIdStairs(upstairs: false), EClass._zone.biome.style.matStairs);
 		Zone.ignoreSpawnAnime = true;
-		EClass._zone.AddCard(thing, this.owner.pos.x, this.owner.pos.z);
-		thing.SetPlaceState(PlaceState.installed, false);
+		EClass._zone.AddCard(thing, owner.pos.x, owner.pos.z);
+		thing.SetPlaceState(PlaceState.installed);
 		return true;
 	}
 }

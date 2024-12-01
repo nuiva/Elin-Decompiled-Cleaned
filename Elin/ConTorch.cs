@@ -1,18 +1,10 @@
-﻿using System;
-
 public class ConTorch : BaseBuff
 {
-	public override string idSprite
-	{
-		get
-		{
-			return "ActTorch";
-		}
-	}
+	public override string idSprite => "ActTorch";
 
 	public override void OnStart()
 	{
-		this.owner.RecalculateFOV();
+		owner.RecalculateFOV();
 	}
 
 	public override void OnCalculateFov(Fov fov, ref int radius, ref float power)
@@ -40,10 +32,8 @@ public class ConTorch : BaseBuff
 
 	public override void OnRemoved()
 	{
-		this.owner.RecalculateFOV();
-		Thing thing = EClass.player.currentHotItem.Thing;
-		TraitToolTorch traitToolTorch = ((thing != null) ? thing.trait : null) as TraitToolTorch;
-		if (traitToolTorch != null)
+		owner.RecalculateFOV();
+		if (EClass.player.currentHotItem.Thing?.trait is TraitToolTorch traitToolTorch)
 		{
 			traitToolTorch.RefreshRenderer();
 		}

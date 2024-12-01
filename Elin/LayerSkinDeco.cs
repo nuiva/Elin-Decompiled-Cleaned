@@ -1,24 +1,17 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class LayerSkinDeco : ELayer
 {
-	public List<SkinDeco> decos
-	{
-		get
-		{
-			return this.widget.config.skin.decos;
-		}
-	}
+	[NonSerialized]
+	public Widget widget;
 
-	public SkinConfig cfg
-	{
-		get
-		{
-			return this.widget.config.skin;
-		}
-	}
+	public Transform widgetHolder;
+
+	public List<SkinDeco> decos => widget.config.skin.decos;
+
+	public SkinConfig cfg => widget.config.skin;
 
 	public override void OnInit()
 	{
@@ -27,12 +20,12 @@ public class LayerSkinDeco : ELayer
 
 	public void SetWidget(Widget _widget)
 	{
-		this.widget = _widget;
-		foreach (SkinDeco skinDeco in this.decos)
+		widget = _widget;
+		foreach (SkinDeco deco in decos)
 		{
-			this.Activate(skinDeco.actor);
+			Activate(deco.actor);
 		}
-		this.widget.transform.SetParent(this.widgetHolder, false);
+		widget.transform.SetParent(widgetHolder, worldPositionStays: false);
 	}
 
 	public override void OnUpdateInput()
@@ -45,44 +38,35 @@ public class LayerSkinDeco : ELayer
 			}
 			SkinDecoActor selected = InputModuleEX.GetComponentOf<SkinDecoActor>();
 			Vector3 clickPos = Input.mousePosition;
-			UIContextMenu m = ELayer.ui.CreateContextMenu("ContextMenu");
-			if (selected)
+			UIContextMenu m = ELayer.ui.CreateContextMenu();
+			if ((bool)selected)
 			{
 				SkinDeco deco = selected.owner;
-				Action<PickerState, Color> <>9__9;
-				m.AddButton("editColor", delegate()
+				m.AddButton("editColor", delegate
 				{
-					LayerColorPicker layerColorPicker = ELayer.ui.AddLayer<LayerColorPicker>();
-					Color color = deco.color;
-					Color white = Color.white;
-					Action<PickerState, Color> onChangeColor;
-					if ((onChangeColor = <>9__9) == null)
+					ELayer.ui.AddLayer<LayerColorPicker>().SetColor(deco.color, Color.white, delegate(PickerState state, Color _c)
 					{
-						onChangeColor = (<>9__9 = delegate(PickerState state, Color _c)
-						{
-							deco.color = _c;
-							selected.Refresh();
-						});
-					}
-					layerColorPicker.SetColor(color, white, onChangeColor);
-				}, true);
-				m.AddButton("bringToTop", delegate()
+						deco.color = _c;
+						selected.Refresh();
+					});
+				});
+				m.AddButton("bringToTop", delegate
 				{
-					this.decos.Remove(deco);
-					this.decos.Add(deco);
+					decos.Remove(deco);
+					decos.Add(deco);
 					selected.transform.SetAsLastSibling();
-				}, true);
-				m.AddSlider("rotation", (float n) => (n * 45f).ToString() ?? "", (float)deco.rz, delegate(float a)
+				});
+				m.AddSlider("rotation", (float n) => (n * 45f).ToString() ?? "", deco.rz, delegate(float a)
 				{
 					deco.rz = (int)a;
 					selected.Refresh();
-				}, 0f, 7f, true, true, false);
-				m.AddSlider("size", (float n) => n.ToString() ?? "", (float)Mathf.Abs(deco.sx), delegate(float a)
+				}, 0f, 7f, isInt: true);
+				m.AddSlider("size", (float n) => n.ToString() ?? "", Mathf.Abs(deco.sx), delegate(float a)
 				{
-					deco.sx = (int)a * ((deco.sx > 0) ? 1 : -1);
-					deco.sy = (int)a * ((deco.sy > 0) ? 1 : -1);
+					deco.sx = (int)a * ((deco.sx > 0) ? 1 : (-1));
+					deco.sy = (int)a * ((deco.sy > 0) ? 1 : (-1));
 					selected.Refresh();
-				}, 10f, 400f, true, true, false);
+				}, 10f, 400f, isInt: true);
 				m.AddToggle("shadow", deco.shadow, delegate(bool a)
 				{
 					deco.shadow = a;
@@ -93,83 +77,79 @@ public class LayerSkinDeco : ELayer
 					deco.reverse = a;
 					selected.Refresh();
 				});
-				m.AddButton("removeDeco", delegate()
+				m.AddButton("removeDeco", delegate
 				{
-					this.widget.RemoveDeco(selected.owner);
-				}, true);
+					widget.RemoveDeco(selected.owner);
+				});
 			}
 			else
 			{
-				UIContextMenu parent = m.AddChild("addDeco");
-				UIList uilist = Util.Instantiate<UIList>("UI/Element/List/ListImageGrid", parent);
-				BaseList baseList = uilist;
-				UIList.Callback<Sprite, UIButton> callback = new UIList.Callback<Sprite, UIButton>();
-				callback.onInstantiate = delegate(Sprite a, UIButton _b)
+				UIContextMenu uIContextMenu = m.AddChild("addDeco");
+				UIList uIList = Util.Instantiate<UIList>("UI/Element/List/ListImageGrid", uIContextMenu);
+				uIList.callbacks = new UIList.Callback<Sprite, UIButton>
 				{
-					_b.icon.sprite = a;
-				};
-				callback.onClick = delegate(Sprite a, UIButton _b)
-				{
-					SkinDeco skinDeco = new SkinDeco
+					onInstantiate = delegate(Sprite a, UIButton _b)
 					{
-						sx = 100,
-						sy = 100,
-						color = Color.white
-					};
-					skinDeco.id = int.Parse(a.name.Remove(0, 4));
-					this.widget.AddDeco(skinDeco);
-					SkinDecoActor actor = skinDeco.actor;
-					this.Activate(actor);
-					actor.transform.position = clickPos;
-					EInput.Consume(false, 1);
-					m.Hide();
+						_b.icon.sprite = a;
+					},
+					onClick = delegate(Sprite a, UIButton _b)
+					{
+						SkinDeco skinDeco = new SkinDeco
+						{
+							sx = 100,
+							sy = 100,
+							color = Color.white
+						};
+						skinDeco.id = int.Parse(a.name.Remove(0, 4));
+						widget.AddDeco(skinDeco);
+						SkinDecoActor actor = skinDeco.actor;
+						Activate(actor);
+						actor.transform.position = clickPos;
+						EInput.Consume();
+						m.Hide();
+					}
 				};
-				baseList.callbacks = callback;
-				foreach (Sprite o in Resources.LoadAll<Sprite>("Media/Graphics/Deco/"))
+				Sprite[] array = Resources.LoadAll<Sprite>("Media/Graphics/Deco/");
+				foreach (Sprite o in array)
 				{
-					uilist.Add(o);
+					uIList.Add(o);
 				}
-				uilist.Refresh(false);
+				uIList.Refresh();
 			}
 			m.Show();
 		}
 		if (EInput.rightMouse.down)
 		{
-			UIContextMenu uicontextMenu = ELayer.ui.CreateContextMenu("ContextMenu");
-			uicontextMenu.AddButton("quitEdit", delegate()
+			UIContextMenu uIContextMenu2 = ELayer.ui.CreateContextMenu();
+			uIContextMenu2.AddButton("quitEdit", delegate
 			{
-				this.Close();
-			}, true);
-			uicontextMenu.Show();
+				Close();
+			});
+			uIContextMenu2.Show();
 		}
 	}
 
 	public void Activate(SkinDecoActor actor)
 	{
 		actor.image.raycastTarget = true;
-		actor.transform.SetParent(base.transform, true);
-		UIDragPanel uidragPanel = actor.gameObject.AddComponent<UIDragPanel>();
-		uidragPanel.target = actor.Rect();
-		uidragPanel.bound = actor.Rect();
-		uidragPanel.clamp = false;
+		actor.transform.SetParent(base.transform, worldPositionStays: true);
+		UIDragPanel uIDragPanel = actor.gameObject.AddComponent<UIDragPanel>();
+		uIDragPanel.target = actor.Rect();
+		uIDragPanel.bound = actor.Rect();
+		uIDragPanel.clamp = false;
 	}
 
 	public override void OnKill()
 	{
-		this.widget.transform.SetParent(ELayer.ui.widgets.transform, false);
-		foreach (SkinDeco skinDeco in this.decos)
+		widget.transform.SetParent(ELayer.ui.widgets.transform, worldPositionStays: false);
+		foreach (SkinDeco deco in decos)
 		{
-			SkinDecoActor actor = skinDeco.actor;
+			SkinDecoActor actor = deco.actor;
 			actor.image.raycastTarget = false;
 			UnityEngine.Object.DestroyImmediate(actor.gameObject.GetComponent<UIDragPanel>());
-			actor.transform.SetParent(this.widget.transform, true);
-			skinDeco.x = (int)actor.Rect().anchoredPosition.x;
-			skinDeco.y = (int)actor.Rect().anchoredPosition.y;
+			actor.transform.SetParent(widget.transform, worldPositionStays: true);
+			deco.x = (int)actor.Rect().anchoredPosition.x;
+			deco.y = (int)actor.Rect().anchoredPosition.y;
 		}
 	}
-
-	[NonSerialized]
-	public Widget widget;
-
-	public Transform widgetHolder;
 }

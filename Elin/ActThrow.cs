@@ -1,70 +1,59 @@
-﻿using System;
 using UnityEngine;
 
 public class ActThrow : ActBaseAttack
 {
-	public override bool CanPressRepeat
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public Thing target;
 
-	public override TargetType TargetType
-	{
-		get
-		{
-			return TargetType.Ground;
-		}
-	}
+	public Chara pcTarget;
 
-	public override int PerformDistance
-	{
-		get
-		{
-			return 99;
-		}
-	}
+	public override bool CanPressRepeat => true;
+
+	public override TargetType TargetType => TargetType.Ground;
+
+	public override int PerformDistance => 99;
 
 	public override string GetText(string str = "")
 	{
-		string str2 = "";
-		if (this.target != null && this.pcTarget != null && this.target.trait is TraitMonsterBall && this.pcTarget.LV > this.target.LV)
+		string text = "";
+		if (target != null && pcTarget != null && target.trait is TraitMonsterBall && pcTarget.LV > target.LV)
 		{
-			str2 = " " + "mb_invalidLV".lang();
+			text = " " + "mb_invalidLV".lang();
 		}
-		return base.GetText(str) + str2;
+		return base.GetText(str) + text;
 	}
 
 	public override bool CanPerform()
 	{
-		if (this.pcTarget != null && this.pcTarget.ExistsOnMap)
+		if (pcTarget != null && pcTarget.ExistsOnMap)
 		{
-			Act.TP.Set(this.pcTarget.pos);
+			Act.TP.Set(pcTarget.pos);
 		}
-		return !Act.TP.IsHidden && Act.CC.CanSeeLos(Act.TP, -1);
+		if (!Act.TP.IsHidden)
+		{
+			return Act.CC.CanSeeLos(Act.TP);
+		}
+		return false;
 	}
 
 	public override bool Perform()
 	{
-		if (this.target == null)
+		if (target == null)
 		{
-			this.target = (Act.TC as Thing);
+			target = Act.TC as Thing;
 		}
-		if (this.target == null || this.target.isDestroyed || this.target.GetRootCard() != Act.CC)
+		if (target == null || target.isDestroyed || target.GetRootCard() != Act.CC)
 		{
 			return false;
 		}
-		if (this.pcTarget != null)
+		if (pcTarget != null)
 		{
-			if (!this.pcTarget.ExistsOnMap)
+			if (!pcTarget.ExistsOnMap)
 			{
 				return false;
 			}
-			Act.TP.Set(this.pcTarget.pos);
+			Act.TP.Set(pcTarget.pos);
 		}
-		ActThrow.Throw(Act.CC, Act.TP, this.target.HasElement(410, 1) ? this.target : this.target.Split(1), ThrowMethod.Default, 0f);
+		Throw(Act.CC, Act.TP, target.HasElement(410) ? target : target.Split(1));
 		return true;
 	}
 
@@ -74,7 +63,7 @@ public class ActThrow : ActBaseAttack
 		{
 			return false;
 		}
-		if (t.c_isImportant && !t.HasElement(410, 1))
+		if (t.c_isImportant && !t.HasElement(410))
 		{
 			return false;
 		}
@@ -105,18 +94,18 @@ public class ActThrow : ActBaseAttack
 	{
 		if (failChance > EClass.rndf(1f))
 		{
-			Point randomPoint = p.GetRandomPoint(1, true, true, false, 100);
+			Point randomPoint = p.GetRandomPoint(1);
 			if (randomPoint != null && !randomPoint.Equals(c.pos))
 			{
 				p = randomPoint;
 			}
 		}
-		return ActThrow.Throw(c, p, p.FindAttackTarget(), t, method);
+		return Throw(c, p, p.FindAttackTarget(), t, method);
 	}
 
 	public static EffectIRenderer Throw(Card c, Point p, Card target, Thing t, ThrowMethod method = ThrowMethod.Default)
 	{
-		if (t.parent != EClass._zone && !t.HasElement(410, 1))
+		if (t.parent != EClass._zone && !t.HasElement(410))
 		{
 			EClass._zone.AddCard(t, c.pos).KillAnime();
 		}
@@ -125,33 +114,33 @@ public class ActThrow : ActBaseAttack
 		if (t.trait.ThrowType == ThrowType.Snow)
 		{
 			t.dir = EClass.rnd(2);
-			c.Talk("snow_throw", null, null, false);
+			c.Talk("snow_throw");
 			if (EClass.rnd(2) == 0)
 			{
 				Act.TC = null;
 			}
 		}
-		c.Say("throw", c, t.GetName(NameStyle.Full, 1), null);
+		c.Say("throw", c, t.GetName(NameStyle.Full, 1));
 		c.LookAt(p);
 		c.renderer.NextFrame();
-		c.PlaySound("throw", 1f, true);
+		c.PlaySound("throw");
 		EffectIRenderer result = null;
 		if (c.isSynced || p.IsSync)
 		{
 			result = Effect.Get<EffectIRenderer>((t.trait is TraitBall) ? "throw_ball" : "throw").Play((c.isChara && c.Chara.host != null) ? c.Chara.host : c, t, c.pos, p, 0.2f);
-			t.renderer.SetFirst(false, c.renderer.position);
+			t.renderer.SetFirst(first: false, c.renderer.position);
 		}
-		if (!t.HasElement(410, 1))
+		if (!t.HasElement(410))
 		{
-			t._Move(p, Card.MoveType.Walk);
+			t._Move(p);
 		}
 		if (!t.trait.CanBeDestroyed)
 		{
-			c.PlaySound("miss", 1f, true);
+			c.PlaySound("miss");
 			return result;
 		}
 		ThrowType throwType = t.trait.ThrowType;
-		if (throwType - ThrowType.Potion <= 1)
+		if ((uint)(throwType - 1) <= 1u)
 		{
 			Msg.Say("shatter");
 		}
@@ -159,11 +148,19 @@ public class ActThrow : ActBaseAttack
 		bool flag2 = method == ThrowMethod.Default;
 		switch (t.trait.ThrowType)
 		{
+		case ThrowType.Explosive:
+			flag = true;
+			t.c_uidRefCard = c.uid;
+			t.Die(null, c, AttackSource.Throw);
+			break;
+		case ThrowType.Vase:
+			t.Die(null, null, AttackSource.Throw);
+			break;
 		case ThrowType.Potion:
 			flag = true;
 			if (Act.TC != null)
 			{
-				Act.TC.Say("throw_hit", t, Act.TC, null, null);
+				Act.TC.Say("throw_hit", t, Act.TC);
 			}
 			Act.TP.ModFire(-50);
 			if (Act.TC != null && Act.TC.isChara)
@@ -173,7 +170,7 @@ public class ActThrow : ActBaseAttack
 					t.trait.OnDrink(Act.TC.Chara);
 				}
 				flag2 = t.IsNegativeGift;
-				Act.TC.Chara.AddCondition<ConWet>(100, false);
+				Act.TC.Chara.AddCondition<ConWet>();
 			}
 			else
 			{
@@ -182,21 +179,33 @@ public class ActThrow : ActBaseAttack
 			t.Die(null, null, AttackSource.Throw);
 			c.ModExp(108, 50);
 			break;
-		case ThrowType.Vase:
-			t.Die(null, null, AttackSource.Throw);
-			break;
 		case ThrowType.Snow:
 			flag = true;
 			flag2 = false;
 			if (Act.TC != null && Act.TC.isChara)
 			{
-				Act.TC.Say("throw_hit", t, Act.TC, null, null);
+				Act.TC.Say("throw_hit", t, Act.TC);
 				if (EClass.rnd(2) == 0)
 				{
-					c.Talk("snow_hit", null, null, false);
+					c.Talk("snow_hit");
 				}
-				Act.TC.Chara.AddCondition<ConWet>(50, false);
+				Act.TC.Chara.AddCondition<ConWet>(50);
 				t.Die(null, null, AttackSource.Throw);
+				c.ModExp(108, 50);
+			}
+			break;
+		case ThrowType.Ball:
+			flag = true;
+			flag2 = false;
+			if (Act.TC != null && Act.TC.isChara)
+			{
+				Act.TC.Say("throw_hit", t, Act.TC);
+				if (EClass.rnd(2) == 0)
+				{
+					c.Talk("snow_hit");
+				}
+				Act.TC.Say("ball_hit");
+				Act.TC.Chara?.Pick(t);
 				c.ModExp(108, 50);
 			}
 			break;
@@ -205,7 +214,7 @@ public class ActThrow : ActBaseAttack
 			flag2 = false;
 			if (Act.TC != null && Act.TC.isChara && c.isChara)
 			{
-				Act.TC.Say("throw_hit", t, Act.TC, null, null);
+				Act.TC.Say("throw_hit", t, Act.TC);
 				c.Chara.GiveGift(Act.TC.Chara, t);
 				c.ModExp(108, 50);
 			}
@@ -217,37 +226,44 @@ public class ActThrow : ActBaseAttack
 			TraitMonsterBall traitMonsterBall = t.trait as TraitMonsterBall;
 			if (traitMonsterBall.chara != null)
 			{
-				if (!traitMonsterBall.IsLittleBall || EClass._zone is Zone_LittleGarden)
+				if (traitMonsterBall.IsLittleBall && !(EClass._zone is Zone_LittleGarden))
 				{
-					Chara _c = EClass._zone.AddCard(traitMonsterBall.chara, p).Chara;
-					_c.PlayEffect("identify", true, 0f, default(Vector3));
-					t.Die(null, null, AttackSource.None);
-					if (traitMonsterBall.IsLittleBall && _c.id == "littleOne")
+					break;
+				}
+				Chara _c = EClass._zone.AddCard(traitMonsterBall.chara, p).Chara;
+				_c.PlayEffect("identify");
+				t.Die();
+				if (traitMonsterBall.IsLittleBall && _c.id == "littleOne")
+				{
+					_c.orgPos = c.pos.Copy();
+					Chara chara = _c;
+					Hostility c_originalHostility = (_c.hostility = Hostility.Neutral);
+					chara.c_originalHostility = c_originalHostility;
+					EClass._zone.ModInfluence(5);
+					_c.PlaySound("chime_angel");
+					EClass.core.actionsNextFrame.Add(delegate
 					{
-						_c.orgPos = c.pos.Copy();
-						_c.c_originalHostility = (_c.hostility = Hostility.Neutral);
-						EClass._zone.ModInfluence(5);
-						_c.PlaySound("chime_angel", 1f, true);
-						EClass.core.actionsNextFrame.Add(delegate
-						{
-							_c.Talk("little_saved", null, null, false);
-						});
-						EClass.player.flags.little_saved = true;
-						EClass.player.little_saved++;
-					}
-					else
-					{
-						_c.MakeAlly(true);
-					}
+						_c.Talk("little_saved");
+					});
+					EClass.player.flags.little_saved = true;
+					EClass.player.little_saved++;
+				}
+				else
+				{
+					_c.MakeAlly();
 				}
 			}
-			else if (Act.TC != null && Act.TC.isChara)
+			else
 			{
-				Act.TC.Say("throw_hit", t, Act.TC, null, null);
-				Chara chara = Act.TC.Chara;
+				if (Act.TC == null || !Act.TC.isChara)
+				{
+					break;
+				}
+				Act.TC.Say("throw_hit", t, Act.TC);
+				Chara chara2 = Act.TC.Chara;
 				if (traitMonsterBall.IsLittleBall)
 				{
-					if (chara.id != "littleOne" || EClass._zone is Zone_LittleGarden || EClass._zone.IsUserZone)
+					if (chara2.id != "littleOne" || EClass._zone is Zone_LittleGarden || EClass._zone.IsUserZone)
 					{
 						Msg.Say("monsterball_invalid");
 						break;
@@ -255,64 +271,38 @@ public class ActThrow : ActBaseAttack
 				}
 				else
 				{
-					if (!chara.trait.CanBeTamed || EClass._zone.IsUserZone)
+					if (!chara2.trait.CanBeTamed || EClass._zone.IsUserZone)
 					{
 						Msg.Say("monsterball_invalid");
 						break;
 					}
-					if (chara.LV > traitMonsterBall.owner.LV)
+					if (chara2.LV > traitMonsterBall.owner.LV)
 					{
 						Msg.Say("monsterball_lv");
 						break;
 					}
-					if (!EClass.debug.enable && chara.hp > chara.MaxHP / 10)
+					if (!EClass.debug.enable && chara2.hp > chara2.MaxHP / 10)
 					{
 						Msg.Say("monsterball_hp");
 						break;
 					}
 				}
-				Msg.Say("monsterball_capture", c, chara, null, null);
-				chara.PlaySound("identify", 1f, true);
-				chara.PlayEffect("identify", true, 0f, default(Vector3));
+				Msg.Say("monsterball_capture", c, chara2);
+				chara2.PlaySound("identify");
+				chara2.PlayEffect("identify");
 				t.ChangeMaterial("copper");
-				if (chara.IsLocalChara)
+				if (chara2.IsLocalChara)
 				{
-					string str = "Creating Replacement NPC for:";
-					Chara chara2 = chara;
-					Debug.Log(str + ((chara2 != null) ? chara2.ToString() : null));
-					EClass._map.deadCharas.Add(chara.CreateReplacement());
+					Debug.Log("Creating Replacement NPC for:" + chara2);
+					EClass._map.deadCharas.Add(chara2.CreateReplacement());
 				}
-				traitMonsterBall.chara = chara;
-				EClass._zone.RemoveCard(chara);
-				chara.homeZone = null;
+				traitMonsterBall.chara = chara2;
+				EClass._zone.RemoveCard(chara2);
+				chara2.homeZone = null;
 				c.ModExp(108, 100);
 			}
 			break;
 		}
-		case ThrowType.Explosive:
-			flag = true;
-			t.c_uidRefCard = c.uid;
-			t.Die(null, c, AttackSource.Throw);
-			break;
-		case ThrowType.Ball:
-			flag = true;
-			flag2 = false;
-			if (Act.TC != null && Act.TC.isChara)
-			{
-				Act.TC.Say("throw_hit", t, Act.TC, null, null);
-				if (EClass.rnd(2) == 0)
-				{
-					c.Talk("snow_hit", null, null, false);
-				}
-				Act.TC.Say("ball_hit", null, null);
-				Chara chara3 = Act.TC.Chara;
-				if (chara3 != null)
-				{
-					chara3.Pick(t, true, true);
-				}
-				c.ModExp(108, 50);
-			}
-			break;
 		}
 		if (t.trait is TraitDye)
 		{
@@ -320,21 +310,21 @@ public class ActThrow : ActBaseAttack
 		}
 		if (!flag && Act.TC != null)
 		{
-			AttackProcess.Current.Prepare(c.Chara, t, Act.TC, Act.TP, 0, true);
-			if (AttackProcess.Current.Perform(0, false, 1f, false))
+			AttackProcess.Current.Prepare(c.Chara, t, Act.TC, Act.TP, 0, _isThrow: true);
+			if (AttackProcess.Current.Perform(0, hasHit: false))
 			{
 				if (Act.TC.IsAliveInCurrentZone && t.trait is TraitErohon && Act.TC.id == t.c_idRefName)
 				{
 					Act.TC.Chara.OnGiveErohon(t);
 				}
-				if (!t.isDestroyed && t.trait.CanBeDestroyed && !t.IsFurniture && !t.category.IsChildOf("instrument") && !t.IsUnique && !t.HasElement(410, 1))
+				if (!t.isDestroyed && t.trait.CanBeDestroyed && !t.IsFurniture && !t.category.IsChildOf("instrument") && !t.IsUnique && !t.HasElement(410))
 				{
 					t.Destroy();
 				}
 			}
 			else
 			{
-				c.PlaySound("miss", 1f, true);
+				c.PlaySound("miss");
 			}
 		}
 		if (EClass.rnd(2) == 0)
@@ -345,14 +335,14 @@ public class ActThrow : ActBaseAttack
 		{
 			if (flag2)
 			{
-				c.Chara.DoHostileAction(Act.TC, false);
+				c.Chara.DoHostileAction(Act.TC);
 			}
 			if ((Act.TC.trait.CanBeAttacked || Act.TC.IsRestrainedResident) && EClass.rnd(2) == 0)
 			{
 				c.Chara.stamina.Mod(-1);
 			}
 		}
-		if (t.HasElement(410, 1) && Act.TC != null && Act.CC == EClass.pc && !(Act.CC.ai is AI_PracticeDummy) && (Act.TC.trait is TraitTrainingDummy || Act.TC.IsRestrainedResident) && Act.CC.stamina.value > 0)
+		if (t.HasElement(410) && Act.TC != null && Act.CC == EClass.pc && !(Act.CC.ai is AI_PracticeDummy) && (Act.TC.trait is TraitTrainingDummy || Act.TC.IsRestrainedResident) && Act.CC.stamina.value > 0)
 		{
 			Act.CC.SetAI(new AI_PracticeDummy
 			{
@@ -362,8 +352,4 @@ public class ActThrow : ActBaseAttack
 		}
 		return result;
 	}
-
-	public Thing target;
-
-	public Chara pcTarget;
 }

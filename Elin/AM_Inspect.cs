@@ -1,27 +1,14 @@
-﻿using System;
 using UnityEngine;
 
 public class AM_Inspect : AM_MoveInstalled
 {
-	public override bool ShowMouseoverTarget
-	{
-		get
-		{
-			return this.target == null;
-		}
-	}
+	public override bool ShowMouseoverTarget => target == null;
 
-	public override BuildMenu.Mode buildMenuMode
-	{
-		get
-		{
-			return BuildMenu.Mode.Build;
-		}
-	}
+	public override BuildMenu.Mode buildMenuMode => BuildMenu.Mode.Build;
 
 	public override void OnUpdateCursor()
 	{
-		base.SetCursorOnMap(CursorSystem.Hand);
+		SetCursorOnMap(CursorSystem.Hand);
 	}
 
 	public override void OnUpdateInput()
@@ -40,7 +27,7 @@ public class AM_Inspect : AM_MoveInstalled
 
 	public override string GetHintText()
 	{
-		if (this.target == null)
+		if (target == null)
 		{
 			return null;
 		}

@@ -1,54 +1,26 @@
-﻿using System;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class HotItemChara : HotItem
 {
-	public Chara chara
-	{
-		get
-		{
-			return RefChara.Get(this.uid) ?? EClass.pc;
-		}
-	}
+	[JsonProperty]
+	public int uid;
 
-	public override Color SpriteColor
-	{
-		get
-		{
-			return new Color(1f, 1f, 1f, 0.9f);
-		}
-	}
+	public Chara chara => RefChara.Get(uid) ?? EClass.pc;
 
-	public override Vector3 SpriteScale
-	{
-		get
-		{
-			return new Vector3(0.8f, 0.8f, 1f);
-		}
-	}
+	public override Color SpriteColor => new Color(1f, 1f, 1f, 0.9f);
 
-	public override string Name
-	{
-		get
-		{
-			return this.chara.Name;
-		}
-	}
+	public override Vector3 SpriteScale => new Vector3(0.8f, 0.8f, 1f);
 
-	public override bool UseUIObjMaterial
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override string Name => chara.Name;
+
+	public override bool UseUIObjMaterial => true;
 
 	public override Sprite GetSprite()
 	{
-		if (this.chara != null)
+		if (chara != null)
 		{
-			return this.chara.GetSprite(0);
+			return chara.GetSprite();
 		}
 		return base.GetSprite();
 	}
@@ -57,7 +29,4 @@ public class HotItemChara : HotItem
 	{
 		return base.TrySetAct(p);
 	}
-
-	[JsonProperty]
-	public int uid;
 }

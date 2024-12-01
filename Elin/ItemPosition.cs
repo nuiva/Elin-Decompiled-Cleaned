@@ -1,8 +1,16 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class ItemPosition : EClass
 {
+	[JsonProperty]
+	public int uidContainer;
+
+	[JsonProperty]
+	public int invX;
+
+	[JsonProperty]
+	public int invY;
+
 	public static ItemPosition Get(Thing t)
 	{
 		if (t == null || t.parentCard == null)
@@ -16,13 +24,4 @@ public class ItemPosition : EClass
 			invY = t.invY
 		};
 	}
-
-	[JsonProperty]
-	public int uidContainer;
-
-	[JsonProperty]
-	public int invX;
-
-	[JsonProperty]
-	public int invY;
 }

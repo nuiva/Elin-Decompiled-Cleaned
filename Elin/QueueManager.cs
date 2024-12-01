@@ -1,25 +1,22 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class QueueManager : EClass
 {
-	public UIQueue uiq
-	{
-		get
-		{
-			return UIQueue.Instance;
-		}
-	}
+	public Chara owner;
+
+	public List<Queue> list = new List<Queue>();
+
+	public UIQueue uiq => UIQueue.Instance;
 
 	public Queue currentQueue
 	{
 		get
 		{
-			if (this.list.Count <= 0)
+			if (list.Count <= 0)
 			{
 				return null;
 			}
-			return this.list[0];
+			return list[0];
 		}
 	}
 
@@ -45,15 +42,15 @@ public class QueueManager : EClass
 		};
 		if (insert)
 		{
-			this.list.Insert(0, queue);
+			list.Insert(0, queue);
 		}
 		else
 		{
-			this.list.Add(queue);
+			list.Add(queue);
 		}
-		if (this.uiq)
+		if ((bool)uiq)
 		{
-			this.uiq.OnAdd(queue, insert);
+			uiq.OnAdd(queue, insert);
 		}
 		return queue;
 	}
@@ -61,34 +58,32 @@ public class QueueManager : EClass
 	public void Remove(Queue q)
 	{
 		q.removed = true;
-		this.list.Remove(q);
-		if (this.uiq)
+		list.Remove(q);
+		if ((bool)uiq)
 		{
-			this.uiq.OnRemove(q);
+			uiq.OnRemove(q);
 		}
 	}
 
 	public void Cancel(Queue q)
 	{
-		if (this.list[0] == q)
+		if (list[0] == q)
 		{
 			q.interaction.Cancel();
-			return;
 		}
-		this.Remove(q);
+		else
+		{
+			Remove(q);
+		}
 	}
 
 	public void SetOwner(Chara _owner)
 	{
-		this.list.Clear();
-		this.owner = _owner;
-		if (this.uiq)
+		list.Clear();
+		owner = _owner;
+		if ((bool)uiq)
 		{
-			this.uiq.OnSetOwner();
+			uiq.OnSetOwner();
 		}
 	}
-
-	public Chara owner;
-
-	public List<Queue> list = new List<Queue>();
 }

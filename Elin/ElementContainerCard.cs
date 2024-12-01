@@ -1,82 +1,87 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class ElementContainerCard : ElementContainer
 {
-	public override Card Card
-	{
-		get
-		{
-			return this.owner;
-		}
-	}
+	public Card owner;
 
-	public override Chara Chara
-	{
-		get
-		{
-			return this.owner.Chara;
-		}
-	}
+	public override Card Card => owner;
+
+	public override Chara Chara => owner.Chara;
 
 	public override bool IsMeleeWeapon
 	{
 		get
 		{
-			return this.Card.category.slot == 35 && this.Card.category.skill != 0;
+			if (Card.category.slot == 35)
+			{
+				return Card.category.skill != 0;
+			}
+			return false;
 		}
 	}
 
 	public void SetOwner(Card c, bool applyFeat)
 	{
-		this.owner = c;
-		SourceValueType sourceValueType = (c.IsEquipmentOrRanged && c.rarity < Rarity.Artifact) ? SourceValueType.EquipmentRandom : SourceValueType.Fixed;
-		base.ApplyElementMap(c.uid, sourceValueType, c.sourceCard.elementMap, (sourceValueType == SourceValueType.EquipmentRandom) ? c.LV : 1, false, applyFeat);
+		owner = c;
+		SourceValueType sourceValueType = ((c.IsEquipmentOrRanged && c.rarity < Rarity.Artifact) ? SourceValueType.EquipmentRandom : SourceValueType.Fixed);
+		ApplyElementMap(c.uid, sourceValueType, c.sourceCard.elementMap, (sourceValueType != SourceValueType.EquipmentRandom) ? 1 : c.LV, invert: false, applyFeat);
 	}
 
 	public override void OnLearn(int ele)
 	{
-		if (this.owner.IsPCFaction)
+		if (owner.IsPCFaction)
 		{
 			SE.DingSkill2();
 		}
-		Msg.Say("learnSkill", this.Card, EClass.sources.elements.map[ele].GetName(), null, null);
-		this.CheckSkillActions();
+		Msg.Say("learnSkill", Card, EClass.sources.elements.map[ele].GetName());
+		CheckSkillActions();
 	}
 
 	public void CheckSkillActions()
 	{
-		if (this.owner.IsPC)
+		if (owner.IsPC)
 		{
-			this.<CheckSkillActions>g__TryLearn|9_0(6011, 281, 0);
-			this.<CheckSkillActions>g__TryLearn|9_0(6018, 226, 0);
-			this.<CheckSkillActions>g__TryLearn|9_0(6019, 227, 0);
-			this.<CheckSkillActions>g__TryLearn|9_0(6700, 1649, 0);
-			this.<CheckSkillActions>g__TryLearn|9_0(6720, 1657, 0);
-			this.<CheckSkillActions>g__TryLearn|9_0(6450, 132, 5);
+			TryLearn(6011, 281, 0);
+			TryLearn(6018, 226, 0);
+			TryLearn(6019, 227, 0);
+			TryLearn(6700, 1649, 0);
+			TryLearn(6720, 1657, 0);
+			TryLearn(6450, 132, 5);
+		}
+		void TryLearn(int eleAction, int reqEle, int lqlv)
+		{
+			if (!HasBase(eleAction) && HasBase(reqEle) && GetElement(reqEle).ValueWithoutLink >= lqlv)
+			{
+				SetBase(eleAction, 1);
+				if (EClass.core.IsGameStarted)
+				{
+					if (owner.IsPC)
+					{
+						LayerAbility.Redraw();
+					}
+					owner.Say("learnSkill", Card, EClass.sources.elements.map[eleAction].GetName());
+				}
+			}
 		}
 	}
 
 	public override void OnTrain(int ele)
 	{
-		Msg.Say("trainSkill", this.Card, EClass.sources.elements.map[ele].GetName(), null, null);
+		Msg.Say("trainSkill", Card, EClass.sources.elements.map[ele].GetName());
 	}
 
 	public override void OnModTempPotential(Element e, int v, int threshMsg)
 	{
-		if (threshMsg != 0 && Mathf.Abs(v) < threshMsg)
+		if (threshMsg == 0 || Mathf.Abs(v) >= threshMsg)
 		{
-			return;
+			string lang = ((v > 0) ? "potentialInc" : "potentialDec");
+			if (owner.IsPCFaction && v > 0)
+			{
+				owner.PlaySound("ding_potential");
+			}
+			Msg.SetColor((v > 0) ? "positive" : "negative");
+			owner.Say(lang, owner, e.Name.ToLower());
 		}
-		string lang = (v > 0) ? "potentialInc" : "potentialDec";
-		if (this.owner.IsPCFaction && v > 0)
-		{
-			this.owner.PlaySound("ding_potential", 1f, true);
-		}
-		Msg.SetColor((v > 0) ? "positive" : "negative");
-		this.owner.Say(lang, this.owner, e.Name.ToLower(), null);
 	}
 
 	public override void OnLevelUp(Element e, int lastValue)
@@ -85,7 +90,7 @@ public class ElementContainerCard : ElementContainer
 		{
 			return;
 		}
-		if (this.owner.IsPC)
+		if (owner.IsPC)
 		{
 			if (e.id == 287)
 			{
@@ -93,43 +98,43 @@ public class ElementContainerCard : ElementContainer
 			}
 			SE.DingSkill2();
 		}
-		if (this.owner.isChara)
+		if (owner.isChara)
 		{
-			if (this.owner.Chara.IsPCFaction)
+			if (owner.Chara.IsPCFaction)
 			{
 				if (!VirtualDate.IsActive)
 				{
-					if (this.owner.Chara.IsInActiveZone)
+					if (owner.Chara.IsInActiveZone)
 					{
 						Msg.SetColor(Msg.colors.Ding);
-						string text = e.source.GetText("textInc", true);
+						string text = e.source.GetText("textInc", returnNull: true);
 						if (!text.IsEmpty())
 						{
-							this.owner.Say(text, this.owner, null, null);
+							owner.Say(text, owner);
 						}
 						else
 						{
-							this.owner.Say("ding_skill", this.owner, e.Name, null);
+							owner.Say("ding_skill", owner, e.Name);
 						}
-						this.owner.pos.TalkWitnesses(this.owner.Chara, "ding_other", 4, WitnessType.ally, null, 4 + EClass.pc.party.members.Count);
+						owner.pos.TalkWitnesses(owner.Chara, "ding_other", 4, WitnessType.ally, null, 4 + EClass.pc.party.members.Count);
 					}
-					if (this.owner.IsPCParty)
+					if (owner.IsPCParty)
 					{
-						WidgetPopText.Say("popDing".lang(this.owner.IsPC ? "" : this.owner.Name, e.Name, lastValue.ToString() ?? "", e.ValueWithoutLink.ToString() ?? "", null), FontColor.Good, null);
+						WidgetPopText.Say("popDing".lang(owner.IsPC ? "" : owner.Name, e.Name, lastValue.ToString() ?? "", e.ValueWithoutLink.ToString() ?? ""), FontColor.Good);
 					}
 				}
-				if (this.owner.Chara.homeBranch != null)
+				if (owner.Chara.homeBranch != null)
 				{
-					this.owner.Chara.homeBranch.Log("bDing", this.Card, e.Name, lastValue.ToString() ?? "", e.ValueWithoutLink.ToString() ?? "");
+					owner.Chara.homeBranch.Log("bDing", Card, e.Name, lastValue.ToString() ?? "", e.ValueWithoutLink.ToString() ?? "");
 				}
 			}
 			if (e is Skill)
 			{
-				this.owner.AddExp(10 + EClass.rnd(5));
+				owner.AddExp(10 + EClass.rnd(5));
 			}
-			this.owner.Chara.CalculateMaxStamina();
+			owner.Chara.CalculateMaxStamina();
 		}
-		this.CheckSkillActions();
+		CheckSkillActions();
 	}
 
 	public override void OnLevelDown(Element e, int lastValue)
@@ -138,24 +143,25 @@ public class ElementContainerCard : ElementContainer
 		{
 			return;
 		}
-		bool isPC = this.owner.IsPC;
-		if (this.owner.isChara)
+		_ = owner.IsPC;
+		if (!owner.isChara)
 		{
-			if (this.owner.Chara.IsPCFaction)
-			{
-				Msg.SetColor(Msg.colors.Negative);
-				string text = e.source.GetText("textDec", true);
-				if (!text.IsEmpty())
-				{
-					Msg.Say(text, this.owner, null, null, null);
-				}
-				else
-				{
-					Msg.Say("dec_skill", this.owner, e.Name, null, null);
-				}
-			}
-			this.owner.Chara.CalculateMaxStamina();
+			return;
 		}
+		if (owner.Chara.IsPCFaction)
+		{
+			Msg.SetColor(Msg.colors.Negative);
+			string text = e.source.GetText("textDec", returnNull: true);
+			if (!text.IsEmpty())
+			{
+				Msg.Say(text, owner);
+			}
+			else
+			{
+				Msg.Say("dec_skill", owner, e.Name);
+			}
+		}
+		owner.Chara.CalculateMaxStamina();
 	}
 
 	public override int ValueBonus(Element e)
@@ -165,42 +171,39 @@ public class ElementContainerCard : ElementContainer
 			return 0;
 		}
 		int num = 0;
-		if (this.owner.IsPCFactionOrMinion)
+		if (owner.IsPCFactionOrMinion)
 		{
 			Element element = EClass.pc.faction.charaElements.GetElement(e.id);
 			if (element != null)
 			{
 				num += element.Value;
 			}
-			if (this.owner.IsPCParty)
+			if (owner.IsPCParty)
 			{
 				int id = e.id;
-				if (id == 70 || id - 72 <= 1)
+				if (id == 70 || (uint)(id - 72) <= 1u)
 				{
 					int num2 = 0;
-					foreach (Chara chara in EClass.pc.party.members)
+					foreach (Chara member in EClass.pc.party.members)
 					{
-						if (chara.Evalue(1419) > 0)
+						if (member.Evalue(1419) > 0)
 						{
-							num2 += chara.Evalue(1419);
+							num2 += member.Evalue(1419);
 						}
 					}
 					if (num2 > 0)
 					{
 						int num3 = 0;
-						using (List<Chara>.Enumerator enumerator = EClass._map.charas.GetEnumerator())
+						foreach (Chara chara in EClass._map.charas)
 						{
-							while (enumerator.MoveNext())
+							if (chara.IsHostile(EClass.pc))
 							{
-								if (enumerator.Current.IsHostile(EClass.pc))
-								{
-									num3++;
-								}
+								num3++;
 							}
 						}
 						if (num3 > 0)
 						{
-							num += Mathf.Max(1, (e.ValueWithoutLink + e.vLink) * (int)Mathf.Clamp(4f + Mathf.Sqrt((float)num3) * (float)num2 * 2f, 5f, 30f) / 100);
+							num += Mathf.Max(1, (e.ValueWithoutLink + e.vLink) * (int)Mathf.Clamp(4f + Mathf.Sqrt(num3) * (float)num2 * 2f, 5f, 30f) / 100);
 						}
 					}
 				}
@@ -208,34 +211,32 @@ public class ElementContainerCard : ElementContainer
 			if (e.id == 78)
 			{
 				num += EClass.player.CountKeyItem("lucky_coin") * 2;
-				if (this.Chara != null && this.Chara.Evalue(663) > 0)
+				if (Chara != null && Chara.Evalue(663) > 0)
 				{
 					num = num * 2 + (e.ValueWithoutLink + e.vLink);
 				}
 			}
-			if (e.id != 664 && (this.owner.Chara.race.IsMachine || this.owner.id == "android"))
+			if (e.id != 664 && (owner.Chara.race.IsMachine || owner.id == "android"))
 			{
-				int num4 = this.owner.Evalue(664);
+				int num4 = owner.Evalue(664);
 				if (num4 > 0)
 				{
-					int id = e.id;
-					if (id - 64 > 1)
+					switch (e.id)
 					{
-						if (id == 79)
-						{
-							num += (e.ValueWithoutLink + e.vLink) * num4 / 100;
-						}
-					}
-					else
-					{
+					case 64:
+					case 65:
 						num += (e.ValueWithoutLink + e.vLink) * num4 / 2 / 100;
+						break;
+					case 79:
+						num += (e.ValueWithoutLink + e.vLink) * num4 / 100;
+						break;
 					}
 				}
 			}
 		}
 		if (!e.source.aliasMtp.IsEmpty())
 		{
-			int num5 = this.owner.Evalue(e.source.aliasMtp);
+			int num5 = owner.Evalue(e.source.aliasMtp);
 			if (num5 != 0)
 			{
 				num += (e.ValueWithoutLink + e.vLink) * num5 / 100;
@@ -243,25 +244,4 @@ public class ElementContainerCard : ElementContainer
 		}
 		return num;
 	}
-
-	[CompilerGenerated]
-	private void <CheckSkillActions>g__TryLearn|9_0(int eleAction, int reqEle, int lqlv)
-	{
-		if (base.HasBase(eleAction) || !base.HasBase(reqEle) || base.GetElement(reqEle).ValueWithoutLink < lqlv)
-		{
-			return;
-		}
-		base.SetBase(eleAction, 1, 0);
-		if (!EClass.core.IsGameStarted)
-		{
-			return;
-		}
-		if (this.owner.IsPC)
-		{
-			LayerAbility.Redraw();
-		}
-		this.owner.Say("learnSkill", this.Card, EClass.sources.elements.map[eleAction].GetName(), null);
-	}
-
-	public Card owner;
 }

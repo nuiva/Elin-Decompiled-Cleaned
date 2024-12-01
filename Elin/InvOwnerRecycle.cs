@@ -1,47 +1,25 @@
-﻿using System;
 using UnityEngine;
 
 public class InvOwnerRecycle : InvOwnerDraglet
 {
-	public override string langTransfer
-	{
-		get
-		{
-			return "invRecycle";
-		}
-	}
+	public TraitRecycle recycle;
 
-	public override InvOwnerDraglet.ProcessType processType
-	{
-		get
-		{
-			return InvOwnerDraglet.ProcessType.Consume;
-		}
-	}
+	public override string langTransfer => "invRecycle";
 
-	public override bool InvertSell
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override ProcessType processType => ProcessType.Consume;
 
-	public override bool DenyImportant
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool InvertSell => false;
 
-	public InvOwnerRecycle(Card owner = null, Card container = null, CurrencyType _currency = CurrencyType.Ecopo) : base(owner, container, _currency)
+	public override bool DenyImportant => true;
+
+	public InvOwnerRecycle(Card owner = null, Card container = null, CurrencyType _currency = CurrencyType.Ecopo)
+		: base(owner, container, _currency)
 	{
 	}
 
 	public override void BuildUICurrency(UICurrency uiCurrency, bool canReroll = false)
 	{
-		uiCurrency.SetActive(true);
+		uiCurrency.SetActive(enable: true);
 		uiCurrency.Build(new UICurrency.Options
 		{
 			ecopo = true,
@@ -51,21 +29,23 @@ public class InvOwnerRecycle : InvOwnerDraglet
 
 	public override bool ShouldShowGuide(Thing t)
 	{
-		return !t.c_isImportant && t.things.Count == 0 && t.trait.CanBeDestroyed && !t.trait.CanOnlyCarry && t.rarity < Rarity.Artifact && t.category.GetRoot().id != "currency" && !(t.trait is TraitRecycle);
+		if (!t.c_isImportant && t.things.Count == 0 && t.trait.CanBeDestroyed && !t.trait.CanOnlyCarry && t.rarity < Rarity.Artifact && t.category.GetRoot().id != "currency")
+		{
+			return !(t.trait is TraitRecycle);
+		}
+		return false;
 	}
 
 	public override void _OnProcess(Thing t)
 	{
 		SE.Play("trash");
-		Msg.Say("dump", t, this.Container.Name, null, null);
-		int num = t.Num * Mathf.Clamp(t.GetPrice(CurrencyType.Money, false, PriceType.Default, null) / 100, 1, 100);
-		num = EClass.rndHalf(num);
-		if (num != 0)
+		Msg.Say("dump", t, Container.Name);
+		int a = t.Num * Mathf.Clamp(t.GetPrice() / 100, 1, 100);
+		a = EClass.rndHalf(a);
+		if (a != 0)
 		{
-			EClass.pc.Pick(ThingGen.Create("ecopo", -1, -1).SetNum(num / 10 + 1), true, true);
+			EClass.pc.Pick(ThingGen.Create("ecopo").SetNum(a / 10 + 1));
 		}
 		t.Destroy();
 	}
-
-	public TraitRecycle recycle;
 }

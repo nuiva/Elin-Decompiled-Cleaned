@@ -1,22 +1,27 @@
-﻿using System;
 using Newtonsoft.Json;
 
 [JsonObject(MemberSerialization.OptIn)]
 public class Season : EClass
 {
-	public GameDate date
-	{
-		get
-		{
-			return EClass.world.date;
-		}
-	}
+	public const int Spring = 1;
+
+	public const int Summer = 2;
+
+	public const int Autumn = 3;
+
+	public const int Winter = 4;
+
+	public GameDate date => EClass.world.date;
 
 	public bool isSpring
 	{
 		get
 		{
-			return this.date.month >= 3 && this.date.month <= 5;
+			if (date.month >= 3)
+			{
+				return date.month <= 5;
+			}
+			return false;
 		}
 	}
 
@@ -24,7 +29,11 @@ public class Season : EClass
 	{
 		get
 		{
-			return this.date.month >= 6 && this.date.month <= 8;
+			if (date.month >= 6)
+			{
+				return date.month <= 8;
+			}
+			return false;
 		}
 	}
 
@@ -32,7 +41,11 @@ public class Season : EClass
 	{
 		get
 		{
-			return this.date.month >= 9 && this.date.month <= 11;
+			if (date.month >= 9)
+			{
+				return date.month <= 11;
+			}
+			return false;
 		}
 	}
 
@@ -40,7 +53,11 @@ public class Season : EClass
 	{
 		get
 		{
-			return this.date.month >= 12 || this.date.month <= 2;
+			if (date.month < 12)
+			{
+				return date.month <= 2;
+			}
+			return true;
 		}
 	}
 
@@ -67,29 +84,21 @@ public class Season : EClass
 
 	public void Next()
 	{
-		if (this.isSpring)
+		if (isSpring)
 		{
-			this.date.month = 6;
-			return;
+			date.month = 6;
 		}
-		if (this.isSummer)
+		else if (isSummer)
 		{
-			this.date.month = 9;
-			return;
+			date.month = 9;
 		}
-		if (this.isAutumn)
+		else if (isAutumn)
 		{
-			this.date.month = 12;
-			return;
+			date.month = 12;
 		}
-		this.date.month = 3;
+		else
+		{
+			date.month = 3;
+		}
 	}
-
-	public const int Spring = 1;
-
-	public const int Summer = 2;
-
-	public const int Autumn = 3;
-
-	public const int Winter = 4;
 }

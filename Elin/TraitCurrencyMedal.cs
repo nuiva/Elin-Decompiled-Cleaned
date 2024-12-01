@@ -1,5 +1,3 @@
-﻿using System;
-
 public class TraitCurrencyMedal : TraitCurrency
 {
 	public override void OnStepped(Chara c)
@@ -7,7 +5,7 @@ public class TraitCurrencyMedal : TraitCurrency
 		if (c.IsPC)
 		{
 			Msg.Say("spotMedalStep");
-			this.owner.SetPlaceState(PlaceState.roaming, false);
+			owner.SetPlaceState(PlaceState.roaming);
 		}
 	}
 }

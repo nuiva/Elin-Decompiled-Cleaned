@@ -1,5 +1,3 @@
-﻿using System;
-
 public class SourceSupplyType
 {
 	public class Row

@@ -1,26 +1,12 @@
-﻿using System;
-
 public class TraitDreamBug : Trait
 {
-	public override bool CanStack
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanStack => false;
 
-	public override bool IsBlendBase
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsBlendBase => true;
 
 	public override void OnCreate(int lv)
 	{
-		this.owner.c_charges = 3 + EClass.rnd(5);
+		owner.c_charges = 3 + EClass.rnd(5);
 	}
 
 	public override bool CanBlend(Thing t)
@@ -30,7 +16,7 @@ public class TraitDreamBug : Trait
 
 	public override void OnBlend(Thing t, Chara c)
 	{
-		TraitDrink.BlendLove(EClass.pc, t, true);
-		this.owner.ModNum(-1, true);
+		TraitDrink.BlendLove(EClass.pc, t, dream: true);
+		owner.ModNum(-1);
 	}
 }

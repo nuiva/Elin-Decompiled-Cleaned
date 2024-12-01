@@ -1,14 +1,6 @@
-﻿using System;
-
 public class TraitBJTable : TraitGamble
 {
-	public override string idMsg
-	{
-		get
-		{
-			return "use_card";
-		}
-	}
+	public override string idMsg => "use_card";
 
 	public override bool OnUse(Chara c)
 	{

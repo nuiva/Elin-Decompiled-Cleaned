@@ -1,5 +1,3 @@
-﻿using System;
-
 public class GridItem : EClass
 {
 	public virtual void SetButton(ButtonGrid b)

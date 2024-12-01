@@ -1,93 +1,65 @@
-﻿using System;
 using UnityEngine;
 
 public class TraitScrollMap : TraitScroll
 {
-	public string idSourceZone
+	public string idSourceZone => owner.GetStr(30);
+
+	public SourceZone.Row sourceZone => EClass.sources.zones.map[idSourceZone];
+
+	public override bool CanStack => false;
+
+	public bool IsBlank
 	{
 		get
 		{
-			return this.owner.GetStr(30, null);
+			if (!idSourceZone.IsEmpty())
+			{
+				return !EClass.sources.zones.map.ContainsKey(idSourceZone);
+			}
+			return true;
 		}
 	}
 
-	public SourceZone.Row sourceZone
-	{
-		get
-		{
-			return EClass.sources.zones.map[this.idSourceZone];
-		}
-	}
-
-	public override bool CanStack
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public bool HasPrefix => owner.GetInt(24) != 0;
 
 	public override int GetActDuration(Chara c)
 	{
 		return 5;
 	}
 
-	public bool IsBlank
-	{
-		get
-		{
-			return this.idSourceZone.IsEmpty() || !EClass.sources.zones.map.ContainsKey(this.idSourceZone);
-		}
-	}
-
-	public bool HasPrefix
-	{
-		get
-		{
-			return this.owner.GetInt(24, null) != 0;
-		}
-	}
-
 	public override void SetName(ref string s)
 	{
-		if (!this.IsBlank)
+		if (!IsBlank)
 		{
-			s = "_of".lang(this.sourceZone.GetName(), s, null, null, null);
-			if (this.HasPrefix)
+			s = "_of".lang(sourceZone.GetName(), s);
+			if (HasPrefix)
 			{
-				s = EClass.sources.zoneAffixes.map[this.owner.GetInt(24, null)].GetName() + Lang.space + s;
+				s = EClass.sources.zoneAffixes.map[owner.GetInt(24)].GetName() + Lang.space + s;
 			}
 		}
-		int @int = this.owner.GetInt(25, null);
+		int @int = owner.GetInt(25);
 		if (@int > 0)
 		{
-			s = s + " Lv " + (@int + 1).ToString();
+			s = s + " Lv " + (@int + 1);
 		}
 	}
 
 	public override void OnRead(Chara c)
 	{
-		int @int = this.owner.GetInt(25, null);
-		Zone zone = EClass.world.region.CreateRandomSite(EClass._zone, 8, this.idSourceZone, true, @int);
+		int @int = owner.GetInt(25);
+		Zone zone = EClass.world.region.CreateRandomSite(EClass._zone, 8, idSourceZone, updateMesh: true, @int);
 		if (zone == null)
 		{
 			Msg.Say("nothingHappens");
 			return;
 		}
 		zone.isKnown = true;
-		if (this.HasPrefix)
+		if (HasPrefix)
 		{
-			zone.idPrefix = this.owner.GetInt(24, null);
+			zone.idPrefix = owner.GetInt(24);
 		}
-		Msg.Say("discoverZone", zone.NameWithDangerLevel, null, null, null);
-		this.owner.ModNum(-1, true);
-		Debug.Log(string.Concat(new string[]
-		{
-			zone.Name,
-			"/",
-			zone.x.ToString(),
-			"/",
-			zone.y.ToString()
-		}));
+		Msg.Say("discoverZone", zone.NameWithDangerLevel);
+		owner.ModNum(-1);
+		Debug.Log(zone.Name + "/" + zone.x + "/" + zone.y);
 	}
 }

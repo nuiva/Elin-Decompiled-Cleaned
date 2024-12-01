@@ -1,20 +1,6 @@
-﻿using System;
-
 public class TraitDoorAuto : TraitDoorSwing
 {
-	public override bool UseLowblock
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool UseLowblock => true;
 
-	public override string idSound
-	{
-		get
-		{
-			return "door2";
-		}
-	}
+	public override string idSound => "door2";
 }

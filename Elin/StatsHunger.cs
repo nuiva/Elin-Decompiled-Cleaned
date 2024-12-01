@@ -1,15 +1,5 @@
-﻿using System;
-
 public class StatsHunger : Stats
 {
-	public override bool TrackPhaseChange
-	{
-		get
-		{
-			return BaseStats.CC.IsPC;
-		}
-	}
-
 	public const int Bloated = 0;
 
 	public const int Filled = 1;
@@ -21,4 +11,6 @@ public class StatsHunger : Stats
 	public const int VeryHungry = 4;
 
 	public const int Starving = 5;
+
+	public override bool TrackPhaseChange => BaseStats.CC.IsPC;
 }

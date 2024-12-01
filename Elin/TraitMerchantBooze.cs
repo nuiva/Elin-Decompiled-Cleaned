@@ -1,12 +1,4 @@
-﻿using System;
-
 public class TraitMerchantBooze : TraitMerchant
 {
-	public override ShopType ShopType
-	{
-		get
-		{
-			return ShopType.Booze;
-		}
-	}
+	public override ShopType ShopType => ShopType.Booze;
 }

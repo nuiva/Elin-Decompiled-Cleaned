@@ -1,13 +1,22 @@
-﻿using System;
 using System.Collections.Generic;
 
 public class AI_Read : AIAct
 {
+	public Card target;
+
 	public override bool LocalAct
 	{
 		get
 		{
-			return this.target == null || (!(this.target.trait is TraitStoryBook) && !(this.target.trait is TraitDeedRelocate));
+			if (target != null)
+			{
+				if (!(target.trait is TraitStoryBook))
+				{
+					return !(target.trait is TraitDeedRelocate);
+				}
+				return false;
+			}
+			return true;
 		}
 	}
 
@@ -15,79 +24,75 @@ public class AI_Read : AIAct
 	{
 		get
 		{
-			return this.target != null && this.target.isNPCProperty;
+			if (target != null)
+			{
+				return target.isNPCProperty;
+			}
+			return false;
 		}
 	}
 
 	public override void OnSetOwner()
 	{
-		if (this.target != null && this.target.trait.GetActDuration(this.owner) == 0 && this.target != null && (this.target.GetRootCard() == this.owner || this.target.parent == null))
+		if (target != null && target.trait.GetActDuration(owner) == 0 && target != null && (target.GetRootCard() == owner || target.parent == null))
 		{
-			this.owner.Say("read", this.owner, this.target.Duplicate(1), null, null);
-			Chara owner = this.owner;
-			this.target.trait.OnRead(this.owner);
-			Thing thing = this.target.Thing;
-			if (thing != null)
-			{
-				thing.Identify(owner.IsPCParty, IDTSource.Identify);
-			}
-			base.Success(null);
+			owner.Say("read", owner, target.Duplicate(1));
+			Chara chara = owner;
+			target.trait.OnRead(owner);
+			target.Thing?.Identify(chara.IsPCParty);
+			Success();
 		}
 	}
 
-	public override IEnumerable<AIAct.Status> Run()
+	public override IEnumerable<Status> Run()
 	{
-		if (this.target != null && (this.target.GetRootCard() == this.owner || this.target.parent == null))
+		if (target != null && (target.GetRootCard() == owner || target.parent == null))
 		{
-			this.owner.HoldCard(this.target, 1);
+			owner.HoldCard(target, 1);
 		}
-		else if (this.target != null)
+		else if (target != null)
 		{
-			yield return base.DoGrab(this.target, 1, false, null);
+			yield return DoGrab(target, 1);
 		}
 		else
 		{
-			yield return base.DoGrab<TraitDrink>();
+			yield return DoGrab<TraitDrink>();
 		}
-		this.target = this.owner.held;
-		if (this.target == null)
+		target = owner.held;
+		if (target == null)
 		{
-			yield return this.Cancel();
+			yield return Cancel();
 		}
-		if (this.target.trait.GetActDuration(this.owner) == 0)
+		if (target.trait.GetActDuration(owner) == 0)
 		{
-			this.owner.Say("read", this.owner, this.target.Duplicate(1), null, null);
-			this.target.trait.OnRead(this.owner);
-			yield return base.Success(null);
+			owner.Say("read", owner, target.Duplicate(1));
+			target.trait.OnRead(owner);
+			yield return Success();
 		}
 		Progress_Custom seq = new Progress_Custom
 		{
-			maxProgress = this.target.trait.GetActDuration(this.owner),
+			maxProgress = target.trait.GetActDuration(owner),
 			interval = 2,
-			canProgress = (() => this.owner.held == this.target),
-			onProgressBegin = delegate()
+			canProgress = () => owner.held == target,
+			onProgressBegin = delegate
 			{
-				this.owner.Say("read_start", this.owner, this.target.GetName(NameStyle.Full, 1), null);
-				this.owner.PlaySound("read_book", 1f, true);
+				owner.Say("read_start", owner, target.GetName(NameStyle.Full, 1));
+				owner.PlaySound("read_book");
 			},
 			onProgress = delegate(Progress_Custom p)
 			{
-				if (!this.target.trait.TryProgress(p) || this.target.GetRootCard() != this.owner)
+				if (!target.trait.TryProgress(p) || target.GetRootCard() != owner)
 				{
 					p.Cancel();
-					return;
 				}
 			},
-			onProgressComplete = delegate()
+			onProgressComplete = delegate
 			{
-				this.owner.PlaySound("read_book_end", 1f, true);
-				this.owner.Say("read_end", this.owner, this.target.GetName(NameStyle.Full, 1), null);
-				this.target.trait.OnRead(this.owner);
+				owner.PlaySound("read_book_end");
+				owner.Say("read_end", owner, target.GetName(NameStyle.Full, 1));
+				target.trait.OnRead(owner);
 			}
 		};
-		yield return base.Do(seq, null);
-		yield break;
+		yield return Do(seq);
 	}
-
-	public Card target;
 }

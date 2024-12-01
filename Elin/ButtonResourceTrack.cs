@@ -1,59 +1,52 @@
-﻿using System;
 using UnityEngine;
 
 public class ButtonResourceTrack : UIButton
 {
-	public UIResourceTrack track
-	{
-		get
-		{
-			return UIResourceTrack.Instance;
-		}
-	}
+	public PropSet prop;
+
+	public PropSetCategory cat;
+
+	public UIResourceTrack track => UIResourceTrack.Instance;
 
 	public void SetProp(string id)
 	{
 		Debug.Log(id);
-		this.prop = EClass._map.Stocked.cardMap.GetOrCreate(id, null);
+		prop = EClass._map.Stocked.cardMap.GetOrCreate(id);
 		CardRow cardRow = EClass.sources.cards.map[id];
-		this.tooltip.text = cardRow.GetName();
-		this.tooltip.enable = true;
-		cardRow.SetImage(this.icon, null, 0, true, 0, 0);
-		this.onRightClick = delegate()
+		tooltip.text = cardRow.GetName();
+		tooltip.enable = true;
+		cardRow.SetImage(icon);
+		onRightClick = delegate
 		{
 			EClass.player.trackedCards.Remove(id);
-			this.track._Refresh();
+			track._Refresh();
 			SE.Trash();
 		};
-		this.Refresh();
+		Refresh();
 	}
 
 	public void SetCat(string id)
 	{
-		this.cat = EClass._map.Stocked.categoryMap[id];
-		this.tooltip.text = this.cat.source.GetName();
-		this.tooltip.enable = true;
-		this.onRightClick = delegate()
+		cat = EClass._map.Stocked.categoryMap[id];
+		tooltip.text = cat.source.GetName();
+		tooltip.enable = true;
+		onRightClick = delegate
 		{
 			EClass.player.trackedCategories.Remove(id);
-			this.track._Refresh();
+			track._Refresh();
 			SE.Trash();
 		};
-		this.Refresh();
+		Refresh();
 	}
 
 	public void Refresh()
 	{
-		if (this.cat != null)
+		if (cat != null)
 		{
-			this.subText.SetText(this.cat.sum.ToString() ?? "");
+			subText.SetText(cat.sum.ToString() ?? "");
 			return;
 		}
-		int num = (this.prop != null) ? this.prop.num : 0;
-		this.subText.SetText(num.ToString() ?? "");
+		int num = ((prop != null) ? prop.num : 0);
+		subText.SetText(num.ToString() ?? "");
 	}
-
-	public PropSet prop;
-
-	public PropSetCategory cat;
 }

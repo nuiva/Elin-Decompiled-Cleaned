@@ -1,8 +1,15 @@
-﻿using System;
 using UnityEngine;
 
 public class LayerLocation : ELayer
 {
+	public UIList listZone;
+
+	public Sprite spriteFaction;
+
+	public Sprite spriteFaith;
+
+	public UIZoneInfo info;
+
 	public override bool HeaderIsListOf(int id)
 	{
 		return true;
@@ -12,57 +19,49 @@ public class LayerLocation : ELayer
 	{
 		if (window.windowIndex == 1)
 		{
-			this.RefreshZones();
+			RefreshZones();
 		}
 	}
 
 	public void RefreshZones()
 	{
-		UIList uilist = this.listZone;
-		uilist.Clear();
-		BaseList baseList = uilist;
-		UIList.Callback<Spatial, ItemGeneral> callback = new UIList.Callback<Spatial, ItemGeneral>();
-		callback.onClick = delegate(Spatial a, ItemGeneral b)
+		UIList uIList = listZone;
+		uIList.Clear();
+		uIList.callbacks = new UIList.Callback<Spatial, ItemGeneral>
 		{
-			if (!(a is Zone))
+			onClick = delegate(Spatial a, ItemGeneral b)
 			{
-				return;
-			}
-			this.info.SetZone(a as Zone);
-		};
-		callback.onInstantiate = delegate(Spatial a, ItemGeneral b)
-		{
-			b.SetSound(null);
-			b.SetMainText(a.Name, null, true);
-			b.Build();
-		};
-		baseList.callbacks = callback;
-		foreach (Spatial spatial in ELayer.game.spatials.map.Values)
-		{
-			if (spatial is Zone && spatial.parent == ELayer.pc.currentZone.Region)
-			{
-				if (this.windows[1].idTab == 0)
+				if (a is Zone)
 				{
-					if (!spatial.IsPlayerFaction)
-					{
-						continue;
-					}
+					info.SetZone(a as Zone);
 				}
-				else if (spatial.IsPlayerFaction)
+			},
+			onInstantiate = delegate(Spatial a, ItemGeneral b)
+			{
+				b.SetSound();
+				b.SetMainText(a.Name);
+				b.Build();
+			}
+		};
+		foreach (Spatial value in ELayer.game.spatials.map.Values)
+		{
+			if (!(value is Zone) || value.parent != ELayer.pc.currentZone.Region)
+			{
+				continue;
+			}
+			if (windows[1].idTab == 0)
+			{
+				if (!value.IsPlayerFaction)
 				{
 					continue;
 				}
-				uilist.Add(spatial);
 			}
+			else if (value.IsPlayerFaction)
+			{
+				continue;
+			}
+			uIList.Add(value);
 		}
-		uilist.Refresh(false);
+		uIList.Refresh();
 	}
-
-	public UIList listZone;
-
-	public Sprite spriteFaction;
-
-	public Sprite spriteFaith;
-
-	public UIZoneInfo info;
 }

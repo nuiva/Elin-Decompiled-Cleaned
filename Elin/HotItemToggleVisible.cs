@@ -1,50 +1,27 @@
-﻿using System;
 using UnityEngine;
 
 public class HotItemToggleVisible : HotItemIcon
 {
-	public override string Name
-	{
-		get
-		{
-			return "s_visible".lang();
-		}
-	}
+	public bool sticky;
 
-	public override string TextTip
-	{
-		get
-		{
-			return null;
-		}
-	}
+	public override string Name => "s_visible".lang();
 
-	public override bool KeepVisibleWhenHighlighted
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override string TextTip => null;
+
+	public override bool KeepVisibleWhenHighlighted => true;
+
+	public override bool UseIconForHighlight => true;
 
 	public override bool ShouldHighlight()
 	{
-		return this.sticky;
-	}
-
-	public override bool UseIconForHighlight
-	{
-		get
-		{
-			return true;
-		}
+		return sticky;
 	}
 
 	public override Sprite GetSprite(bool highlight)
 	{
 		if (!highlight)
 		{
-			return base.GetSprite();
+			return GetSprite();
 		}
 		return SpriteSheet.Get("icon_visible_highlight");
 	}
@@ -54,7 +31,7 @@ public class HotItemToggleVisible : HotItemIcon
 		ButtonHotItem buttonHotItem = b as ButtonHotItem;
 		if (!buttonHotItem.widget.Visible)
 		{
-			this.OnClick(buttonHotItem, buttonHotItem.widget.hotbar);
+			OnClick(buttonHotItem, buttonHotItem.widget.hotbar);
 		}
 	}
 
@@ -68,7 +45,7 @@ public class HotItemToggleVisible : HotItemIcon
 		if (b.widget.Visible)
 		{
 			SE.ClickGeneral();
-			this.sticky = !this.sticky;
+			sticky = !sticky;
 		}
 		else
 		{
@@ -77,6 +54,4 @@ public class HotItemToggleVisible : HotItemIcon
 		}
 		b.widget.RefreshHighlight();
 	}
-
-	public bool sticky;
 }

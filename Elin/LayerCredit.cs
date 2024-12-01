@@ -1,5 +1,3 @@
-﻿using System;
-
 public class LayerCredit : ELayer
 {
 	public void OnClickCredit()

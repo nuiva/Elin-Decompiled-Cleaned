@@ -1,5 +1,3 @@
-﻿using System;
-
 public class ConReload : Condition
 {
 	public override int GetPhase()
@@ -9,7 +7,7 @@ public class ConReload : Condition
 
 	public override void OnRemoved()
 	{
-		if (this.owner.IsPC)
+		if (owner.IsPC)
 		{
 			WidgetCurrentTool.RefreshCurrentHotItem();
 		}

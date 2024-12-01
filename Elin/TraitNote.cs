@@ -1,35 +1,34 @@
-﻿using System;
-
 public class TraitNote : Trait
 {
 	public override void OnCreate(int lv)
 	{
-		if (base.GetParam(1, null) != null)
+		if (GetParam(1) != null)
 		{
-			this.owner.c_note = base.GetParam(1, null);
+			owner.c_note = GetParam(1);
 		}
 	}
 
 	public override void OnImportMap()
 	{
-		this.OnCreate(EClass._zone.DangerLv);
+		OnCreate(EClass._zone.DangerLv);
 	}
 
 	public override void TrySetAct(ActPlan p)
 	{
-		if (p.altAction)
+		if (!p.altAction)
 		{
-			p.TrySetAct("actWrite", delegate()
-			{
-				Dialog.InputName("dialogWriteNote", this.owner.c_note, delegate(bool cancel, string text)
-				{
-					if (!cancel)
-					{
-						this.owner.c_note = text;
-					}
-				}, Dialog.InputType.Default);
-				return false;
-			}, this.owner, null, 1, false, true, false);
+			return;
 		}
+		p.TrySetAct("actWrite", delegate
+		{
+			Dialog.InputName("dialogWriteNote", owner.c_note, delegate(bool cancel, string text)
+			{
+				if (!cancel)
+				{
+					owner.c_note = text;
+				}
+			});
+			return false;
+		}, owner);
 	}
 }

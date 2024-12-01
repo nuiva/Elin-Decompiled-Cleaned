@@ -1,40 +1,20 @@
-﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class TraitCanvas : Trait
 {
-	public virtual bool PointFilter
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public virtual bool PointFilter => false;
 
-	public virtual float Scale
-	{
-		get
-		{
-			return 1f;
-		}
-	}
+	public virtual float Scale => 1f;
 
-	public virtual TraitPainter.Type CanvasType
-	{
-		get
-		{
-			return TraitPainter.Type.Paint;
-		}
-	}
+	public virtual TraitPainter.Type CanvasType => TraitPainter.Type.Paint;
 
 	public override void OnSetCardGrid(ButtonGrid b)
 	{
-		if (this.owner.c_textureData == null)
+		if (owner.c_textureData != null)
 		{
-			return;
+			Sprite paintSprite = owner.GetPaintSprite();
+			b.Attach<Image>("canvas", rightAttach: false).sprite = paintSprite;
 		}
-		Sprite paintSprite = this.owner.GetPaintSprite();
-		b.Attach<Image>("canvas", false).sprite = paintSprite;
 	}
 }

@@ -1,23 +1,22 @@
-﻿using System;
 using System.IO;
 
 public class TraitBlueprint : TraitScroll
 {
-	public override bool CanStackTo(Thing to)
-	{
-		return this.path == to.GetStr(54, null);
-	}
-
 	public string path
 	{
 		get
 		{
-			return this.owner.GetStr(54, null);
+			return owner.GetStr(54);
 		}
 		set
 		{
-			this.owner.SetStr(54, value);
+			owner.SetStr(54, value);
 		}
+	}
+
+	public override bool CanStackTo(Thing to)
+	{
+		return path == to.GetStr(54);
 	}
 
 	public override void OnRead(Chara c)
@@ -27,20 +26,20 @@ public class TraitBlueprint : TraitScroll
 			Msg.Say("skillbook_invalidZone");
 			return;
 		}
-		if (!this.path.IsEmpty() && !File.Exists(this.path))
+		if (!path.IsEmpty() && !File.Exists(path))
 		{
 			Msg.SayNothingHappen();
 			return;
 		}
-		ActionMode.Blueprint.Activate(true, false);
+		ActionMode.Blueprint.Activate();
 		ActionMode.Blueprint.SetBlueprint(this);
 	}
 
 	public override void SetName(ref string s)
 	{
-		if (!this.owner.c_idRefName.IsEmpty())
+		if (!owner.c_idRefName.IsEmpty())
 		{
-			s = "_written".lang(this.owner.c_idRefName, s, null, null, null);
+			s = "_written".lang(owner.c_idRefName, s);
 		}
 	}
 }

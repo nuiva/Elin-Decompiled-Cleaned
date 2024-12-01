@@ -1,4 +1,5 @@
-﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 public class FEAT
 {
@@ -218,115 +219,542 @@ public class FEAT
 
 	public const int featPaladin = 1407;
 
-	public static readonly int[] IDS = new int[]
+	public static readonly int[] IDS = new int[108]
 	{
-		1612,
-		1620,
-		1621,
-		1627,
-		1623,
-		1624,
-		1625,
-		1626,
-		1622,
-		1611,
-		1418,
-		1421,
-		1420,
-		1419,
-		1417,
-		1416,
-		1415,
-		1414,
-		1413,
-		1412,
-		1628,
-		1610,
-		1629,
-		1645,
-		1631,
-		1411,
-		1657,
-		1656,
-		1655,
-		1654,
-		1652,
-		1651,
-		1650,
-		1649,
-		1648,
-		1630,
-		1647,
-		1644,
-		1643,
-		1642,
-		1641,
-		1640,
-		1636,
-		1635,
-		1634,
-		1633,
-		1632,
-		1646,
-		1410,
-		1653,
-		1408,
-		1223,
-		1224,
-		1225,
-		1226,
-		1227,
-		1228,
-		1229,
-		1230,
-		1232,
-		1222,
-		1233,
-		1235,
-		1300,
-		1305,
-		1310,
-		1315,
-		1320,
-		1325,
-		1330,
-		1335,
-		1234,
-		1340,
-		1221,
-		1219,
-		1409,
-		1200,
-		1201,
-		1202,
-		1203,
-		1204,
-		1205,
-		1206,
-		1207,
-		1220,
-		1208,
-		1210,
-		1211,
-		1212,
-		1213,
-		1214,
-		1215,
-		1216,
-		1217,
-		1218,
-		1209,
-		1345,
-		1231,
-		1350,
-		1355,
-		1400,
-		1402,
-		1403,
-		1404,
-		1405,
-		1406,
-		1401,
-		1407
+		1612, 1620, 1621, 1627, 1623, 1624, 1625, 1626, 1622, 1611,
+		1418, 1421, 1420, 1419, 1417, 1416, 1415, 1414, 1413, 1412,
+		1628, 1610, 1629, 1645, 1631, 1411, 1657, 1656, 1655, 1654,
+		1652, 1651, 1650, 1649, 1648, 1630, 1647, 1644, 1643, 1642,
+		1641, 1640, 1636, 1635, 1634, 1633, 1632, 1646, 1410, 1653,
+		1408, 1223, 1224, 1225, 1226, 1227, 1228, 1229, 1230, 1232,
+		1222, 1233, 1235, 1300, 1305, 1310, 1315, 1320, 1325, 1330,
+		1335, 1234, 1340, 1221, 1219, 1409, 1200, 1201, 1202, 1203,
+		1204, 1205, 1206, 1207, 1220, 1208, 1210, 1211, 1212, 1213,
+		1214, 1215, 1216, 1217, 1218, 1209, 1345, 1231, 1350, 1355,
+		1400, 1402, 1403, 1404, 1405, 1406, 1401, 1407
 	};
+}
+public class Feat : Element
+{
+	public static List<string> hints = new List<string>();
+
+	public static string[] featRef = new string[5];
+
+	public override bool ShowBonuses => false;
+
+	public override string Name => base.source.GetText().SplitNewline().TryGet(base.Value - 1);
+
+	public override string FullName
+	{
+		get
+		{
+			string[] array = base.source.GetText().SplitNewline();
+			return array.TryGet(base.Value - 1) + ((base.source.max > 1 && array.Length == 1 && base.Value > 1) ? (" " + base.Value) : "");
+		}
+	}
+
+	public override bool ShowXP => false;
+
+	public override bool ShowValue => false;
+
+	public override int CostLearn => base.source.cost.TryGet(base.Value - 1);
+
+	public override bool CanLink(ElementContainer owner)
+	{
+		return !base.IsGlobalElement;
+	}
+
+	public override Sprite GetIcon(string suffix = "")
+	{
+		return SpriteSheet.Get("Media/Graphics/Icon/Element/icon_elements", "ele_Feat");
+	}
+
+	public override void OnWriteNote(UINote n, ElementContainer owner)
+	{
+		Apply(base.Value, owner, hint: true);
+		foreach (string hint in hints)
+		{
+			n.AddText("_bullet".lang() + hint);
+		}
+	}
+
+	public string GetHint(ElementContainer owner)
+	{
+		string text = "";
+		Apply(base.Value, owner, hint: true);
+		foreach (string hint in hints)
+		{
+			text = text + hint.StripLastPun() + ", ";
+		}
+		return text.TrimEnd(' ').TrimEnd(',');
+	}
+
+	public bool IsAvailable(ElementContainer owner, int a = 1)
+	{
+		if (base.source.req.Length != 0)
+		{
+			Element element = owner.GetElement(base.source.req[0]);
+			if (element == null || element.ValueWithoutLink < ((base.source.req.Length == 1) ? 1 : base.source.req[Mathf.Clamp(a, 1, base.source.req.Length - 1)].ToInt()))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public List<string> Apply(int a, ElementContainer owner, bool hint = false)
+	{
+		if (hint)
+		{
+			hints.Clear();
+		}
+		int value = base.Value;
+		int A = Mathf.Abs(a);
+		int invert = ((a >= 0) ? 1 : (-1));
+		if (hint)
+		{
+			featRef[0] = a.ToString() ?? "";
+			featRef[1] = a.ToString() ?? "";
+		}
+		Chara chara = owner.Chara;
+		int num = vPotential;
+		if (!hint && a > 0 && chara != null)
+		{
+			num = (vPotential = chara.LV);
+		}
+		switch (id)
+		{
+		case 1206:
+			ModBase(78, -a * 10, hide: false);
+			break;
+		case 1642:
+			featRef[0] = ((a == 1) ? 10 : ((a == 2) ? 20 : 30)).ToString() ?? "";
+			break;
+		case 1643:
+			featRef[0] = ((a == 1) ? 1 : ((a == 2) ? 3 : 5)).ToString() ?? "";
+			break;
+		case 1610:
+			ModBase(60, a * 4, hide: false);
+			break;
+		case 1611:
+			ModBase(61, a * 4, hide: false);
+			break;
+		case 1612:
+			ModBase(62, a * 4, hide: false);
+			break;
+		case 1620:
+			ModAttribute(70);
+			break;
+		case 1621:
+			ModAttribute(72);
+			break;
+		case 1622:
+			ModAttribute(71);
+			break;
+		case 1623:
+			ModAttribute(73);
+			break;
+		case 1626:
+			ModAttribute(75);
+			break;
+		case 1625:
+			ModAttribute(76);
+			break;
+		case 1627:
+			ModAttribute(77);
+			break;
+		case 1624:
+			ModAttribute(74);
+			break;
+		case 1629:
+			ModBase(79, a * 5, hide: false);
+			break;
+		case 1630:
+			ModBase(65, ((A == 1) ? 2 : ((A == 2) ? 5 : 10)) * invert, hide: false);
+			break;
+		case 1631:
+			ModBase(64, ((A == 1) ? 2 : ((A == 2) ? 5 : 10)) * invert, hide: false);
+			break;
+		case 1632:
+			ModBase(150, a * 2, hide: false);
+			break;
+		case 1633:
+			ModBase(210, a * 3, hide: false);
+			ModBase(402, ((A == 3) ? 1 : 0) * invert, hide: false);
+			break;
+		case 1634:
+			ModBase(291, a * 4, hide: false);
+			break;
+		case 1635:
+			ModBase(100, a * 3, hide: false);
+			break;
+		case 1636:
+			ModBase(306, a * 4, hide: false);
+			break;
+		case 1628:
+			ModBase(78, a * 2, hide: false);
+			break;
+		case 1640:
+			ModBase(77, a * 2, hide: false);
+			break;
+		case 1400:
+			featRef[0] = (a * 10).ToString() ?? "";
+			break;
+		case 1404:
+			featRef[0] = (a * 10).ToString() ?? "";
+			break;
+		case 1401:
+			ModBase(78, a * 15, hide: false);
+			break;
+		case 1406:
+			featRef[0] = (a * 20).ToString() ?? "";
+			featRef[1] = (a * 5).ToString() ?? "";
+			break;
+		case 1644:
+			featRef[0] = a.ToString() ?? "";
+			if (!hint && a > 0)
+			{
+				owner.Chara.AddRandomBodyPart(owner.Chara.IsPC);
+				if (owner.Chara.IsPC && (bool)WidgetEquip.Instance)
+				{
+					WidgetEquip.Instance.Rebuild();
+				}
+			}
+			ModBase(60, (A > 5) ? ((A - 5) * -3 * invert) : 0, hide: false);
+			ModBase(79, (A > 5) ? ((A - 5) * -5 * invert) : 0, hide: false);
+			ModBase(77, (A > 5) ? ((A - 5) * -3 * invert) : 0, hide: false);
+			break;
+		case 1230:
+			ModBase(60, A * 2 * invert, hide: false);
+			ModBase(79, A * 3 * invert, hide: false);
+			break;
+		case 1204:
+			ModBase(64, a * 50, hide: true);
+			ModBase(401, a, hide: false);
+			break;
+		case 1202:
+			ModBase(403, a * 20, hide: true);
+			break;
+		case 1210:
+			ModBase(955, a * 5, hide: false);
+			ModBase(953, a * 10, hide: false);
+			ModBase(958, a * 5, hide: false);
+			ModBase(956, a * 10, hide: false);
+			ModBase(950, a * -5, hide: false);
+			break;
+		case 1233:
+			ModBase(954, a * 10, hide: false);
+			ModBase(423, a, hide: false);
+			ModBase(425, a, hide: false);
+			ModBase(424, a, hide: false);
+			ModBase(421, a, hide: false);
+			break;
+		case 1226:
+			ModBase(955, a * 5, hide: false);
+			ModBase(953, a * 5, hide: false);
+			break;
+		case 1212:
+			ModBase(961, a * 5, hide: false);
+			ModBase(953, a * 5, hide: false);
+			ModBase(958, a * 5, hide: false);
+			ModBase(956, a * 5, hide: false);
+			ModBase(954, a * 5, hide: false);
+			ModBase(957, a * 5, hide: false);
+			ModBase(959, a * 5, hide: false);
+			break;
+		case 1213:
+			ModBase(962, a * 20, hide: false);
+			break;
+		case 1224:
+			ModBase(951, a * 15, hide: false);
+			break;
+		case 1217:
+			ModBase(952, a * -10, hide: false);
+			ModBase(955, a * 20, hide: false);
+			ModBase(964, a * 20, hide: false);
+			break;
+		case 1218:
+			ModBase(950, a / 40, hide: false);
+			ModBase(952, a / 40, hide: false);
+			ModBase(955, a / 40, hide: false);
+			ModBase(953, a / 40, hide: false);
+			ModBase(958, a / 40, hide: false);
+			ModBase(956, a / 40, hide: false);
+			ModBase(954, a / 40, hide: false);
+			ModBase(959, a / 40, hide: false);
+			ModBase(964, a / 40, hide: false);
+			ModBase(961, a / 40, hide: false);
+			break;
+		case 1221:
+			ModBase(964, a * 20, hide: false);
+			break;
+		case 1223:
+			ModBase(963, a * 20, hide: false);
+			break;
+		case 1216:
+			ModBase(6020, a, hide: false);
+			break;
+		case 1415:
+			ModBase(60, a * 15, hide: false);
+			ModBase(79, a * 5, hide: false);
+			ModBase(953, a * 3, hide: false);
+			ModBase(961, a, hide: false);
+			ModBase(960, a, hide: false);
+			break;
+		case 1419:
+			ModPotential(101, a * 50);
+			ModPotential(111, a * 50);
+			ModPotential(103, a * 50);
+			ModPotential(106, a * 50);
+			ModPotential(122, a * 50);
+			ModPotential(120, a * 50);
+			ModPotential(123, a * 50);
+			break;
+		case 1510:
+			ModBase(65, a * 3, hide: false);
+			break;
+		case 1511:
+			ModBase(65, -a * 3, hide: false);
+			break;
+		case 1512:
+			ModBase(73, a * 5, hide: false);
+			break;
+		case 1513:
+			ModBase(73, -a * 5, hide: false);
+			break;
+		case 1514:
+			ModBase(72, a * 3, hide: false);
+			break;
+		case 1515:
+			ModBase(72, -a * 3, hide: false);
+			break;
+		case 1516:
+			ModBase(300, a * 4, hide: false);
+			break;
+		case 1517:
+			ModBase(300, -a * 4, hide: false);
+			break;
+		case 1518:
+			ModBase(79, a * 5, hide: false);
+			break;
+		case 1519:
+			ModBase(79, -a * 5, hide: false);
+			break;
+		case 1520:
+			ModBase(70, a * 3, hide: false);
+			break;
+		case 1521:
+			ModBase(70, -a * 3, hide: false);
+			break;
+		case 1522:
+			ModBase(77, a * 5, hide: false);
+			break;
+		case 1523:
+			ModBase(77, -a * 5, hide: false);
+			break;
+		case 1524:
+			ModBase(307, a * 4, hide: false);
+			break;
+		case 1525:
+			ModBase(307, -a * 4, hide: false);
+			break;
+		case 1526:
+			ModBase(951, a * 5, hide: false);
+			ModBase(950, -a * 5, hide: false);
+			break;
+		case 1527:
+			ModBase(951, -a * 5, hide: false);
+			ModBase(950, a * 5, hide: false);
+			break;
+		case 1528:
+			ModBase(952, a * 5, hide: false);
+			break;
+		case 1529:
+			ModBase(952, -a * 5, hide: false);
+			break;
+		case 1530:
+			ModBase(960, a * 5, hide: false);
+			ModBase(956, -a * 5, hide: false);
+			break;
+		case 1531:
+			ModBase(960, -a * 5, hide: false);
+			ModBase(956, a * 5, hide: false);
+			break;
+		case 1300:
+		case 1305:
+		case 1310:
+		case 1315:
+		case 1320:
+		case 1325:
+		case 1330:
+		case 1335:
+		case 1340:
+		case 1345:
+		case 1350:
+		case 1355:
+			GodHint();
+			break;
+		case 1550:
+			ModBase(404, -a * 10, hide: false);
+			break;
+		case 1551:
+			ModBase(77, -a * (4 + num / 5), hide: false);
+			break;
+		case 1552:
+			ModBase(79, a * Mathf.Min(30 + num / 5, 100), hide: false);
+			if (!hint && a > 0)
+			{
+				chara?.body.UnequipAll(39);
+			}
+			break;
+		case 1553:
+			ModBase(73, a * (5 + num / 3), hide: false);
+			ModBase(77, -a * (5 + num / 3), hide: false);
+			break;
+		case 1554:
+			ModBase(404, a * 10, hide: false);
+			ModBase(401, a, hide: false);
+			ModBase(79, a * (10 + num / 5), hide: false);
+			if (!hint && a > 0)
+			{
+				chara?.body.UnequipAll(33);
+			}
+			break;
+		case 1555:
+			ModBase(65, a * (12 + num), hide: false);
+			ModBase(77, -a * (5 + num / 5), hide: false);
+			if (!hint && a > 0)
+			{
+				chara?.body.UnequipAll(31);
+			}
+			break;
+		case 1556:
+			ModBase(64, -a * (10 + num), hide: false);
+			ModBase(67, a * (5 + num / 2), hide: false);
+			break;
+		case 1557:
+			ModBase(71, -a * (5 + num / 3), hide: false);
+			ModBase(72, -a * (4 + num / 4), hide: false);
+			ModBase(74, a * (6 + num / 2), hide: false);
+			ModBase(75, a * (2 + num / 6), hide: false);
+			break;
+		case 1560:
+			ModBase(60, -a * 15, hide: false);
+			ModBase(70, -a * (4 + num / 3), hide: false);
+			break;
+		case 1561:
+			ModBase(61, -a * 15, hide: false);
+			ModBase(76, -a * (4 + num / 3), hide: false);
+			break;
+		case 1562:
+			ModBase(65, a * (15 + num / 2), hide: false);
+			ModBase(79, -a * (10 + num / 5), hide: false);
+			break;
+		case 1563:
+			ModBase(77, -a * (3 + num / 4), hide: false);
+			break;
+		case 1564:
+			ModBase(961, a * 5, hide: false);
+			break;
+		case 1565:
+			ModBase(955, a * 20, hide: false);
+			break;
+		}
+		if (hint)
+		{
+			string text = base.source.GetText("textExtra");
+			if (!text.IsEmpty())
+			{
+				string text2 = text.SplitNewline().TryGet(value - 1, 99);
+				if (!text2.IsEmpty())
+				{
+					int num2 = 0;
+					string[] array = text2.Split(',');
+					for (int i = 0; i < array.Length; i++)
+					{
+						string item = array[i].Replace("#1", featRef[num2]);
+						hints.Add(item);
+						num2++;
+					}
+				}
+			}
+		}
+		return hints;
+		void GodHint()
+		{
+			if (!hint)
+			{
+				return;
+			}
+			foreach (Element value2 in owner.Card.Chara.faithElements.dict.Values)
+			{
+				if (value2.source.id != id)
+				{
+					NoteElement(value2.id, value2.Value);
+				}
+			}
+		}
+		void ModAttribute(int ele)
+		{
+			if (!hint)
+			{
+				Debug.Log(A);
+				Debug.Log(((A == 1) ? 2 : ((A == 2) ? 4 : 5)) * invert);
+			}
+			ModBase(ele, ((A == 1) ? 2 : ((A == 2) ? 4 : 5)) * invert, hide: false);
+			ModPotential(ele, a * 10);
+		}
+		void ModBase(int ele, int _v, bool hide)
+		{
+			if (!hint)
+			{
+				owner.ModBase(ele, _v);
+			}
+			if (!hide && _v != 0)
+			{
+				NoteElement(ele, _v);
+			}
+		}
+		void ModPotential(int ele, int _v)
+		{
+			if (!hint)
+			{
+				owner.ModPotential(ele, _v);
+			}
+			Note("modPotential".lang(EClass.sources.elements.map[ele].GetName(), "+" + _v + "%"));
+		}
+		void Note(string s)
+		{
+			if (hint)
+			{
+				hints.Add(s);
+			}
+		}
+		void NoteElement(int ele, int a)
+		{
+			SourceElement.Row row = EClass.sources.elements.map[ele];
+			if (row.category == "ability")
+			{
+				Note("hintLearnAbility".lang(row.GetName().ToTitleCase()));
+			}
+			else if (row.tag.Contains("flag"))
+			{
+				Note(row.GetName());
+			}
+			else
+			{
+				string @ref = ((a < 0) ? "" : "+") + a;
+				if (row.category == "resist")
+				{
+					int num3 = 0;
+					@ref = ((a > 0) ? "+" : "-").Repeat(Mathf.Clamp(Mathf.Abs(a) / 5 + num3, 1, 5));
+					Note("modValueRes".lang(row.GetName(), @ref));
+				}
+				else
+				{
+					Note("modValue".lang(row.GetName(), @ref));
+				}
+			}
+		}
+	}
 }

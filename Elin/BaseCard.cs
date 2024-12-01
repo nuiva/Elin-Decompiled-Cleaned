@@ -1,119 +1,8 @@
-﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class BaseCard : EClass
 {
-	public bool GetBool(int id)
-	{
-		return this.GetInt(id, null) != 0;
-	}
-
-	public void SetBool(int id, bool enable)
-	{
-		this.SetInt(id, enable ? 1 : 0);
-	}
-
-	public int GetInt(int id, int? defaultInt = null)
-	{
-		int result;
-		if (this.mapInt.TryGetValue(id, out result))
-		{
-			return result;
-		}
-		return defaultInt.GetValueOrDefault();
-	}
-
-	public void AddInt(int id, int value)
-	{
-		this.SetInt(id, this.GetInt(id, null) + value);
-	}
-
-	public void SetInt(int id, int value = 0)
-	{
-		if (value == 0)
-		{
-			if (this.mapInt.ContainsKey(id))
-			{
-				this.mapInt.Remove(id);
-			}
-			return;
-		}
-		this.mapInt[id] = value;
-	}
-
-	public string GetStr(int id, string defaultStr = null)
-	{
-		string result;
-		if (this.mapStr.TryGetValue(id, out result))
-		{
-			return result;
-		}
-		return defaultStr;
-	}
-
-	public void SetStr(int id, string value = null)
-	{
-		if (value.IsEmpty())
-		{
-			if (this.mapStr.ContainsKey(id))
-			{
-				this.mapStr.Remove(id);
-			}
-			return;
-		}
-		this.mapStr[id] = value;
-	}
-
-	public T GetObj<T>(int id)
-	{
-		if (this.mapObj == null)
-		{
-			return default(T);
-		}
-		object obj;
-		if (this.mapObj.TryGetValue(id, out obj) && obj is T)
-		{
-			return (T)((object)obj);
-		}
-		return default(T);
-	}
-
-	public void SetObj(int id, object o)
-	{
-		if (this.mapObj == null)
-		{
-			this.mapObj = new Dictionary<int, object>();
-		}
-		if (o == null)
-		{
-			if (this.mapObj.ContainsKey(id))
-			{
-				this.mapObj.Remove(id);
-			}
-			return;
-		}
-		this.mapObj[id] = o;
-	}
-
-	public T SetObj<T>(int id, object o)
-	{
-		if (this.mapObj == null)
-		{
-			this.mapObj = new Dictionary<int, object>();
-		}
-		if (o == null)
-		{
-			if (this.mapStr.ContainsKey(id))
-			{
-				this.mapObj.Remove(id);
-			}
-			return default(T);
-		}
-		this.mapObj[id] = o;
-		return (T)((object)o);
-	}
-
 	[JsonProperty(PropertyName = "X")]
 	public Dictionary<int, object> mapObj = new Dictionary<int, object>();
 
@@ -122,4 +11,117 @@ public class BaseCard : EClass
 
 	[JsonProperty(PropertyName = "Z")]
 	public Dictionary<int, string> mapStr = new Dictionary<int, string>();
+
+	public bool GetBool(int id)
+	{
+		return GetInt(id) != 0;
+	}
+
+	public void SetBool(int id, bool enable)
+	{
+		SetInt(id, enable ? 1 : 0);
+	}
+
+	public int GetInt(int id, int? defaultInt = null)
+	{
+		if (mapInt.TryGetValue(id, out var value))
+		{
+			return value;
+		}
+		return defaultInt.GetValueOrDefault();
+	}
+
+	public void AddInt(int id, int value)
+	{
+		SetInt(id, GetInt(id) + value);
+	}
+
+	public void SetInt(int id, int value = 0)
+	{
+		if (value == 0)
+		{
+			if (mapInt.ContainsKey(id))
+			{
+				mapInt.Remove(id);
+			}
+		}
+		else
+		{
+			mapInt[id] = value;
+		}
+	}
+
+	public string GetStr(int id, string defaultStr = null)
+	{
+		if (mapStr.TryGetValue(id, out var value))
+		{
+			return value;
+		}
+		return defaultStr;
+	}
+
+	public void SetStr(int id, string value = null)
+	{
+		if (value.IsEmpty())
+		{
+			if (mapStr.ContainsKey(id))
+			{
+				mapStr.Remove(id);
+			}
+		}
+		else
+		{
+			mapStr[id] = value;
+		}
+	}
+
+	public T GetObj<T>(int id)
+	{
+		if (mapObj == null)
+		{
+			return default(T);
+		}
+		if (mapObj.TryGetValue(id, out var value) && value is T)
+		{
+			return (T)value;
+		}
+		return default(T);
+	}
+
+	public void SetObj(int id, object o)
+	{
+		if (mapObj == null)
+		{
+			mapObj = new Dictionary<int, object>();
+		}
+		if (o == null)
+		{
+			if (mapObj.ContainsKey(id))
+			{
+				mapObj.Remove(id);
+			}
+		}
+		else
+		{
+			mapObj[id] = o;
+		}
+	}
+
+	public T SetObj<T>(int id, object o)
+	{
+		if (mapObj == null)
+		{
+			mapObj = new Dictionary<int, object>();
+		}
+		if (o == null)
+		{
+			if (mapStr.ContainsKey(id))
+			{
+				mapObj.Remove(id);
+			}
+			return default(T);
+		}
+		mapObj[id] = o;
+		return (T)o;
+	}
 }

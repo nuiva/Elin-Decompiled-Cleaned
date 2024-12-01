@@ -1,34 +1,14 @@
-﻿using System;
-
 public class InvOwnerIdentify : InvOwnerEffect
 {
-	public override bool CanTargetAlly
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanTargetAlly => true;
 
-	public override string langTransfer
-	{
-		get
-		{
-			return "invIdentify";
-		}
-	}
+	public override string langTransfer => "invIdentify";
 
-	public override string langWhat
-	{
-		get
-		{
-			return "identify_what";
-		}
-	}
+	public override string langWhat => "identify_what";
 
 	public override Thing CreateDefaultContainer()
 	{
-		return ThingGen.CreateScroll(this.superior ? 8232 : 8230, 1);
+		return ThingGen.CreateScroll(superior ? 8232 : 8230);
 	}
 
 	public override bool ShouldShowGuide(Thing t)
@@ -38,20 +18,17 @@ public class InvOwnerIdentify : InvOwnerEffect
 
 	public override void _OnProcess(Thing t)
 	{
-		ActEffect.Proc(this.superior ? EffectId.GreaterIdentify : EffectId.Identify, 100, this.state, t.GetRootCard(), t, default(ActRef));
-		if (t.GetRootCard().IsPC)
+		ActEffect.Proc(superior ? EffectId.GreaterIdentify : EffectId.Identify, 100, state, t.GetRootCard(), t);
+		if (!t.GetRootCard().IsPC)
+		{
+			return;
+		}
+		EClass.core.actionsNextFrame.Add(delegate
 		{
 			EClass.core.actionsNextFrame.Add(delegate
 			{
-				EClass.core.actionsNextFrame.Add(delegate
-				{
-					UIButton.TryShowTip(null, true, false);
-				});
+				UIButton.TryShowTip(null, highlight: true, ignoreWhenRightClick: false);
 			});
-		}
-	}
-
-	public InvOwnerIdentify() : base(null, null, CurrencyType.Money)
-	{
+		});
 	}
 }

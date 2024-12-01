@@ -1,5 +1,3 @@
-﻿using System;
-
 public enum Hostility
 {
 	Enemy = 1,

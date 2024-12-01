@@ -1,79 +1,73 @@
-﻿using System;
+using System;
 
 public class InspectGroupThing : InspectGroup<Thing>
 {
-	public override string MultiName
-	{
-		get
-		{
-			return "Thing";
-		}
-	}
+	public override string MultiName => "Thing";
 
 	public override void OnSetActions()
 	{
 		Thing first = base.FirstTarget;
-		base.Add("objInfo", "", delegate()
+		Add("objInfo", "", (Action)delegate
 		{
-			EClass.ui.AddLayer<LayerInfo>().Set(first, false);
-		}, false, 0, false);
+			EClass.ui.AddLayer<LayerInfo>().Set(first);
+		}, sound: false, 0, auto: false);
 		if (first.trait is TraitQuestBoard)
 		{
-			base.Add("quest", "", delegate()
+			Add("quest", "", (Action)delegate
 			{
 				EClass.ui.AddLayer<LayerQuestBoard>();
-			}, false, 20, true);
-			base.Add("hire", "", delegate()
+			}, sound: false, 20, auto: true);
+			Add("hire", "", (Action)delegate
 			{
 				EClass.ui.AddLayer<LayerHire>();
-			}, false, 20, true);
+			}, sound: false, 20, auto: true);
 		}
 		if (first.trait is TraitGacha)
 		{
-			base.Add("gacha", "", delegate()
+			Add("gacha", "", (Action)delegate
 			{
 				EClass.ui.AddLayer<LayerGacha>();
-			}, false, 10, true);
+			}, sound: false, 10, auto: true);
 		}
 		if (first.trait.IsFactory)
 		{
-			base.Add("craft", "icon_Inspect", delegate()
+			Add("craft", "icon_Inspect", (Action)delegate
 			{
 				EClass.ui.AddLayer<LayerCraft>().SetFactory(first);
-			}, false, 100, true);
+			}, sound: false, 100, auto: true);
 		}
 		if (first.IsInstalled)
 		{
-			base.Add("uninstall", "", delegate()
+			Add("uninstall", "", (Action)delegate
 			{
-				first.SetPlaceState(PlaceState.roaming, false);
-			}, false, 0, false);
+				first.SetPlaceState(PlaceState.roaming);
+			}, sound: false, 0, auto: false);
 		}
-		base.Add("install", "", delegate()
+		Add("install", "", (Action)delegate
 		{
 			ActionMode.Inspect.Activate(first);
-		}, false, 0, false);
+		}, sound: false, 0, auto: false);
 		if (first.isDeconstructing)
 		{
-			base.Add("cancel".lang() + "\n(" + "Deconstruct".lang() + ")", "", delegate(Thing t)
+			Add("cancel".lang() + "\n(" + "Deconstruct".lang() + ")", "", delegate(Thing t)
 			{
-				t.SetDeconstruct(false);
-			}, true, 0, false);
+				t.SetDeconstruct(deconstruct: false);
+			}, sound: true);
 		}
 		else
 		{
-			base.Add("Deconstruct", "", delegate(Thing t)
+			Add("Deconstruct", "", delegate(Thing t)
 			{
-				t.SetDeconstruct(true);
-			}, true, 0, false);
+				t.SetDeconstruct(deconstruct: true);
+			}, sound: true);
 		}
 		AM_Picker.Result r = ActionMode.Picker.TestThing(first);
 		if (r.IsValid)
 		{
-			base.Add("Copy", "", delegate()
+			Add("Copy", "", (Action)delegate
 			{
 				ActionMode.Picker.Select(r);
-			}, false, 0, false);
+			}, sound: false, 0, auto: false);
 		}
 	}
 }

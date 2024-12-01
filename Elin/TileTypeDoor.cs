@@ -1,52 +1,24 @@
-﻿using System;
-
 public class TileTypeDoor : TileTypeObj
 {
-	public override string LangPlaceType
-	{
-		get
-		{
-			return "place_Door";
-		}
-	}
+	public override string LangPlaceType => "place_Door";
 
-	public override bool FreeStyle
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool FreeStyle => false;
 
-	public override bool CanStack
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanStack => false;
 
-	public override bool CanBuiltOnBlock
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanBuiltOnBlock => true;
 
-	public override bool IsDoor
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsDoor => true;
 
 	public override bool CanBeHeld
 	{
 		get
 		{
-			return EClass._zone.IsPCFaction || EClass._zone is Zone_Tent;
+			if (!EClass._zone.IsPCFaction)
+			{
+				return EClass._zone is Zone_Tent;
+			}
+			return true;
 		}
 	}
 }

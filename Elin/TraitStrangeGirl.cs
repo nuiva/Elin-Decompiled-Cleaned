@@ -1,5 +1,3 @@
-﻿using System;
-
 public class TraitStrangeGirl : TraitUniqueChara
 {
 	public override ShopType ShopType
@@ -14,11 +12,5 @@ public class TraitStrangeGirl : TraitUniqueChara
 		}
 	}
 
-	public override CurrencyType CurrencyType
-	{
-		get
-		{
-			return CurrencyType.Influence;
-		}
-	}
+	public override CurrencyType CurrencyType => CurrencyType.Influence;
 }

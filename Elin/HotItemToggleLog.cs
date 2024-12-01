@@ -1,22 +1,8 @@
-﻿using System;
-
 public class HotItemToggleLog : HotItemIcon
 {
-	public override int defaultIcon
-	{
-		get
-		{
-			return 4;
-		}
-	}
+	public override int defaultIcon => 4;
 
-	public override string Name
-	{
-		get
-		{
-			return "s_log".lang();
-		}
-	}
+	public override string Name => "s_log".lang();
 
 	public override void OnClick(UIButton b)
 	{

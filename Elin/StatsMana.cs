@@ -1,23 +1,10 @@
-﻿using System;
 using UnityEngine;
 
 public class StatsMana : Stats
 {
-	public override int max
-	{
-		get
-		{
-			return Mathf.Max(1, ((BaseStats.CC.MAG * 2 + BaseStats.CC.WIL + BaseStats.CC.LER / 2) * Mathf.Min(BaseStats.CC.LV, 25) / 25 + BaseStats.CC.MAG + 10) * BaseStats.CC.Evalue(61) / 100 * (int)((BaseStats.CC.IsPCFaction ? ((Rarity)100) : ((Rarity)100 + (int)(BaseStats.CC.rarity * (Rarity)250))) + (BaseStats.CC.IsPC ? (EClass.player.lastEmptyAlly * BaseStats.CC.Evalue(1646)) : 0)) / 100);
-		}
-	}
+	public override int max => Mathf.Max(1, ((BaseStats.CC.MAG * 2 + BaseStats.CC.WIL + BaseStats.CC.LER / 2) * Mathf.Min(BaseStats.CC.LV, 25) / 25 + BaseStats.CC.MAG + 10) * BaseStats.CC.Evalue(61) / 100 * ((BaseStats.CC.IsPCFaction ? 100 : (100 + (int)BaseStats.CC.rarity * 250)) + (BaseStats.CC.IsPC ? (EClass.player.lastEmptyAlly * BaseStats.CC.Evalue(1646)) : 0)) / 100);
 
-	public override int min
-	{
-		get
-		{
-			return -9999;
-		}
-	}
+	public override int min => -9999;
 
 	public override void Mod(int a)
 	{
@@ -25,40 +12,42 @@ public class StatsMana : Stats
 		{
 			return;
 		}
-		if (a < 0 && BaseStats.CC.HasElement(1330, 1))
+		if (a < 0 && BaseStats.CC.HasElement(1330))
 		{
 			a = -EClass.rnd(-a * 130 / 100 + 2);
 		}
 		base.Mod(a);
-		if (a < 0)
+		if (a >= 0)
 		{
-			if (!BaseStats.CC.IsPCFaction)
+			return;
+		}
+		if (!BaseStats.CC.IsPCFaction)
+		{
+			a /= 10;
+		}
+		_ = BaseStats.CC.ShouldShowMsg;
+		if (value >= 0)
+		{
+			return;
+		}
+		int num = -value * 400 / (100 + BaseStats.CC.Evalue(303) * 10);
+		if (BaseStats.CC.HasElement(1201))
+		{
+			num /= 3;
+		}
+		if (!BaseStats.CC.IsPC)
+		{
+			num /= 5;
+			if (num < 10)
 			{
-				a /= 10;
+				return;
 			}
-			bool shouldShowMsg = BaseStats.CC.ShouldShowMsg;
-			if (this.value < 0)
-			{
-				int num = -this.value * 400 / (100 + BaseStats.CC.Evalue(303) * 10);
-				if (BaseStats.CC.HasElement(1201, 1))
-				{
-					num /= 3;
-				}
-				if (!BaseStats.CC.IsPC)
-				{
-					num /= 5;
-					if (num < 10)
-					{
-						return;
-					}
-				}
-				BaseStats.CC.Say("mana_overflow", BaseStats.CC, null, null);
-				BaseStats.CC.DamageHP(num, 921, 100, AttackSource.ManaBackfire, null, true);
-				if (BaseStats.CC.IsAliveInCurrentZone)
-				{
-					BaseStats.CC.elements.ModExp(303, Mathf.Clamp(-a * 10, 10, 200), false);
-				}
-			}
+		}
+		BaseStats.CC.Say("mana_overflow", BaseStats.CC);
+		BaseStats.CC.DamageHP(num, 921, 100, AttackSource.ManaBackfire);
+		if (BaseStats.CC.IsAliveInCurrentZone)
+		{
+			BaseStats.CC.elements.ModExp(303, Mathf.Clamp(-a * 10, 10, 200));
 		}
 	}
 }

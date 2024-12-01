@@ -1,48 +1,36 @@
-﻿using System;
+using System;
 
 public class TraitMod : TraitItem
 {
-	public override bool CanStack
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool CanStack => false;
 
-	public SourceElement.Row source
-	{
-		get
-		{
-			return EClass.sources.elements.map[this.owner.refVal];
-		}
-	}
+	public SourceElement.Row source => EClass.sources.elements.map[owner.refVal];
 
 	public override void OnCreate(int lv)
 	{
-		Tuple<SourceElement.Row, int> tuple = Thing.GetEnchant(lv, (SourceElement.Row r) => r.tag.Contains("modRanged"), false);
+		Tuple<SourceElement.Row, int> tuple = Thing.GetEnchant(lv, (SourceElement.Row r) => r.tag.Contains("modRanged"), neg: false);
 		if (tuple == null)
 		{
 			tuple = new Tuple<SourceElement.Row, int>(EClass.sources.elements.map[600], EClass.rnd(10) + 1);
 		}
-		this.owner.refVal = tuple.Item1.id;
-		this.owner.encLV = tuple.Item2;
+		owner.refVal = tuple.Item1.id;
+		owner.encLV = tuple.Item2;
 	}
 
 	public override bool OnUse(Chara c)
 	{
-		LayerDragGrid.Create(new InvOwnerMod(this.owner, null, CurrencyType.None), false);
+		LayerDragGrid.Create(new InvOwnerMod(owner));
 		return false;
 	}
 
 	public override void SetName(ref string s)
 	{
-		s = "_of".lang(this.source.GetName(), s, null, null, null);
+		s = "_of".lang(source.GetName(), s);
 	}
 
 	public override int GetValue()
 	{
-		int num = this.source.value * this.owner.encLV;
+		int num = source.value * owner.encLV;
 		return base.GetValue() * num / 100;
 	}
 }

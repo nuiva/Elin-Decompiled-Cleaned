@@ -1,4 +1,4 @@
-﻿using System;
+using UnityEngine;
 
 public class DOMAIN
 {
@@ -34,23 +34,19 @@ public class DOMAIN
 
 	public const int domOblivion = 813;
 
-	public static readonly int[] IDS = new int[]
+	public static readonly int[] IDS = new int[16]
 	{
-		800,
-		801,
-		802,
-		803,
-		804,
-		805,
-		806,
-		807,
-		809,
-		810,
-		811,
-		812,
-		815,
-		814,
-		808,
-		813
+		800, 801, 802, 803, 804, 805, 806, 807, 809, 810,
+		811, 812, 815, 814, 808, 813
 	};
+}
+public class Domain : EClass
+{
+	public SourceElement.Row source;
+
+	public Sprite GetSprite()
+	{
+		string text = source.alias.Remove(0, 3).ToLower();
+		return ResourceCache.Load<Sprite>("Media/Graphics/Image/Faction/" + text);
+	}
 }

@@ -1,29 +1,38 @@
-﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class UIAutoTurn : EMono
 {
+	public Image icon;
+
+	public Sprite[] iconSprites;
+
+	public Gauge gauge;
+
+	public string hint;
+
+	private int count;
+
 	private void Awake()
 	{
-		base.InvokeRepeating("_Update", 0f, 0.05f);
+		InvokeRepeating("_Update", 0f, 0.05f);
 	}
 
 	private void _Update()
 	{
 		float now = 0f;
 		float num = 0f;
-		this.hint = null;
+		hint = null;
 		if (EMono.core.IsGameStarted)
 		{
 			if (EMono.pc.WillConsumeTurn())
 			{
 				num = 1f;
-				for (int i = EMono.pc.conditions.Count - 1; i >= 0; i--)
+				for (int num2 = EMono.pc.conditions.Count - 1; num2 >= 0; num2--)
 				{
-					if (EMono.pc.conditions[i].ConsumeTurn)
+					if (EMono.pc.conditions[num2].ConsumeTurn)
 					{
-						this.hint = EMono.pc.conditions[i].GetText().ToTitleCase(false);
+						hint = EMono.pc.conditions[num2].GetText().ToTitleCase();
 					}
 				}
 			}
@@ -34,44 +43,33 @@ public class UIAutoTurn : EMono
 				{
 					if (progress != null)
 					{
-						this.hint = progress.TextHint;
-						num = (float)(progress.ShowProgress ? progress.MaxProgress : 0);
-						now = (float)(progress.ShowProgress ? progress.progress : 0);
+						hint = progress.TextHint;
+						num = (progress.ShowProgress ? progress.MaxProgress : 0);
+						now = (progress.ShowProgress ? progress.progress : 0);
 					}
 					else
 					{
-						num = (float)EMono.pc.ai.MaxProgress;
-						now = (float)(EMono.pc.ai.ShowProgress ? EMono.pc.ai.CurrentProgress : 0);
+						num = EMono.pc.ai.MaxProgress;
+						now = (EMono.pc.ai.ShowProgress ? EMono.pc.ai.CurrentProgress : 0);
 					}
 				}
 			}
 		}
-		if (!this.gauge.gameObject.activeSelf & num != 0f)
+		if (!gauge.gameObject.activeSelf && num != 0f)
 		{
-			this.gauge.bar.rectTransform.sizeDelta = new Vector2(0f, this.gauge.bar.rectTransform.sizeDelta.y);
+			gauge.bar.rectTransform.sizeDelta = new Vector2(0f, gauge.bar.rectTransform.sizeDelta.y);
 		}
-		this.gauge.SetActive(num != 0f);
-		if (num == 0f)
+		gauge.SetActive(num != 0f);
+		if (num != 0f)
 		{
-			return;
+			gauge.textNow.SetActive(hint != null);
+			count++;
+			gauge.UpdateValue(now, num);
+			if (hint != null)
+			{
+				gauge.textNow.SetText(hint);
+			}
+			icon.sprite = iconSprites[count / 5 % 2];
 		}
-		this.gauge.textNow.SetActive(this.hint != null);
-		this.count++;
-		this.gauge.UpdateValue(now, num);
-		if (this.hint != null)
-		{
-			this.gauge.textNow.SetText(this.hint);
-		}
-		this.icon.sprite = this.iconSprites[this.count / 5 % 2];
 	}
-
-	public Image icon;
-
-	public Sprite[] iconSprites;
-
-	public Gauge gauge;
-
-	public string hint;
-
-	private int count;
 }

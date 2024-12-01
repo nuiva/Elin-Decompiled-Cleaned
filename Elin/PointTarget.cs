@@ -1,16 +1,49 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class PointTarget : EClass
 {
+	public Card card;
+
+	public Area area;
+
+	public ObjInfo obj;
+
+	public BlockInfo block;
+
+	public TaskPoint task;
+
+	public IInspect target;
+
+	public IInspect lastTarget;
+
+	public bool hasTargetChanged;
+
+	public bool hasValidTarget;
+
+	public bool drawHighlight;
+
+	public bool mouse = true;
+
+	public bool hasInteraction;
+
+	public bool isValid;
+
+	public Point pos = new Point();
+
+	public Point lastPos = new Point();
+
+	public int index;
+
+	public List<Card> cards = new List<Card>();
+
 	public Chara TargetChara
 	{
 		get
 		{
-			if (this.card != null)
+			if (card != null)
 			{
-				return this.card.Chara;
+				return card.Chara;
 			}
 			return null;
 		}
@@ -18,48 +51,48 @@ public class PointTarget : EClass
 
 	public void Update(Point _pos)
 	{
-		this.pos.Set(_pos);
-		this.isValid = this.pos.IsValid;
-		this.cards.Clear();
-		if (!this.isValid || this.pos.IsHidden || EClass.ui.BlockMouseOverUpdate || (this.mouse && (EClass.ui.isPointerOverUI || !EClass.scene.actionMode.ShowMouseoverTarget)))
+		pos.Set(_pos);
+		isValid = pos.IsValid;
+		cards.Clear();
+		if (!isValid || pos.IsHidden || EClass.ui.BlockMouseOverUpdate || (mouse && (EClass.ui.isPointerOverUI || !EClass.scene.actionMode.ShowMouseoverTarget)))
 		{
-			this.Clear();
+			Clear();
 			return;
 		}
-		this.card = null;
-		this.area = null;
-		this.task = null;
-		this.block = (BlockInfo._CanInspect(this.pos) ? BlockInfo.GetTemp(this.pos) : null);
-		if (this.pos.sourceBlock.tileType.Invisible && !EClass.scene.actionMode.IsBuildMode)
+		card = null;
+		area = null;
+		task = null;
+		block = (BlockInfo._CanInspect(pos) ? BlockInfo.GetTemp(pos) : null);
+		if (pos.sourceBlock.tileType.Invisible && !EClass.scene.actionMode.IsBuildMode)
 		{
-			this.block = null;
+			block = null;
 		}
-		this.obj = (ObjInfo._CanInspect(this.pos) ? ObjInfo.GetTemp(this.pos) : null);
-		if (this.obj != null)
+		obj = (ObjInfo._CanInspect(pos) ? ObjInfo.GetTemp(pos) : null);
+		if (obj != null)
 		{
-			this.target = this.obj;
+			target = obj;
 		}
-		else if (this.block != null)
+		else if (block != null)
 		{
-			this.target = this.block;
+			target = block;
 		}
 		else
 		{
-			this.target = null;
+			target = null;
 		}
-		this.drawHighlight = (this.target != null);
-		CellDetail detail = this.pos.detail;
+		drawHighlight = target != null;
+		CellDetail detail = pos.detail;
 		if (detail != null)
 		{
-			this.area = detail.area;
-			this.task = detail.designation;
+			area = detail.area;
+			task = detail.designation;
 			Thing thing = null;
 			Chara chara = null;
 			foreach (Chara chara2 in detail.charas)
 			{
-				if (!this.ShouldIgnore(chara2))
+				if (!ShouldIgnore(chara2))
 				{
-					this.cards.Add(chara2);
+					cards.Add(chara2);
 					if (chara == null || chara2.hostility < chara.hostility)
 					{
 						chara = chara2;
@@ -68,47 +101,47 @@ public class PointTarget : EClass
 			}
 			foreach (Thing thing2 in detail.things)
 			{
-				if (!this.ShouldIgnore(thing2))
+				if (!ShouldIgnore(thing2))
 				{
-					this.cards.Add(thing2);
+					cards.Add(thing2);
 					thing = thing2;
 				}
 			}
 			if (chara != null)
 			{
-				this.target = (this.card = chara);
-				this.drawHighlight = true;
+				target = (card = chara);
+				drawHighlight = true;
 			}
 			else if (thing != null)
 			{
-				this.target = (this.card = thing);
-				this.drawHighlight = true;
+				target = (card = thing);
+				drawHighlight = true;
 			}
-			else if (this.task != null)
+			else if (task != null)
 			{
-				this.target = this.task;
-				this.drawHighlight = true;
+				target = task;
+				drawHighlight = true;
 			}
-			else if (this.area != null && EClass.scene.actionMode.AreaHihlight != AreaHighlightMode.None)
+			else if (area != null && EClass.scene.actionMode.AreaHihlight != 0)
 			{
-				this.target = this.area;
+				target = area;
 			}
-			if (this.cards.Count > 0 && EClass.scene.actionMode.IsBuildMode)
+			if (cards.Count > 0 && EClass.scene.actionMode.IsBuildMode)
 			{
-				this.target = (this.card = this.cards[Mathf.Abs(this.index) % this.cards.Count]);
-				this.drawHighlight = true;
+				target = (card = cards[Mathf.Abs(index) % cards.Count]);
+				drawHighlight = true;
 			}
 		}
-		if ((this.target == null || this.target is Chara) && EClass._zone.IsRegion)
+		if ((target == null || target is Chara) && EClass._zone.IsRegion)
 		{
-			Zone zone = EClass.scene.elomap.GetZone(this.pos);
+			Zone zone = EClass.scene.elomap.GetZone(pos);
 			if (zone != null)
 			{
-				this.target = zone;
+				target = zone;
 			}
 		}
-		this.hasInteraction = (this.target != null);
-		this.CheckLastTarget();
+		hasInteraction = target != null;
+		CheckLastTarget();
 	}
 
 	public bool ShouldIgnore(Card c)
@@ -143,40 +176,37 @@ public class PointTarget : EClass
 			}
 			return false;
 		}
-		else
+		if (c.trait.IsGround && !pos.cell.IsFloorWater && c.Cell.IsFloorWater)
 		{
-			if (c.trait.IsGround && !this.pos.cell.IsFloorWater && c.Cell.IsFloorWater)
+			return true;
+		}
+		if (EClass.scene.actionMode.IsBuildMode)
+		{
+			if (EClass.scene.actionMode.IsRoofEditMode())
 			{
-				return true;
-			}
-			if (EClass.scene.actionMode.IsBuildMode)
-			{
-				if (EClass.scene.actionMode.IsRoofEditMode(null))
-				{
-					if (!c.isRoofItem)
-					{
-						return true;
-					}
-				}
-				else if (c.isRoofItem)
+				if (!c.isRoofItem)
 				{
 					return true;
 				}
 			}
-			else if (c.isHidden || c.isRoofItem || c.isMasked)
+			else if (c.isRoofItem)
 			{
 				return true;
 			}
-			return false;
 		}
+		else if (c.isHidden || c.isRoofItem || c.isMasked)
+		{
+			return true;
+		}
+		return false;
 	}
 
 	public void CycleTarget(int a)
 	{
 		SE.Rotate();
-		this.index += a;
-		this.Update(Scene.HitPoint);
-		if (WidgetMouseover.Instance)
+		index += a;
+		Update(Scene.HitPoint);
+		if ((bool)WidgetMouseover.Instance)
 		{
 			WidgetMouseover.Instance.Refresh();
 		}
@@ -184,57 +214,23 @@ public class PointTarget : EClass
 
 	public bool CanCycle()
 	{
-		return this.cards.Count >= 2;
+		return cards.Count >= 2;
 	}
 
 	public void Clear()
 	{
-		this.card = null;
-		this.area = null;
-		this.target = null;
-		this.hasInteraction = false;
-		this.CheckLastTarget();
+		card = null;
+		area = null;
+		target = null;
+		hasInteraction = false;
+		CheckLastTarget();
 	}
 
 	public void CheckLastTarget()
 	{
-		this.hasTargetChanged = (this.target != this.lastTarget || !this.pos.Equals(this.lastPos));
-		this.hasValidTarget = (this.target != null);
-		this.lastTarget = this.target;
-		this.lastPos.Set(this.pos);
+		hasTargetChanged = target != lastTarget || !pos.Equals(lastPos);
+		hasValidTarget = target != null;
+		lastTarget = target;
+		lastPos.Set(pos);
 	}
-
-	public Card card;
-
-	public Area area;
-
-	public ObjInfo obj;
-
-	public BlockInfo block;
-
-	public TaskPoint task;
-
-	public IInspect target;
-
-	public IInspect lastTarget;
-
-	public bool hasTargetChanged;
-
-	public bool hasValidTarget;
-
-	public bool drawHighlight;
-
-	public bool mouse = true;
-
-	public bool hasInteraction;
-
-	public bool isValid;
-
-	public Point pos = new Point();
-
-	public Point lastPos = new Point();
-
-	public int index;
-
-	public List<Card> cards = new List<Card>();
 }

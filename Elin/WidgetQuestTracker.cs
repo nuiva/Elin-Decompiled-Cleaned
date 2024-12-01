@@ -1,64 +1,74 @@
-﻿using System;
 using System.Collections.Generic;
 using UnityEngine.UI;
 
 public class WidgetQuestTracker : Widget
 {
+	public static WidgetQuestTracker Instance;
+
+	public List<ItemQuestTracker> items;
+
+	public ItemQuestTracker mold;
+
+	public LayoutGroup layout;
+
 	private void OnEnable()
 	{
-		base.InvokeRepeating("Refresh", 0.5f, 0.5f);
+		InvokeRepeating("Refresh", 0.5f, 0.5f);
 	}
 
 	private void OnDisable()
 	{
-		base.CancelInvoke();
+		CancelInvoke();
 	}
 
 	public override void OnActivate()
 	{
-		WidgetQuestTracker.Instance = this;
-		this.Refresh();
+		Instance = this;
+		Refresh();
 	}
 
 	public void Refresh()
 	{
-		if (EMono.game == null || LayerDrama.Instance)
+		if (EMono.game == null || (bool)LayerDrama.Instance)
 		{
 			return;
 		}
-		foreach (Quest quest in EMono.game.quests.list)
+		foreach (Quest item in EMono.game.quests.list)
 		{
-			if (quest.track)
+			if (!item.track)
 			{
-				ItemQuestTracker itemQuestTracker = null;
-				foreach (ItemQuestTracker itemQuestTracker2 in this.items)
+				continue;
+			}
+			ItemQuestTracker itemQuestTracker = null;
+			foreach (ItemQuestTracker item2 in items)
+			{
+				if (item2.quest == item)
 				{
-					if (itemQuestTracker2.quest == quest)
-					{
-						itemQuestTracker = itemQuestTracker2;
-						break;
-					}
-				}
-				if (!(itemQuestTracker != null))
-				{
-					itemQuestTracker = Util.Instantiate<ItemQuestTracker>(this.mold, this.layout);
-					itemQuestTracker.SetActive(false);
-					itemQuestTracker.quest = quest;
-					this.items.Add(itemQuestTracker);
+					itemQuestTracker = item2;
+					break;
 				}
 			}
+			if (!(itemQuestTracker != null))
+			{
+				itemQuestTracker = Util.Instantiate(mold, layout);
+				itemQuestTracker.SetActive(enable: false);
+				itemQuestTracker.quest = item;
+				items.Add(itemQuestTracker);
+			}
 		}
-		this.items.ForeachReverse(delegate(ItemQuestTracker i)
+		items.ForeachReverse(delegate(ItemQuestTracker i)
 		{
 			i.Refresh();
 		});
-		this.RebuildLayout(false);
-		if (this.items.Count == 0)
+		this.RebuildLayout();
+		if (items.Count == 0)
 		{
 			EMono.ui.widgets.DeactivateWidget(this);
-			return;
 		}
-		EMono.player.questTracker = true;
+		else
+		{
+			EMono.player.questTracker = true;
+		}
 	}
 
 	public static void Show()
@@ -72,37 +82,22 @@ public class WidgetQuestTracker : Widget
 	public static bool TryShow()
 	{
 		bool flag = false;
-		using (List<Quest>.Enumerator enumerator = EMono.game.quests.list.GetEnumerator())
+		foreach (Quest item in EMono.game.quests.list)
 		{
-			while (enumerator.MoveNext())
+			if (item.track)
 			{
-				if (enumerator.Current.track)
-				{
-					flag = true;
-				}
+				flag = true;
 			}
 		}
-		if (flag || EMono.ui.widgets.GetWidget("QuestTracker"))
+		if (flag || (bool)EMono.ui.widgets.GetWidget("QuestTracker"))
 		{
-			Widget widget = EMono.ui.widgets.Toggle("QuestTracker");
-			if (widget != null)
-			{
-				widget.SoundActivate();
-			}
+			EMono.ui.widgets.Toggle("QuestTracker")?.SoundActivate();
 			return false;
 		}
-		if (!EMono.ui.GetLayer<LayerJournal>(false))
+		if (!EMono.ui.GetLayer<LayerJournal>())
 		{
-			EMono.ui.ToggleLayer<LayerJournal>(null).SwitchContent(0, 0);
+			EMono.ui.ToggleLayer<LayerJournal>().SwitchContent(0, 0);
 		}
 		return true;
 	}
-
-	public static WidgetQuestTracker Instance;
-
-	public List<ItemQuestTracker> items;
-
-	public ItemQuestTracker mold;
-
-	public LayoutGroup layout;
 }

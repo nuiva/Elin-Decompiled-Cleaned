@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using NoiseSystem;
@@ -6,159 +6,6 @@ using UnityEngine;
 
 public class BiomeProfile : EScriptable
 {
-	public BiomeProfile.TileGroup exterior
-	{
-		get
-		{
-			return this._exterior;
-		}
-	}
-
-	public BiomeProfile.TileGroup interior
-	{
-		get
-		{
-			if (this._interior.floor.id != 0)
-			{
-				return this._interior;
-			}
-			return this.exterior;
-		}
-	}
-
-	public SourceMaterial.Row MatFloor
-	{
-		get
-		{
-			SourceMaterial.Row result;
-			if ((result = this._mat) == null)
-			{
-				result = (this._mat = EClass.sources.materials.map[this.exterior.floor.mat]);
-			}
-			return result;
-		}
-	}
-
-	public SourceMaterial.Row MatSub
-	{
-		get
-		{
-			SourceMaterial.Row result;
-			if ((result = this._matSub) == null)
-			{
-				result = (this._matSub = ((this.exterior.floor.matSub == 0) ? this.MatFloor : EClass.sources.materials.map[this.exterior.floor.matSub]));
-			}
-			return result;
-		}
-	}
-
-	public void Populate(Point point, bool interior = false)
-	{
-		Cell cell = point.cell;
-		if (cell.obj != 0 || cell.Things.Count > 0)
-		{
-			return;
-		}
-		int count = this.cluster.obj.Count;
-		for (int i = 0; i < count + this.cluster.thing.Count; i++)
-		{
-			BiomeProfile.Cluster cluster = (i >= count) ? this.cluster.thing[i - count] : this.cluster.obj[i];
-			if (cluster.density == 0f)
-			{
-				return;
-			}
-			if (Rand.Range(0f, 1f) <= cluster.density)
-			{
-				BiomeProfile.Cluster.Type type = cluster.type;
-				switch (type)
-				{
-				case BiomeProfile.Cluster.Type.ScatterExterior:
-					if (interior)
-					{
-						goto IL_185;
-					}
-					break;
-				case BiomeProfile.Cluster.Type.ScatterInterior:
-					if (!interior)
-					{
-						goto IL_185;
-					}
-					break;
-				case BiomeProfile.Cluster.Type.ScatterNonObstacle:
-					if ((cell.Left.HasObstacle() ? 1 : 0) + (cell.Right.HasObstacle() ? 1 : 0) + (cell.Front.HasObstacle() ? 1 : 0) + (cell.Back.HasObstacle() ? 1 : 0) > 0)
-					{
-						goto IL_185;
-					}
-					break;
-				default:
-					if (type == BiomeProfile.Cluster.Type.ByWall)
-					{
-						if (cell.Left.hasDoor || cell.Right.hasDoor || cell.Front.hasDoor || cell.Back.hasDoor || (!cell.Left.HasBlock && !cell.Right.HasBlock && !cell.Front.HasBlock && !cell.Back.HasBlock))
-						{
-							goto IL_185;
-						}
-					}
-					break;
-				}
-				if (cluster.TryCreate(point))
-				{
-					return;
-				}
-			}
-			IL_185:;
-		}
-	}
-
-	public static void Init()
-	{
-		if (!BiomeProfile.forceInitialize)
-		{
-			return;
-		}
-		Debug.Log("Initializing Clusters");
-		foreach (BiomeProfile biomeProfile in EClass.core.refs.biomes.dict.Values)
-		{
-			biomeProfile.Reset();
-		}
-		BiomeProfile.forceInitialize = false;
-	}
-
-	public void Reset()
-	{
-		this._mat = null;
-		this._matSub = null;
-	}
-
-	public static bool forceInitialize;
-
-	public NoiseLayer layerBlock;
-
-	public BiomeID id;
-
-	public Color color;
-
-	public FowProfile fowProfile;
-
-	public BiomeProfile.TileGroup _exterior;
-
-	public BiomeProfile.TileGroup _interior;
-
-	public BiomeProfile.Style style;
-
-	public BiomeProfile.Spawns spawn;
-
-	public BiomeProfile.Clusters cluster;
-
-	public string tags;
-
-	public int floor_height;
-
-	[NonSerialized]
-	private SourceMaterial.Row _mat;
-
-	[NonSerialized]
-	private SourceMaterial.Row _matSub;
-
 	public enum DoorStyle
 	{
 		simpleWood,
@@ -178,6 +25,22 @@ public class BiomeProfile : EScriptable
 
 	public class BaseTile
 	{
+		public enum SubType
+		{
+			None = 0,
+			Rnd5 = 10,
+			Rnd10 = 11,
+			Rnd20 = 12,
+			Pattern = 20
+		}
+
+		public enum DirType
+		{
+			Random8,
+			RandomSqrt8,
+			RandomSqrtSqrt8
+		}
+
 		protected string _GetThing(string id)
 		{
 			if (id.IsEmpty())
@@ -194,7 +57,7 @@ public class BiomeProfile : EScriptable
 
 		protected void _SetThing(ref string id, string value)
 		{
-			id = EClass.editorSources.things.rows.First((SourceThing.Row a) => a.id == value.Split('-', StringSplitOptions.None)[0]).id;
+			id = EClass.editorSources.things.rows.First((SourceThing.Row a) => a.id == value.Split('-')[0]).id;
 		}
 
 		protected IEnumerable<string> ThingRows()
@@ -207,22 +70,14 @@ public class BiomeProfile : EScriptable
 			SourceObj.Row row = EClass.editorSources.objs.rows.First((SourceObj.Row a) => a.id == id);
 			if (row != null)
 			{
-				return string.Concat(new string[]
-				{
-					row.id.ToString(),
-					"-",
-					row.alias,
-					"(",
-					row.name_JP,
-					")"
-				});
+				return row.id + "-" + row.alias + "(" + row.name_JP + ")";
 			}
 			return "-";
 		}
 
 		protected void _SetObj(ref int id, string value)
 		{
-			id = EClass.editorSources.objs.rows.First((SourceObj.Row a) => a.id == int.Parse(value.Split('-', StringSplitOptions.None)[0])).id;
+			id = EClass.editorSources.objs.rows.First((SourceObj.Row a) => a.id == int.Parse(value.Split('-')[0])).id;
 		}
 
 		protected IEnumerable<string> ObjRows()
@@ -235,22 +90,14 @@ public class BiomeProfile : EScriptable
 			SourceFloor.Row row = EClass.editorSources.floors.rows.First((SourceFloor.Row a) => a.id == id);
 			if (row != null)
 			{
-				return string.Concat(new string[]
-				{
-					row.id.ToString(),
-					"-",
-					row.alias,
-					"(",
-					row.name_JP,
-					")"
-				});
+				return row.id + "-" + row.alias + "(" + row.name_JP + ")";
 			}
 			return "-";
 		}
 
 		protected void _SetFloor(ref int id, string value)
 		{
-			id = EClass.editorSources.floors.rows.First((SourceFloor.Row a) => a.id == int.Parse(value.Split('-', StringSplitOptions.None)[0])).id;
+			id = EClass.editorSources.floors.rows.First((SourceFloor.Row a) => a.id == int.Parse(value.Split('-')[0])).id;
 		}
 
 		protected IEnumerable<string> FloorRows()
@@ -263,22 +110,14 @@ public class BiomeProfile : EScriptable
 			SourceBlock.Row row = EClass.editorSources.blocks.rows.First((SourceBlock.Row a) => a.id == id);
 			if (row != null)
 			{
-				return string.Concat(new string[]
-				{
-					row.id.ToString(),
-					"-",
-					row.alias,
-					"(",
-					row.name_JP,
-					")"
-				});
+				return row.id + "-" + row.alias + "(" + row.name_JP + ")";
 			}
 			return "-";
 		}
 
 		protected void _SetBlock(ref int id, string value)
 		{
-			id = EClass.editorSources.blocks.rows.First((SourceBlock.Row a) => a.id == int.Parse(value.Split('-', StringSplitOptions.None)[0])).id;
+			id = EClass.editorSources.blocks.rows.First((SourceBlock.Row a) => a.id == int.Parse(value.Split('-')[0])).id;
 		}
 
 		protected IEnumerable<string> BlockRows()
@@ -295,22 +134,14 @@ public class BiomeProfile : EScriptable
 			SourceMaterial.Row row = EClass.editorSources.materials.rows.First((SourceMaterial.Row a) => a.id == id);
 			if (row != null)
 			{
-				return string.Concat(new string[]
-				{
-					row.id.ToString(),
-					"-",
-					row.alias,
-					"(",
-					row.name_JP,
-					")"
-				});
+				return row.id + "-" + row.alias + "(" + row.name_JP + ")";
 			}
 			return "-";
 		}
 
 		protected void _SetMat(ref int id, string value)
 		{
-			id = EClass.editorSources.materials.rows.First((SourceMaterial.Row a) => a.id == int.Parse(value.Split('-', StringSplitOptions.None)[0])).id;
+			id = EClass.editorSources.materials.rows.First((SourceMaterial.Row a) => a.id == int.Parse(value.Split('-')[0])).id;
 		}
 
 		protected IEnumerable<string> MatRows()
@@ -341,66 +172,11 @@ public class BiomeProfile : EScriptable
 		{
 			return EClass.editorSources.spawnLists.GetListString();
 		}
-
-		public enum SubType
-		{
-			None,
-			Rnd5 = 10,
-			Rnd10,
-			Rnd20,
-			Pattern = 20
-		}
-
-		public enum DirType
-		{
-			Random8,
-			RandomSqrt8,
-			RandomSqrtSqrt8
-		}
 	}
 
 	[Serializable]
-	public class Tile : BiomeProfile.BaseTile
+	public class Tile : BaseTile
 	{
-		public string _mat
-		{
-			get
-			{
-				return base._GetMat(this.mat);
-			}
-			set
-			{
-				base._SetMat(ref this.mat, value);
-			}
-		}
-
-		public string _matSub
-		{
-			get
-			{
-				return base._GetMat(this.matSub);
-			}
-			set
-			{
-				base._SetMat(ref this.matSub, value);
-			}
-		}
-
-		public int GetDir()
-		{
-			switch (this.dirType)
-			{
-			case BiomeProfile.BaseTile.DirType.Random8:
-				return EScriptable.rnd(8);
-			case BiomeProfile.BaseTile.DirType.RandomSqrt8:
-				return EScriptable.rnd(EScriptable.rnd(8) + 1);
-			case BiomeProfile.BaseTile.DirType.RandomSqrtSqrt8:
-				return EScriptable.rnd(EScriptable.rnd(EScriptable.rnd(8) + 1) + 1);
-			default:
-				return EScriptable.rnd(8);
-			}
-		}
-
 		[HideInInspector]
 		public int id;
 
@@ -413,23 +189,58 @@ public class BiomeProfile : EScriptable
 		[HideInInspector]
 		public int matSub;
 
-		public BiomeProfile.BaseTile.SubType subType;
+		public SubType subType;
 
-		public BiomeProfile.BaseTile.DirType dirType;
+		public DirType dirType;
+
+		public string _mat
+		{
+			get
+			{
+				return _GetMat(mat);
+			}
+			set
+			{
+				_SetMat(ref mat, value);
+			}
+		}
+
+		public string _matSub
+		{
+			get
+			{
+				return _GetMat(matSub);
+			}
+			set
+			{
+				_SetMat(ref matSub, value);
+			}
+		}
+
+		public int GetDir()
+		{
+			return dirType switch
+			{
+				DirType.Random8 => EScriptable.rnd(8), 
+				DirType.RandomSqrt8 => EScriptable.rnd(EScriptable.rnd(8) + 1), 
+				DirType.RandomSqrtSqrt8 => EScriptable.rnd(EScriptable.rnd(EScriptable.rnd(8) + 1) + 1), 
+				_ => EScriptable.rnd(8), 
+			};
+		}
 	}
 
 	[Serializable]
-	public class TileFloor : BiomeProfile.Tile
+	public class TileFloor : Tile
 	{
 		public string _id
 		{
 			get
 			{
-				return base._GetFloor(this.id);
+				return _GetFloor(id);
 			}
 			set
 			{
-				base._SetFloor(ref this.id, value);
+				_SetFloor(ref id, value);
 			}
 		}
 
@@ -437,27 +248,27 @@ public class BiomeProfile : EScriptable
 		{
 			get
 			{
-				return base._GetFloor(this.idSub);
+				return _GetFloor(idSub);
 			}
 			set
 			{
-				base._SetFloor(ref this.idSub, value);
+				_SetFloor(ref idSub, value);
 			}
 		}
 	}
 
 	[Serializable]
-	public class TileBlock : BiomeProfile.Tile
+	public class TileBlock : Tile
 	{
 		public string _id
 		{
 			get
 			{
-				return base._GetBlock(this.id);
+				return _GetBlock(id);
 			}
 			set
 			{
-				base._SetBlock(ref this.id, value);
+				_SetBlock(ref id, value);
 			}
 		}
 
@@ -465,11 +276,11 @@ public class BiomeProfile : EScriptable
 		{
 			get
 			{
-				return base._GetBlock(this.idSub);
+				return _GetBlock(idSub);
 			}
 			set
 			{
-				base._SetBlock(ref this.idSub, value);
+				_SetBlock(ref idSub, value);
 			}
 		}
 	}
@@ -477,23 +288,37 @@ public class BiomeProfile : EScriptable
 	[Serializable]
 	public class TileGroup
 	{
-		public BiomeProfile.TileFloor floor;
+		public TileFloor floor;
 
-		public BiomeProfile.TileBlock block;
+		public TileBlock block;
 	}
 
 	[Serializable]
-	public class Style : BiomeProfile.BaseTile
+	public class Style : BaseTile
 	{
+		public float doorChance = 0.9f;
+
+		public DoorStyle doorStyle;
+
+		[HideInInspector]
+		public int matDoor;
+
+		public StairsStyle stairsStyle;
+
+		[HideInInspector]
+		public int matStairs;
+
+		public List<Cluster.ItemThing> lights;
+
 		public string _matDoor
 		{
 			get
 			{
-				return base._GetMat(this.matDoor);
+				return _GetMat(matDoor);
 			}
 			set
 			{
-				base._SetMat(ref this.matDoor, value);
+				_SetMat(ref matDoor, value);
 			}
 		}
 
@@ -501,23 +326,23 @@ public class BiomeProfile : EScriptable
 		{
 			get
 			{
-				return base._GetMat(this.matStairs);
+				return _GetMat(matStairs);
 			}
 			set
 			{
-				base._SetMat(ref this.matStairs, value);
+				_SetMat(ref matStairs, value);
 			}
 		}
 
 		public string GetIdLight(bool wall)
 		{
-			if (this.lights.Count > 0)
+			if (lights.Count > 0)
 			{
-				foreach (BiomeProfile.Cluster.ItemThing itemThing in this.lights)
+				foreach (Cluster.ItemThing light in lights)
 				{
-					if (EClass.sources.cards.map[itemThing.id].tileType.UseMountHeight == wall)
+					if (EClass.sources.cards.map[light.id].tileType.UseMountHeight == wall)
 					{
-						return itemThing.id;
+						return light.id;
 					}
 				}
 			}
@@ -530,21 +355,21 @@ public class BiomeProfile : EScriptable
 
 		public string GetIdStairs(bool upstairs)
 		{
-			switch (this.stairsStyle)
+			switch (stairsStyle)
 			{
-			case BiomeProfile.StairsStyle.Wood:
+			case StairsStyle.Wood:
 				if (!upstairs)
 				{
 					return "381";
 				}
 				return "376";
-			case BiomeProfile.StairsStyle.Stone:
+			case StairsStyle.Stone:
 				if (!upstairs)
 				{
 					return "932";
 				}
 				return "379";
-			case BiomeProfile.StairsStyle.Rock:
+			case StairsStyle.Rock:
 				if (!upstairs)
 				{
 					return "380";
@@ -561,203 +386,162 @@ public class BiomeProfile : EScriptable
 
 		public string GetIdDoor()
 		{
-			switch (this.doorStyle)
+			return doorStyle switch
 			{
-			case BiomeProfile.DoorStyle.FirmWood:
-				return "46";
-			case BiomeProfile.DoorStyle.Stone:
-				return "42";
-			case BiomeProfile.DoorStyle.Jail:
-				return "40";
-			case BiomeProfile.DoorStyle.Rune:
-				return "43";
-			default:
-				return "45";
-			}
+				DoorStyle.FirmWood => "46", 
+				DoorStyle.Stone => "42", 
+				DoorStyle.Jail => "40", 
+				DoorStyle.Rune => "43", 
+				_ => "45", 
+			};
 		}
-
-		public float doorChance = 0.9f;
-
-		public BiomeProfile.DoorStyle doorStyle;
-
-		[HideInInspector]
-		public int matDoor;
-
-		public BiomeProfile.StairsStyle stairsStyle;
-
-		[HideInInspector]
-		public int matStairs;
-
-		public List<BiomeProfile.Cluster.ItemThing> lights;
 	}
 
 	[Serializable]
 	public class Spawns
 	{
+		public List<SpawnListChara> chara;
+
+		public List<SpawnListThing> thing;
+
 		public string GetRandomCharaId()
 		{
-			if (this.chara.Count != 0)
+			if (chara.Count != 0)
 			{
-				return this.chara.RandomItemWeighted((BiomeProfile.SpawnListChara a) => a.chance).id;
+				return chara.RandomItemWeighted((SpawnListChara a) => a.chance).id;
 			}
 			return "c_dungeon";
 		}
 
 		public string GetRandomThingId()
 		{
-			if (this.thing.Count != 0)
+			if (thing.Count != 0)
 			{
-				return this.thing.RandomItemWeighted((BiomeProfile.SpawnListThing a) => a.chance).id;
+				return thing.RandomItemWeighted((SpawnListThing a) => a.chance).id;
 			}
 			return "dungeon";
 		}
-
-		public List<BiomeProfile.SpawnListChara> chara;
-
-		public List<BiomeProfile.SpawnListThing> thing;
 	}
 
 	[Serializable]
-	public class SpawnList : BiomeProfile.BaseTile
+	public class SpawnList : BaseTile
 	{
-		public string _id
-		{
-			get
-			{
-				return base._GetSpawnList(this.id);
-			}
-			set
-			{
-				base._SetSpawnList(ref this.id, value);
-			}
-		}
-
 		public float chance = 1f;
 
 		[HideInInspector]
 		public string id;
+
+		public string _id
+		{
+			get
+			{
+				return _GetSpawnList(id);
+			}
+			set
+			{
+				_SetSpawnList(ref id, value);
+			}
+		}
 	}
 
 	[Serializable]
-	public class SpawnListChara : BiomeProfile.SpawnList
+	public class SpawnListChara : SpawnList
 	{
 	}
 
 	[Serializable]
-	public class SpawnListThing : BiomeProfile.SpawnList
+	public class SpawnListThing : SpawnList
 	{
 	}
 
 	[Serializable]
 	public class Clusters
 	{
-		public List<BiomeProfile.ClusterObj> obj;
+		public List<ClusterObj> obj;
 
-		public List<BiomeProfile.ClusterThing> thing;
+		public List<ClusterThing> thing;
 	}
 
 	[Serializable]
 	public class Cluster
 	{
-		public virtual bool TryCreate(Point p)
-		{
-			return false;
-		}
-
-		public BiomeProfile.Cluster.Type type;
-
-		public float density;
-
 		public enum Type
 		{
-			Scatter,
-			ScatterExterior,
-			ScatterInterior,
-			ScatterNonObstacle,
+			Scatter = 0,
+			ScatterExterior = 1,
+			ScatterInterior = 2,
+			ScatterNonObstacle = 3,
 			ByWall = 10
 		}
 
 		[Serializable]
-		public class BaseItem : BiomeProfile.BaseTile
+		public class BaseItem : BaseTile
 		{
-			public virtual bool IsSpawnOnBlock
-			{
-				get
-				{
-					return false;
-				}
-			}
-
-			public virtual bool IsSpawnOnWater
-			{
-				get
-				{
-					return false;
-				}
-			}
-
 			public float chance = 1f;
+
+			public virtual bool IsSpawnOnBlock => false;
+
+			public virtual bool IsSpawnOnWater => false;
 		}
 
 		[Serializable]
-		public class Item : BiomeProfile.Cluster.BaseItem
+		public class Item : BaseItem
 		{
-			public override bool IsSpawnOnBlock
-			{
-				get
-				{
-					return EClass.sources.objs.rows[this.idObj].tileType.IsBlockMount;
-				}
-			}
+			public int idObj;
 
-			public override bool IsSpawnOnWater
-			{
-				get
-				{
-					return EClass.sources.objs.rows[this.idObj].tileType.CanSpawnOnWater;
-				}
-			}
+			public override bool IsSpawnOnBlock => EClass.sources.objs.rows[idObj].tileType.IsBlockMount;
+
+			public override bool IsSpawnOnWater => EClass.sources.objs.rows[idObj].tileType.CanSpawnOnWater;
 
 			public string obj
 			{
 				get
 				{
-					return base._GetObj(this.idObj);
+					return _GetObj(idObj);
 				}
 				set
 				{
-					base._SetObj(ref this.idObj, value);
+					_SetObj(ref idObj, value);
 				}
 			}
-
-			public int idObj;
 		}
 
 		[Serializable]
-		public class ItemThing : BiomeProfile.Cluster.BaseItem
+		public class ItemThing : BaseItem
 		{
+			public string id;
+
 			public string _id
 			{
 				get
 				{
-					return base._GetThing(this.id);
+					return _GetThing(id);
 				}
 				set
 				{
-					base._SetThing(ref this.id, value);
+					_SetThing(ref id, value);
 				}
 			}
+		}
 
-			public string id;
+		public Type type;
+
+		public float density;
+
+		public virtual bool TryCreate(Point p)
+		{
+			return false;
 		}
 	}
 
 	[Serializable]
-	public class ClusterObj : BiomeProfile.Cluster
+	public class ClusterObj : Cluster
 	{
+		public List<Item> items;
+
 		public override bool TryCreate(Point p)
 		{
-			BiomeProfile.Cluster.Item item = this.items.RandomItem<BiomeProfile.Cluster.Item>();
+			Item item = items.RandomItem();
 			if (Rand.Range(0f, 1f) > item.chance)
 			{
 				return false;
@@ -774,7 +558,7 @@ public class BiomeProfile : EScriptable
 			{
 				return false;
 			}
-			p.SetObj(item.idObj, 1, 0);
+			p.SetObj(item.idObj);
 			cell.objDir = EScriptable.rnd(8);
 			if (cell.sourceObj.HasGrowth && cell.sourceObj.id != 103)
 			{
@@ -782,16 +566,16 @@ public class BiomeProfile : EScriptable
 			}
 			return true;
 		}
-
-		public List<BiomeProfile.Cluster.Item> items;
 	}
 
 	[Serializable]
-	public class ClusterThing : BiomeProfile.Cluster
+	public class ClusterThing : Cluster
 	{
+		public List<ItemThing> items;
+
 		public override bool TryCreate(Point p)
 		{
-			BiomeProfile.Cluster.ItemThing itemThing = this.items.RandomItem<BiomeProfile.Cluster.ItemThing>();
+			ItemThing itemThing = items.RandomItem();
 			if (Rand.Range(0f, 1f) > itemThing.chance)
 			{
 				return false;
@@ -819,7 +603,7 @@ public class BiomeProfile : EScriptable
 			{
 				return false;
 			}
-			Thing thing = ThingGen.Create(itemThing.id, -1, -1);
+			Thing thing = ThingGen.Create(itemThing.id);
 			int desiredDir = thing.TileType.GetDesiredDir(p, 0);
 			if (desiredDir != -1)
 			{
@@ -828,7 +612,126 @@ public class BiomeProfile : EScriptable
 			EClass._zone.AddCard(thing, p).Install();
 			return true;
 		}
+	}
 
-		public List<BiomeProfile.Cluster.ItemThing> items;
+	public static bool forceInitialize;
+
+	public NoiseLayer layerBlock;
+
+	public BiomeID id;
+
+	public Color color;
+
+	public FowProfile fowProfile;
+
+	public TileGroup _exterior;
+
+	public TileGroup _interior;
+
+	public Style style;
+
+	public Spawns spawn;
+
+	public Clusters cluster;
+
+	public string tags;
+
+	public int floor_height;
+
+	[NonSerialized]
+	private SourceMaterial.Row _mat;
+
+	[NonSerialized]
+	private SourceMaterial.Row _matSub;
+
+	public TileGroup exterior => _exterior;
+
+	public TileGroup interior
+	{
+		get
+		{
+			if (_interior.floor.id != 0)
+			{
+				return _interior;
+			}
+			return exterior;
+		}
+	}
+
+	public SourceMaterial.Row MatFloor => _mat ?? (_mat = EClass.sources.materials.map[exterior.floor.mat]);
+
+	public SourceMaterial.Row MatSub => _matSub ?? (_matSub = ((exterior.floor.matSub == 0) ? MatFloor : EClass.sources.materials.map[exterior.floor.matSub]));
+
+	public void Populate(Point point, bool interior = false)
+	{
+		Cell cell = point.cell;
+		if (cell.obj != 0 || cell.Things.Count > 0)
+		{
+			return;
+		}
+		int count = this.cluster.obj.Count;
+		for (int i = 0; i < count + this.cluster.thing.Count; i++)
+		{
+			Cluster cluster = ((i >= count) ? ((Cluster)this.cluster.thing[i - count]) : ((Cluster)this.cluster.obj[i]));
+			if (cluster.density == 0f)
+			{
+				break;
+			}
+			if (Rand.Range(0f, 1f) > cluster.density)
+			{
+				continue;
+			}
+			switch (cluster.type)
+			{
+			case Cluster.Type.ScatterExterior:
+				if (interior)
+				{
+					continue;
+				}
+				break;
+			case Cluster.Type.ScatterInterior:
+				if (!interior)
+				{
+					continue;
+				}
+				break;
+			case Cluster.Type.ScatterNonObstacle:
+				if ((cell.Left.HasObstacle() ? 1 : 0) + (cell.Right.HasObstacle() ? 1 : 0) + (cell.Front.HasObstacle() ? 1 : 0) + (cell.Back.HasObstacle() ? 1 : 0) > 0)
+				{
+					continue;
+				}
+				break;
+			case Cluster.Type.ByWall:
+				if (cell.Left.hasDoor || cell.Right.hasDoor || cell.Front.hasDoor || cell.Back.hasDoor || (!cell.Left.HasBlock && !cell.Right.HasBlock && !cell.Front.HasBlock && !cell.Back.HasBlock))
+				{
+					continue;
+				}
+				break;
+			}
+			if (cluster.TryCreate(point))
+			{
+				break;
+			}
+		}
+	}
+
+	public static void Init()
+	{
+		if (!forceInitialize)
+		{
+			return;
+		}
+		Debug.Log("Initializing Clusters");
+		foreach (BiomeProfile value in EClass.core.refs.biomes.dict.Values)
+		{
+			value.Reset();
+		}
+		forceInitialize = false;
+	}
+
+	public void Reset()
+	{
+		_mat = null;
+		_matSub = null;
 	}
 }

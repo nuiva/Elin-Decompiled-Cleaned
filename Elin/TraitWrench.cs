@@ -1,23 +1,8 @@
-﻿using System;
-using UnityEngine;
-
 public class TraitWrench : Trait
 {
-	public string ID
-	{
-		get
-		{
-			return base.GetParam(1, null);
-		}
-	}
+	public string ID => GetParam(1);
 
-	public override bool IsTool
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsTool => true;
 
 	public bool IsValidTarget(Thing t)
 	{
@@ -25,87 +10,87 @@ public class TraitWrench : Trait
 		{
 			return false;
 		}
-		string id = this.ID;
-		if (id == "tent_elec")
+		switch (ID)
 		{
-			return t.trait is TraitTent && (t.trait as TraitTent).zone != null;
-		}
-		if (id == "bed")
-		{
+		case "tent_elec":
+			if (t.trait is TraitTent)
+			{
+				return (t.trait as TraitTent).zone != null;
+			}
+			return false;
+		case "bed":
 			return t.trait is TraitBed;
+		case "storage":
+		case "fridge":
+			return t.trait is TraitMagicChest;
+		case "extend_v":
+		case "extend_h":
+			if (t.trait is TraitMagicChest || t.trait is TraitDeliveryChest || t.trait.IsSpecialContainer)
+			{
+				return false;
+			}
+			if (t.IsContainer)
+			{
+				return t.trait is TraitContainer;
+			}
+			return false;
+		default:
+			return false;
 		}
-		if (!(id == "storage") && !(id == "fridge"))
-		{
-			return (id == "extend_v" || id == "extend_h") && !(t.trait is TraitMagicChest) && !(t.trait is TraitDeliveryChest) && !t.trait.IsSpecialContainer && t.IsContainer && t.trait is TraitContainer;
-		}
-		return t.trait is TraitMagicChest;
 	}
 
 	public bool Upgrade(Thing t)
 	{
-		string id = this.ID;
-		if (!(id == "tent_elec"))
+		switch (ID)
 		{
-			if (!(id == "bed"))
+		case "tent_elec":
+			(t.trait as TraitTent).zone.elements.ModBase(2201, 2);
+			break;
+		case "bed":
+			t.c_containerSize++;
+			if (EClass.debug.enable)
 			{
-				if (!(id == "storage"))
+				t.c_containerSize += 1000;
+			}
+			break;
+		case "storage":
+			t.c_containerUpgrade.cap += 20;
+			break;
+		case "fridge":
+			if (t.c_containerUpgrade.cool != 0)
+			{
+				return false;
+			}
+			t.c_containerUpgrade.cool = 1;
+			t.elements.SetBase(405, 50);
+			break;
+		case "extend_v":
+		case "extend_h":
+		{
+			bool flag = ID == "extend_v";
+			TraitContainer traitContainer = t.trait as TraitContainer;
+			if (t.things.GridSize == 0)
+			{
+				return false;
+			}
+			if (flag)
+			{
+				if (t.things.height != traitContainer.Height)
 				{
-					if (!(id == "fridge"))
-					{
-						if (id == "extend_v" || id == "extend_h")
-						{
-							bool flag = this.ID == "extend_v";
-							TraitContainer traitContainer = t.trait as TraitContainer;
-							if (t.things.GridSize == 0)
-							{
-								return false;
-							}
-							if (flag)
-							{
-								if (t.things.height != traitContainer.Height)
-								{
-									return false;
-								}
-								t.things.SetSize(t.things.width, t.things.height + 1);
-							}
-							else
-							{
-								if (t.things.width != traitContainer.Width)
-								{
-									return false;
-								}
-								t.things.SetSize(t.things.width + 1, t.things.height);
-							}
-						}
-					}
-					else
-					{
-						if (t.c_containerUpgrade.cool != 0)
-						{
-							return false;
-						}
-						t.c_containerUpgrade.cool = 1;
-						t.elements.SetBase(405, 50, 0);
-					}
+					return false;
 				}
-				else
-				{
-					t.c_containerUpgrade.cap += 20;
-				}
+				t.things.SetSize(t.things.width, t.things.height + 1);
 			}
 			else
 			{
-				int c_containerSize = t.c_containerSize;
-				t.c_containerSize = c_containerSize + 1;
-				if (EClass.debug.enable)
+				if (t.things.width != traitContainer.Width)
 				{
-					t.c_containerSize += 1000;
+					return false;
 				}
+				t.things.SetSize(t.things.width + 1, t.things.height);
 			}
+			break;
 		}
-		else
-		{
-			(t.trait as TraitTent).zone.elements.ModBase(2201, 2);
 		}
 		if (EClass.Branch != null)
 		{
@@ -118,26 +103,25 @@ public class TraitWrench : Trait
 	{
 		p.pos.Things.ForEach(delegate(Thing t)
 		{
-			if (!this.IsValidTarget(t))
+			if (IsValidTarget(t))
 			{
-				return;
+				p.TrySetAct("actWrench".lang(t.Name), delegate
+				{
+					if (Upgrade(t))
+					{
+						Msg.Say("upgrade", t, owner.GetName(NameStyle.Full, 1));
+						SE.Play("build_area");
+						t.PlayEffect("buff");
+						owner.ModNum(-1);
+						EClass._zone.RefreshElectricity();
+					}
+					else
+					{
+						Msg.Say("noMoreUpgrade", t, owner.GetName(NameStyle.Full, 1));
+					}
+					return false;
+				});
 			}
-			p.TrySetAct("actWrench".lang(t.Name, null, null, null, null), delegate()
-			{
-				if (this.Upgrade(t))
-				{
-					Msg.Say("upgrade", t, this.owner.GetName(NameStyle.Full, 1), null, null);
-					SE.Play("build_area");
-					t.PlayEffect("buff", true, 0f, default(Vector3));
-					this.owner.ModNum(-1, true);
-					EClass._zone.RefreshElectricity();
-				}
-				else
-				{
-					Msg.Say("noMoreUpgrade", t, this.owner.GetName(NameStyle.Full, 1), null, null);
-				}
-				return false;
-			}, null, 1);
 		});
 	}
 }

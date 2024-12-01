@@ -1,27 +1,25 @@
-﻿using System;
-
 public class RenderDataObj : RenderDataTile
 {
 	public override void Draw(RenderParam p)
 	{
-		MeshPass meshPass = (this.hasSubPass && SubPassData.Current.enable) ? this.pass.subPass : this.pass;
+		MeshPass meshPass = ((hasSubPass && SubPassData.Current.enable) ? pass.subPass : pass);
 		MeshBatch meshBatch = meshPass.batches[meshPass.batchIdx];
-		int num = (p.tile > 0f) ? 1 : -1;
-		if (this.useOffsetBack)
+		int num = ((p.tile > 0f) ? 1 : (-1));
+		if (useOffsetBack)
 		{
-			this._offset = ((p.dir == 2 || p.dir == 3) ? this.offsetBack : this.offset);
+			_offset = ((p.dir == 2 || p.dir == 3) ? offsetBack : offset);
 		}
-		if (meshPass == this.pass.subPass)
+		if (meshPass == pass.subPass)
 		{
 			meshBatch.colors[meshPass.idx] = p.color - 1572864f;
-			meshBatch.matrices[meshPass.idx].SetTRS(p.NewVector3 + this._offset + SubPassData.Current.offset, SubPassData.Current.rotation, SubPassData.Current.scale);
+			meshBatch.matrices[meshPass.idx].SetTRS(p.NewVector3 + _offset + SubPassData.Current.offset, SubPassData.Current.rotation, SubPassData.Current.scale);
 		}
 		else
 		{
 			meshBatch.colors[meshPass.idx] = p.color;
-			meshBatch.matrices[meshPass.idx].m03 = p.x + this._offset.x * (float)num;
-			meshBatch.matrices[meshPass.idx].m13 = p.y + this._offset.y;
-			meshBatch.matrices[meshPass.idx].m23 = p.z + this._offset.z;
+			meshBatch.matrices[meshPass.idx].m03 = p.x + _offset.x * (float)num;
+			meshBatch.matrices[meshPass.idx].m13 = p.y + _offset.y;
+			meshBatch.matrices[meshPass.idx].m23 = p.z + _offset.z;
 		}
 		meshBatch.tiles[meshPass.idx] = p.tile + (float)(p.liquidLv * 10000 * num);
 		meshBatch.matColors[meshPass.idx] = p.matColor;
@@ -30,14 +28,14 @@ public class RenderDataObj : RenderDataTile
 		{
 			meshPass.NextBatch();
 		}
-		if (p.snow && this.hasSnowPass && meshPass == this.pass)
+		if (p.snow && hasSnowPass && meshPass == pass)
 		{
-			meshPass = this.pass.snowPass;
+			meshPass = pass.snowPass;
 			meshBatch = meshPass.batches[meshPass.batchIdx];
 			meshBatch.colors[meshPass.idx] = p.color;
-			meshBatch.matrices[meshPass.idx].m03 = p.x + this._offset.x * (float)num;
-			meshBatch.matrices[meshPass.idx].m13 = p.y + this._offset.y;
-			meshBatch.matrices[meshPass.idx].m23 = p.z + this._offset.z + this.snowZ;
+			meshBatch.matrices[meshPass.idx].m03 = p.x + _offset.x * (float)num;
+			meshBatch.matrices[meshPass.idx].m13 = p.y + _offset.y;
+			meshBatch.matrices[meshPass.idx].m23 = p.z + _offset.z + snowZ;
 			meshBatch.tiles[meshPass.idx] = p.tile + (float)(p.liquidLv * 10000 * num);
 			meshBatch.matColors[meshPass.idx] = 104025f;
 			meshPass.idx++;
@@ -50,6 +48,6 @@ public class RenderDataObj : RenderDataTile
 
 	private void OnValidate()
 	{
-		this._offset = this.offset;
+		_offset = offset;
 	}
 }

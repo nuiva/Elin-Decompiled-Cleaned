@@ -1,20 +1,13 @@
-﻿using System;
-
 public class InvOwnerAlly : InvOwner
 {
-	public override bool AllowTransfer
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public override bool AllowTransfer => false;
 
-	public InvOwnerAlly(Card owner, Card container = null, CurrencyType _currency = CurrencyType.Money) : base(owner, container, _currency, PriceType.Default)
+	public InvOwnerAlly(Card owner, Card container = null, CurrencyType _currency = CurrencyType.Money)
+		: base(owner, container, _currency)
 	{
 	}
 
-	public override void ListInteractions(InvOwner.ListInteraction list, Thing t, Trait trait, ButtonGrid b, bool context)
+	public override void ListInteractions(ListInteraction list, Thing t, Trait trait, ButtonGrid b, bool context)
 	{
 	}
 
@@ -30,7 +23,7 @@ public class InvOwnerAlly : InvOwner
 
 	public override void OnRightClick(ButtonGrid button)
 	{
-		this.Process(button);
+		Process(button);
 	}
 
 	public override void OnRightPressed(ButtonGrid button)
@@ -52,7 +45,7 @@ public class InvOwnerAlly : InvOwner
 		{
 			buttonGrid.card = null;
 		}
-		return new InvOwner.Transaction(new DragItemCard.DragInfo(button), new DragItemCard.DragInfo(buttonGrid), 1).Process(true);
+		return new Transaction(new DragItemCard.DragInfo(button), new DragItemCard.DragInfo(buttonGrid)).Process(startTransaction: true);
 	}
 
 	public override string GetAutoUseLang(ButtonGrid button)
@@ -61,7 +54,7 @@ public class InvOwnerAlly : InvOwner
 		{
 			return null;
 		}
-		if (!new InvOwner.Transaction(new DragItemCard.DragInfo(button), new DragItemCard.DragInfo(LayerDragGrid.Instance.buttons[0]), 1).IsValid())
+		if (!new Transaction(new DragItemCard.DragInfo(button), new DragItemCard.DragInfo(LayerDragGrid.Instance.buttons[0])).IsValid())
 		{
 			return null;
 		}

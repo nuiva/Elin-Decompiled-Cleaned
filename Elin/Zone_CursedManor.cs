@@ -1,30 +1,10 @@
-﻿using System;
-
 public class Zone_CursedManor : Zone_Civilized
 {
-	public override bool LockExit
-	{
-		get
-		{
-			return !EClass.game.quests.IsStarted<QuestCursedManor>();
-		}
-	}
+	public override bool LockExit => !EClass.game.quests.IsStarted<QuestCursedManor>();
 
-	public override FlockController.SpawnType FlockType
-	{
-		get
-		{
-			return FlockController.SpawnType.Bat;
-		}
-	}
+	public override FlockController.SpawnType FlockType => FlockController.SpawnType.Bat;
 
-	public override ZoneTransition.EnterState RegionEnterState
-	{
-		get
-		{
-			return ZoneTransition.EnterState.Right;
-		}
-	}
+	public override ZoneTransition.EnterState RegionEnterState => ZoneTransition.EnterState.Right;
 
 	public override string GetNewZoneID(int level)
 	{
@@ -42,7 +22,7 @@ public class Zone_CursedManor : Zone_Civilized
 		{
 			if (!chara.IsPCParty && chara.IsMinion && chara.id == "sister_undead")
 			{
-				chara.AddCondition<ConSuspend>(100, true);
+				chara.AddCondition<ConSuspend>(100, force: true);
 			}
 		}
 	}

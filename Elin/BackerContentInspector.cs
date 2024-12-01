@@ -1,36 +1,13 @@
-﻿using System;
+using System;
 
 public class BackerContentInspector : EMono
 {
-	private void Awake()
-	{
-		BackerContentInspector.Instance = this;
-	}
-
-	public void Apply()
-	{
-		this.content.Apply();
-	}
-
-	public void Remove()
-	{
-		this.content.Remove();
-	}
-
-	public static BackerContentInspector Instance;
-
-	public BackerContentInspector.Content content;
-
 	[Serializable]
 	public class Content
 	{
-		public virtual string name
-		{
-			get
-			{
-				return this.id.ToString() ?? "";
-			}
-		}
+		public int id;
+
+		public virtual string name => id.ToString() ?? "";
 
 		public virtual void OnValidate()
 		{
@@ -43,53 +20,58 @@ public class BackerContentInspector : EMono
 		public virtual void Remove()
 		{
 		}
-
-		public int id;
 	}
 
-	public class ContentObj : BackerContentInspector.Content
+	public class ContentObj : Content
 	{
-		public override string name
-		{
-			get
-			{
-				return this.p.cell.GetObjName();
-			}
-		}
-
-		public override void Apply()
-		{
-			EMono._map.ApplyBackerObj(this.p, this.id);
-		}
-
-		public override void Remove()
-		{
-			EMono._map.backerObjs.Remove(this.p.index);
-		}
-
 		public Point p;
-	}
 
-	public class ContentCard : BackerContentInspector.Content
-	{
-		public override string name
-		{
-			get
-			{
-				return this.c.id + "/" + this.c.Name;
-			}
-		}
+		public override string name => p.cell.GetObjName();
 
 		public override void Apply()
 		{
-			this.c.ApplyBacker(this.id);
+			EMono._map.ApplyBackerObj(p, id);
 		}
 
 		public override void Remove()
 		{
-			this.c.RemoveBacker();
+			EMono._map.backerObjs.Remove(p.index);
+		}
+	}
+
+	public class ContentCard : Content
+	{
+		public Card c;
+
+		public override string name => c.id + "/" + c.Name;
+
+		public override void Apply()
+		{
+			c.ApplyBacker(id);
 		}
 
-		public Card c;
+		public override void Remove()
+		{
+			c.RemoveBacker();
+		}
+	}
+
+	public static BackerContentInspector Instance;
+
+	public Content content;
+
+	private void Awake()
+	{
+		Instance = this;
+	}
+
+	public void Apply()
+	{
+		content.Apply();
+	}
+
+	public void Remove()
+	{
+		content.Remove();
 	}
 }

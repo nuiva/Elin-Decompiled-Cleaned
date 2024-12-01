@@ -1,20 +1,16 @@
-﻿using System;
-
 public class GuildMage : Guild
 {
-	public override QuestGuild Quest
-	{
-		get
-		{
-			return EClass.game.quests.Get<QuestGuildMage>();
-		}
-	}
+	public override QuestGuild Quest => EClass.game.quests.Get<QuestGuildMage>();
 
 	public override bool IsCurrentZone
 	{
 		get
 		{
-			return EClass._zone.id == "lumiest" && EClass._zone.lv == -1;
+			if (EClass._zone.id == "lumiest")
+			{
+				return EClass._zone.lv == -1;
+			}
+			return false;
 		}
 	}
 
@@ -24,6 +20,6 @@ public class GuildMage : Guild
 		{
 			return a;
 		}
-		return a * 100 / (120 + this.relation.rank / 2);
+		return a * 100 / (120 + relation.rank / 2);
 	}
 }

@@ -1,20 +1,22 @@
-﻿using System;
-
 public class InvOwnerDeliver : InvOwnerDraglet
 {
-	public override bool SingleTarget
+	public enum Mode
 	{
-		get
-		{
-			return this.mode == InvOwnerDeliver.Mode.Tax;
-		}
+		Default,
+		Tax,
+		Bank,
+		Crop
 	}
+
+	public Mode mode;
+
+	public override bool SingleTarget => mode == Mode.Tax;
 
 	public override string langTransfer
 	{
 		get
 		{
-			if (this.mode != InvOwnerDeliver.Mode.Bank)
+			if (mode != Mode.Bank)
 			{
 				return "invDeliver";
 			}
@@ -22,28 +24,27 @@ public class InvOwnerDeliver : InvOwnerDraglet
 		}
 	}
 
-	public override InvOwnerDraglet.ProcessType processType
-	{
-		get
-		{
-			return InvOwnerDraglet.ProcessType.Consume;
-		}
-	}
+	public override ProcessType processType => ProcessType.Consume;
 
-	public InvOwnerDeliver(Card owner = null, Card container = null, CurrencyType _currency = CurrencyType.Money) : base(owner, container, _currency)
+	public InvOwnerDeliver(Card owner = null, Card container = null, CurrencyType _currency = CurrencyType.Money)
+		: base(owner, container, _currency)
 	{
 	}
 
 	public override bool ShouldShowGuide(Thing t)
 	{
-		switch (this.mode)
+		switch (mode)
 		{
-		case InvOwnerDeliver.Mode.Tax:
+		case Mode.Tax:
 			return t.c_bill != 0;
-		case InvOwnerDeliver.Mode.Bank:
+		case Mode.Bank:
 			return t.id == "money";
-		case InvOwnerDeliver.Mode.Crop:
-			return t.category.id == "vegi" || t.category.id == "fruit" || t.category.id == "mushroom";
+		case Mode.Crop:
+			if (!(t.category.id == "vegi") && !(t.category.id == "fruit"))
+			{
+				return t.category.id == "mushroom";
+			}
+			return true;
 		default:
 			return false;
 		}
@@ -59,14 +60,14 @@ public class InvOwnerDeliver : InvOwnerDraglet
 		{
 			SE.Beep();
 			Msg.Say("badidea");
-			EClass.pc.Pick(t, false, true);
+			EClass.pc.Pick(t, msg: false);
 			return;
 		}
 		if (fromBank)
 		{
-			EClass.game.cards.container_deposit.ModCurrency(-t.c_bill, "money");
+			EClass.game.cards.container_deposit.ModCurrency(-t.c_bill);
 		}
-		else if (!EClass.pc.TryPay(t.c_bill, "money"))
+		else if (!EClass.pc.TryPay(t.c_bill))
 		{
 			return;
 		}
@@ -88,15 +89,12 @@ public class InvOwnerDeliver : InvOwnerDraglet
 			{
 				EClass.player.taxBills = 0;
 			}
-			int num = t.GetInt(35, null) / 1000;
+			int num = t.GetInt(35) / 1000;
 			if (num > 0)
 			{
 				Thing thing = ThingGen.Create("money2", "copper").SetNum(num);
-				Thing p = ThingGen.CreateParcel("parcel_mysiliaGift", new Thing[]
-				{
-					thing
-				});
-				Msg.Say("getSalary", thing, null, null, null);
+				Thing p = ThingGen.CreateParcel("parcel_mysiliaGift", thing);
+				Msg.Say("getSalary", thing);
 				EClass.world.SendPackage(p);
 			}
 		}
@@ -104,25 +102,25 @@ public class InvOwnerDeliver : InvOwnerDraglet
 		{
 			EClass.player.unpaidBill -= t.c_bill;
 		}
-		Msg.Say("payBill", t, null, null, null);
+		Msg.Say("payBill", t);
 		t.Destroy();
 	}
 
 	public override void _OnProcess(Thing t)
 	{
-		switch (this.mode)
+		switch (mode)
 		{
-		case InvOwnerDeliver.Mode.Tax:
-			InvOwnerDeliver.PayBill(t, false);
-			return;
-		case InvOwnerDeliver.Mode.Bank:
+		case Mode.Tax:
+			PayBill(t);
+			break;
+		case Mode.Bank:
 			SE.Pay();
-			Msg.Say("depositMoney", t, this.owner, null, null);
-			this.owner.AddThing(t, true, -1, -1);
-			return;
-		case InvOwnerDeliver.Mode.Crop:
+			Msg.Say("depositMoney", t, owner);
+			owner.AddThing(t);
+			break;
+		case Mode.Crop:
 		{
-			Msg.Say("farm_chest", t, Lang._weight(t.SelfWeight * t.Num, true, 0), null, null);
+			Msg.Say("farm_chest", t, Lang._weight(t.SelfWeight * t.Num));
 			QuestHarvest questHarvest = EClass.game.quests.Get<QuestHarvest>();
 			if (questHarvest != null)
 			{
@@ -130,20 +128,8 @@ public class InvOwnerDeliver : InvOwnerDraglet
 			}
 			SE.Pick();
 			t.Destroy();
-			return;
+			break;
 		}
-		default:
-			return;
 		}
-	}
-
-	public InvOwnerDeliver.Mode mode;
-
-	public enum Mode
-	{
-		Default,
-		Tax,
-		Bank,
-		Crop
 	}
 }

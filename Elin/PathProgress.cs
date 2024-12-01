@@ -1,40 +1,14 @@
-﻿using System;
 using System.Collections.Generic;
 using Algorithms;
 
 public class PathProgress
 {
-	public bool HasPath
+	public enum State
 	{
-		get
-		{
-			return this.state == PathProgress.State.PathReady && this.nodes.Count >= 1;
-		}
-	}
-
-	public bool IsDestinationReached(Point pos)
-	{
-		return Util.Distance(pos.x, pos.z, this.destPoint.x, this.destPoint.z) <= this.destDist;
-	}
-
-	public void RequestPath(Point _startPoint, Point _destPoint, int _destDist, bool _ignoreConnection, int _searchLimit = -1)
-	{
-		this.startPoint.Set(_startPoint);
-		this.destPoint.Set(_destPoint);
-		this.destDist = _destDist;
-		this.ignoreConnection = _ignoreConnection;
-		this.searchLimit = ((_searchLimit == -1) ? PathManager.Instance.searchLimit : _searchLimit);
-		PathManager.Instance.RequestPath(this);
-	}
-
-	public void RequestPathImmediate(Point _startPoint, Point _destPoint, int _destDist, bool _ignoreConnection, int _searchLimit = -1)
-	{
-		this.startPoint.Set(_startPoint);
-		this.destPoint.Set(_destPoint);
-		this.destDist = _destDist;
-		this.ignoreConnection = _ignoreConnection;
-		this.searchLimit = ((_searchLimit == -1) ? PathManager.Instance.searchLimit : _searchLimit);
-		PathManager.Instance.RequestPathImmediate(this);
+		Idle,
+		Searching,
+		PathReady,
+		Fail
 	}
 
 	public IPathfindWalker walker;
@@ -47,7 +21,7 @@ public class PathProgress
 
 	public int nodeIndex;
 
-	public PathProgress.State state;
+	public State state;
 
 	public int destDist;
 
@@ -57,11 +31,40 @@ public class PathProgress
 
 	public PathManager.MoveType moveType;
 
-	public enum State
+	public bool HasPath
 	{
-		Idle,
-		Searching,
-		PathReady,
-		Fail
+		get
+		{
+			if (state == State.PathReady)
+			{
+				return nodes.Count >= 1;
+			}
+			return false;
+		}
+	}
+
+	public bool IsDestinationReached(Point pos)
+	{
+		return Util.Distance(pos.x, pos.z, destPoint.x, destPoint.z) <= destDist;
+	}
+
+	public void RequestPath(Point _startPoint, Point _destPoint, int _destDist, bool _ignoreConnection, int _searchLimit = -1)
+	{
+		startPoint.Set(_startPoint);
+		destPoint.Set(_destPoint);
+		destDist = _destDist;
+		ignoreConnection = _ignoreConnection;
+		searchLimit = ((_searchLimit == -1) ? PathManager.Instance.searchLimit : _searchLimit);
+		PathManager.Instance.RequestPath(this);
+	}
+
+	public void RequestPathImmediate(Point _startPoint, Point _destPoint, int _destDist, bool _ignoreConnection, int _searchLimit = -1)
+	{
+		startPoint.Set(_startPoint);
+		destPoint.Set(_destPoint);
+		destDist = _destDist;
+		ignoreConnection = _ignoreConnection;
+		searchLimit = ((_searchLimit == -1) ? PathManager.Instance.searchLimit : _searchLimit);
+		PathManager.Instance.RequestPathImmediate(this);
 	}
 }

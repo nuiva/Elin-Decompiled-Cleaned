@@ -1,34 +1,20 @@
-﻿using System;
-
 public class AttbMain : Element
 {
-	public override bool CanGainExp
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanGainExp => true;
 
 	public override int DisplayValue
 	{
 		get
 		{
-			if (this.id != 79 || this.owner.Chara == null)
+			if (id != 79 || owner.Chara == null)
 			{
 				return base.DisplayValue;
 			}
-			return this.owner.Chara.Speed;
+			return owner.Chara.Speed;
 		}
 	}
 
-	public override int MinPotential
-	{
-		get
-		{
-			return 80;
-		}
-	}
+	public override int MinPotential => 80;
 
 	public override bool CanLink(ElementContainer owner)
 	{
@@ -37,23 +23,16 @@ public class AttbMain : Element
 
 	public override void OnChangeValue()
 	{
-		Chara chara = this.owner.Chara;
-		int id = this.id;
-		if (id - 70 > 1)
+		Chara chara = owner.Chara;
+		switch (id)
 		{
-			if (id != 79)
-			{
-				return;
-			}
-			if (chara != null)
-			{
-				chara.SetDirtySpeed();
-			}
-		}
-		else if (chara != null)
-		{
-			chara.SetDirtyWeight();
-			return;
+		case 70:
+		case 71:
+			chara?.SetDirtyWeight();
+			break;
+		case 79:
+			chara?.SetDirtySpeed();
+			break;
 		}
 	}
 }

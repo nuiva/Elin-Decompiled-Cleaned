@@ -1,15 +1,14 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class ZoneInstanceRandomQuest : ZoneInstance
 {
-	public override bool WarnExit
-	{
-		get
-		{
-			return this.status != ZoneInstance.Status.Success;
-		}
-	}
+	[JsonProperty]
+	public int uidClient;
+
+	[JsonProperty]
+	public int uidQuest;
+
+	public override bool WarnExit => status != Status.Success;
 
 	public override void OnLeaveZone()
 	{
@@ -23,15 +22,9 @@ public class ZoneInstanceRandomQuest : ZoneInstance
 		}
 		base.ReturnZone.events.AddPreEnter(new ZonePreEnterOnCompleteQuestInstance
 		{
-			uidClient = this.uidClient,
-			uidQuest = this.uidQuest,
-			fail = (this.status != ZoneInstance.Status.Success)
-		}, true);
+			uidClient = uidClient,
+			uidQuest = uidQuest,
+			fail = (status != Status.Success)
+		});
 	}
-
-	[JsonProperty]
-	public int uidClient;
-
-	[JsonProperty]
-	public int uidQuest;
 }

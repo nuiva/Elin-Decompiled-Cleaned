@@ -1,38 +1,5 @@
-﻿using System;
-
 public class CardBlueprint
 {
-	public static CardBlueprint Chara(int lv, Rarity rarity = Rarity.Normal)
-	{
-		return new CardBlueprint
-		{
-			rarity = rarity,
-			lv = lv
-		};
-	}
-
-	public static void Set(CardBlueprint _bp)
-	{
-		CardBlueprint.current = _bp;
-	}
-
-	public static void SetNormalRarity(bool fixedMat = false)
-	{
-		CardBlueprint.Set(new CardBlueprint
-		{
-			rarity = Rarity.Normal,
-			fixedMat = fixedMat
-		});
-	}
-
-	public static void SetRarity(Rarity q = Rarity.Normal)
-	{
-		CardBlueprint.Set(new CardBlueprint
-		{
-			rarity = q
-		});
-	}
-
 	public int lv = -999;
 
 	public int qualityBonus;
@@ -66,4 +33,35 @@ public class CardBlueprint
 	{
 		rarity = Rarity.Legendary
 	};
+
+	public static CardBlueprint Chara(int lv, Rarity rarity = Rarity.Normal)
+	{
+		return new CardBlueprint
+		{
+			rarity = rarity,
+			lv = lv
+		};
+	}
+
+	public static void Set(CardBlueprint _bp)
+	{
+		current = _bp;
+	}
+
+	public static void SetNormalRarity(bool fixedMat = false)
+	{
+		Set(new CardBlueprint
+		{
+			rarity = Rarity.Normal,
+			fixedMat = fixedMat
+		});
+	}
+
+	public static void SetRarity(Rarity q = Rarity.Normal)
+	{
+		Set(new CardBlueprint
+		{
+			rarity = q
+		});
+	}
 }

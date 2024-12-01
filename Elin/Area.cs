@@ -1,64 +1,50 @@
-﻿using System;
 using Newtonsoft.Json;
 
 public class Area : BaseArea
 {
-	public virtual bool isListable
-	{
-		get
-		{
-			return true;
-		}
-	}
+	[JsonProperty]
+	public TaskList<Task> taskList = new TaskList<Task>();
 
-	public virtual bool AutoTask
-	{
-		get
-		{
-			return false;
-		}
-	}
+	public bool isDestroyed;
 
-	public RoomManager manager
-	{
-		get
-		{
-			return EClass._map.rooms;
-		}
-	}
+	public virtual bool isListable => true;
+
+	public virtual bool AutoTask => false;
+
+	public RoomManager manager => EClass._map.rooms;
 
 	public virtual void OnLoad()
 	{
-		foreach (Point point in this.points)
+		foreach (Point point in points)
 		{
-			this.AddPoint(point, true);
+			AddPoint(point, onLoad: true);
 		}
-		this.taskList.OnLoad();
-		this.type.owner = this;
-		this.manager.mapIDs.Add(this.uid, this);
+		taskList.OnLoad();
+		type.owner = this;
+		manager.mapIDs.Add(uid, this);
 	}
 
 	public void AddPoint(Point point, bool onLoad = false)
 	{
 		if (!onLoad)
 		{
-			this.points.Add(point);
+			points.Add(point);
 		}
 		point.cell.GetOrCreateDetail().area = this;
 	}
 
 	public void RemovePoint(Point point)
 	{
-		if (this.points.Count <= 1)
+		if (points.Count <= 1)
 		{
 			return;
 		}
-		foreach (Point point2 in this.points)
+		foreach (Point point2 in points)
 		{
 			if (point2.Equals(point))
 			{
-				this.OnRemovePoint(point2);
-				this.points.Remove(point2);
+				OnRemovePoint(point2);
+				points.Remove(point2);
 				point.detail.area = null;
 				point.cell.TryDespawnDetail();
 				break;
@@ -80,9 +66,9 @@ public class Area : BaseArea
 
 	public void OnHoverArea(MeshPass pass)
 	{
-		foreach (Point point in this.points)
+		foreach (Point point in points)
 		{
-			pass.Add(point, (float)((EClass.scene.actionMode.AreaHihlight == AreaHighlightMode.Edit) ? 34 : 33), 0f);
+			pass.Add(point, (EClass.scene.actionMode.AreaHihlight == AreaHighlightMode.Edit) ? 34 : 33);
 		}
 	}
 
@@ -97,19 +83,19 @@ public class Area : BaseArea
 
 	public void OnRemove()
 	{
-		if (this.isDestroyed)
+		if (isDestroyed)
 		{
 			return;
 		}
-		this.isDestroyed = true;
-		Task[] array = this.taskList.items.ToArray();
+		isDestroyed = true;
+		Task[] array = taskList.items.ToArray();
 		for (int i = 0; i < array.Length; i++)
 		{
 			array[i].Destroy();
 		}
-		foreach (Point point in this.points)
+		foreach (Point point in points)
 		{
-			this.OnRemovePoint(point);
+			OnRemovePoint(point);
 			point.detail.area = null;
 			point.cell.TryDespawnDetail();
 		}
@@ -122,9 +108,4 @@ public class Area : BaseArea
 		EClass._map.rooms.AssignUID(area);
 		return area;
 	}
-
-	[JsonProperty]
-	public TaskList<Task> taskList = new TaskList<Task>();
-
-	public bool isDestroyed;
 }

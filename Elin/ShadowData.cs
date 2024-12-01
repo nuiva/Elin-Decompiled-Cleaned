@@ -1,24 +1,24 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 public class ShadowData : EScriptable
 {
-	public static ShadowData Instance;
-
-	public List<ShadowData.Item> items;
-
 	[Serializable]
 	public class Item
 	{
+		public string name;
+
+		public int[] raw = new int[8] { 1, 0, 0, 0, 0, 0, 0, 0 };
+
 		public int tile
 		{
 			get
 			{
-				return this.raw[0];
+				return raw[0];
 			}
 			set
 			{
-				this.raw[0] = value;
+				raw[0] = value;
 			}
 		}
 
@@ -26,11 +26,11 @@ public class ShadowData : EScriptable
 		{
 			get
 			{
-				return this.raw[1];
+				return raw[1];
 			}
 			set
 			{
-				this.raw[1] = value;
+				raw[1] = value;
 			}
 		}
 
@@ -38,11 +38,11 @@ public class ShadowData : EScriptable
 		{
 			get
 			{
-				return this.raw[2];
+				return raw[2];
 			}
 			set
 			{
-				this.raw[2] = value;
+				raw[2] = value;
 			}
 		}
 
@@ -50,11 +50,11 @@ public class ShadowData : EScriptable
 		{
 			get
 			{
-				return this.raw[3] + 100;
+				return raw[3] + 100;
 			}
 			set
 			{
-				this.raw[3] = value - 100;
+				raw[3] = value - 100;
 			}
 		}
 
@@ -62,11 +62,11 @@ public class ShadowData : EScriptable
 		{
 			get
 			{
-				return this.raw[4] + 100;
+				return raw[4] + 100;
 			}
 			set
 			{
-				this.raw[4] = value - 100;
+				raw[4] = value - 100;
 			}
 		}
 
@@ -74,37 +74,29 @@ public class ShadowData : EScriptable
 		{
 			get
 			{
-				return this.raw[5];
+				return raw[5];
 			}
 			set
 			{
-				this.raw[5] = value;
+				raw[5] = value;
 			}
 		}
 
 		public override string ToString()
 		{
-			return "(" + this.tile.ToString() + ") " + this.name;
+			return "(" + tile + ") " + name;
 		}
 
 		public void Validate()
 		{
-			if (this.raw.Length < 8)
+			if (raw.Length < 8)
 			{
-				Array.Resize<int>(ref this.raw, 8);
+				Array.Resize(ref raw, 8);
 			}
 		}
-
-		public Item()
-		{
-			int[] array = new int[8];
-			array[0] = 1;
-			this.raw = array;
-			base..ctor();
-		}
-
-		public string name;
-
-		public int[] raw;
 	}
+
+	public static ShadowData Instance;
+
+	public List<Item> items;
 }

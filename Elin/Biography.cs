@@ -1,17 +1,27 @@
-﻿using System;
+using System;
 using Newtonsoft.Json;
 
 public class Biography : EClass
 {
+	public static string[] idFemale = new string[5] { "shojo", "sister", "sister_cat", "younglady", "sister_undead" };
+
+	[JsonProperty]
+	public int[] ints = new int[20];
+
+	[JsonProperty]
+	public string[] strs = new string[3];
+
+	public int[] personalities = new int[5];
+
 	public string idLike
 	{
 		get
 		{
-			return this.strs[0];
+			return strs[0];
 		}
 		set
 		{
-			this.strs[0] = value;
+			strs[0] = value;
 		}
 	}
 
@@ -19,11 +29,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[0];
+			return ints[0];
 		}
 		set
 		{
-			this.ints[0] = value;
+			ints[0] = value;
 		}
 	}
 
@@ -31,11 +41,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[2];
+			return ints[2];
 		}
 		set
 		{
-			this.ints[2] = value;
+			ints[2] = value;
 		}
 	}
 
@@ -43,11 +53,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[3];
+			return ints[3];
 		}
 		set
 		{
-			this.ints[3] = value;
+			ints[3] = value;
 		}
 	}
 
@@ -55,11 +65,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[4];
+			return ints[4];
 		}
 		set
 		{
-			this.ints[4] = value;
+			ints[4] = value;
 		}
 	}
 
@@ -67,11 +77,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[5];
+			return ints[5];
 		}
 		set
 		{
-			this.ints[5] = value;
+			ints[5] = value;
 		}
 	}
 
@@ -79,11 +89,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[6];
+			return ints[6];
 		}
 		set
 		{
-			this.ints[6] = value;
+			ints[6] = value;
 		}
 	}
 
@@ -91,11 +101,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[7];
+			return ints[7];
 		}
 		set
 		{
-			this.ints[7] = value;
+			ints[7] = value;
 		}
 	}
 
@@ -103,11 +113,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[8];
+			return ints[8];
 		}
 		set
 		{
-			this.ints[8] = value;
+			ints[8] = value;
 		}
 	}
 
@@ -115,11 +125,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[9];
+			return ints[9];
 		}
 		set
 		{
-			this.ints[9] = value;
+			ints[9] = value;
 		}
 	}
 
@@ -127,11 +137,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[10];
+			return ints[10];
 		}
 		set
 		{
-			this.ints[10] = value;
+			ints[10] = value;
 		}
 	}
 
@@ -139,11 +149,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[11];
+			return ints[11];
 		}
 		set
 		{
-			this.ints[11] = value;
+			ints[11] = value;
 		}
 	}
 
@@ -151,11 +161,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[12];
+			return ints[12];
 		}
 		set
 		{
-			this.ints[12] = value;
+			ints[12] = value;
 		}
 	}
 
@@ -163,11 +173,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[13];
+			return ints[13];
 		}
 		set
 		{
-			this.ints[13] = value;
+			ints[13] = value;
 		}
 	}
 
@@ -175,11 +185,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[14];
+			return ints[14];
 		}
 		set
 		{
-			this.ints[14] = value;
+			ints[14] = value;
 		}
 	}
 
@@ -187,11 +197,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[15];
+			return ints[15];
 		}
 		set
 		{
-			this.ints[15] = value;
+			ints[15] = value;
 		}
 	}
 
@@ -199,11 +209,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[16];
+			return ints[16];
 		}
 		set
 		{
-			this.ints[16] = value;
+			ints[16] = value;
 		}
 	}
 
@@ -211,11 +221,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[17];
+			return ints[17];
 		}
 		set
 		{
-			this.ints[17] = value;
+			ints[17] = value;
 		}
 	}
 
@@ -223,11 +233,11 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[18];
+			return ints[18];
 		}
 		set
 		{
-			this.ints[18] = value;
+			ints[18] = value;
 		}
 	}
 
@@ -235,141 +245,100 @@ public class Biography : EClass
 	{
 		get
 		{
-			return this.ints[19];
+			return ints[19];
 		}
 		set
 		{
-			this.ints[19] = value;
+			ints[19] = value;
 		}
 	}
 
-	public string nameHome
-	{
-		get
-		{
-			return this.StrBio(this.idHome);
-		}
-	}
+	public string nameHome => StrBio(idHome);
 
-	public string nameLoc
-	{
-		get
-		{
-			return this.StrBio(this.idLoc);
-		}
-	}
+	public string nameLoc => StrBio(idLoc);
 
-	public string nameDad
-	{
-		get
-		{
-			return "textParent".lang(this.StrBio(this.idAdvDad), this.StrBio(this.idDad), null, null, null);
-		}
-	}
+	public string nameDad => "textParent".lang(StrBio(idAdvDad), StrBio(idDad));
 
-	public string nameMom
-	{
-		get
-		{
-			return "textParent".lang(this.StrBio(this.idAdvMom), this.StrBio(this.idMom), null, null, null);
-		}
-	}
+	public string nameMom => "textParent".lang(StrBio(idAdvMom), StrBio(idMom));
 
-	public string nameBirthplace
-	{
-		get
-		{
-			return "birthLoc2".lang(this.nameHome, this.nameLoc, null, null, null);
-		}
-	}
+	public string nameBirthplace => "birthLoc2".lang(nameHome, nameLoc);
 
 	public int age
 	{
 		get
 		{
-			return EClass.world.date.year - this.birthYear;
+			return EClass.world.date.year - birthYear;
 		}
 		set
 		{
-			this.birthYear = EClass.world.date.year - value;
+			birthYear = EClass.world.date.year - value;
 		}
 	}
 
-	public int ageOriginal
-	{
-		get
-		{
-			return EClass.game.Prologue.year - this.birthYear;
-		}
-	}
+	public int ageOriginal => EClass.game.Prologue.year - birthYear;
 
-	public bool IsUnderAge
-	{
-		get
-		{
-			return this.age < 18;
-		}
-	}
+	public bool IsUnderAge => age < 18;
 
 	public string TextAge(Chara c)
 	{
-		string result;
-		if (this.age < 1000)
+		object obj;
+		if (age < 1000)
 		{
-			if ((result = (c.IsUnique ? this.ageOriginal : this.age).ToString()) == null)
+			obj = (c.IsUnique ? ageOriginal : age).ToString();
+			if (obj == null)
 			{
 				return "";
 			}
 		}
 		else
 		{
-			result = "???";
+			obj = "???";
 		}
-		return result;
+		return (string)obj;
 	}
 
 	public void Generate(Chara c)
 	{
 		string bio = c.source.bio;
-		SourceRace.Row race = c.Chara.race;
-		this.stability = Rand.rndNormal(100);
-		this.law = Rand.rndNormal(100);
-		this.affection = Rand.rndNormal(100);
-		this.dominance = Rand.rndNormal(100);
-		this.extroversion = Rand.rndNormal(100);
-		this.idInterest = EClass.rnd(Enum.GetNames(typeof(Interest)).Length);
-		if (Biography.idFemale.Contains(c.id) || c.race.id == "roran")
+		_ = c.Chara.race;
+		stability = Rand.rndNormal(100);
+		law = Rand.rndNormal(100);
+		affection = Rand.rndNormal(100);
+		dominance = Rand.rndNormal(100);
+		extroversion = Rand.rndNormal(100);
+		idInterest = EClass.rnd(Enum.GetNames(typeof(Interest)).Length);
+		if (idFemale.Contains(c.id) || c.race.id == "roran")
 		{
-			this.SetGender(1);
+			SetGender(1);
 		}
 		else
 		{
-			this.SetGender(Gender.GetRandom());
+			SetGender(Gender.GetRandom());
 		}
-		this.RerollBio(c, 0, false);
+		RerollBio(c);
 		c.SetRandomTone();
 		c.SetRandomTalk();
 		bool flag = c.IsHuman;
 		if (!bio.IsEmpty())
 		{
-			string[] array = bio.Split('/', StringSplitOptions.None);
-			this.SetGender((array[0] == "f") ? 1 : 2);
+			string[] array = bio.Split('/');
+			SetGender((array[0] == "f") ? 1 : 2);
 			if (array.Length > 1)
 			{
 				if (!c.source.HasTag(CTAG.randomPortrait))
 				{
 					flag = false;
 				}
-				this.age = int.Parse(array[1]);
-				c.pccData = IO.LoadFile<PCCData>(CorePath.packageCore + "Data/PCC/" + c.id + ".txt", false, null);
+				age = int.Parse(array[1]);
+				c.pccData = IO.LoadFile<PCCData>(CorePath.packageCore + "Data/PCC/" + c.id + ".txt");
 			}
 			if (array.Length > 2)
 			{
-				this.height = int.Parse(array[2]);
+				height = int.Parse(array[2]);
 			}
 			if (array.Length > 3)
 			{
-				this.weight = int.Parse(array[3]);
+				weight = int.Parse(array[3]);
 			}
 			if (array.Length > 4)
 			{
@@ -386,27 +355,27 @@ public class Biography : EClass
 		}
 		if (flag && !c.HasTag(CTAG.noPortrait))
 		{
-			this.SetPortrait(c);
+			SetPortrait(c);
 		}
-		if (c.id == "prostitute" && this.age < 15)
+		if (c.id == "prostitute" && age < 15)
 		{
-			this.age = 15;
+			age = 15;
 		}
-		SourceThing.Row row = EClass.sources.things.rows.RandomItem<SourceThing.Row>();
-		this.idLike = row.id;
-		this.idHobby = EClass.sources.elements.hobbies.RandomItem<SourceElement.Row>().id;
+		SourceThing.Row row = EClass.sources.things.rows.RandomItem();
+		idLike = row.id;
+		idHobby = EClass.sources.elements.hobbies.RandomItem().id;
 	}
 
 	public void RerollBio(Chara c, int ageIndex = 0, bool keepParent = false)
 	{
-		this.GenerateBirthday(c, ageIndex);
-		this.GenerateAppearance(c);
+		GenerateBirthday(c, ageIndex);
+		GenerateAppearance(c);
 		if (!keepParent)
 		{
-			this.GenerateDad();
-			this.GenerateMom();
-			this.idHome = this.RndBio("home");
-			this.idLoc = this.RndBio("loc");
+			GenerateDad();
+			GenerateMom();
+			idHome = RndBio("home");
+			idLoc = RndBio("loc");
 		}
 	}
 
@@ -418,33 +387,33 @@ public class Biography : EClass
 		if (ageIndex != 0)
 		{
 			int num3 = (num2 - num) / 4;
-			this.age = Rand.Range(num + num3 * (ageIndex - 1), num + num3 * ageIndex);
+			age = Rand.Range(num + num3 * (ageIndex - 1), num + num3 * ageIndex);
 		}
 		else
 		{
-			this.age = Rand.Range(num, num2);
+			age = Rand.Range(num, num2);
 		}
-		this.birthDay = EClass.rnd(30) + 1;
-		this.birthMonth = EClass.rnd(12) + 1;
+		birthDay = EClass.rnd(30) + 1;
+		birthMonth = EClass.rnd(12) + 1;
 	}
 
 	public void GenerateAppearance(Chara c)
 	{
 		SourceRace.Row race = c.race;
-		this.height = race.height + EClass.rnd(race.height / 5 + 1) - EClass.rnd(race.height / 5 + 1);
-		this.weight = this.height * this.height * (EClass.rnd(6) + 18) / 10000;
+		height = race.height + EClass.rnd(race.height / 5 + 1) - EClass.rnd(race.height / 5 + 1);
+		weight = height * height * (EClass.rnd(6) + 18) / 10000;
 	}
 
 	public void GenerateDad()
 	{
-		this.idDad = this.RndBio("parent");
-		this.idAdvDad = this.RndBio("adv");
+		idDad = RndBio("parent");
+		idAdvDad = RndBio("adv");
 	}
 
 	public void GenerateMom()
 	{
-		this.idMom = this.RndBio("parent");
-		this.idAdvMom = this.RndBio("adv");
+		idMom = RndBio("parent");
+		idAdvMom = RndBio("adv");
 	}
 
 	private int RndBio(string group)
@@ -454,87 +423,68 @@ public class Biography : EClass
 
 	private string StrBio(int id)
 	{
-		string result;
+		object obj;
 		if (!EClass.sources.langWord.map.ContainsKey(id))
 		{
-			if ((result = id.ToString()) == null)
+			obj = id.ToString();
+			if (obj == null)
 			{
 				return "";
 			}
 		}
 		else
 		{
-			result = EClass.sources.langWord.map[id].GetText("name", false).Split(',', StringSplitOptions.None)[0];
+			obj = EClass.sources.langWord.map[id].GetText().Split(',')[0];
 		}
-		return result;
+		return (string)obj;
 	}
 
 	public void SetGender(int g)
 	{
-		this.gender = g;
-		if (this.gender > 2)
+		gender = g;
+		if (gender > 2)
 		{
-			this.gender = 0;
+			gender = 0;
 		}
 	}
 
 	public void SetPortrait(Chara c)
 	{
 		string id = c.id;
-		if (id == "shojo")
+		if (!(id == "shojo"))
+		{
+			if (id == "sister")
+			{
+				c.c_idPortrait = Portrait.GetRandomPortrait("special_f-littlesister");
+			}
+			else
+			{
+				c.c_idPortrait = Portrait.GetRandomPortrait(gender, c.GetIdPortraitCat());
+			}
+		}
+		else
 		{
 			c.c_idPortrait = Portrait.GetRandomPortrait("special_f-littlegirl");
-			return;
 		}
-		if (!(id == "sister"))
-		{
-			c.c_idPortrait = Portrait.GetRandomPortrait(this.gender, c.GetIdPortraitCat());
-			return;
-		}
-		c.c_idPortrait = Portrait.GetRandomPortrait("special_f-littlesister");
 	}
 
 	public string TextBio(Chara c)
 	{
-		return string.Concat(new string[]
-		{
-			c.race.GetText("name", false).ToTitleCase(true),
-			" ",
-			Lang.Parse("age", this.TextAge(c), null, null, null, null),
-			" ",
-			Lang._gender(this.gender)
-		});
+		return c.race.GetText().ToTitleCase(wholeText: true) + " " + Lang.Parse("age", TextAge(c)) + " " + Lang._gender(gender);
 	}
 
 	public string TextBio2(Chara c)
 	{
-		return Lang.Parse("heightWeight", this.height.ToString() ?? "", this.weight.ToString() ?? "", null, null, null) + " " + ((c.material.alias == "meat") ? "" : c.material.GetName().ToTitleCase(true));
+		return Lang.Parse("heightWeight", height.ToString() ?? "", weight.ToString() ?? "") + " " + ((c.material.alias == "meat") ? "" : c.material.GetName().ToTitleCase(wholeText: true));
 	}
 
 	public string TextBirthDate(Chara c, bool _age = false)
 	{
-		return Lang.Parse("birthText", (this.birthYear >= 0) ? (this.birthYear.ToString() ?? "") : "???", this.birthMonth.ToString() ?? "", this.birthDay.ToString() ?? "", null, null) + (_age ? (" (" + Lang.Parse("age", this.TextAge(c), null, null, null, null) + ")") : "");
+		return Lang.Parse("birthText", (birthYear >= 0) ? (birthYear.ToString() ?? "") : "???", birthMonth.ToString() ?? "", birthDay.ToString() ?? "") + (_age ? (" (" + Lang.Parse("age", TextAge(c)) + ")") : "");
 	}
 
 	public string TextAppearance()
 	{
-		return Lang.Parse("heightWeight", this.height.ToString() ?? "", this.weight.ToString() ?? "", null, null, null);
+		return Lang.Parse("heightWeight", height.ToString() ?? "", weight.ToString() ?? "");
 	}
-
-	public static string[] idFemale = new string[]
-	{
-		"shojo",
-		"sister",
-		"sister_cat",
-		"younglady",
-		"sister_undead"
-	};
-
-	[JsonProperty]
-	public int[] ints = new int[20];
-
-	[JsonProperty]
-	public string[] strs = new string[3];
-
-	public int[] personalities = new int[5];
 }

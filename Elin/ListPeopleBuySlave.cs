@@ -1,22 +1,8 @@
-﻿using System;
-
 public class ListPeopleBuySlave : BaseListPeople
 {
-	public SlaverData data
-	{
-		get
-		{
-			return this.owner.GetObj<SlaverData>(5);
-		}
-	}
+	public SlaverData data => owner.GetObj<SlaverData>(5);
 
-	public override LayerPeople.ShowMode ShowMode
-	{
-		get
-		{
-			return LayerPeople.ShowMode.Work;
-		}
-	}
+	public override LayerPeople.ShowMode ShowMode => LayerPeople.ShowMode.Work;
 
 	public override bool IsDisabled(Chara c)
 	{
@@ -25,18 +11,18 @@ public class ListPeopleBuySlave : BaseListPeople
 
 	public override void OnCreate()
 	{
-		if (this.data == null)
+		if (data == null)
 		{
-			this.owner.SetObj(5, new SlaverData());
+			owner.SetObj(5, new SlaverData());
 		}
-		this.data.TryRefresh(this.owner);
+		data.TryRefresh(owner);
 	}
 
 	public override void OnInstantiate(Chara a, ItemGeneral b)
 	{
 		base.OnInstantiate(a, b);
-		int money = EClass.pc.GetCurrency("money");
-		b.AddPrefab<UIItem>("costMoney").text1.SetText((this.Cost(a).ToString() ?? "").TagColorGoodBad(() => money >= this.Cost(a), false));
+		int money = EClass.pc.GetCurrency();
+		b.AddPrefab<UIItem>("costMoney").text1.SetText((Cost(a).ToString() ?? "").TagColorGoodBad(() => money >= Cost(a)));
 	}
 
 	public override void OnClick(Chara c, ItemGeneral i)
@@ -52,9 +38,9 @@ public class ListPeopleBuySlave : BaseListPeople
 
 	public override void OnList()
 	{
-		foreach (Chara o in this.data.list)
+		foreach (Chara item in data.list)
 		{
-			this.list.Add(o);
+			list.Add(item);
 		}
 	}
 }

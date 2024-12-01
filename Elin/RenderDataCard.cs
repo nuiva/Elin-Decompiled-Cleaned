@@ -1,20 +1,19 @@
-﻿using System;
 using UnityEngine;
 
 public class RenderDataCard : RenderData
 {
+	public CardActor mold;
+
 	public override CardActor CreateActor()
 	{
-		if (!this.mold && base.name == "pcc")
+		if (!mold && base.name == "pcc")
 		{
-			this.mold = Resources.Load<CharaActorPCC>("Scene/Render/Actor/CharaActorPCC");
+			mold = Resources.Load<CharaActorPCC>("Scene/Render/Actor/CharaActorPCC");
 		}
-		if (this.mold == null)
+		if (mold == null)
 		{
 			return null;
 		}
-		return PoolManager.Spawn<CardActor>(this.mold, null);
+		return PoolManager.Spawn(mold);
 	}
-
-	public CardActor mold;
 }

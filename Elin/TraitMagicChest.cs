@@ -1,68 +1,34 @@
-﻿using System;
-
 public class TraitMagicChest : TraitContainer
 {
-	public override int Electricity
-	{
-		get
-		{
-			return base.Electricity + ((this.IsFridge ? 50 : 0) + this.owner.c_containerUpgrade.cap / 5) * -1;
-		}
-	}
+	public override int Electricity => base.Electricity + ((IsFridge ? 50 : 0) + owner.c_containerUpgrade.cap / 5) * -1;
 
-	public override bool IsHomeItem
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsHomeItem => true;
 
-	public override bool IsSpecialContainer
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool IsSpecialContainer => true;
 
-	public override bool CanBeOnlyBuiltInHome
-	{
-		get
-		{
-			return true;
-		}
-	}
+	public override bool CanBeOnlyBuiltInHome => true;
 
 	public override bool CanOpenContainer
 	{
 		get
 		{
-			return EClass._zone.IsPCFaction && this.owner.IsInstalled;
+			if (EClass._zone.IsPCFaction)
+			{
+				return owner.IsInstalled;
+			}
+			return false;
 		}
 	}
 
-	public override bool IsFridge
-	{
-		get
-		{
-			return this.owner.c_containerUpgrade.cool > 0;
-		}
-	}
+	public override bool IsFridge => owner.c_containerUpgrade.cool > 0;
 
-	public override bool UseAltTiles
-	{
-		get
-		{
-			return this.owner.isOn;
-		}
-	}
+	public override bool UseAltTiles => owner.isOn;
 
 	public override int DecaySpeedChild
 	{
 		get
 		{
-			if (!this.IsFridge || !this.owner.isOn)
+			if (!IsFridge || !owner.isOn)
 			{
 				return base.DecaySpeedChild;
 			}
@@ -74,15 +40,19 @@ public class TraitMagicChest : TraitContainer
 	{
 		get
 		{
-			return EClass.core.IsGameStarted && this.owner.IsInstalled && EClass._zone.IsPCFaction;
+			if (EClass.core.IsGameStarted && owner.IsInstalled)
+			{
+				return EClass._zone.IsPCFaction;
+			}
+			return false;
 		}
 	}
 
 	public override void SetName(ref string s)
 	{
-		if (this.IsFridge)
+		if (IsFridge)
 		{
-			s = "chest_fridge".lang(s, null, null, null, null);
+			s = "chest_fridge".lang(s);
 		}
 	}
 }

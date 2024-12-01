@@ -1,12 +1,5 @@
-﻿using System;
-
 public class FLOOR : EClass
 {
-	public static bool IsTatami(int id)
-	{
-		return id == 93 || id == 98;
-	}
-
 	public const int TileWidth = 32;
 
 	public const int floor_raw = 40;
@@ -42,4 +35,13 @@ public class FLOOR : EClass
 	public static SourceFloor.Row sourceIce = EClass.sources.floors.rows[38];
 
 	public static SourceFloor.Row sourceWood = EClass.sources.floors.rows[21];
+
+	public static bool IsTatami(int id)
+	{
+		if (id != 93)
+		{
+			return id == 98;
+		}
+		return true;
+	}
 }

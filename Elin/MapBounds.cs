@@ -1,107 +1,102 @@
-﻿using System;
+using System;
 using Newtonsoft.Json;
 using UnityEngine;
 
 public class MapBounds : EClass
 {
-	public int CenterX
-	{
-		get
-		{
-			return (this.x + this.maxX) / 2;
-		}
-	}
+	[JsonProperty]
+	public int x;
 
-	public int CenterZ
-	{
-		get
-		{
-			return (this.z + this.maxZ) / 2;
-		}
-	}
+	[JsonProperty]
+	public int z;
 
-	public int Width
-	{
-		get
-		{
-			return this.maxX - this.x + 1;
-		}
-	}
+	[JsonProperty]
+	public int maxX;
 
-	public int Height
-	{
-		get
-		{
-			return this.maxZ - this.z + 1;
-		}
-	}
+	[JsonProperty]
+	public int maxZ;
+
+	[JsonProperty]
+	public int Size;
+
+	public int CenterX => (x + maxX) / 2;
+
+	public int CenterZ => (z + maxZ) / 2;
+
+	public int Width => maxX - x + 1;
+
+	public int Height => maxZ - z + 1;
 
 	public void SetBounds(int _x, int _z, int _maxX, int _maxZ)
 	{
-		this.x = _x;
-		this.z = _z;
-		this.maxX = _maxX;
-		this.maxZ = _maxZ;
+		x = _x;
+		z = _z;
+		maxX = _maxX;
+		maxZ = _maxZ;
 	}
 
 	public bool Contains(int dx, int dz)
 	{
-		return dx >= this.x && dz >= this.z && dx <= this.maxX && dz <= this.maxZ;
+		if (dx >= x && dz >= z && dx <= maxX)
+		{
+			return dz <= maxZ;
+		}
+		return false;
 	}
 
 	public bool Contains(Point p)
 	{
-		return this.Contains(p.x, p.z);
+		return Contains(p.x, p.z);
 	}
 
 	public Point GetCenterPos()
 	{
-		return new Point(this.CenterX, this.CenterZ);
+		return new Point(CenterX, CenterZ);
 	}
 
 	public Point GetRandomTopPos()
 	{
-		return new Point(this.x + EClass.rnd(this.maxX - this.x), this.maxZ);
+		return new Point(x + EClass.rnd(maxX - x), maxZ);
 	}
 
 	public Point GetRandomRightPos()
 	{
-		return new Point(this.maxX, this.z + EClass.rnd(this.maxZ - this.z));
+		return new Point(maxX, z + EClass.rnd(maxZ - z));
 	}
 
 	public Point GetRandomBottomPos()
 	{
-		return new Point(this.x + EClass.rnd(this.maxX - this.x), this.z);
+		return new Point(x + EClass.rnd(maxX - x), z);
 	}
 
 	public Point GetRandomLeftPos()
 	{
-		return new Point(this.x, this.z + EClass.rnd(this.maxZ - this.z));
+		return new Point(x, z + EClass.rnd(maxZ - z));
 	}
 
 	public Point GetTopPos(float rate = -1f)
 	{
-		return this.GetSpawnPos(this.x, this.maxZ, this.maxX, this.maxZ);
+		return GetSpawnPos(x, maxZ, maxX, maxZ);
 	}
 
 	public Point GetRightPos(float rate = -1f)
 	{
-		return this.GetSpawnPos(this.maxX, this.z, this.maxX, this.maxZ);
+		return GetSpawnPos(maxX, z, maxX, maxZ);
 	}
 
 	public Point GetBottomPos(float rate = -1f)
 	{
-		return this.GetSpawnPos(this.x, this.z, this.maxX, this.z);
+		return GetSpawnPos(x, z, maxX, z);
 	}
 
 	public Point GetLeftPos(float rate = -1f)
 	{
-		return this.GetSpawnPos(this.x, this.z, this.x, this.maxZ);
+		return GetSpawnPos(x, z, x, maxZ);
 	}
 
 	public Point GetRandomPoint()
 	{
-		return new Point(this.x + EClass.rnd(this.Width), this.z + EClass.rnd(this.Height));
+		return new Point(x + EClass.rnd(Width), z + EClass.rnd(Height));
 	}
 
 	public Point GetSpawnPos(int x, int z, int maxX, int maxZ)
@@ -142,37 +137,41 @@ public class MapBounds : EClass
 
 	public bool CanExpand(int a)
 	{
-		return this.x - a >= 1 || this.z - a >= 1 || this.maxX + a < EClass._map.Size - 1 || this.maxZ + a < EClass._map.Size - 1;
+		if (x - a < 1 && z - a < 1 && maxX + a >= EClass._map.Size - 1)
+		{
+			return maxZ + a < EClass._map.Size - 1;
+		}
+		return true;
 	}
 
 	public void Expand(int a)
 	{
-		this.x -= a;
-		this.z -= a;
-		this.maxX += a;
-		this.maxZ += a;
-		if (this.x < 1)
+		x -= a;
+		z -= a;
+		maxX += a;
+		maxZ += a;
+		if (x < 1)
 		{
-			this.x = 1;
+			x = 1;
 		}
-		if (this.z < 1)
+		if (z < 1)
 		{
-			this.z = 1;
+			z = 1;
 		}
-		if (this.maxX >= EClass._map.Size - 1)
+		if (maxX >= EClass._map.Size - 1)
 		{
-			this.maxX = EClass._map.Size - 2;
+			maxX = EClass._map.Size - 2;
 		}
-		if (this.maxZ >= EClass._map.Size - 1)
+		if (maxZ >= EClass._map.Size - 1)
 		{
-			this.maxZ = EClass._map.Size - 2;
+			maxZ = EClass._map.Size - 2;
 		}
 	}
 
 	public Point GetSurface(int x, int z, bool walkable = true)
 	{
 		Point point = new Point(x, z);
-		point.Clamp(false);
+		point.Clamp();
 		if (!walkable || !point.cell.blocked)
 		{
 			return point;
@@ -184,7 +183,7 @@ public class MapBounds : EClass
 	{
 		for (int i = 0; i < radius * radius * 2; i++)
 		{
-			Point surface = this.GetSurface(x + EClass.rnd(radius) - EClass.rnd(radius), z + EClass.rnd(radius) - EClass.rnd(radius), walkable);
+			Point surface = GetSurface(x + EClass.rnd(radius) - EClass.rnd(radius), z + EClass.rnd(radius) - EClass.rnd(radius), walkable);
 			if (surface.IsValid && (allowWater || !surface.IsWater))
 			{
 				return surface;
@@ -197,13 +196,13 @@ public class MapBounds : EClass
 	{
 		for (int i = 0; i < 10000; i++)
 		{
-			Point surface = this.GetSurface(centered ? (this.CenterX + EClass.rnd(this.Width / 4) - EClass.rnd(this.Width / 4)) : (this.x + EClass.rnd(this.Width)), centered ? (this.CenterZ + EClass.rnd(this.Height / 4) - EClass.rnd(this.Height / 4)) : (this.z + EClass.rnd(this.Height)), walkable);
+			Point surface = GetSurface(centered ? (CenterX + EClass.rnd(Width / 4) - EClass.rnd(Width / 4)) : (x + EClass.rnd(Width)), centered ? (CenterZ + EClass.rnd(Height / 4) - EClass.rnd(Height / 4)) : (z + EClass.rnd(Height)), walkable);
 			if (surface.IsValid && (allowWater || !surface.IsWater))
 			{
 				return surface;
 			}
 		}
-		return this.GetSurface(this.CenterX, this.CenterZ, false);
+		return GetSurface(CenterX, CenterZ, walkable: false);
 	}
 
 	public Point GetRandomSpawnPos()
@@ -216,32 +215,32 @@ public class MapBounds : EClass
 				return randomPoint;
 			}
 		}
-		return this.GetCenterPos().GetNearestPoint(false, true, true, false);
+		return GetCenterPos().GetNearestPoint();
 	}
 
 	public Point GetRandomEdge(int r = 3)
 	{
+		int num = 0;
+		int num2 = 0;
 		for (int i = 0; i < 10000; i++)
 		{
-			int num;
-			int num2;
 			if (EClass.rnd(2) == 0)
 			{
-				num = ((EClass.rnd(2) == 0) ? (this.x + EClass.rnd(r)) : (this.maxX - EClass.rnd(r)));
-				num2 = this.z + EClass.rnd(this.Height);
+				num = ((EClass.rnd(2) == 0) ? (x + EClass.rnd(r)) : (maxX - EClass.rnd(r)));
+				num2 = z + EClass.rnd(Height);
 			}
 			else
 			{
-				num2 = ((EClass.rnd(2) == 0) ? (this.z + EClass.rnd(r)) : (this.maxZ - EClass.rnd(r)));
-				num = this.x + EClass.rnd(this.Width);
+				num2 = ((EClass.rnd(2) == 0) ? (z + EClass.rnd(r)) : (maxZ - EClass.rnd(r)));
+				num = x + EClass.rnd(Width);
 			}
-			Point surface = this.GetSurface(num, num2, false);
+			Point surface = GetSurface(num, num2, walkable: false);
 			if (surface.IsValid)
 			{
 				return surface;
 			}
 		}
-		return this.GetSurface(this.Size / 2, this.Size / 2, false);
+		return GetSurface(Size / 2, Size / 2, walkable: false);
 	}
 
 	public Point GetRandomSpace(int width, int height, int tries = 100)
@@ -251,13 +250,13 @@ public class MapBounds : EClass
 		for (int i = 0; i < tries; i++)
 		{
 			bool flag = true;
-			point2.Set(this.x + EClass.rnd(this.maxX - this.x), this.z + EClass.rnd(this.maxZ - this.z));
+			point2.Set(x + EClass.rnd(maxX - x), z + EClass.rnd(maxZ - z));
 			for (int j = 0; j < height; j++)
 			{
 				for (int k = 0; k < width; k++)
 				{
 					point.Set(point2.x + k, point2.z + j);
-					if (point.x > this.maxX || point.z > this.maxZ || point.IsBlocked || point.cell.HasZoneStairs(true))
+					if (point.x > maxX || point.z > maxZ || point.IsBlocked || point.cell.HasZoneStairs())
 					{
 						flag = false;
 						break;
@@ -273,16 +272,16 @@ public class MapBounds : EClass
 				return point2;
 			}
 		}
-		Debug.Log("valid space not found:" + width.ToString() + "/" + height.ToString());
+		Debug.Log("valid space not found:" + width + "/" + height);
 		return null;
 	}
 
 	public void ForeachCell(Action<Cell> action)
 	{
 		Cell[,] cells = EClass._map.cells;
-		for (int i = this.x; i <= this.maxX; i++)
+		for (int i = x; i <= maxX; i++)
 		{
-			for (int j = this.z; j <= this.maxZ; j++)
+			for (int j = z; j <= maxZ; j++)
 			{
 				action(cells[i, j]);
 			}
@@ -292,9 +291,9 @@ public class MapBounds : EClass
 	public void ForeachPoint(Action<Point> action)
 	{
 		Point point = new Point();
-		for (int i = this.x; i <= this.maxX; i++)
+		for (int i = x; i <= maxX; i++)
 		{
-			for (int j = this.z; j <= this.maxZ; j++)
+			for (int j = z; j <= maxZ; j++)
 			{
 				action(point.Set(i, j));
 			}
@@ -303,27 +302,12 @@ public class MapBounds : EClass
 
 	public void ForeachXYZ(Action<int, int> action)
 	{
-		for (int i = this.x; i <= this.maxX; i++)
+		for (int i = x; i <= maxX; i++)
 		{
-			for (int j = this.z; j <= this.maxZ; j++)
+			for (int j = z; j <= maxZ; j++)
 			{
 				action(i, j);
 			}
 		}
 	}
-
-	[JsonProperty]
-	public int x;
-
-	[JsonProperty]
-	public int z;
-
-	[JsonProperty]
-	public int maxX;
-
-	[JsonProperty]
-	public int maxZ;
-
-	[JsonProperty]
-	public int Size;
 }
