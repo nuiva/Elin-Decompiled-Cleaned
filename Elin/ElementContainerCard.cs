@@ -213,7 +213,7 @@ public class ElementContainerCard : ElementContainer
 					num = num * 2 + (e.ValueWithoutLink + e.vLink);
 				}
 			}
-			if (this.owner.Chara.race.IsMachine || this.owner.id == "android")
+			if (e.id != 664 && (this.owner.Chara.race.IsMachine || this.owner.id == "android"))
 			{
 				int num4 = this.owner.Evalue(664);
 				if (num4 > 0)

@@ -1213,7 +1213,10 @@ public class Chara : Card, IPathfindWalker
 				select a).First<Tuple<string, int, int>>();
 			}
 			this.SetMainElement(tuple.Item1, (tuple.Item2 == 0) ? 10 : tuple.Item2, true);
-			num = tuple.Item3;
+			if (list.Count >= 2)
+			{
+				num = tuple.Item3;
+			}
 		}
 		if (this.source.name == "*r")
 		{
@@ -1257,28 +1260,28 @@ public class Chara : Card, IPathfindWalker
 				{
 					if (num3 != 2331752522U)
 					{
-						goto IL_633;
+						goto IL_63C;
 					}
 					if (!(id == "snail"))
 					{
-						goto IL_633;
+						goto IL_63C;
 					}
 					base.idSkin = 5;
-					goto IL_633;
+					goto IL_63C;
 				}
 				else
 				{
 					if (!(id == "dodo"))
 					{
-						goto IL_633;
+						goto IL_63C;
 					}
 					base.idSkin = EClass.rnd(4);
-					goto IL_633;
+					goto IL_63C;
 				}
 			}
 			else if (!(id == "cat"))
 			{
-				goto IL_633;
+				goto IL_63C;
 			}
 		}
 		else if (num3 <= 3253821027U)
@@ -1287,46 +1290,46 @@ public class Chara : Card, IPathfindWalker
 			{
 				if (num3 != 3253821027U)
 				{
-					goto IL_633;
+					goto IL_63C;
 				}
 				if (!(id == "sister_undead"))
 				{
-					goto IL_633;
+					goto IL_63C;
 				}
 			}
 			else
 			{
 				if (!(id == "olderyoungersister"))
 				{
-					goto IL_633;
+					goto IL_63C;
 				}
 				base.idSkin = 1;
-				goto IL_633;
+				goto IL_63C;
 			}
 		}
 		else if (num3 != 3352919697U)
 		{
 			if (num3 != 3865623817U)
 			{
-				goto IL_633;
+				goto IL_63C;
 			}
 			if (!(id == "dog"))
 			{
-				goto IL_633;
+				goto IL_63C;
 			}
 		}
 		else
 		{
 			if (!(id == "putty_snow"))
 			{
-				goto IL_633;
+				goto IL_63C;
 			}
 			if (EClass.rnd(100) == 0 || EClass.debug.enable)
 			{
 				base.idSkin = EClass.rnd(4);
-				goto IL_633;
+				goto IL_63C;
 			}
-			goto IL_633;
+			goto IL_63C;
 		}
 		base.idSkin = EClass.rnd(this.sourceCard.tiles.Length);
 		if (this.id == "sister_undead" && EClass.rnd(10) == 0)
@@ -1337,7 +1340,7 @@ public class Chara : Card, IPathfindWalker
 				base.ApplyBacker(row2.id);
 			}
 		}
-		IL_633:
+		IL_63C:
 		if (this.source.tag.Contains("random_color"))
 		{
 			base.DyeRandom();
@@ -2447,15 +2450,23 @@ public class Chara : Card, IPathfindWalker
 			this.actTime = num;
 		}
 		Chara chara = (this.ride == null) ? this : this.ride;
-		if ((!EClass._zone.IsRegion || chara.IsPC) && ((chara.isConfused && EClass.rnd(2) == 0) || (chara.isDrunk && EClass.rnd(this.IsIdle ? 2 : 8) == 0 && !chara.HasElement(1215, 1))) && newPoint.Distance(this.pos) <= 1)
+		if (!EClass._zone.IsRegion || chara.IsPC)
 		{
-			Point randomNeighbor = this.pos.GetRandomNeighbor();
-			if (this.CanMoveTo(randomNeighbor, false))
+			bool flag = (chara.isConfused && EClass.rnd(2) == 0) || (chara.isDrunk && EClass.rnd(this.IsIdle ? 2 : 8) == 0 && !chara.HasElement(1215, 1));
+			if (this.host != null && this.host.ride == this && ((this.host.isConfused && EClass.rnd(2) == 0) || (this.host.isDrunk && EClass.rnd(this.IsIdle ? 2 : 8) == 0 && !this.host.HasElement(1215, 1))))
 			{
-				newPoint = randomNeighbor;
-				if (this.isDrunk)
+				flag = true;
+			}
+			if (flag && newPoint.Distance(this.pos) <= 1)
+			{
+				Point randomNeighbor = this.pos.GetRandomNeighbor();
+				if (this.CanMoveTo(randomNeighbor, false))
 				{
-					base.Talk("drunk", null, null, false);
+					newPoint = randomNeighbor;
+					if (this.isDrunk)
+					{
+						base.Talk("drunk", null, null, false);
+					}
 				}
 			}
 		}
@@ -2507,22 +2518,22 @@ public class Chara : Card, IPathfindWalker
 		}
 		Cell cell = newPoint.cell;
 		Cell cell2 = this.pos.cell;
-		bool flag = cell.HasLiquid && !this.IsLevitating;
+		bool flag2 = cell.HasLiquid && !this.IsLevitating;
 		bool hasBridge = cell.HasBridge;
 		bool hasRamp = cell.HasRamp;
-		bool flag2 = EClass._zone.IsSnowCovered && !cell.HasRoof && !cell.isClearSnow;
+		bool flag3 = EClass._zone.IsSnowCovered && !cell.HasRoof && !cell.isClearSnow;
 		TileRow tileRow = hasRamp ? cell.sourceBlock : (hasBridge ? cell.sourceBridge : cell.sourceFloor);
 		SourceMaterial.Row row = hasRamp ? cell.matBlock : (hasBridge ? cell.matBridge : cell.matFloor);
-		bool flag3 = cell.IsTopWater && !cell.isFloating;
+		bool flag4 = cell.IsTopWater && !cell.isFloating;
 		if (!EClass._zone.IsRegion)
 		{
 			if (cell.hasDoorBoat)
 			{
 				tileRow = FLOOR.sourceWood;
 				row = MATERIAL.sourceOak;
-				flag3 = false;
+				flag4 = false;
 			}
-			else if (flag2 && !tileRow.ignoreSnow)
+			else if (flag3 && !tileRow.ignoreSnow)
 			{
 				if (tileRow.tileType.IsWater)
 				{
@@ -2534,7 +2545,7 @@ public class Chara : Card, IPathfindWalker
 					tileRow = FLOOR.sourceSnow;
 					row = MATERIAL.sourceSnow;
 				}
-				flag3 = false;
+				flag4 = false;
 			}
 		}
 		if ((this.pos.sourceFloor.isBeach || cell2.IsSnowTile) && !this.pos.HasObj)
@@ -2543,7 +2554,7 @@ public class Chara : Card, IPathfindWalker
 		}
 		if (this.isSynced)
 		{
-			string text = (flag || flag3) ? "water" : tileRow.soundFoot.IsEmpty(row.soundFoot.IsEmpty("default"));
+			string text = (flag2 || flag4) ? "water" : tileRow.soundFoot.IsEmpty(row.soundFoot.IsEmpty("default"));
 			if (cell.obj != 0 && cell.sourceObj.tileType.IsPlayFootSound && !cell.matObj.soundFoot.IsEmpty())
 			{
 				text = cell.matObj.soundFoot;
@@ -2553,21 +2564,21 @@ public class Chara : Card, IPathfindWalker
 				SoundManager.altLastData = this.IsPC;
 				base.PlaySound("Footstep/" + text, this.IsPC ? 1f : 0.9f, true);
 			}
-			if (!flag3)
+			if (!flag4)
 			{
 				Scene scene = EClass.scene;
 				PCOrbit pcOrbit = EClass.screen.pcOrbit;
-				bool flag4 = scene.actionMode.gameSpeed > 1f;
+				bool flag5 = scene.actionMode.gameSpeed > 1f;
 				scene.psFoot.transform.position = this.renderer.position + pcOrbit.footPos;
 				scene.psFoot.startColor = row.matColor;
-				scene.psFoot.Emit(pcOrbit.emitFoot * (flag4 ? 2 : 1));
-				if (flag4 && this.IsPC)
+				scene.psFoot.Emit(pcOrbit.emitFoot * (flag5 ? 2 : 1));
+				if (flag5 && this.IsPC)
 				{
 					scene.psSmoke.transform.position = this.renderer.position + pcOrbit.smokePos;
 					scene.psSmoke.Emit(pcOrbit.emitSmoke);
 				}
 			}
-			if (flag || flag3)
+			if (flag2 || flag4)
 			{
 				Effect.Get("ripple").Play(0.4f * this.actTime * EClass.scene.actionMode.gameSpeed, newPoint, 0f, null, null);
 			}
@@ -5008,7 +5019,7 @@ public class Chara : Card, IPathfindWalker
 			if (origin.IsPCParty || origin.IsPCPartyMinion)
 			{
 				int num = 0;
-				if (this.OriginalHostility >= Hostility.Friend && this.IsHuman && !this.IsPCFaction && !this.IsPCFactionMinion)
+				if (this.OriginalHostility >= Hostility.Friend && this.IsHuman && !base.IsPCFactionOrMinion)
 				{
 					num = -5;
 				}

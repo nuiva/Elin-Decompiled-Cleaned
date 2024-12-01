@@ -667,7 +667,7 @@ public class CoreDebug : EScriptable
 		}
 		if (Input.GetKeyDown(KeyCode.F4))
 		{
-			EClass.game.backupTime += 3600.0;
+			CoreDebug.TestSpawn(this.param1, this.param2, 5);
 			return;
 		}
 		if (Input.GetKeyDown(KeyCode.F5))
@@ -876,7 +876,7 @@ public class CoreDebug : EScriptable
 						Card t = enumerator2.Current;
 						EClass._zone.RemoveCard(t);
 					}
-					goto IL_BC2;
+					goto IL_BBB;
 				}
 			}
 			if (hitPoint.detail != null)
@@ -894,7 +894,7 @@ public class CoreDebug : EScriptable
 				}
 			}
 		}
-		IL_BC2:
+		IL_BBB:
 		if (Input.GetKeyDown(KeyCode.End) && hitPoint.detail != null)
 		{
 			for (int n = hitPoint.detail.things.Count - 1; n >= 0; n--)
@@ -1686,7 +1686,7 @@ public class CoreDebug : EScriptable
 	}
 
 	[ConsoleCommand("")]
-	public static string TestSpawn(int lv, int num)
+	public static string TestSpawn(int lv, int num, int lvRange = -1)
 	{
 		if (!CoreDebug.CheatEnabled())
 		{
@@ -1702,7 +1702,8 @@ public class CoreDebug : EScriptable
 		{
 			EClass._zone.SpawnMob(EClass.pc.pos.GetNearestPoint(false, false, false, true), new SpawnSetting
 			{
-				filterLv = lv
+				filterLv = lv,
+				levelRange = lvRange
 			}).AddEditorTag(EditorTag.SpawnTest);
 		}
 		return "Spawned.";

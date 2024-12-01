@@ -86,22 +86,42 @@ public class SpawnList : EClass
 			CardRow cardRow = this.rows[i];
 			if (levelRange != -1)
 			{
-				if (Mathf.Abs(cardRow.LV - lv) < levelRange)
+				if (cardRow.isChara && (cardRow as SourceChara.Row).mainElement.Length >= 2)
 				{
-					goto IL_5A;
+					SourceChara.Row row = cardRow as SourceChara.Row;
+					bool flag = false;
+					string[] mainElement = row.mainElement;
+					for (int j = 0; j < mainElement.Length; j++)
+					{
+						string[] array = mainElement[j].Split('/', StringSplitOptions.None);
+						SourceElement.Row row2 = EClass.sources.elements.alias["ele" + array[0]];
+						if (Mathf.Abs(cardRow.LV * row2.eleP / 100 - lv) < levelRange)
+						{
+							flag = true;
+							break;
+						}
+					}
+					if (flag)
+					{
+						goto IL_F1;
+					}
+				}
+				else if (Mathf.Abs(cardRow.LV - lv) < levelRange)
+				{
+					goto IL_F1;
 				}
 			}
 			else if (cardRow.LV <= lv)
 			{
-				goto IL_5A;
+				goto IL_F1;
 			}
-			IL_81:
+			IL_118:
 			i++;
 			continue;
-			IL_5A:
+			IL_F1:
 			SpawnList.tempList.rows.Add(cardRow);
 			SpawnList.tempList.totalChance += cardRow.chance;
-			goto IL_81;
+			goto IL_118;
 		}
 		if (SpawnList.tempList.rows.Count == 0)
 		{

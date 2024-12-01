@@ -2085,7 +2085,10 @@ public class Zone : Spatial, ICardParent, IInspect
 			EClass._zone.AddCard(ThingGen.Create("core_zone", -1, -1), nearestPoint).SetPlaceState(PlaceState.installed, false);
 		}
 		base.idPrefix = 0;
-		EClass.player.spawnZone = EClass._zone;
+		if (EClass._zone == EClass.game.StartZone)
+		{
+			EClass.player.spawnZone = EClass._zone;
+		}
 		if (EClass._zone != EClass.game.StartZone && !(EClass._zone is Zone_Vernis))
 		{
 			EClass._zone.SetBGM(new List<int>

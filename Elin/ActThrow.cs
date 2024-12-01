@@ -138,7 +138,7 @@ public class ActThrow : ActBaseAttack
 		EffectIRenderer result = null;
 		if (c.isSynced || p.IsSync)
 		{
-			result = Effect.Get<EffectIRenderer>((t.trait is TraitBall) ? "throw_ball" : "throw").Play(t, c.pos, p, 0.2f);
+			result = Effect.Get<EffectIRenderer>((t.trait is TraitBall) ? "throw_ball" : "throw").Play((c.isChara && c.Chara.host != null) ? c.Chara.host : c, t, c.pos, p, 0.2f);
 			t.renderer.SetFirst(false, c.renderer.position);
 		}
 		if (!t.HasElement(410, 1))

@@ -102,7 +102,7 @@ public class TaskDrawWater : TaskDesignation
 
 	public override HitResult GetHitResult()
 	{
-		if (!this.pos.cell.IsTopWater || this.pos.HasObj || this.pos.cell.blocked)
+		if (!this.pos.cell.IsTopWater || this.pos.HasObj || this.pos.cell.HasFullBlock)
 		{
 			return HitResult.Invalid;
 		}

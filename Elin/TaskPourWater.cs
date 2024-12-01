@@ -100,7 +100,7 @@ public class TaskPourWater : TaskDesignation
 
 	public override HitResult GetHitResult()
 	{
-		if (this.pos.HasBridge || this.pos.HasObj || this.pos.cell.blocked)
+		if (this.pos.HasBridge || this.pos.HasObj || this.pos.cell.HasFullBlock)
 		{
 			return HitResult.Invalid;
 		}

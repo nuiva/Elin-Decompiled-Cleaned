@@ -10,6 +10,18 @@ public class Zone_Void : Zone_Dungeon
 		}
 	}
 
+	public override string TextWidgetDate
+	{
+		get
+		{
+			if (base.Boss == null)
+			{
+				return "";
+			}
+			return "bossLevel".lang(base.Boss.Name, null, null, null, null);
+		}
+	}
+
 	public override int MinLv
 	{
 		get

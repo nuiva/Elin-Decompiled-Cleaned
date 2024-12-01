@@ -28,12 +28,19 @@ public class EffectIRenderer : Effect
 		return this;
 	}
 
-	public EffectIRenderer Play(Card _card, Point from, Point to = null, float fixY = 0f)
+	public EffectIRenderer Play(Card origin, Card _card, Point from, Point to = null, float fixY = 0f)
 	{
 		this.card = _card;
 		this.snapTimer = -0.01f;
 		this.from = from.Copy();
-		base.Play(from, fixY, to, null);
+		if (origin.ExistsOnMap)
+		{
+			base._Play(from, origin.renderer.position, fixY, to, null);
+		}
+		else
+		{
+			base.Play(from, fixY, to, null);
+		}
 		if (this.animeData)
 		{
 			this.anime = new TransAnime
@@ -91,6 +98,10 @@ public class EffectIRenderer : Effect
 		{
 			this.card.renderer.data.Draw(renderParam);
 			return;
+		}
+		if (!this.card.renderer.hasActor)
+		{
+			this.card.renderer.OnEnterScreen();
 		}
 		if (this.card.renderer.actor)
 		{

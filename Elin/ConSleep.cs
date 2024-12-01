@@ -76,6 +76,13 @@ public class ConSleep : BadCondition
 				}
 				base.value = 1;
 				this.slept = true;
+				foreach (Chara chara in EClass.pc.party.members)
+				{
+					if (!chara.IsPC)
+					{
+						chara.AddCondition<ConSleep>(5 + EClass.rnd(10), true);
+					}
+				}
 				EClass.ui.AddLayer<LayerSleep>().Sleep(num, this.pcBed, this.pcPillow);
 			}
 			return;

@@ -1029,6 +1029,23 @@ public class Element : EClass
 			{
 				this.c.RefreshSpeed(this);
 			}
+			if (this.c.race.IsMachine || this.c.id == "android")
+			{
+				int num3 = this.c.Evalue(664);
+				if (num3 > 0)
+				{
+					if (id - 64 <= 1)
+					{
+						this.AddFix(num3 / 2, EClass.sources.elements.map[664].GetName());
+						return;
+					}
+					if (id != 79)
+					{
+						return;
+					}
+					this.AddFix(num3, EClass.sources.elements.map[664].GetName());
+				}
+			}
 		}
 
 		public Element ele;

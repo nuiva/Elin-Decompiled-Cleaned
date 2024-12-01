@@ -908,7 +908,10 @@ public class FactionBranch : EClass
 		{
 			this.elements.SetBase(2206, 15, 0);
 		}
-		this.AddMemeber(EClass.pc);
+		if (EClass.game.StartZone == this.owner || this.owner is Zone_Vernis)
+		{
+			this.AddMemeber(EClass.pc);
+		}
 		if (EClass.debug.allPolicy)
 		{
 			foreach (SourceElement.Row row3 in from a in EClass.sources.elements.rows
