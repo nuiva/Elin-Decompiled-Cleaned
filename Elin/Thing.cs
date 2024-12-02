@@ -1540,6 +1540,10 @@ public class Thing : Card
 		{
 			return false;
 		}
+		if (base.c_altName != to.c_altName)
+		{
+			return false;
+		}
 		bool flag = false;
 		if (to.parent is Card)
 		{

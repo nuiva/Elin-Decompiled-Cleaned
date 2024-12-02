@@ -106,7 +106,7 @@ public class TraitGeneMachine : TraitStasisChamber
 				c.RemoveCondition<ConSleep>();
 				c.PlaySound("ride");
 				(c.AddCondition<ConSuspend>(100, force: true) as ConSuspend).uidMachine = owner.uid;
-			}, (Chara a) => "gene_note".lang(((a.c_genes != null) ? a.c_genes.items.Count : 0).ToString() ?? "", a.MaxGene.ToString() ?? "", a.feat.ToString() ?? "", a.GetTotalFeat() + " "));
+			}, (Chara a) => "gene_note".lang(a.CurrentGeneSlot.ToString() ?? "", a.MaxGeneSlot.ToString() ?? "", a.feat.ToString() ?? "", a.GetTotalFeat() + " "));
 		}
 		else if (GetProgress() >= 1f)
 		{

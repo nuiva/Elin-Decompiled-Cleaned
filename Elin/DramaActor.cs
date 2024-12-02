@@ -34,8 +34,6 @@ public class DramaActor : EMono
 			dialog.portrait.enableFull = sequence.fullPortrait;
 			dialog.portrait.SetPerson(owner);
 		}
-		text = ConvertAdv(text);
-		text = GameLang.ConvertDrama(text, owner.chara);
 		if (!owner.HumanSpeak)
 		{
 			if (!text.StartsWith("("))
@@ -44,6 +42,8 @@ public class DramaActor : EMono
 			}
 			text = text.Replace("。)", ")");
 		}
+		text = ConvertAdv(text);
+		text = GameLang.ConvertDrama(text, owner.chara);
 		if (chara != null)
 		{
 			string text2 = chara.id;
@@ -59,6 +59,8 @@ public class DramaActor : EMono
 				BackerContent.GakiConvert(ref text);
 			}
 		}
+		text = text.Replace("((", "(").Replace("))", ")").Replace("（（", "（")
+			.Replace("））", "）");
 		if ((bool)dialog.goAffinity)
 		{
 			dialog.layoutInterest.SetActive(chara != null);
@@ -106,8 +108,6 @@ public class DramaActor : EMono
 				dialog.textNoInterest.text = "???";
 			}
 		}
-		text = text.Replace("((", "(").Replace("))", ")").Replace("（（", "（")
-			.Replace("））", "）");
 		if ((bool)dialog.glitch)
 		{
 			dialog.glitch.enabled = useGlitch;

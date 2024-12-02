@@ -26,4 +26,14 @@ public class CharaGenes : EClass
 		}
 		return num;
 	}
+
+	public int GetGeneSlot()
+	{
+		int num = 0;
+		foreach (DNA item in items)
+		{
+			num += item.slot;
+		}
+		return num;
+	}
 }

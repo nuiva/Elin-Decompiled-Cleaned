@@ -86,9 +86,30 @@ public class ConSleep : BadCondition
 			}
 			base.value = 1;
 			slept = true;
+			foreach (Chara chara in EClass._map.charas)
+			{
+				if (chara.host != null || chara.noMove || chara.conSuspend != null || chara.isRestrained || chara.IsPC)
+				{
+					continue;
+				}
+				bool flag = chara.GetBool(123);
+				if (!flag && chara.IsPCFaction && chara.race.tag.Contains("sleepBeside") && EClass.rnd(5) == 0)
+				{
+					flag = true;
+				}
+				if (flag)
+				{
+					chara.MoveImmediate(EClass.pc.pos);
+					chara.Say("sleep_beside", chara, EClass.pc);
+					if (!chara.HasCondition<ConSleep>())
+					{
+						chara.AddCondition<ConSleep>(20 + EClass.rnd(25), force: true);
+					}
+				}
+			}
 			foreach (Chara member in EClass.pc.party.members)
 			{
-				if (!member.IsPC)
+				if (!member.IsPC && !member.HasCondition<ConSleep>())
 				{
 					member.AddCondition<ConSleep>(5 + EClass.rnd(10), force: true);
 				}

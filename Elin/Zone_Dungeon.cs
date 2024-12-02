@@ -74,10 +74,6 @@ public class Zone_Dungeon : Zone
 
 	public override bool IsSnowCovered => false;
 
-	public override bool GrowPlant => true;
-
-	public override bool GrowWeed => false;
-
 	public override bool CountDeepestLevel => true;
 
 	public override ZoneTransition.EnterState RegionEnterState => ZoneTransition.EnterState.Down;

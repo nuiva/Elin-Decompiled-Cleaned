@@ -323,6 +323,7 @@ public class DramaCustomSequence : EClass
 		{
 			Choice("disableMove", "_disableMove");
 		}
+		Choice((c.GetInt(123) == 0) ? "daSleepBeside" : "daSleepBeside2", "_sleepBeside");
 		if (c.GetInt(113) == 0)
 		{
 			Choice("daEquipSharedOff", "_toggleSharedEquip");
@@ -542,6 +543,20 @@ public class DramaCustomSequence : EClass
 			c.SetInt(106, (c.GetInt(106) == 0) ? 1 : 0);
 		});
 		_Talk("tg", GetTopic(c, (c.GetInt(106) == 0) ? "shutup" : "shutup2"));
+		End();
+		Step("_sleepBeside");
+		Method(delegate
+		{
+			if (c.affinity.CanSleepBeside())
+			{
+				c.SetInt(123, (c.GetInt(123) == 0) ? 1 : 0);
+			}
+			else
+			{
+				TempTalkTopic("refuse", StepEnd);
+			}
+		});
+		_Talk("tg", GetTopic(c, (c.GetInt(123) == 0) ? "ok" : "shutup"));
 		End();
 		Step("_insult");
 		Method(delegate

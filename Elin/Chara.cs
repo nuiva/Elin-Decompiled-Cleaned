@@ -864,7 +864,19 @@ public class Chara : Card, IPathfindWalker
 
 	public FactionBranch homeBranch => homeZone?.branch;
 
-	public int MaxGene => race.geneCap;
+	public int MaxGeneSlot => race.geneCap;
+
+	public int CurrentGeneSlot
+	{
+		get
+		{
+			if (base.c_genes != null)
+			{
+				return base.c_genes.GetGeneSlot();
+			}
+			return 0;
+		}
+	}
 
 	public int Speed
 	{
@@ -1020,13 +1032,9 @@ public class Chara : Card, IPathfindWalker
 		return true;
 	}
 
-	public bool CanSeeLos(Card c, int dist = -1, bool includeTelepathy = false)
+	public bool CanSeeLos(Card c, int dist = -1)
 	{
-		if (c.isChara && includeTelepathy && hasTelepathy && c.Chara.race.visibleWithTelepathy)
-		{
-			return true;
-		}
-		if (c.isHidden && !canSeeInvisible)
+		if (c.isHidden && !canSeeInvisible && (!hasTelepathy || !c.Chara.race.visibleWithTelepathy))
 		{
 			return false;
 		}
@@ -5748,9 +5756,16 @@ public class Chara : Card, IPathfindWalker
 
 	public override SubPassData GetSubPassData()
 	{
-		if (IsPCC && (IsDeadOrSleeping || (!EClass.player.altHeldPos && parent is Chara)))
+		if (IsPCC)
 		{
-			return EClass.setting.pass.subDeadPCC;
+			if (IsDeadOrSleeping || (!EClass.player.altHeldPos && parent is Chara))
+			{
+				return EClass.setting.pass.subDeadPCC;
+			}
+		}
+		else if (conSleep != null && host == null && pos.Equals(EClass.pc.pos) && IsHuman && GetBool(123))
+		{
+			return EClass.setting.pass.subDead;
 		}
 		return SubPassData.Default;
 	}

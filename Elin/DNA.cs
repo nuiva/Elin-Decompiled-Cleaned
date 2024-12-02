@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -17,10 +18,12 @@ public class DNA : EClass
 	public string id;
 
 	[JsonProperty]
-	public int[] ints = new int[4];
+	public int[] ints = new int[6];
 
 	[JsonProperty]
 	public List<int> vals = new List<int>();
+
+	public BitArray32 bits;
 
 	public Type type
 	{
@@ -67,6 +70,34 @@ public class DNA : EClass
 		set
 		{
 			ints[3] = value;
+		}
+	}
+
+	public int slot
+	{
+		get
+		{
+			return ints[5];
+		}
+		set
+		{
+			ints[5] = value;
+		}
+	}
+
+	[OnSerializing]
+	private void _OnSerializing(StreamingContext context)
+	{
+		ints[4] = bits.ToInt();
+	}
+
+	[OnDeserialized]
+	private void _OnDeserialized(StreamingContext context)
+	{
+		if (ints.Length < 6)
+		{
+			Array.Resize(ref ints, 6);
+			slot = 1;
 		}
 	}
 
@@ -255,6 +286,7 @@ public class DNA : EClass
 		}
 		Rand.SetSeed();
 		CalcCost();
+		CalcSlot();
 		void AddAction()
 		{
 			if (model.ability.list.items.Count != 0)
@@ -389,6 +421,19 @@ public class DNA : EClass
 		}
 	}
 
+	public void CalcSlot()
+	{
+		slot = 0;
+		for (int i = 0; i < vals.Count; i += 2)
+		{
+			Element element = Element.Create(vals[i], vals[i + 1]);
+			if (element.source.geneSlot > slot)
+			{
+				slot = element.source.geneSlot;
+			}
+		}
+	}
+
 	public static Type GetType(string idMat)
 	{
 		return idMat switch
@@ -436,10 +481,15 @@ public class DNA : EClass
 
 	public void WriteNote(UINote n)
 	{
+		if (slot > 1)
+		{
+			n.AddText("isGeneReqSlots".lang(slot.ToString() ?? ""), FontColor.Warning);
+		}
 		if (!CanRemove())
 		{
 			n.AddText("isPermaGene".lang(), FontColor.Warning);
 		}
+		n.Space(4);
 		if (type == Type.Brain)
 		{
 			SourceChara.Row row = EClass.sources.charas.map.TryGetValue(id);

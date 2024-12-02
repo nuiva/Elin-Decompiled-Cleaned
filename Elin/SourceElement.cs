@@ -67,6 +67,8 @@ public class SourceElement : SourceDataInt<SourceElement.Row>
 
 		public int[] cost;
 
+		public int geneSlot;
+
 		public int charge;
 
 		public float radius;
@@ -293,32 +295,33 @@ public class SourceElement : SourceDataInt<SourceElement.Row>
 			chance = SourceData.GetInt(26),
 			value = SourceData.GetInt(27),
 			cost = SourceData.GetIntArray(28),
-			charge = SourceData.GetInt(29),
-			radius = SourceData.GetFloat(30),
-			max = SourceData.GetInt(31),
-			req = SourceData.GetStringArray(32),
-			idTrainer = SourceData.GetString(33),
-			encSlot = SourceData.GetString(34),
-			partySkill = SourceData.GetInt(35),
-			tagTrainer = SourceData.GetString(36),
-			levelBonus_JP = SourceData.GetString(37),
-			levelBonus = SourceData.GetString(38),
-			foodEffect = SourceData.GetStringArray(39),
-			langAct = SourceData.GetStringArray(41),
-			detail_JP = SourceData.GetString(42),
-			detail = SourceData.GetString(43),
-			textPhase_JP = SourceData.GetString(44),
-			textPhase = SourceData.GetString(45),
-			textExtra_JP = SourceData.GetString(46),
-			textExtra = SourceData.GetString(47),
-			textInc_JP = SourceData.GetString(48),
-			textInc = SourceData.GetString(49),
-			textDec_JP = SourceData.GetString(50),
-			textDec = SourceData.GetString(51),
-			textAlt_JP = SourceData.GetStringArray(52),
-			textAlt = SourceData.GetStringArray(53),
-			adjective_JP = SourceData.GetStringArray(54),
-			adjective = SourceData.GetStringArray(55)
+			geneSlot = SourceData.GetInt(29),
+			charge = SourceData.GetInt(30),
+			radius = SourceData.GetFloat(31),
+			max = SourceData.GetInt(32),
+			req = SourceData.GetStringArray(33),
+			idTrainer = SourceData.GetString(34),
+			encSlot = SourceData.GetString(35),
+			partySkill = SourceData.GetInt(36),
+			tagTrainer = SourceData.GetString(37),
+			levelBonus_JP = SourceData.GetString(38),
+			levelBonus = SourceData.GetString(39),
+			foodEffect = SourceData.GetStringArray(40),
+			langAct = SourceData.GetStringArray(42),
+			detail_JP = SourceData.GetString(43),
+			detail = SourceData.GetString(44),
+			textPhase_JP = SourceData.GetString(45),
+			textPhase = SourceData.GetString(46),
+			textExtra_JP = SourceData.GetString(47),
+			textExtra = SourceData.GetString(48),
+			textInc_JP = SourceData.GetString(49),
+			textInc = SourceData.GetString(50),
+			textDec_JP = SourceData.GetString(51),
+			textDec = SourceData.GetString(52),
+			textAlt_JP = SourceData.GetStringArray(53),
+			textAlt = SourceData.GetStringArray(54),
+			adjective_JP = SourceData.GetStringArray(55),
+			adjective = SourceData.GetStringArray(56)
 		};
 	}
 

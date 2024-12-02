@@ -139,4 +139,6 @@ public class CINT
 	public const int isPrayed = 121;
 
 	public const int isDisableStockUse = 122;
+
+	public const int isSleepBeside = 123;
 }

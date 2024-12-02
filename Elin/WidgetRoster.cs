@@ -197,7 +197,7 @@ public class WidgetRoster : Widget
 			extra.width = (int)a;
 			Build();
 		}, 30f, 160f, isInt: true);
-		uIContextMenu.AddSlider("margine", (float a) => a.ToString() ?? "", extra.margin, delegate(float a)
+		uIContextMenu.AddSlider("margin", (float a) => a.ToString() ?? "", extra.margin, delegate(float a)
 		{
 			extra.margin = (int)a;
 			Build();

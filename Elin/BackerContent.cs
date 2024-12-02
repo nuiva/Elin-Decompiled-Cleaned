@@ -30,7 +30,10 @@ public class BackerContent : EClass
 				text = idLang.lang().Split(',').RandomItem() + " " + text;
 			}
 			text = text.Replace("。)", ")");
-			text = text.Replace("」", "");
+			if (text.EndsWith("」"))
+			{
+				text = text.Substring(0, text.Length - 1);
+			}
 		}
 	}
 }

@@ -3,6 +3,8 @@ using System;
 [Serializable]
 public class GameDifficulty : EClass
 {
+	public int tier;
+
 	public bool allowManualSave;
 
 	public bool allowRevive;

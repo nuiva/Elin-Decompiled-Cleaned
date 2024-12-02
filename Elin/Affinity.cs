@@ -46,7 +46,16 @@ public class Affinity : EClass
 	{
 		if (!EClass.debug.marryAnytime)
 		{
-			return list.IndexOf(this) >= 7;
+			return list.IndexOf(this) >= 8;
+		}
+		return true;
+	}
+
+	public bool CanSleepBeside()
+	{
+		if (!EClass.debug.marryAnytime)
+		{
+			return list.IndexOf(this) >= 8;
 		}
 		return true;
 	}

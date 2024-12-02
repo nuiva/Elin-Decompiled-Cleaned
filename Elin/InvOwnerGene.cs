@@ -25,7 +25,7 @@ public class InvOwnerGene : InvOwnerDraglet
 	public override void _OnProcess(Thing t)
 	{
 		DNA.Type type = t.c_DNA.type;
-		if (type != 0 && tg.c_genes != null && tg.c_genes.items.Count >= tg.MaxGene)
+		if (type != 0 && tg.c_genes != null && tg.CurrentGeneSlot >= tg.MaxGeneSlot)
 		{
 			SE.Beep();
 			Msg.Say("tooManyGene", tg);
@@ -78,10 +78,11 @@ public class InvOwnerGene : InvOwnerDraglet
 		if (ShouldShowGuide(t))
 		{
 			n.AddHeader("HeaderAdditionalTrait", "gene_hint");
-			int num = tg.c_genes?.items.Count ?? 0;
-			int num2 = num + 1;
-			int maxGene = tg.MaxGene;
-			n.AddText("gene_hint_slot".lang(num.ToString() ?? "", num2.ToString() ?? "", maxGene.ToString() ?? ""), (num2 <= maxGene) ? FontColor.Good : FontColor.Bad);
+			_ = tg.c_genes;
+			int num = tg.MaxGeneSlot - tg.CurrentGeneSlot;
+			int num2 = num - t.c_DNA.slot;
+			int maxGeneSlot = tg.MaxGeneSlot;
+			n.AddText("gene_hint_slot".lang(num.ToString() ?? "", num2.ToString() ?? "", maxGeneSlot.ToString() ?? ""), (num2 >= 0) ? FontColor.Good : FontColor.Bad);
 			int cost = t.c_DNA.cost;
 			int num3 = tg.feat - cost;
 			n.AddText("gene_hint_cost".lang(tg.feat.ToString() ?? "", cost + ((cost == t.c_DNA.cost) ? "" : ("(" + t.c_DNA.cost + ")")), num3.ToString() ?? ""), (num3 >= 0) ? FontColor.Good : FontColor.Bad);
