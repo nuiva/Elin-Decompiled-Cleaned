@@ -46,6 +46,10 @@ public class UIMapPreview : EMono
 
 	public Color colorStairs;
 
+	public Color colorVoid;
+
+	public Color colorVoidWorld;
+
 	public Material matMap;
 
 	public RawImage image;
@@ -271,6 +275,10 @@ public class UIMapPreview : EMono
 				row = MATERIAL.sourceSnow;
 			}
 			Color color = (cell.IsSky ? colorSky : row.GetColor());
+			if (row.id == 0 && EMono._zone.IsRegion)
+			{
+				color = colorVoidWorld;
+			}
 			if (color.r > maxColor)
 			{
 				color.r = maxColor;

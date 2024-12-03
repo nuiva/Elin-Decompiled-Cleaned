@@ -6,6 +6,11 @@ public class TraitMoongateEx : TraitMoongate
 {
 	public override bool OnUse(Chara c)
 	{
+		if (EClass.core.version.demo)
+		{
+			Msg.SayNothingHappen();
+			return false;
+		}
 		List<MapMetaData> list = new List<MapMetaData>();
 		foreach (FileInfo item in new DirectoryInfo(CorePath.ZoneSaveUser).GetFiles().Concat(MOD.listMaps))
 		{

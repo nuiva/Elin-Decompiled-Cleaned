@@ -721,7 +721,7 @@ public class UI : ELayer
 			Msg.Say("bug_hal");
 			return;
 		}
-		if (!Application.isEditor && (ELayer.debug.enable || (ELayer.core.IsGameStarted && ELayer.player.flags.debugEnabled)))
+		if (!Application.isEditor && (ELayer.debug.enable || ELayer.core.version.demo || (ELayer.core.IsGameStarted && ELayer.player.flags.debugEnabled)))
 		{
 			Dialog.Ok("dialog_debugFeedback");
 			return;

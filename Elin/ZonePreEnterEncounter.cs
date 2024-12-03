@@ -41,7 +41,7 @@ public class ZonePreEnterEncounter : ZonePreEnterEvent
 						return false;
 					}
 					return t.trait.CanBeDestroyed && t.things.Count == 0 && t.invY != 1 && t.trait.CanBeStolen && !t.trait.CanOnlyCarry && !t.IsUnique && !t.isEquipped;
-				});
+				}, onlyAccessible: true);
 				Thing t2 = ((list2.Count > 0) ? list2.RandomItem() : null);
 				if (t2 == null)
 				{

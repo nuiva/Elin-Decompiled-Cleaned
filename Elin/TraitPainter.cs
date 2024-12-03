@@ -24,7 +24,7 @@ public class TraitPainter : TraitItem
 
 	public TraitCanvas GetCanvas()
 	{
-		List<Thing> list = EClass.pc.things.List((Thing t) => t.trait is TraitCanvas && (t.trait as TraitCanvas).CanvasType == PaintType && t.c_textureData == null);
+		List<Thing> list = EClass.pc.things.List((Thing t) => t.trait is TraitCanvas && (t.trait as TraitCanvas).CanvasType == PaintType && t.c_textureData == null, onlyAccessible: true);
 		if (list.Count <= 0)
 		{
 			return null;

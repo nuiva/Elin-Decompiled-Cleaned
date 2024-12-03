@@ -305,6 +305,10 @@ public class Net : MonoBehaviour
 
 	public static async UniTask<bool> SendChat(string name, string msg, ChatCategory cat, string idLang)
 	{
+		if (EClass.core.version.demo)
+		{
+			return false;
+		}
 		try
 		{
 			Debug.Log("Start Sending Text:");

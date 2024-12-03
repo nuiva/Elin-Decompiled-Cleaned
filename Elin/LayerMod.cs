@@ -63,7 +63,7 @@ public class LayerMod : ELayer
 				{
 					Refresh();
 					UIContextMenu uIContextMenu = ELayer.ui.CreateContextMenuInteraction();
-					if (ELayer.debug.enable || (!BaseCore.IsOffline && a.isInPackages && !a.builtin))
+					if (ELayer.debug.enable || (!BaseCore.IsOffline && a.isInPackages && !a.builtin && !ELayer.core.version.demo))
 					{
 						uIContextMenu.AddButton("mod_publish", delegate
 						{

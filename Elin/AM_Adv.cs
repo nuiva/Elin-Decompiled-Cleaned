@@ -52,7 +52,7 @@ public class AM_Adv : AM_BaseGameMode
 			axis = Vector2.zero;
 		}
 
-		public void SetAction(Func<bool> _action = null, bool _canTurbo = true, bool _willEndTurn = true, bool _waitForTurn = true)
+		public void SetAction(Func<bool> _action = null, bool _canTurbo = true, bool _willEndTurn = true, bool _waitForTurn = true, bool _canRepeat = false)
 		{
 			plan = null;
 			action = _action;
@@ -60,7 +60,7 @@ public class AM_Adv : AM_BaseGameMode
 			willEndTurn = _willEndTurn;
 			waitForTurn = _waitForTurn;
 			hideRightInfo = false;
-			repeat = false;
+			repeat = _canRepeat;
 			ignoreCount = false;
 			act = null;
 		}
@@ -457,7 +457,7 @@ public class AM_Adv : AM_BaseGameMode
 		}
 		if (EClass.rnd(30) == 0 && EClass.pc.HasElement(1559))
 		{
-			List<Thing> list = EClass.pc.things.List((Thing a) => a.trait is TraitPotion);
+			List<Thing> list = EClass.pc.things.List((Thing a) => a.trait is TraitPotion, onlyAccessible: true);
 			if (list.Count > 0)
 			{
 				EClass.pc.Drink(list.RandomItem());
@@ -1125,7 +1125,7 @@ public class AM_Adv : AM_BaseGameMode
 			else
 			{
 				pressedAction.axis = EInput.axis;
-				pressedAction.SetAction(planKeyboard.GetAction(), _canTurbo: true, planKeyboard.WillEndTurn);
+				pressedAction.SetAction(planKeyboard.GetAction(), _canTurbo: true, planKeyboard.WillEndTurn, _waitForTurn: true, planKeyboard.canRepeat);
 			}
 			return;
 		}

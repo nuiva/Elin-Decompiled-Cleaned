@@ -469,11 +469,14 @@ public class SerializedCards : EClass
 		List<Thing> things = map.things;
 		List<Chara> serializedCharas = map.serializedCharas;
 		bool isUserZone = EClass._zone.IsUserZone;
+		Dictionary<int, int> dictionary = new Dictionary<int, int>();
+		Dictionary<int, int> dictionary2 = new Dictionary<int, int>();
 		importedCards.Clear();
-		foreach (Data card3 in cards)
+		foreach (Data card4 in cards)
 		{
-			int num = card3.dir;
-			Point point = new Point(card3.x, card3.z);
+			int num = card4.dir;
+			Point point = new Point(card4.x, card4.z);
+			int index = point.index;
 			if (partial != null)
 			{
 				if (partial.result.ruined.Contains(point.index))
@@ -513,17 +516,17 @@ public class SerializedCards : EClass
 				if (!partial.editMode)
 				{
 					Card card = null;
-					string id = card3.id;
+					string id = card4.id;
 					if (!(id == "sign_spawnThing"))
 					{
 						if (id == "sign_spawnChara")
 						{
-							card = CharaGen.CreateFromFilter(card3.idRefCard.IsEmpty(EClass._zone.biome.spawn.GetRandomCharaId()), EClass._zone.DangerLv);
+							card = CharaGen.CreateFromFilter(card4.idRefCard.IsEmpty(EClass._zone.biome.spawn.GetRandomCharaId()), EClass._zone.DangerLv);
 						}
 					}
 					else
 					{
-						card = ThingGen.CreateFromFilter(card3.idRefCard.IsEmpty(EClass._zone.biome.spawn.GetRandomThingId()), EClass._zone.DangerLv);
+						card = ThingGen.CreateFromFilter(card4.idRefCard.IsEmpty(EClass._zone.biome.spawn.GetRandomThingId()), EClass._zone.DangerLv);
 					}
 					if (card != null)
 					{
@@ -537,15 +540,15 @@ public class SerializedCards : EClass
 					}
 				}
 			}
-			card3._bits1.SetInt(card3.ints[0]);
-			string text = card3.id;
-			if (card3.idV != 0)
+			card4._bits1.SetInt(card4.ints[0]);
+			string text = card4.id;
+			if (card4.idV != 0)
 			{
-				text = card3.idV.ToString() ?? "";
+				text = card4.idV.ToString() ?? "";
 			}
 			if (addToZone && partial != null && !partial.editMode)
 			{
-				string id = card3.id;
+				string id = card4.id;
 				if (!(id == "editor_torch"))
 				{
 					if (id == "editor_torch_wall")
@@ -601,17 +604,21 @@ public class SerializedCards : EClass
 						continue;
 					}
 				}
-				card2 = CharaGen.Create(text);
-				if (card3.ints.Length > 20)
+				if (isUserZone && dictionary.TryGetValue(index, 0) >= 3)
 				{
-					card2.Chara.SetLv(card3.lv);
-					if (card3.element != 0)
+					continue;
+				}
+				card2 = CharaGen.Create(text);
+				if (card4.ints.Length > 20)
+				{
+					card2.Chara.SetLv(card4.lv);
+					if (card4.element != 0)
 					{
-						card2.Chara.SetMainElement(card3.element);
+						card2.Chara.SetMainElement(card4.element);
 					}
 				}
 				card2.Chara.orgPos = point.Copy();
-				if (card3.isDead)
+				if (card4.isDead)
 				{
 					card2.hp = -1;
 					card2.Chara.isDead = true;
@@ -621,11 +628,15 @@ public class SerializedCards : EClass
 				{
 					serializedCharas.Add(card2.Chara);
 				}
+				if (isUserZone)
+				{
+					dictionary[index] = dictionary.TryGetValue(index, 0) + 1;
+				}
 			}
 			else
 			{
-				PlaceState placeState = card3.placeState.ToEnum<PlaceState>();
-				if (isUserZone && ((placeState != PlaceState.installed && !card3.bits1.IsOn(13)) || text == "medal"))
+				PlaceState placeState = card4.placeState.ToEnum<PlaceState>();
+				if (isUserZone && ((dictionary2.TryGetValue(index, 0) >= 20 && text != "waystone" && text != "core_zone") || (placeState != PlaceState.installed && !card4.bits1.IsOn(13)) || text == "medal"))
 				{
 					continue;
 				}
@@ -634,14 +645,18 @@ public class SerializedCards : EClass
 					text = SpawnListThing.Get("origin_" + text, (SourceThing.Row a) => a.origin == source).GetFirst().id;
 				}
 				card2 = ThingGen.Create(text, -1, EClass._zone.DangerLv);
-				card2.ChangeMaterial((card3.idMat == -1) ? card2.DefaultMaterial.id : card3.idMat);
+				card2.ChangeMaterial((card4.idMat == -1) ? card2.DefaultMaterial.id : card4.idMat);
 				if (!addToZone)
 				{
 					things.Add(card2.Thing);
 				}
-				card2.altitude = card3.altitude;
+				card2.altitude = card4.altitude;
 				card2.placeState = placeState;
-				card2.c_lightColor = card3.lightColor;
+				card2.c_lightColor = card4.lightColor;
+				if (isUserZone)
+				{
+					dictionary2[index] = dictionary2.TryGetValue(index, 0) + 1;
+				}
 			}
 			if (num < 0)
 			{
@@ -649,62 +664,64 @@ public class SerializedCards : EClass
 			}
 			card2.pos = point;
 			card2.dir = num;
-			card2._bits1.SetInt(card3.bits1);
-			card2._bits2.SetInt(card3.bits2);
+			card2._bits1.SetInt(card4.bits1);
+			card2._bits2.SetInt(card4.bits2);
 			card2.isPlayerCreation = true;
 			card2.autoRefuel = true;
-			card2.c_editorTraitVal = card3.traitVals;
-			card2.c_idRefCard = card3.idRefCard;
+			card2.c_editorTraitVal = card4.traitVals;
+			card2.c_idRefCard = card4.idRefCard;
 			card2.isImported = true;
-			card2.refVal = card3.refVal;
-			card2.idSkin = card3.idSkin;
-			card2.c_idDeity = card3.idDeity;
-			if (isUserZone)
+			card2.refVal = card4.refVal;
+			card2.idSkin = card4.idSkin;
+			card2.c_idDeity = card4.idDeity;
+			if (isUserZone && (card2.isHidden || card2.isMasked) && ((card2.TileType.IsBlockPass && card2.IsInstalled) || card2.trait is TraitCoreZone || card2.trait is TraitWaystone))
 			{
-				_ = card2.isRoofItem;
+				Card card3 = card2;
+				bool isHidden = (card2.isMasked = false);
+				card3.isHidden = isHidden;
 			}
-			if (card3.idBacker != 0)
+			if (card4.idBacker != 0)
 			{
-				Debug.Log(card3.idBacker);
-				card2.c_idBacker = card3.idBacker;
+				Debug.Log(card4.idBacker);
+				card2.c_idBacker = card4.idBacker;
 			}
-			if (version >= 2 && card3.idDyeMat != -1)
+			if (version >= 2 && card4.idDyeMat != -1)
 			{
-				card2.Dye(EClass.sources.materials.rows[card3.idDyeMat]);
+				card2.Dye(EClass.sources.materials.rows[card4.idDyeMat]);
 			}
-			card2.mapObj = card3.obj;
+			card2.mapObj = card4.obj;
 			if (card2.mapObj?.TryGetValue(2) != null)
 			{
 				card2.mapObj.Remove(2);
 			}
-			if (card3.cstr != null)
+			if (card4.cstr != null)
 			{
-				foreach (KeyValuePair<int, string> item2 in card3.cstr)
+				foreach (KeyValuePair<int, string> item2 in card4.cstr)
 				{
 					card2.SetStr(item2.Key, item2.Value);
 				}
 			}
 			if (card2.freePos)
 			{
-				card2.fx = (float)card3.fx * 0.001f;
-				card2.fy = (float)card3.fy * 0.001f;
+				card2.fx = (float)card4.fx * 0.001f;
+				card2.fy = (float)card4.fy * 0.001f;
 			}
-			if (!card3.idEditor.IsEmpty())
+			if (!card4.idEditor.IsEmpty())
 			{
-				card2.c_idEditor = card3.idEditor;
+				card2.c_idEditor = card4.idEditor;
 			}
-			if (!card3.idTrait.IsEmpty())
+			if (!card4.idTrait.IsEmpty())
 			{
-				card2.c_idTrait = card3.idTrait;
+				card2.c_idTrait = card4.idTrait;
 				card2.ApplyTrait();
 				card2.trait.OnCreate(EClass._zone.lv);
 			}
-			if (!card3.tags.IsEmpty())
+			if (!card4.tags.IsEmpty())
 			{
-				card2.c_editorTags = card3.tags;
+				card2.c_editorTags = card4.tags;
 				try
 				{
-					string[] array = card3.tags.Split(',');
+					string[] array = card4.tags.Split(',');
 					foreach (string value in array)
 					{
 						card2.ApplyEditorTags(value.ToEnum<EditorTag>());
@@ -712,13 +729,13 @@ public class SerializedCards : EClass
 				}
 				catch
 				{
-					Debug.LogWarning("Could not convert editor tag:" + card2.Name + "/" + card3.tags);
+					Debug.LogWarning("Could not convert editor tag:" + card2.Name + "/" + card4.tags);
 				}
 			}
 			if (card2.isChara)
 			{
 				card2.Chara.homeZone = EClass._zone;
-				card2.Chara.uidEditor = card3.uidEditor;
+				card2.Chara.uidEditor = card4.uidEditor;
 				if (card2.isBackerContent)
 				{
 					card2.ApplyBacker(card2.c_idBacker);

@@ -20,6 +20,11 @@ public class TraitMoongate : Trait
 
 	public override bool OnUse(Chara c)
 	{
+		if (EClass.core.version.demo)
+		{
+			Msg.SayNothingHappen();
+			return false;
+		}
 		LayerProgress.StartAsync("Loading", UseMoongate());
 		return false;
 	}

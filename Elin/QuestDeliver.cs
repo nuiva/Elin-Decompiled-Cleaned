@@ -120,7 +120,7 @@ public class QuestDeliver : QuestDestZone
 
 	public List<Thing> ListDestThing(bool onlyFirst = false)
 	{
-		List<Thing> list = EClass.pc.things.List((Thing t) => IsDestThing(t));
+		List<Thing> list = EClass.pc.things.List((Thing t) => IsDestThing(t), onlyAccessible: true);
 		if (onlyFirst && list.Count > 0)
 		{
 			return list;

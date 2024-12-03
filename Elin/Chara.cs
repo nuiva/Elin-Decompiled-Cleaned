@@ -3307,7 +3307,7 @@ public class Chara : Card, IPathfindWalker
 						AddCondition<ConBlind>(200);
 					}
 				}
-				if (turn % (2000 * (100 + Evalue(412) * 2) / (100 + Evalue(409) * 10)) == 0)
+				if (turn % (2000 * (100 + Evalue(412) * 2) / Mathf.Max(100 + Evalue(409) * 10, 100)) == 0)
 				{
 					ModCorruption(1);
 				}

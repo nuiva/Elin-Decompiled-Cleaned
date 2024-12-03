@@ -71,7 +71,7 @@ public class TraitCoreZone : Trait
 				return false;
 			}, owner);
 		}
-		if (Application.isEditor || (EClass.Branch.resources.worth.bestRank > 0 && EClass.Branch.resources.worth.bestRank <= 100 && !EClass._zone.name.IsEmpty()))
+		if (Application.isEditor || (EClass.Branch.resources.worth.bestRank > 0 && EClass.Branch.resources.worth.bestRank <= 100 && !EClass._zone.name.IsEmpty() && !EClass.core.version.demo))
 		{
 			p.TrySetAct("actUploadMap", delegate
 			{

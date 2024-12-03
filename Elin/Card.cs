@@ -4901,7 +4901,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 
 	public int ResistLvFrom(int ele)
 	{
-		return ResistLv(EClass.sources.elements.alias[EClass.sources.elements.map[ele].aliasRef].id);
+		return ResistLv(EClass.sources.elements.alias.TryGetValue(EClass.sources.elements.map[ele].aliasRef)?.id ?? 0);
 	}
 
 	public int ResistLv(int res)

@@ -61,7 +61,7 @@ public class HomeResourceWorth : HomeResourceRate
 		List<Thing> list2 = new List<Thing>();
 		HashSet<string> hashSet = new HashSet<string>();
 		int[] array = new int[EClass._map.SizeXZ];
-		int num = 0;
+		long num = 0L;
 		int num2 = branch.Evalue(2814);
 		int num3 = branch.Evalue(2823);
 		foreach (Thing thing in EClass._map.things)
@@ -117,7 +117,7 @@ public class HomeResourceWorth : HomeResourceRate
 			}
 		}
 		int num7 = branch.Evalue(3780) + branch.Evalue(3781) + branch.Evalue(3782) + branch.Evalue(3783) + branch.Evalue(3784);
-		branch.tourism = (100 + num) * (100 + num7 * 15) / 100;
+		branch.tourism = (int)((100 + num) * (100 + num7 * 15) / 100);
 		list2.Sort((Thing a, Thing b) => GetPrice(b) - GetPrice(a));
 		for (int i = 0; i < branch.NumHeirloom && i < list2.Count; i++)
 		{

@@ -136,7 +136,7 @@ public class ContentCodex : EContent
 
 	public void OnClickAddCards()
 	{
-		List<Thing> list = EClass.pc.things.List((Thing c) => c.id == "figure3");
+		List<Thing> list = EClass.pc.things.List((Thing c) => c.id == "figure3", onlyAccessible: true);
 		int num = 0;
 		if (list.Count > 0)
 		{
