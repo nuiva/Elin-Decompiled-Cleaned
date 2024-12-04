@@ -315,13 +315,20 @@ public class TaskBuild : TaskBaseBuild
 		EClass._map.RefreshShadow(pos.x, pos.z - 1);
 		EClass._map.RefreshFOV(pos.x, pos.z);
 		EClass.pc.renderer.SetFirst(first: true);
-		if (!recipe.IsFloor)
+		if (recipe.IsFloor)
+		{
+			foreach (Card item in pos.ListThings<TraitNewZone>())
+			{
+				_ = (item.trait as TraitNewZone).IsDownstairs;
+			}
+		}
+		if (!pos.IsBlocked || !pos.HasChara)
 		{
 			return;
 		}
-		foreach (Card item in pos.ListThings<TraitNewZone>())
+		foreach (Chara item2 in pos.ListCharas())
 		{
-			_ = (item.trait as TraitNewZone).IsDownstairs;
+			EClass.pc.Kick(item2, ignoreSelf: true, karmaLoss: false, show: false);
 		}
 	}
 

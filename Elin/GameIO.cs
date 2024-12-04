@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -28,11 +29,7 @@ public class GameIO : EClass
 
 	public static Formatting formatting = Formatting.Indented;
 
-	public static string pathBackup => CorePath.RootSave + "Backup/";
-
-	public static string pathSaveRoot => CorePath.RootSave;
-
-	public static string pathCurrentSave => pathSaveRoot + Game.id + "/";
+	public static string pathCurrentSave => (EClass.core.game.isCloud ? CorePath.RootSaveCloud : CorePath.RootSave) + Game.id + "/";
 
 	public static string pathTemp => pathCurrentSave + "Temp/";
 
@@ -84,6 +81,7 @@ public class GameIO : EClass
 		string path = pathCurrentSave + "game.txt";
 		GameIndex gameIndex = new GameIndex().Create(EClass.core.game);
 		gameIndex.id = Game.id;
+		gameIndex.cloud = EClass.game.isCloud;
 		IO.SaveFile(pathCurrentSave + "index.txt", gameIndex);
 		if (compressSave)
 		{
@@ -103,6 +101,10 @@ public class GameIO : EClass
 			}
 		}
 		ClearTemp();
+		if (gameIndex.cloud)
+		{
+			PrepareSteamCloud(gameIndex.id);
+		}
 		return gameIndex;
 	}
 
@@ -110,8 +112,9 @@ public class GameIO : EClass
 	{
 		Debug.Log("Start backup:" + index.id);
 		string id = index.id;
-		IO.CreateDirectory(pathBackup);
-		string text = pathBackup + id;
+		bool cloud = index.cloud;
+		IO.CreateDirectory(cloud ? CorePath.PathBackupCloud : CorePath.PathBackup);
+		string text = (cloud ? CorePath.PathBackupCloud : CorePath.PathBackup) + id;
 		IO.CreateDirectory(text);
 		Debug.Log(text);
 		List<DirectoryInfo> dirs = new DirectoryInfo(text).GetDirectories().ToList();
@@ -134,20 +137,99 @@ public class GameIO : EClass
 		}
 		Debug.Log("Copying backup:");
 		string newId = GetNewId(text + "/", "", (dirs.Count == 0) ? 1 : int.Parse(dirs.LastItem().Name));
-		IO.CopyDir(pathSaveRoot + id + "/", text + "/" + newId, (string s) => s == "Temp");
+		IO.CopyDir((cloud ? CorePath.RootSaveCloud : CorePath.RootSave) + id + "/", text + "/" + newId, (string s) => s == "Temp");
 	}
 
-	public static Game LoadGame(string id, string root)
+	public static Game LoadGame(string id, string root, bool cloud)
 	{
 		Game.id = id;
-		ClearTemp();
+		GameIndex gameIndex = IO.LoadFile<GameIndex>(root + "/index.txt");
+		if (cloud)
+		{
+			gameIndex.cloud = true;
+			Debug.Log(TryLoadSteamCloud());
+		}
 		string path = root + "/game.txt";
 		return JsonConvert.DeserializeObject<Game>(IO.IsCompressed(path) ? IO.Decompress(path) : File.ReadAllText(path), jsReadGame);
 	}
 
+	public static void PrepareSteamCloud(string id, string path = "")
+	{
+		if (path.IsEmpty())
+		{
+			path = CorePath.RootSaveCloud + "/" + id;
+		}
+		Debug.Log("Prepareing Steam Cloud:" + id + ": " + path);
+		string text = CorePath.RootSaveCloud + "/cloud.zip";
+		string text2 = path + "/cloud.zip";
+		try
+		{
+			if (File.Exists(text))
+			{
+				File.Delete(text);
+			}
+			ZipFile.CreateFromDirectory(path, text);
+			if (File.Exists(text2))
+			{
+				File.Delete(text2);
+			}
+			File.Move(text, text2);
+		}
+		catch (Exception ex)
+		{
+			EClass.ui.Say(ex.Message);
+		}
+	}
+
+	public static bool TryLoadSteamCloud()
+	{
+		Debug.Log("LoadGame using cloud save");
+		string text = CorePath.RootSaveCloud + Game.id;
+		string text2 = text + "/cloud.zip";
+		string text3 = CorePath.RootSaveCloud + "/cloud.zip";
+		bool flag = false;
+		try
+		{
+			if (!File.Exists(text2))
+			{
+				EClass.ui.Say("Steam Cloud save not found:" + text2);
+				return true;
+			}
+			if (File.Exists(text3))
+			{
+				File.Delete(text3);
+			}
+			File.Move(text2, text3);
+			IO.DeleteDirectory(text);
+			flag = true;
+			Directory.CreateDirectory(text);
+			ZipFile.ExtractToDirectory(text3, text);
+			if (File.Exists(text2))
+			{
+				File.Delete(text2);
+			}
+			File.Move(text3, text2);
+		}
+		catch (Exception ex)
+		{
+			EClass.ui.Say(ex.Message);
+			if (flag)
+			{
+				Debug.Log("Try restore backup:");
+				if (Directory.Exists(text))
+				{
+					Directory.Delete(text);
+				}
+				File.Move(text3, text2);
+				return true;
+			}
+			return false;
+		}
+		return true;
+	}
+
 	public static void UpdateGameIndex(GameIndex i)
 	{
-		i.madeBackup = true;
 		IO.SaveFile(i.path + "/index.txt", i);
 	}
 
@@ -161,41 +243,25 @@ public class GameIO : EClass
 		return IO.LoadFile<T>(path, compressSave, jsReadGame);
 	}
 
-	public static bool FileExist(string id)
+	public static void DeleteGame(string id, bool cloud, bool deleteBackup = true)
 	{
-		return File.Exists(pathSaveRoot + Game.id + "/" + id + ".txt");
-	}
-
-	public static void DeleteGame(string id, bool deleteBackup = true)
-	{
-		if (!Directory.Exists(pathSaveRoot + id))
+		string path = (cloud ? CorePath.RootSaveCloud : CorePath.RootSave) + id;
+		if (!Directory.Exists(path))
 		{
 			return;
 		}
-		DirectoryInfo directoryInfo = new DirectoryInfo(pathSaveRoot + id);
+		DirectoryInfo directoryInfo = new DirectoryInfo(path);
 		if (directoryInfo.Exists)
 		{
 			directoryInfo.Delete(recursive: true);
 		}
 		if (deleteBackup)
 		{
-			directoryInfo = new DirectoryInfo(pathBackup + id);
+			directoryInfo = new DirectoryInfo((cloud ? CorePath.PathBackupCloud : CorePath.PathBackup) + id);
 			if (directoryInfo.Exists)
 			{
 				directoryInfo.Delete(recursive: true);
 			}
-		}
-	}
-
-	public static void MakeDirectories(string id)
-	{
-		if (!Directory.Exists(pathSaveRoot + id))
-		{
-			Directory.CreateDirectory(pathSaveRoot + id);
-		}
-		if (!Directory.Exists(pathSaveRoot + id + "/Temp"))
-		{
-			Directory.CreateDirectory(pathSaveRoot + id + "/Temp");
 		}
 	}
 
@@ -240,12 +306,12 @@ public class GameIO : EClass
 		return list;
 	}
 
-	public static void DeleteEmptyGameFolders()
+	public static void DeleteEmptyGameFolders(string path)
 	{
-		DirectoryInfo[] directories = new DirectoryInfo(pathSaveRoot).GetDirectories();
+		DirectoryInfo[] directories = new DirectoryInfo(path).GetDirectories();
 		foreach (DirectoryInfo directoryInfo in directories)
 		{
-			if (directoryInfo.Name != "Backup" && !File.Exists(directoryInfo?.ToString() + "/game.txt"))
+			if (!File.Exists(directoryInfo?.ToString() + "/game.txt"))
 			{
 				directoryInfo.Delete(recursive: true);
 			}

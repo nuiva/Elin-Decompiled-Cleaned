@@ -4560,6 +4560,10 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 			{
 				i = 1;
 			}
+			if (IsMinion)
+			{
+				i *= 2;
+			}
 			if (EClass.rnd(i) == 0)
 			{
 				return true;

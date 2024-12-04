@@ -20,7 +20,7 @@ public class TraitSyringeHeaven : Trait
 				}
 				owner.ModNum(-1);
 				return false;
-			});
+			}, c);
 		});
 	}
 }

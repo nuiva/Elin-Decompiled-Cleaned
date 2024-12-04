@@ -129,6 +129,10 @@ public class AI_Fish : AIAct
 				{
 					item.Destroy();
 				}
+				if (owner.things.IsFull())
+				{
+					thing.Destroy();
+				}
 			}
 			if (EClass.rnd(2) == 0 || num > 1)
 			{

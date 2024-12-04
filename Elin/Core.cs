@@ -482,7 +482,7 @@ public class Core : BaseCore
 		try
 		{
 			IO.DeleteDirectory(CorePath.Temp);
-			GameIO.DeleteEmptyGameFolders();
+			GameIO.DeleteEmptyGameFolders(CorePath.RootSave);
 		}
 		catch (Exception ex3)
 		{

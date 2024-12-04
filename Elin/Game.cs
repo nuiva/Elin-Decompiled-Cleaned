@@ -230,6 +230,8 @@ public class Game : EClass
 
 	public bool isKilling;
 
+	public bool isCloud;
+
 	public GameBlueprint bp;
 
 	public GameUpdater updater = new GameUpdater();
@@ -293,21 +295,19 @@ public class Game : EClass
 		updater.FixedUpdate();
 	}
 
-	public static void Load(string slot)
+	public static void Load(string id, bool cloud)
 	{
-		Load(slot, GameIO.pathSaveRoot + slot);
-	}
-
-	public static void Load(string id, string root)
-	{
-		Debug.Log("Loading: " + id + ": " + root);
+		string text = (cloud ? CorePath.RootSaveCloud : CorePath.RootSave) + id;
+		Debug.Log("Loading: " + id + ": " + text);
 		if (EClass.game != null)
 		{
 			EClass.game.Kill();
 		}
 		OnBeforeInstantiate();
-		EClass.core.game = GameIO.LoadGame(id, root);
+		EClass.core.game = GameIO.LoadGame(id, text, cloud);
+		EClass.game.isCloud = cloud;
 		EClass.game.isLoading = true;
+		GameIO.ClearTemp();
 		EClass.game.OnGameInstantiated();
 		EClass.game.OnLoad();
 		EClass.scene.Init(Scene.Mode.StartGame);
@@ -551,12 +551,13 @@ public class Game : EClass
 		}
 	}
 
-	public static void Create(string _id = null)
+	public static void Create(string _id = null, bool cloud = false)
 	{
-		id = _id ?? GameIO.GetNewId(GameIO.pathSaveRoot, "world_");
-		GameIO.ResetTemp();
+		id = _id ?? GameIO.GetNewId(cloud ? CorePath.RootSaveCloud : CorePath.RootSave, "world_");
 		OnBeforeInstantiate();
 		EClass.core.game = (Instance = new Game());
+		EClass.core.game.isCloud = cloud;
+		GameIO.ResetTemp();
 		EClass.core.game.OnGameInstantiated();
 		EClass.core.game._Create();
 	}

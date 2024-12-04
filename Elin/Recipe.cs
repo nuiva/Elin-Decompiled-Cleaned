@@ -608,7 +608,7 @@ public class Recipe : EClass
 			{
 				foreach (Chara item in pos.ListCharas())
 				{
-					chara.Kick(item);
+					chara.Kick(item, ignoreSelf: false, karmaLoss: false);
 				}
 			}
 			if (tileType.AltitudeAsDir)

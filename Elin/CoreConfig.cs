@@ -571,6 +571,8 @@ public class CoreConfig : EClass
 
 	public bool ignoreLinuxModWarning;
 
+	public bool cloud;
+
 	public new UISetting ui;
 
 	public SoundSetting sound;

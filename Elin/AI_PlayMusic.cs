@@ -288,7 +288,7 @@ public class AI_PlayMusic : AIAct
 									continue;
 								}
 							}
-							if (EClass.rnd(num3 * num3) <= 30)
+							if (EClass.rnd(num3 * num3) <= 30 && item2.pos.FirstChara == item2)
 							{
 								bool isMinion = item2.IsMinion;
 								if (num2 < item2.LV && EClass.rnd(2) == 0)
@@ -502,17 +502,22 @@ public class AI_PlayMusic : AIAct
 		{
 			return;
 		}
-		owner.Pick(thing);
-		if (thing.id == "money" && !owner.IsPCParty)
+		if (!owner.IsPC && owner.things.IsFull())
 		{
-			if (thing.GetRootCard() != owner && !thing.isDestroyed)
+			thing.Destroy();
+		}
+		else
+		{
+			owner.Pick(thing);
+		}
+		if (thing.id == "money" && !owner.IsPC)
+		{
+			int num2 = (owner.Evalue(241) * 10 + 100) / ((owner.IsPCFaction && owner.memberType == FactionMemberType.Default) ? 1 : 10);
+			int num3 = owner.GetCurrency() - num2;
+			if (num3 > 0)
 			{
-				thing.Destroy();
-			}
-			if (owner.GetCurrency() >= (owner.Evalue(241) * 10 + 100) / ((owner.IsPCFaction && owner.memberType == FactionMemberType.Default) ? 1 : 10))
-			{
-				owner.c_allowance += num;
-				owner.ModCurrency(-num);
+				owner.c_allowance += num3;
+				owner.ModCurrency(-num3);
 			}
 		}
 	}

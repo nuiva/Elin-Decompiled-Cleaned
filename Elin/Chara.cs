@@ -1676,6 +1676,10 @@ public class Chara : Card, IPathfindWalker
 				info?.AddFix(EClass.player.lastEmptyAlly * 10 - 10, "exceedParty".lang());
 			}
 		}
+		else if (base.LV >= 1000)
+		{
+			num += EClass.curve((base.LV - 900) / 100 * 10, 500, 100);
+		}
 		if (HasCondition<ConGravity>())
 		{
 			num -= 30;
@@ -4949,7 +4953,7 @@ public class Chara : Card, IPathfindWalker
 		}
 	}
 
-	public void Kick(Chara t, bool ignoreSelf = false, bool karmaLoss = true)
+	public void Kick(Chara t, bool ignoreSelf = false, bool karmaLoss = true, bool show = true)
 	{
 		if (!IsAliveInCurrentZone)
 		{
@@ -4975,7 +4979,10 @@ public class Chara : Card, IPathfindWalker
 			}
 			return;
 		}
-		Say("kick", this, t);
+		if (show)
+		{
+			Say("kick", this, t);
+		}
 		PlaySound("kick");
 		if ((t.conSuspend == null || t.conSuspend.uidMachine != 0) && t.trait.CanBePushed && (!t.IsHostile() || EClass.rnd(2) == 0) && !t.noMove && !t.isRestrained)
 		{

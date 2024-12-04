@@ -558,7 +558,7 @@ public class Scene : EMono
 				string lastWord = list.RandomItem();
 				if (EMono.game.Difficulty.deleteGameOnDeath)
 				{
-					GameIO.DeleteGame(Game.id);
+					GameIO.DeleteGame(Game.id, EMono.game.isCloud);
 				}
 				EMono.ui.CloseLayers();
 				if ((bool)UIContextMenu.Current)

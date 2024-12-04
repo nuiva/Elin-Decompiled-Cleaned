@@ -24,6 +24,8 @@ public class LayerLoadGame : ELayer
 
 	public UIButton buttonListBackup;
 
+	public UIButton buttonMove;
+
 	public List<GameIndex> worlds;
 
 	public Portrait portrait;
@@ -46,13 +48,17 @@ public class LayerLoadGame : ELayer
 
 	private string idDest;
 
+	private string pathBackup;
+
 	private bool backup;
 
-	public void Init(bool _backup, string pathBackup = "", string _idDest = "")
+	private bool cloud => ELayer.core.config.cloud;
+
+	public void Init(bool _backup, string _pathBackup = "", string _idDest = "")
 	{
 		backup = _backup;
+		pathBackup = _pathBackup;
 		idDest = _idDest;
-		pathRoot = (backup ? pathBackup : GameIO.pathSaveRoot);
 		if (backup)
 		{
 			for (int i = 0; i < 2; i++)
@@ -81,14 +87,26 @@ public class LayerLoadGame : ELayer
 			}
 		}
 		RefreshList();
+		if (!backup)
+		{
+			windows[0].ClearBottomButtons();
+			windows[0].AddBottomButton("toggleCloud", delegate
+			{
+				ELayer.core.config.cloud = !ELayer.core.config.cloud;
+				SE.Tab();
+				RefreshList();
+			});
+		}
 	}
 
 	public void RefreshList()
 	{
-		if (worlds == null)
+		if (!backup)
 		{
-			worlds = GameIO.GetGameList(pathRoot, backup);
+			windows[0].SetCaption("saveList".lang() + (cloud ? (" " + "isCloud".lang()) : ""));
 		}
+		pathRoot = (backup ? pathBackup : (cloud ? CorePath.RootSaveCloud : CorePath.RootSave));
+		worlds = GameIO.GetGameList(pathRoot, backup);
 		goInfo.SetActive(value: false);
 		goNoInfo.SetActive(value: true);
 		list.Clear();
@@ -101,7 +119,7 @@ public class LayerLoadGame : ELayer
 				b.mainText.SetText(s, c);
 				b.subText.SetText(a.RealDate ?? "");
 				b.subText2.SetText(((a.difficulty == 2) ? "★" : ((a.difficulty == 1) ? "☆" : "")) + a.pcName + " (" + a.zoneName + ")", c);
-				b.GetComponent<UIItem>().text1.SetText(a.version.GetText() ?? "");
+				b.GetComponent<UIItem>().text1.SetText(a.version.GetText() + (cloud ? (" " + "isCloud".lang()) : ""));
 			},
 			onClick = delegate(GameIndex a, UIButton b)
 			{
@@ -162,6 +180,66 @@ public class LayerLoadGame : ELayer
 		buttonDelete.SetActive(!backup && !ELayer.core.IsGameStarted);
 		buttonBackup.SetActive(!backup && (!ELayer.core.IsGameStarted || i.id == Game.id));
 		buttonOpen.SetActive(backup);
+		buttonMove.SetActive(!backup && !ELayer.core.IsGameStarted);
+		buttonMove.mainText.SetText((cloud ? "fromCloud" : "toCloud").lang());
+		buttonMove.SetOnClick(delegate
+		{
+			Dialog.YesNo("dialog_switchCloud", delegate
+			{
+				string sourceDirName = (cloud ? CorePath.RootSaveCloud : CorePath.RootSave) + i.id;
+				string text = (cloud ? CorePath.RootSave : CorePath.RootSaveCloud) + i.id;
+				string text2 = (cloud ? CorePath.PathBackupCloud : CorePath.PathBackup) + i.id;
+				string text3 = (cloud ? CorePath.PathBackup : CorePath.PathBackupCloud) + i.id;
+				bool flag2 = Directory.Exists(text2);
+				if (Directory.Exists(text) || Directory.Exists(text3))
+				{
+					SE.Beep();
+					ELayer.ui.Say("cloud_conflict");
+				}
+				else
+				{
+					SE.Play("mutation");
+					try
+					{
+						if (flag2)
+						{
+							Debug.Log("Converting Backup files:");
+							Directory.Move(text2, text3);
+							foreach (GameIndex game in GameIO.GetGameList(((!cloud) ? CorePath.PathBackupCloud : CorePath.PathBackup) + i.id + "/"))
+							{
+								Debug.Log("Processing:" + game.id + ": " + game.path);
+								if (cloud)
+								{
+									IO.DeleteFile(game.path + "/cloud.zip");
+								}
+								else
+								{
+									GameIO.PrepareSteamCloud(game.id, game.path);
+								}
+							}
+						}
+						Debug.Log("Converting Current World:");
+						Directory.Move(sourceDirName, text);
+						i.path = text;
+						i.cloud = !cloud;
+						GameIO.UpdateGameIndex(i);
+						if (i.cloud)
+						{
+							GameIO.PrepareSteamCloud(i.id);
+						}
+						else
+						{
+							IO.DeleteFile(i.path + "/cloud.zip");
+						}
+					}
+					catch (Exception ex)
+					{
+						ELayer.ui.Say(ex.Message);
+					}
+					RefreshList();
+				}
+			});
+		});
 		buttonLoad.onClick.RemoveAllListeners();
 		buttonDelete.onClick.RemoveAllListeners();
 		buttonLoad.SetOnClick(delegate
@@ -171,11 +249,11 @@ public class LayerLoadGame : ELayer
 			{
 				Dialog.YesNo("dialog_restoreWarning", delegate
 				{
-					GameIO.DeleteGame(idDest, deleteBackup: false);
-					IO.CopyDir(pathRoot + "/" + i.id, GameIO.pathSaveRoot + "/" + idDest);
+					GameIO.DeleteGame(idDest, cloud, deleteBackup: false);
+					IO.CopyDir(pathRoot + "/" + i.id, (cloud ? CorePath.RootSaveCloud : CorePath.RootSave) + "/" + idDest);
 					SE.WriteJournal();
 					Close();
-					Game.Load(idDest);
+					Game.Load(idDest, cloud);
 				});
 			}
 			else
@@ -184,16 +262,17 @@ public class LayerLoadGame : ELayer
 				{
 					GameIO.MakeBackup(i);
 					ELayer.ui.Say("backupDone");
+					i.madeBackup = true;
 					GameIO.UpdateGameIndex(i);
 				}
-				Game.Load(i.id);
+				Game.Load(i.id, cloud);
 			}
 		});
 		buttonDelete.SetOnClick(delegate
 		{
 			Dialog.YesNo("dialogDeleteGame", delegate
 			{
-				GameIO.DeleteGame(i.id);
+				GameIO.DeleteGame(i.id, cloud);
 				worlds = null;
 				RefreshList();
 				SE.Trash();
@@ -201,7 +280,7 @@ public class LayerLoadGame : ELayer
 		});
 		buttonListBackup.SetOnClick(delegate
 		{
-			ELayer.ui.AddLayer<LayerLoadGame>().Init(_backup: true, GameIO.pathBackup + i.id + "/", i.id);
+			ELayer.ui.AddLayer<LayerLoadGame>().Init(_backup: true, (cloud ? CorePath.PathBackupCloud : CorePath.PathBackup) + i.id + "/", i.id);
 		});
 		buttonBackup.SetOnClick(delegate
 		{
@@ -210,6 +289,7 @@ public class LayerLoadGame : ELayer
 				ELayer.game.backupTime = 0.0;
 				ELayer.game.Save();
 			}
+			i.cloud = cloud;
 			GameIO.MakeBackup(i);
 			ELayer.ui.Say("backupDone");
 			SE.WriteJournal();

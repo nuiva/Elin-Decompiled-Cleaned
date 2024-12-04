@@ -311,7 +311,7 @@ public class Map : MapBounds, IPathfindGrid
 		string id = Game.id;
 		EClass.game.Save();
 		EClass.scene.Init(Scene.Mode.None);
-		Game.Load(id);
+		Game.Load(id, EClass.game.isCloud);
 		RevealAll();
 		TweenUtil.Tween(0.1f, null, delegate
 		{

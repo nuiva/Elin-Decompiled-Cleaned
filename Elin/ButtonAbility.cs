@@ -182,38 +182,31 @@ public class ButtonAbility : UIButton, IMouseHint
 
 	public static bool SpecialHoldAction(Act act)
 	{
-		Act e = EClass.pc.elements.GetElement(act.id) as Act;
-		if (e == null)
+		if (!(EClass.pc.elements.GetElement(act.id) is Act { id: var id } act2))
 		{
 			return false;
 		}
-		int id = e.id;
 		if (id == 8230 || id == 8232)
 		{
-			bool stop = false;
-			bool first = true;
-			int count = 0;
-			EClass.pc.things.Foreach(delegate(Thing t)
+			bool flag = true;
+			int num = 0;
+			foreach (Thing item in EClass.pc.things.List((Thing t) => true, onlyAccessible: true))
 			{
-				if (!t.IsIdentified)
+				if (!item.IsIdentified)
 				{
-					if (EClass.pc.mana.value < e.GetCost(EClass.pc).cost && !first)
+					if ((EClass.pc.mana.value < act2.GetCost(EClass.pc).cost && !flag) || act2.vPotential <= 0)
 					{
-						stop = true;
+						break;
 					}
-					if (e.vPotential <= 0)
+					if (item.rarity < Rarity.Mythical || act2.id != 8230)
 					{
-						stop = true;
-					}
-					if (!stop && (t.rarity < Rarity.Mythical || e.id != 8230))
-					{
-						EClass.pc.UseAbility(act.source.alias, t, EClass.pc.pos);
-						count++;
-						first = false;
+						EClass.pc.UseAbility(act.source.alias, item, EClass.pc.pos);
+						num++;
+						flag = false;
 					}
 				}
-			});
-			if (count == 0)
+			}
+			if (num == 0)
 			{
 				Msg.Say("identify_nothing");
 			}

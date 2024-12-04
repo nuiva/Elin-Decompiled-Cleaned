@@ -133,7 +133,7 @@ public class LayerFeedback : ELayer
 			CollectFiles();
 		};
 		category.Init((string s) => ("form_" + s).lang());
-		List<GameIndex> gameList = GameIO.GetGameList(GameIO.pathSaveRoot);
+		List<GameIndex> gameList = GameIO.GetGameList((ELayer.core.config.cloud || (ELayer.core.IsGameStarted && ELayer.game.isCloud)) ? CorePath.RootSaveCloud : CorePath.RootSave);
 		if (gameList.Count > 0)
 		{
 			int index = 0;
@@ -234,11 +234,12 @@ public class LayerFeedback : ELayer
 		form.CurrentReport.AttachFile("log.zip", File.ReadAllBytes(text3));
 		if (toggleSave.isOn)
 		{
+			bool flag = ELayer.core.config.cloud || (ELayer.core.IsGameStarted && ELayer.game.isCloud);
 			string text5 = text2 + "/save.zip";
 			using (ZipFile zipFile2 = new ZipFile())
 			{
 				zipFile2.ExtractExistingFile = ExtractExistingFileAction.OverwriteSilently;
-				zipFile2.AddDirectory(GameIO.pathSaveRoot + saveIndex.id);
+				zipFile2.AddDirectory((flag ? CorePath.RootSaveCloud : CorePath.RootSave) + saveIndex.id);
 				zipFile2.Save(text5);
 			}
 			form.CurrentReport.AttachFile(saveIndex.id + ".zip", File.ReadAllBytes(text5));

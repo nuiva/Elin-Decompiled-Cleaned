@@ -32,7 +32,7 @@ public class TraitSyringeGene : Trait
 				}
 				owner.ModNum(-1);
 				return false;
-			});
+			}, c);
 		});
 	}
 }

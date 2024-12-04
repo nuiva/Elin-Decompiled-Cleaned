@@ -441,7 +441,7 @@ public class RecipeCard : Recipe
 			{
 				foreach (Chara item in _pos.ListCharas())
 				{
-					chara.Kick(item);
+					chara.Kick(item, ignoreSelf: false, karmaLoss: false);
 				}
 			}
 		}

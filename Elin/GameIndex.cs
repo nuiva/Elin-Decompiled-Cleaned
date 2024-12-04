@@ -39,6 +39,8 @@ public class GameIndex : EClass
 
 	public bool isBackup;
 
+	public bool cloud;
+
 	[JsonIgnore]
 	public string path;
 

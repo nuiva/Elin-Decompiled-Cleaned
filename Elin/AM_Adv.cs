@@ -880,9 +880,10 @@ public class AM_Adv : AM_BaseGameMode
 			}
 			EClass.core.WaitForEndOfFrame(delegate
 			{
-				string slot = Game.id;
+				string text = Game.id;
+				bool isCloud = EClass.game.isCloud;
 				EClass.scene.Init(Scene.Mode.None);
-				Game.Load(slot);
+				Game.Load(text, isCloud);
 			});
 			break;
 		case EAction.Report:

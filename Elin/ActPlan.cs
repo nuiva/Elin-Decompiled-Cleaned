@@ -500,45 +500,57 @@ public class ActPlan : EClass
 			}
 			items.ForeachReverse(delegate(Card _c)
 			{
-				Chara chara = _c.Chara;
-				if (chara != null && !chara.IsPC && EClass.pc.CanSee(chara))
+				Chara c = _c.Chara;
+				if (c != null && !c.IsPC && EClass.pc.CanSee(c))
 				{
-					int num = chara.Dist(EClass.pc);
+					int num = c.Dist(EClass.pc);
 					if (num <= 1 || !EClass.pc.isBlind)
 					{
-						if (!EClass.pc.isBlind && !chara.IsHostile() && (input == ActInput.AllAction || !(chara.IsPCParty || chara.IsMinion || isKey)) && (input == ActInput.AllAction || !chara.IsNeutral() || chara.quest != null || EClass.game.quests.IsDeliverTarget(chara)) && chara.isSynced && num <= 2)
+						if (!EClass.pc.isBlind && !c.IsHostile() && (input == ActInput.AllAction || !(c.IsPCParty || c.IsMinion || isKey)) && (input == ActInput.AllAction || !c.IsNeutral() || c.quest != null || EClass.game.quests.IsDeliverTarget(c)) && c.isSynced && num <= 2)
 						{
-							bool flag = !chara.HasCondition<ConSuspend>() && (!chara.isRestrained || !chara.IsPCFaction);
-							if (EClass._zone.instance is ZoneInstanceMusic && !chara.IsPCFactionOrMinion)
+							bool flag = !c.HasCondition<ConSuspend>() && (!c.isRestrained || !c.IsPCFaction);
+							if (EClass._zone.instance is ZoneInstanceMusic && !c.IsPCFactionOrMinion)
 							{
 								flag = false;
 							}
 							if (flag || altAction)
 							{
-								if (EClass.pc.HasElement(1216) && chara.HasCondition<ConSleep>())
+								if (EClass.pc.HasElement(1216) && c.HasCondition<ConSleep>())
 								{
 									TrySetAct(new AI_Fuck
 									{
-										target = chara,
+										target = c,
 										succubus = true
-									}, chara);
+									}, c);
 								}
-								TrySetAct(ACT.Chat, chara);
+								TrySetAct(ACT.Chat, c);
 							}
 						}
-						if (chara.host != EClass.pc)
+						if (c.host != EClass.pc)
 						{
-							if (chara.IsRestrainedResident)
+							if (c.IsRestrainedResident)
 							{
 								TrySetAct(new AI_PracticeDummy
 								{
-									target = chara
+									target = c
 								});
 							}
-							else if ((chara.IsHostile() || altAction || chara.isRestrained) && chara.IsAliveInCurrentZone)
+							else if ((c.IsHostile() || altAction || c.isRestrained) && c.IsAliveInCurrentZone)
 							{
-								TrySetAct(ACT.Melee, chara);
+								TrySetAct(ACT.Melee, c);
 							}
+						}
+						if (c.IsPCPartyMinion && !c.Chara.IsEscorted() && altAction)
+						{
+							TrySetAct("ActBanishSummon", delegate
+							{
+								EClass.pc.Say("summon_vanish", c);
+								c.pos.PlayEffect("vanish");
+								c.pos.PlaySound("vanish");
+								c.pos.PlayEffect("teleport");
+								c.Destroy();
+								return true;
+							}, c, null, 99);
 						}
 					}
 				}
@@ -549,15 +561,15 @@ public class ActPlan : EClass
 			}
 			items.ForeachReverse(delegate(Card _c)
 			{
-				Chara c = _c.Chara;
-				if (c != null)
+				Chara c2 = _c.Chara;
+				if (c2 != null)
 				{
-					bool flag2 = EClass.pc.CanSee(c);
+					bool flag2 = EClass.pc.CanSee(c2);
 					if (flag2)
 					{
-						if (input == ActInput.LeftMouse && c.IsPCFaction && !c.IsPC && pos.FindThing<TraitHitchingPost>() != null)
+						if (input == ActInput.LeftMouse && c2.IsPCFaction && !c2.IsPC && pos.FindThing<TraitHitchingPost>() != null)
 						{
-							Chara ride = c;
+							Chara ride = c2;
 							List<string> list = EClass.core.pccs.sets["ride"].map["body"].map.Keys.ToList();
 							int index = list.IndexOf(ride.c_idRidePCC);
 							if (index == -1)
@@ -574,35 +586,35 @@ public class ActPlan : EClass
 								}, 0f, list.Count - 1, isInt: true, hideOther: false);
 								uIContextMenu.Show();
 								return false;
-							}, c);
+							}, c2);
 						}
-						if (!c.IsPC && ((c.IsPCFaction && !c.IsDisabled) || EClass.debug.enable) && input == ActInput.AllAction)
+						if (!c2.IsPC && ((c2.IsPCFaction && !c2.IsDisabled) || EClass.debug.enable) && input == ActInput.AllAction)
 						{
 							TrySetAct("actTrade", delegate
 							{
-								LayerInventory.CreateContainer(c);
+								LayerInventory.CreateContainer(c2);
 								return false;
-							}, c);
+							}, c2);
 						}
-						if (c.host != null && EClass.pc.held != null && altAction)
+						if (c2.host != null && EClass.pc.held != null && altAction)
 						{
 							bool flag3 = true;
 							if ((EClass.pc.held.trait is TraitThrown || EClass.pc.held.trait.IsTool) && !HotItemHeld.disableTool)
 							{
 								flag3 = false;
 							}
-							if (!c.IsDisabled && flag3 && c.CanAcceptGift(EClass.pc, EClass.pc.held))
+							if (!c2.IsDisabled && flag3 && c2.CanAcceptGift(EClass.pc, EClass.pc.held))
 							{
 								string lang = "actGive";
-								if (c.Evalue(1232) > 0 && EClass.pc.held.trait is TraitDrinkMilkMother)
+								if (c2.Evalue(1232) > 0 && EClass.pc.held.trait is TraitDrinkMilkMother)
 								{
 									lang = "actMilk";
 								}
 								TrySetAct(lang, delegate
 								{
-									if (!c.IsValidGiftWeight(EClass.pc.held, 1))
+									if (!c2.IsValidGiftWeight(EClass.pc.held, 1))
 									{
-										c.Talk("tooHeavy");
+										c2.Talk("tooHeavy");
 										return true;
 									}
 									if (EClass.core.config.game.confirmGive)
@@ -614,58 +626,46 @@ public class ActPlan : EClass
 										func();
 									}
 									return true;
-								}, c);
+								}, c2);
 							}
 						}
 					}
 					if (input == ActInput.AllAction && EClass.pc.held != null && EClass.pc.held.trait is TraitDrink)
 					{
-						TrySetAct(c.IsPC ? "actPour" : "ActThrow", delegate
+						TrySetAct(c2.IsPC ? "actPour" : "ActThrow", delegate
 						{
-							ActThrow.Throw(EClass.pc, c.pos, c, EClass.pc.held.Split(1));
+							ActThrow.Throw(EClass.pc, c2.pos, c2, EClass.pc.held.Split(1));
 							return true;
-						}, (c.host != null) ? c : EClass.pc.held);
+						}, (c2.host != null) ? c2 : EClass.pc.held);
 					}
-					if (!c.IsPC && c.host == null && ((!EClass.pc.isBlind && flag2) || input != ActInput.AllAction))
+					if (!c2.IsPC && c2.host == null && ((!EClass.pc.isBlind && flag2) || input != ActInput.AllAction))
 					{
-						if (c.isRestrained && (input == ActInput.AllAction || (!c.IsRestrainedResident && !c.IsHostile())))
+						if (c2.isRestrained && (input == ActInput.AllAction || (!c2.IsRestrainedResident && !c2.IsHostile())))
 						{
 							TrySetAct("ActUnrestrain", delegate
 							{
-								c.TryUnrestrain(force: true, EClass.pc);
+								c2.TryUnrestrain(force: true, EClass.pc);
 								return true;
-							}, c);
+							}, c2);
 						}
 						if (!EClass.pc.isBlind && flag2 && input == ActInput.AllAction)
 						{
-							TrySetAct(ACT.Kick, c);
-							if (c.IsMofuable)
+							TrySetAct(ACT.Kick, c2);
+							if (c2.IsMofuable)
 							{
 								TrySetAct("ActCuddle", delegate
 								{
-									EClass.pc.Cuddle(c);
+									EClass.pc.Cuddle(c2);
 									return true;
-								}, c);
+								}, c2);
 							}
 							if (EClass.debug.showExtra)
 							{
 								TrySetAct("inspect", delegate
 								{
-									c.Inspect();
+									c2.Inspect();
 									return false;
-								}, c);
-							}
-							if (c.IsPCPartyMinion && !c.Chara.IsEscorted())
-							{
-								TrySetAct("ActBanishSummon", delegate
-								{
-									EClass.pc.Say("summon_vanish", c);
-									c.pos.PlayEffect("vanish");
-									c.pos.PlaySound("vanish");
-									c.pos.PlayEffect("teleport");
-									c.Destroy();
-									return true;
-								}, c);
+								}, c2);
 							}
 						}
 					}
@@ -765,7 +765,7 @@ public class ActPlan : EClass
 				}
 				void func()
 				{
-					EClass.pc.GiveGift(c, EClass.pc.SplitHeld(1) as Thing);
+					EClass.pc.GiveGift(c2, EClass.pc.SplitHeld(1) as Thing);
 				}
 			});
 			if (listPick.Count > 0)

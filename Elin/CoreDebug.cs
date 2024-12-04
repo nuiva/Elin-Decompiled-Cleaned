@@ -974,19 +974,20 @@ public class CoreDebug : EScriptable
 			string text2 = (Input.GetKey(KeyCode.LeftControl) ? "quick3" : (Input.GetKey(KeyCode.LeftShift) ? "quick2" : "quick"));
 			if (text2 != Game.id)
 			{
-				IO.DeleteDirectory(GameIO.pathSaveRoot + text2);
-				IO.CopyAll(GameIO.pathSaveRoot + Game.id, GameIO.pathSaveRoot + text2);
+				IO.DeleteDirectory(CorePath.RootSave + text2);
+				IO.CopyAll(CorePath.RootSave + Game.id, CorePath.RootSave + text2);
 				Game.id = text2;
 			}
+			EClass.game.isCloud = false;
 			EClass.game.Save();
 		}
 		if (Input.GetKeyDown(KeyCode.F6))
 		{
 			EClass.core.WaitForEndOfFrame(delegate
 			{
-				string slot = (Input.GetKey(KeyCode.LeftControl) ? "quick3" : (Input.GetKey(KeyCode.LeftShift) ? "quick2" : "quick"));
+				string id = (Input.GetKey(KeyCode.LeftControl) ? "quick3" : (Input.GetKey(KeyCode.LeftShift) ? "quick2" : "quick"));
 				EClass.scene.Init(Scene.Mode.None);
-				Game.Load(slot);
+				Game.Load(id, cloud: false);
 			});
 		}
 		if (Input.GetKeyDown(KeyCode.F7))
