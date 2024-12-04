@@ -1,0 +1,25 @@
+name: Remote dispatch to Elin.Docs
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - "Elin/**"
+    workflow_dispatch:
+    
+concurrency:
+    group: remote-dispatch
+    cancel-in-progress: true
+  
+jobs:
+    remote-dispatch:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Repository Dispatch
+              uses: peter-evans/repository-dispatch@v3
+              with:
+                token: ${{ secrets.REMOTE_REPO_DISPATCH_PAT }}
+                repository: Elin-Modding-Resources/Elin.Docs
+                event-type: update_diff
