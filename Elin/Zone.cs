@@ -1433,6 +1433,7 @@ public class Zone : Spatial, ICardParent, IInspect
 			spawnPosPC = spawnPosPC.GetNearestPoint();
 		}
 		spawnPosPC = spawnPosPC.Clamp(useBounds: true).GetNearestPoint();
+		Debug.Log(spawnPosPC);
 		foreach (Chara c in EClass.game.cards.globalCharas.Values)
 		{
 			if (c.currentZone != this)
@@ -1464,13 +1465,13 @@ public class Zone : Spatial, ICardParent, IInspect
 						c.pos.Set(spawnPosPC);
 						if (!spawnPosPC.ForeachNearestPoint(delegate(Point p)
 						{
-							if (PathManager.Instance.IsPathClear(spawnPosPC, p, c, 5) && !p.Equals(spawnPosPC))
+							if (PathManager.Instance.IsPathClear(spawnPosPC, p, c, 10) && !p.Equals(spawnPosPC))
 							{
 								pos.Set(p);
 								return true;
 							}
 							return false;
-						}, allowBlock: false, EClass.pc.party.members.Count >= 12, allowInstalled: true, ignoreCenter: true))
+						}, allowBlock: false, EClass.pc.party.members.Count >= 12, allowInstalled: true, ignoreCenter: true, EClass._zone.IsRegion ? 2 : 6))
 						{
 							pos.Set(spawnPosPC);
 						}

@@ -86,24 +86,28 @@ public class ConSleep : BadCondition
 			}
 			base.value = 1;
 			slept = true;
-			foreach (Chara chara in EClass._map.charas)
+			if (!EClass.pc.pos.IsInSpot<TraitPillowStrange>())
 			{
-				if (chara.host != null || chara.noMove || chara.conSuspend != null || chara.isRestrained || chara.IsPC)
+				foreach (Chara chara in EClass._map.charas)
 				{
-					continue;
-				}
-				bool flag = chara.GetBool(123);
-				if (!flag && chara.IsPCFaction && chara.race.tag.Contains("sleepBeside") && EClass.rnd(5) == 0)
-				{
-					flag = true;
-				}
-				if (flag)
-				{
-					chara.MoveImmediate(EClass.pc.pos);
-					chara.Say("sleep_beside", chara, EClass.pc);
-					if (!chara.HasCondition<ConSleep>())
+					if (chara.host != null || chara.noMove || chara.conSuspend != null || chara.isRestrained || chara.IsPC)
 					{
-						chara.AddCondition<ConSleep>(20 + EClass.rnd(25), force: true);
+						continue;
+					}
+					bool flag = chara.GetBool(123);
+					if (!flag && chara.IsPCFaction && chara.race.tag.Contains("sleepBeside") && EClass.rnd(5) == 0)
+					{
+						flag = true;
+					}
+					if (flag)
+					{
+						chara.MoveImmediate(EClass.pc.pos);
+						chara.SetDir(chara.IsPCC ? EClass.pc.dir : 0);
+						chara.Say("sleep_beside", chara, EClass.pc);
+						if (!chara.HasCondition<ConSleep>())
+						{
+							chara.AddCondition<ConSleep>(20 + EClass.rnd(25), force: true);
+						}
 					}
 				}
 			}
@@ -147,7 +151,7 @@ public class ConSleep : BadCondition
 
 	public static void SuccubusVisit(Chara tg)
 	{
-		if (tg.bio.IsUnderAge)
+		if (tg.pos.IsInSpot<TraitPillowStrange>())
 		{
 			return;
 		}

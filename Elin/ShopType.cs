@@ -47,5 +47,6 @@ public enum ShopType
 	Copy,
 	Plat,
 	LoytelMart,
-	StrangeGirl
+	StrangeGirl,
+	Sweet
 }

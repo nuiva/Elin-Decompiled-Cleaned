@@ -108,23 +108,7 @@ public class Steam : MonoBehaviour
 			}
 		}
 		Debug.Log("Creating Content");
-		FileInfo fileInfo = new FileInfo(baseModPackage.dirInfo.FullName + "/preview.jpg");
-		DirectoryInfo directoryInfo = new DirectoryInfo(baseModPackage.dirInfo.FullName);
-		WorkshopItemData workshopItemData = default(WorkshopItemData);
-		workshopItemData.appId = steamworks.settings.applicationId;
-		workshopItemData.title = baseModPackage.title;
-		workshopItemData.description = baseModPackage.description;
-		workshopItemData.content = directoryInfo;
-		workshopItemData.preview = fileInfo;
-		workshopItemData.metadata = baseModPackage.id ?? "";
-		workshopItemData.tags = new string[0];
-		WorkshopItemData workshopItemData2 = workshopItemData;
-		Debug.Log(App.Client.Owner.id);
-		Debug.Log(workshopItemData2.appId);
-		Debug.Log(baseModPackage.id);
-		Debug.Log(directoryInfo.Exists + "/" + directoryInfo.FullName);
-		Debug.Log(fileInfo.Exists + "/" + fileInfo.FullName);
-		workshopItemData2.Create(null, null, new WorkshopItemKeyValueTag[1]
+		CreateItemData(baseModPackage).Create(null, null, new WorkshopItemKeyValueTag[1]
 		{
 			new WorkshopItemKeyValueTag
 			{
@@ -137,6 +121,7 @@ public class Steam : MonoBehaviour
 			if (result.hasError)
 			{
 				Dialog.Ok("mod_publish_error");
+				EClass.ui.Say(result.errorMessage);
 				Debug.Log("error:" + result.errorMessage);
 			}
 			else
@@ -150,23 +135,16 @@ public class Steam : MonoBehaviour
 	public void UpdateUserContent(PublishedFileId_t fileId)
 	{
 		Debug.Log("Updating Content");
-		BaseModPackage baseModPackage = currentPackage;
-		WorkshopItemData workshopItemData = default(WorkshopItemData);
-		workshopItemData.appId = steamworks.settings.applicationId;
-		workshopItemData.title = baseModPackage.title;
-		workshopItemData.description = baseModPackage.description;
-		workshopItemData.content = new DirectoryInfo(baseModPackage.dirInfo.FullName);
-		workshopItemData.preview = new FileInfo(baseModPackage.dirInfo.FullName + "/preview.jpg");
-		workshopItemData.metadata = baseModPackage.id ?? "";
-		workshopItemData.tags = new string[0];
-		WorkshopItemData workshopItemData2 = workshopItemData;
-		workshopItemData2.publishedFileId = fileId;
-		workshopItemData2.Update(delegate(WorkshopItemDataUpdateStatus result)
+		BaseModPackage p = currentPackage;
+		WorkshopItemData workshopItemData = CreateItemData(p);
+		workshopItemData.publishedFileId = fileId;
+		workshopItemData.Update(delegate(WorkshopItemDataUpdateStatus result)
 		{
 			LayerProgress.completed = true;
 			if (result.hasError)
 			{
 				Dialog.Ok("mod_publish_error");
+				EClass.ui.Say(result.errorMessage);
 				Debug.Log("error:" + result.errorMessage);
 			}
 			else
@@ -175,5 +153,40 @@ public class Steam : MonoBehaviour
 				Debug.Log("updated");
 			}
 		});
+	}
+
+	public WorkshopItemData CreateItemData(BaseModPackage p)
+	{
+		FileInfo fileInfo = new FileInfo(p.dirInfo.FullName + "/preview.jpg");
+		DirectoryInfo directoryInfo = new DirectoryInfo(p.dirInfo.FullName);
+		WorkshopItemData workshopItemData = default(WorkshopItemData);
+		workshopItemData.appId = steamworks.settings.applicationId;
+		workshopItemData.title = p.title;
+		workshopItemData.description = p.description;
+		workshopItemData.content = directoryInfo;
+		workshopItemData.preview = fileInfo;
+		workshopItemData.metadata = p.id ?? "";
+		workshopItemData.tags = p.tags;
+		workshopItemData.visibility = ERemoteStoragePublishedFileVisibility.k_ERemoteStoragePublishedFileVisibilityPublic;
+		WorkshopItemData result = workshopItemData;
+		switch (p.visibility)
+		{
+		case "Unlisted":
+			result.visibility = ERemoteStoragePublishedFileVisibility.k_ERemoteStoragePublishedFileVisibilityUnlisted;
+			break;
+		case "Private":
+			result.visibility = ERemoteStoragePublishedFileVisibility.k_ERemoteStoragePublishedFileVisibilityPrivate;
+			break;
+		case "FriendsOnly":
+			result.visibility = ERemoteStoragePublishedFileVisibility.k_ERemoteStoragePublishedFileVisibilityFriendsOnly;
+			break;
+		}
+		Debug.Log(App.Client.Owner.id);
+		Debug.Log(result.appId);
+		Debug.Log(p.id);
+		Debug.Log(p.description + "/" + result.description);
+		Debug.Log(directoryInfo.Exists + "/" + directoryInfo.FullName);
+		Debug.Log(fileInfo.Exists + "/" + fileInfo.FullName);
+		return result;
 	}
 }

@@ -372,9 +372,9 @@ public class BaseListPeople : ListOwner<Chara, ItemGeneral>
 							SE.Click();
 						}
 					});
-					uIContextMenu.AddButton("addToReserve", delegate
+					uIContextMenu.AddButton("addToReserve".lang() + " (" + EClass.Home.listReserve.Count + "/" + EClass.Home.GetMaxReserve() + ")", delegate
 					{
-						if (EClass.Home.listReserve.Count >= EClass.Home.maxReserve)
+						if (EClass.Home.listReserve.Count >= EClass.Home.GetMaxReserve())
 						{
 							SE.Beep();
 							Msg.Say("reserveLimit");

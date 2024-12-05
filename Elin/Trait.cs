@@ -1676,6 +1676,7 @@ public class Trait : EClass
 					Add("dagger_fish", 1, 0).SetReplica(on: true);
 					NoRestock(ThingGen.Create("sword_zephir"));
 					Add("sword_zephir", 1, 0).SetReplica(on: true);
+					Add("ribbon", 1, 0);
 					Add("helm_sage", 1, 0);
 					Add("diary_sister", 1, 0);
 					Add("diary_catsister", 1, 0);
@@ -1947,9 +1948,9 @@ public class Trait : EClass
 				{
 				case ShopType.Dye:
 				{
-					Thing thing2 = ThingGen.Create("dye").SetNum(15 + EClass.rnd(30));
-					thing2.ChangeMaterial(EClass.sources.materials.rows.RandomItem().alias);
-					return thing2;
+					Thing thing4 = ThingGen.Create("dye").SetNum(15 + EClass.rnd(30));
+					thing4.ChangeMaterial(EClass.sources.materials.rows.RandomItem().alias);
+					return thing4;
 				}
 				case ShopType.GeneralExotic:
 					return FromFilter("shop_generalExotic");
@@ -1971,45 +1972,45 @@ public class Trait : EClass
 					return FromFilter("shop_magic");
 				case ShopType.Ecopo:
 				{
-					Thing thing4 = TraitSeed.MakeRandomSeed(enc: true);
-					TraitSeed.LevelSeed(thing4, (thing4.trait as TraitSeed).row, 1);
-					return thing4;
+					Thing thing3 = TraitSeed.MakeRandomSeed(enc: true);
+					TraitSeed.LevelSeed(thing3, (thing3.trait as TraitSeed).row, 1);
+					return thing3;
 				}
 				case ShopType.Healer:
 				{
-					Thing thing3 = null;
+					Thing thing = null;
 					for (int i = 0; i < 1000; i++)
 					{
-						thing3 = FromFilter("shop_healer");
-						if (thing3.trait is TraitScroll { source: not null } traitScroll)
+						thing = FromFilter("shop_healer");
+						if (thing.trait is TraitScroll { source: not null } traitScroll)
 						{
 							if (!(traitScroll.source.aliasParent != "WIL") && !(traitScroll.source.categorySub == "attack"))
 							{
 								break;
 							}
 						}
-						else if (thing3.trait is TraitPotionRandom { source: not null } traitPotionRandom)
+						else if (thing.trait is TraitPotionRandom { source: not null } traitPotionRandom)
 						{
 							if (!(traitPotionRandom.source.aliasParent != "WIL") && !(traitPotionRandom.source.categorySub == "attack"))
 							{
-								thing3.SetNum(EClass.rnd(5) + 1);
+								thing.SetNum(EClass.rnd(5) + 1);
 								break;
 							}
 						}
-						else if (thing3.trait is TraitRodRandom { source: not null } traitRodRandom && !(traitRodRandom.source.aliasParent != "WIL") && !(traitRodRandom.source.categorySub == "attack"))
+						else if (thing.trait is TraitRodRandom { source: not null } traitRodRandom && !(traitRodRandom.source.aliasParent != "WIL") && !(traitRodRandom.source.categorySub == "attack"))
 						{
 							break;
 						}
 					}
-					return thing3;
+					return thing;
 				}
 				case ShopType.Milk:
 					if (EClass._zone is Zone_Nefu && EClass.rnd(2) == 0)
 					{
-						Thing thing = ThingGen.Create("milk");
-						thing.MakeRefFrom(EClass.sources.charas.rows.Where((SourceChara.Row r) => r.race == "mifu" || r.race == "nefu").RandomItem().model);
-						Debug.Log(thing);
-						return thing;
+						Thing thing2 = ThingGen.Create("milk");
+						thing2.MakeRefFrom(EClass.sources.charas.rows.Where((SourceChara.Row r) => r.race == "mifu" || r.race == "nefu").RandomItem().model);
+						Debug.Log(thing2);
+						return thing2;
 					}
 					return Create("milk");
 				case ShopType.Map:
@@ -2062,11 +2063,17 @@ public class Trait : EClass
 					}
 					return FromFilter("shop_meat");
 				case ShopType.Bread:
-					if (EClass.rnd(2) == 0)
+					if (EClass.rnd(3) == 0)
 					{
 						return Create("dough");
 					}
 					return FromFilter("shop_bread");
+				case ShopType.Sweet:
+					if (EClass.rnd(3) == 0)
+					{
+						return Create("dough");
+					}
+					return FromFilter("shop_sweet");
 				case ShopType.Food:
 					if (EClass.rnd(5) == 0)
 					{

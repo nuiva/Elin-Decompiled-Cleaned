@@ -224,7 +224,11 @@ public class DNA : EClass
 		Rand.SetSeed(seed);
 		if (model == null)
 		{
-			model = CharaGen.Create(id, lv);
+			model = CharaGen.Create(id);
+			if (lv > model.LV)
+			{
+				model.SetLv(lv);
+			}
 		}
 		if (type == Type.Inferior || model == null)
 		{

@@ -168,6 +168,10 @@ public class GameIO : EClass
 			{
 				File.Delete(text);
 			}
+			if (File.Exists(text2))
+			{
+				File.Delete(text2);
+			}
 			ZipFile.CreateFromDirectory(path, text);
 			if (File.Exists(text2))
 			{

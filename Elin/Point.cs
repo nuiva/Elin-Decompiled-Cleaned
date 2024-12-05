@@ -403,7 +403,7 @@ public class Point : EClass
 		return true;
 	}
 
-	public bool IsInSpot<T>() where T : TraitSpot
+	public bool IsInSpot<T>() where T : Trait
 	{
 		foreach (Thing thing in EClass._map.things)
 		{
@@ -616,7 +616,6 @@ public class Point : EClass
 					return p;
 				}
 			}
-			num++;
 			for (int k = 0; k < num; k++)
 			{
 				num3++;
@@ -625,6 +624,7 @@ public class Point : EClass
 					return p;
 				}
 			}
+			num++;
 			for (int l = 0; l < num; l++)
 			{
 				num2--;
@@ -633,7 +633,6 @@ public class Point : EClass
 					return p;
 				}
 			}
-			num++;
 			for (int m = 0; m < num; m++)
 			{
 				num3--;
@@ -642,6 +641,7 @@ public class Point : EClass
 					return p;
 				}
 			}
+			num++;
 		}
 		p.Set(this);
 		return p;
@@ -660,7 +660,7 @@ public class Point : EClass
 		}
 	}
 
-	public bool ForeachNearestPoint(Func<Point, bool> endFunc, bool allowBlock = false, bool allowChara = true, bool allowInstalled = true, bool ignoreCenter = false)
+	public bool ForeachNearestPoint(Func<Point, bool> endFunc, bool allowBlock = false, bool allowChara = true, bool allowInstalled = true, bool ignoreCenter = false, int maxRange = 30)
 	{
 		Point p = new Point();
 		int num = 1;
@@ -674,7 +674,7 @@ public class Point : EClass
 		{
 			return true;
 		}
-		for (int i = 0; i < 30; i++)
+		for (int i = 0; i < maxRange; i++)
 		{
 			for (int j = 0; j < num; j++)
 			{
@@ -684,7 +684,6 @@ public class Point : EClass
 					return true;
 				}
 			}
-			num++;
 			for (int k = 0; k < num; k++)
 			{
 				num3++;
@@ -693,6 +692,7 @@ public class Point : EClass
 					return true;
 				}
 			}
+			num++;
 			for (int l = 0; l < num; l++)
 			{
 				num2--;
@@ -701,7 +701,6 @@ public class Point : EClass
 					return true;
 				}
 			}
-			num++;
 			for (int m = 0; m < num; m++)
 			{
 				num3--;
@@ -710,6 +709,7 @@ public class Point : EClass
 					return true;
 				}
 			}
+			num++;
 		}
 		Debug.Log("ForeachNearestPoint Fail:" + this);
 		return false;

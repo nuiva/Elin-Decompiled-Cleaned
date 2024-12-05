@@ -946,7 +946,7 @@ public class FactionBranch : EClass
 			{
 				num7 += (80 + (int)Mathf.Sqrt(num3) * 5) * member.faith.source.tax / 100;
 			}
-			num7 = num7 * efficiency / 100;
+			num7 = num7 * efficiency / (IsTaxFree ? 100 : 1000);
 			num += num7;
 			if (num7 > 0)
 			{

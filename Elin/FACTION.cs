@@ -124,9 +124,6 @@ public class Faction : EClass
 	public FactionRelation relation = new FactionRelation();
 
 	[JsonProperty]
-	public int maxReserve = 3;
-
-	[JsonProperty]
 	public string id;
 
 	[JsonProperty]
@@ -188,6 +185,16 @@ public class Faction : EClass
 	public int CountTax()
 	{
 		return (int)((float)CountWealth() * 0.1f);
+	}
+
+	public int GetMaxReserve()
+	{
+		int num = 2;
+		foreach (FactionBranch child in GetChildren())
+		{
+			num += child.lv;
+		}
+		return num;
 	}
 
 	public List<FactionBranch> GetChildren()
@@ -335,7 +342,7 @@ public class Faction : EClass
 
 	public void OnAdvanceDay()
 	{
-		foreach (FactionBranch child in EClass.pc.faction.GetChildren())
+		foreach (FactionBranch child in GetChildren())
 		{
 			child.OnAdvanceDay();
 		}
@@ -392,7 +399,7 @@ public class Faction : EClass
 
 	public FactionBranch FindBranch(Chara c)
 	{
-		foreach (FactionBranch child in EClass.pc.faction.GetChildren())
+		foreach (FactionBranch child in GetChildren())
 		{
 			if (child.members.Contains(c))
 			{
@@ -410,7 +417,7 @@ public class Faction : EClass
 	public bool IsGlobalPolicyActive(int id)
 	{
 		bool result = false;
-		foreach (FactionBranch child in EClass.pc.faction.GetChildren())
+		foreach (FactionBranch child in GetChildren())
 		{
 			if (child.policies.IsActive(id))
 			{
@@ -422,7 +429,7 @@ public class Faction : EClass
 
 	public void SetGlobalPolicyActive(int id, bool active)
 	{
-		foreach (FactionBranch child in EClass.pc.faction.GetChildren())
+		foreach (FactionBranch child in GetChildren())
 		{
 			child.policies.SetActive(id, active);
 		}
@@ -431,7 +438,7 @@ public class Faction : EClass
 	public int GetResidentTax()
 	{
 		int num = 0;
-		foreach (FactionBranch child in EClass.pc.faction.GetChildren())
+		foreach (FactionBranch child in GetChildren())
 		{
 			num += child.GetResidentTax();
 		}
@@ -445,7 +452,7 @@ public class Faction : EClass
 	public int GetRankIncome()
 	{
 		int num = 0;
-		foreach (FactionBranch child in EClass.pc.faction.GetChildren())
+		foreach (FactionBranch child in GetChildren())
 		{
 			num += EClass.game.spatials.ranks.GetIncome(child.owner);
 		}
@@ -495,7 +502,7 @@ public class Faction : EClass
 			return v;
 		}
 		int num = 0;
-		foreach (FactionBranch child in EClass.pc.faction.GetChildren())
+		foreach (FactionBranch child in GetChildren())
 		{
 			num += child.Evalue(2119);
 		}
@@ -513,7 +520,7 @@ public class Faction : EClass
 	public int CountTaxFreeLand()
 	{
 		int num = 0;
-		foreach (FactionBranch child in EClass.pc.faction.GetChildren())
+		foreach (FactionBranch child in GetChildren())
 		{
 			if (child.policies.IsActive(2514))
 			{
