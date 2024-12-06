@@ -1888,6 +1888,11 @@ public class Player : EClass
 		}
 	}
 
+	public bool HasKeyItem(string alias)
+	{
+		return CountKeyItem(EClass.sources.keyItems.alias[alias].id) > 0;
+	}
+
 	public int CountKeyItem(string alias)
 	{
 		return CountKeyItem(EClass.sources.keyItems.alias[alias].id);

@@ -169,7 +169,7 @@ public class ThingGen : CardGen
 
 	public static Thing CreatePotion(int ele, int num = 1)
 	{
-		Thing thing = Create("potion").SetNum(num);
+		Thing thing = Create("1163").SetNum(num);
 		thing.refVal = ele;
 		return thing;
 	}

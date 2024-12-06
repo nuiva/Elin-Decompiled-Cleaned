@@ -84,7 +84,7 @@ public class CharaRenderer : CardRenderer
 	public override void Draw(RenderParam p, ref Vector3 v, bool drawShadow)
 	{
 		base.Draw(p, ref v, drawShadow);
-		if (Zone.sourceHat != null && owner.Pref.hatY != 0f && owner.host == null)
+		if ((Zone.sourceHat != null || owner.hat != null) && owner.Pref.hatY != 0f && owner.host == null)
 		{
 			DrawHat();
 		}
@@ -298,8 +298,8 @@ public class CharaRenderer : CardRenderer
 	{
 		if (pccData == null || !owner.IsDeadOrSleeping)
 		{
-			CardRow sourceHat = Zone.sourceHat;
-			_ = sourceHat.pref;
+			CardRow cardRow = Zone.sourceHat ?? owner.hat;
+			SourcePref pref = cardRow.pref;
 			bool flag = currentDir == 1 || currentDir == 3;
 			int liquidLv = RenderObject.currentParam.liquidLv;
 			float num = ((replacer != null) ? replacer.pref.hatY : owner.Pref.hatY);
@@ -308,9 +308,11 @@ public class CharaRenderer : CardRenderer
 				num += RenderObject.renderSetting.hatPos[actor.GetFrame()].y;
 			}
 			RenderObject.currentParam.liquidLv = 0;
-			RenderObject.currentParam.y += num;
-			RenderObject.currentParam.tile = sourceHat._tiles[owner.uid % sourceHat._tiles.Length] * ((!flag) ? 1 : (-1));
-			sourceHat.renderData.Draw(RenderObject.currentParam);
+			RenderObject.currentParam.x += 0.01f * (float)pref.equipX;
+			RenderObject.currentParam.y += num + 0.01f * (float)pref.equipY;
+			RenderObject.currentParam.z -= pref.hatY;
+			RenderObject.currentParam.tile = cardRow._tiles[owner.uid % cardRow._tiles.Length] * ((!flag) ? 1 : (-1));
+			cardRow.renderData.Draw(RenderObject.currentParam);
 			RenderObject.currentParam.y -= num;
 			RenderObject.currentParam.liquidLv = liquidLv;
 		}

@@ -52,7 +52,7 @@ public class ENC
 
 	public const int mod_rapid = 602;
 
-	public const int sustain_WIL = 445;
+	public const int sustain_MAG = 446;
 
 	public const int mod_ammo = 600;
 
@@ -66,6 +66,8 @@ public class ENC
 
 	public const int negateSleep = 424;
 
+	public const int mod_reload = 601;
+
 	public const int negateParalysis = 422;
 
 	public const int negateBlind = 421;
@@ -76,9 +78,9 @@ public class ENC
 
 	public const int invisibility = 415;
 
-	public const int slowCorruption = 412;
+	public const int breathing = 429;
 
-	public const int encSpell = 411;
+	public const int slowCorruption = 412;
 
 	public const int throwReturn = 410;
 
@@ -102,7 +104,7 @@ public class ENC
 
 	public const int negateTeleport = 400;
 
-	public const int breathing = 429;
+	public const int encSpell = 411;
 
 	public const int sustain_STR = 440;
 
@@ -130,13 +132,11 @@ public class ENC
 
 	public const int bane_fairy = 462;
 
-	public const int bane_undead = 461;
-
 	public const int bane_dragon = 460;
 
-	public const int mod_reload = 601;
+	public const int bane_undead = 461;
 
-	public const int sustain_MAG = 446;
+	public const int sustain_WIL = 445;
 
 	public const int sustain_LER = 444;
 
@@ -152,11 +152,11 @@ public class ENC
 	{
 		653, 652, 651, 650, 641, 607, 604, 605, 606, 654,
 		640, 655, 852, 660, 661, 662, 663, 664, 665, 666,
-		865, 603, 850, 851, 656, 602, 445, 600, 428, 427,
-		426, 425, 424, 422, 421, 420, 416, 415, 412, 411,
-		410, 409, 408, 407, 406, 405, 404, 403, 402, 401,
-		400, 429, 440, 423, 468, 483, 482, 481, 480, 467,
-		466, 465, 464, 463, 462, 461, 460, 601, 446, 444,
+		865, 603, 850, 851, 656, 602, 446, 600, 428, 427,
+		426, 425, 424, 601, 422, 421, 420, 416, 415, 429,
+		412, 410, 409, 408, 407, 406, 405, 404, 403, 402,
+		401, 400, 411, 440, 423, 468, 483, 482, 481, 480,
+		467, 466, 465, 464, 463, 462, 460, 461, 445, 444,
 		443, 442, 441, 447
 	};
 }

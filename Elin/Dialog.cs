@@ -122,7 +122,7 @@ public class Dialog : ELayer
 
 	public override void OnUpdateInput()
 	{
-		if ((bool)input && option.canClose && Input.GetKeyDown(KeyCode.Return))
+		if ((bool)input && option.canClose && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)))
 		{
 			isInputEnter = true;
 			Close();

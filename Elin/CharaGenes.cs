@@ -27,12 +27,17 @@ public class CharaGenes : EClass
 		return num;
 	}
 
-	public int GetGeneSlot()
+	public int GetGeneSlot(Chara c)
 	{
 		int num = 0;
 		foreach (DNA item in items)
 		{
-			num += item.slot;
+			int num2 = item.slot;
+			if (num2 > 1 && c.HasElement(1237))
+			{
+				num2--;
+			}
+			num += num2;
 		}
 		return num;
 	}

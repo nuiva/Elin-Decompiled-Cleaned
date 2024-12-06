@@ -54,6 +54,8 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 
 	public CardRenderer renderer;
 
+	public CardRow hat;
+
 	public int turn;
 
 	public int _colorInt;
@@ -2678,6 +2680,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 				a = a * Mathf.Clamp(100 + Chara.affinity.value / 10, 50, 100) / 100;
 			}
 		}
+		a = a * (100 + Evalue(1237) * 30) / 100;
 		exp += a;
 		while (exp >= ExpToNext)
 		{
@@ -3779,6 +3782,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 			renderer.PlayAnime(AnimeID.HitObj);
 			hp = MaxHP;
 		}
+		Chara target;
 		if (hp < 0)
 		{
 			if ((attackSource == AttackSource.Melee || attackSource == AttackSource.Range) && origin != null && (origin.isSynced || IsPC))
@@ -3821,38 +3825,40 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 					Chara.AddCondition<ConInvulnerable>();
 					return;
 				}
-				foreach (Chara chara4 in EClass._map.charas)
+				foreach (Chara chara3 in EClass._map.charas)
 				{
-					if (Chara.IsFriendOrAbove(chara4) && chara4.HasElement(1408) && chara4.faith == EClass.game.religions.Healing && EClass.world.date.GetRawDay() != chara4.GetInt(58) && (!chara4.IsPCFaction || IsPCFaction))
+					if (Chara.IsFriendOrAbove(chara3) && chara3.HasElement(1408) && chara3.faith == EClass.game.religions.Healing && EClass.world.date.GetRawDay() != chara3.GetInt(58) && (!chara3.IsPCFaction || IsPCFaction))
 					{
 						Msg.alwaysVisible = true;
-						Msg.Say("layhand", chara4, this);
+						Msg.Say("layhand", chara3, this);
 						Msg.Say("pray_heal", this);
 						hp = MaxHP;
 						Chara.AddCondition<ConInvulnerable>();
 						PlayEffect("revive");
 						PlaySound("revive");
-						chara4.SetInt(58, EClass.world.date.GetRawDay());
+						chara3.SetInt(58, EClass.world.date.GetRawDay());
 						return;
 					}
 				}
 			}
 			if (zoneInstanceBout != null)
 			{
-				Chara chara3 = EClass._map.FindChara(zoneInstanceBout.uidTarget);
-				if (chara3 != null)
+				target = EClass._map.FindChara(zoneInstanceBout.uidTarget);
+				if (target != null)
 				{
 					if (IsPC)
 					{
 						EClass.pc.hp = 0;
-						chara3.ShowDialog("_chara", "bout_lose");
+						Heal();
+						target.ShowDialog("_chara", "bout_lose");
 						return;
 					}
-					if (chara3 == this)
+					if (target == this)
 					{
 						hp = 0;
-						chara3.ModAffinity(EClass.pc, 10);
-						chara3.ShowDialog("_chara", "bout_win");
+						Heal();
+						target.ModAffinity(EClass.pc, 10);
+						target.ShowDialog("_chara", "bout_win");
 						return;
 					}
 				}
@@ -4202,6 +4208,14 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 			if (Evalue(1421) > 0 && isChara && Chara.mana.value < 0)
 			{
 				Chara.mana.value = 0;
+			}
+		}
+		void Heal()
+		{
+			target.Cure(CureType.Death);
+			foreach (Chara member in EClass.pc.party.members)
+			{
+				member.Cure(CureType.Death);
 			}
 		}
 	}

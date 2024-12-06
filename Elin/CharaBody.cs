@@ -41,6 +41,7 @@ public class CharaBody : EClass
 				}
 				slots[num].thing = thing;
 				thing.elements.SetParent(owner);
+				thing.trait.OnEquip(owner, onSetOwner: true);
 			}
 		}
 	}
@@ -76,6 +77,7 @@ public class CharaBody : EClass
 			EClass.pc.faction.charaElements.OnUnequip(owner, thing);
 		}
 		thing.elements.SetParent();
+		thing.trait.OnUnequip(owner);
 		thing.c_equippedSlot = 0;
 		slot.thing = null;
 		if (owner.IsPC)
@@ -207,6 +209,7 @@ public class CharaBody : EClass
 		slot.thing = thing;
 		thing.c_equippedSlot = slot.index + 1;
 		thing.elements.SetParent(owner);
+		thing.trait.OnEquip(owner, onSetOwner: false);
 		if (EClass.pc != null)
 		{
 			EClass.pc.faction.charaElements.OnEquip(owner, thing);

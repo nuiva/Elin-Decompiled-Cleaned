@@ -226,13 +226,16 @@ public class DramaCustomSequence : EClass
 			{
 				Choice2("daSellFame", "_sellFame");
 			}
-			if (c.trait.CanInvestTown && Guild.GetCurrentGuild() == null)
+			if (EClass._zone.AllowInvest)
 			{
-				Choice2("daInvest", "_investZone");
-			}
-			if (c.trait.CanInvest)
-			{
-				Choice2("daInvest", "_investShop");
+				if (c.trait.CanInvestTown && Guild.GetCurrentGuild() == null)
+				{
+					Choice2("daInvest", "_investZone");
+				}
+				if (c.trait.CanInvest)
+				{
+					Choice2("daInvest", "_investShop");
+				}
 			}
 			if (c.trait.CanIdentify)
 			{

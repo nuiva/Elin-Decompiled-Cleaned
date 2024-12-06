@@ -339,7 +339,7 @@ public class FoodEffect : EClass
 		{
 			num3 *= 2;
 		}
-		num3 = num3 * (100 + c.Evalue(1235) * 10) / (100 + c.Evalue(1234) * 10);
+		num3 = num3 * (100 + c.Evalue(1235) * 10) / (100 + c.Evalue(1234) * 10 + c.Evalue(1236) * 15);
 		c.hunger.Mod(-num3);
 		if (flag2)
 		{

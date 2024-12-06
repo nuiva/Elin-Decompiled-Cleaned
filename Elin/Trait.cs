@@ -598,6 +598,14 @@ public class Trait : EClass
 	{
 	}
 
+	public virtual void OnEquip(Chara c, bool onSetOwner)
+	{
+	}
+
+	public virtual void OnUnequip(Chara c)
+	{
+	}
+
 	public virtual void OnChangePlaceState(PlaceState state)
 	{
 	}
@@ -1519,6 +1527,7 @@ public class Trait : EClass
 		case ShopType.Deed:
 			Add("deed", 1, 0);
 			Add("deed_move", 2 + EClass.rnd(5), 0);
+			Add("license_illumination", 1, 0);
 			Add("license_void", 1, 0);
 			Add("license_adv", 1, 0);
 			break;

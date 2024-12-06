@@ -1291,6 +1291,11 @@ public class Thing : Card
 		if (EClass.debug.showExtra)
 		{
 			n.AddText("decay:" + base.decay);
+			n.AddText(base.isDyed + "/" + id + "/" + base.refVal + "/" + base.LV + "/" + trait);
+			if (source.origin != null)
+			{
+				n.AddText(source.origin.id);
+			}
 		}
 		if (id == "statue_weird")
 		{

@@ -1032,7 +1032,7 @@ public class FactionBranch : EClass
 
 	public Thing GetMeal(Chara c)
 	{
-		Thing thing = EClass._zone.TryGetThingFromSharedContainer((Thing t) => c.CanEat(t, shouldEat: true));
+		Thing thing = EClass._zone.TryGetThingFromSharedContainer((Thing t) => c.CanEat(t, shouldEat: true) && !t.c_isImportant);
 		if (thing != null)
 		{
 			thing = thing.Split(1);

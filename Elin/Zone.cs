@@ -226,6 +226,18 @@ public class Zone : Spatial, ICardParent, IInspect
 
 	public virtual bool AllowCriminal => !HasLaw;
 
+	public virtual bool AllowInvest
+	{
+		get
+		{
+			if (!IsTown)
+			{
+				return IsPCFaction;
+			}
+			return true;
+		}
+	}
+
 	public virtual bool AllowNewZone => true;
 
 	public virtual bool WillAutoSave => true;

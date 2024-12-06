@@ -1206,33 +1206,39 @@ public class Map : MapBounds, IPathfindGrid
 			if (item.isThing && item.things.Count == 0)
 			{
 				list.Add(item);
-				continue;
 			}
-			Thing thing = ((ele == 910) ? item.things.FindBest<TraitBlanketFireproof>((Thing t) => -t.c_charges) : item.things.FindBest<TraitBlanketColdproof>((Thing t) => -t.c_charges));
-			if (thing != null)
+			else
 			{
-				thing.ModCharge(-1);
-				Card rootCard2 = item.GetRootCard();
-				if (pos.IsSync)
+				if (ele == 911 && item.HasElement(1236))
 				{
-					Msg.Say((item.isChara ? "blanketInv_" : "blanketGround_") + element.source.alias, thing, item);
+					continue;
 				}
-				if (thing.c_charges <= 0)
+				Thing thing = ((ele == 910) ? item.things.FindBest<TraitBlanketFireproof>((Thing t) => -t.c_charges) : item.things.FindBest<TraitBlanketColdproof>((Thing t) => -t.c_charges));
+				if (thing != null)
 				{
-					thing.Die(element);
-					if (rootCard2.IsPCParty)
+					thing.ModCharge(-1);
+					Card rootCard2 = item.GetRootCard();
+					if (pos.IsSync)
 					{
-						ActionMode.Adv.itemLost++;
+						Msg.Say((item.isChara ? "blanketInv_" : "blanketGround_") + element.source.alias, thing, item);
 					}
+					if (thing.c_charges <= 0)
+					{
+						thing.Die(element);
+						if (rootCard2.IsPCParty)
+						{
+							ActionMode.Adv.itemLost++;
+						}
+					}
+					continue;
 				}
-				continue;
-			}
-			foreach (Thing item2 in item.things.List((Thing a) => a.things.Count == 0))
-			{
-				Card parentCard = item2.parentCard;
-				if (parentCard == null || (!(parentCard.trait is TraitChestMerchant) && !parentCard.HasEditorTag(EditorTag.PreciousContainer)))
+				foreach (Thing item2 in item.things.List((Thing a) => a.things.Count == 0))
 				{
-					list.Add(item2);
+					Card parentCard = item2.parentCard;
+					if (parentCard == null || (!(parentCard.trait is TraitChestMerchant) && !parentCard.HasEditorTag(EditorTag.PreciousContainer)))
+					{
+						list.Add(item2);
+					}
 				}
 			}
 		}

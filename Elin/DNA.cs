@@ -200,7 +200,8 @@ public class DNA : EClass
 	{
 		for (int i = 0; i < vals.Count; i += 2)
 		{
-			if (vals[i] == 1415)
+			int num = vals[i];
+			if (num == 1202 || num == 1237 || num == 1415)
 			{
 				return false;
 			}
@@ -485,7 +486,7 @@ public class DNA : EClass
 
 	public void WriteNote(UINote n)
 	{
-		if (slot > 1)
+		if (slot >= 1)
 		{
 			n.AddText("isGeneReqSlots".lang(slot.ToString() ?? ""), FontColor.Warning);
 		}

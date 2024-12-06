@@ -831,6 +831,10 @@ public class ActionMode : EClass
 						source = EClass.sources.materials.rows;
 					}
 					SourceMaterial.Row row = (flag2 ? source.NextItem(currentMat) : source.PrevItem(currentMat));
+					if (row == null)
+					{
+						row = card2.DyeMat;
+					}
 					if (EInput.isAltDown)
 					{
 						row = lastEditorMat;

@@ -184,7 +184,6 @@ public class Steam : MonoBehaviour
 		Debug.Log(App.Client.Owner.id);
 		Debug.Log(result.appId);
 		Debug.Log(p.id);
-		Debug.Log(p.description + "/" + result.description);
 		Debug.Log(directoryInfo.Exists + "/" + directoryInfo.FullName);
 		Debug.Log(fileInfo.Exists + "/" + fileInfo.FullName);
 		return result;

@@ -677,13 +677,13 @@ public class ActPlan : EClass
 						Thing t = _c.Thing;
 						if (input == ActInput.AllAction)
 						{
-							if (EClass.debug.enable)
+							if (EClass.debug.enable || EClass.player.HasKeyItem("license_illumination"))
 							{
 								if (t.LightData != null)
 								{
 									if (t.c_lightColor != 0)
 									{
-										TrySetAct("(debug) Clear Light", delegate
+										TrySetAct("actClearLight", delegate
 										{
 											t.c_lightColor = 0;
 											t.RecalculateFOV();
@@ -691,7 +691,7 @@ public class ActPlan : EClass
 											return false;
 										}, t);
 									}
-									TrySetAct("(debug) Set Light", delegate
+									TrySetAct("actSetLight", delegate
 									{
 										Color lightColor = t.LightColor;
 										EClass.ui.AddLayer<LayerColorPicker>().SetColor(lightColor, lightColor, delegate(PickerState state, Color _c)

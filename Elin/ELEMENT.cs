@@ -86,6 +86,21 @@ public class Element : EClass
 
 		public int total;
 
+		public void CheckFirst()
+		{
+			if (first)
+			{
+				first = false;
+				n.Space(8);
+			}
+		}
+
+		public void AddText(string text)
+		{
+			CheckFirst();
+			n.AddText("_bullet".lang() + text, FontColor.Warning);
+		}
+
 		public void AddText(int v, string text, string textBad = null)
 		{
 			if (v != 0)
@@ -95,11 +110,7 @@ public class Element : EClass
 				{
 					text2 = textBad;
 				}
-				if (first)
-				{
-					first = false;
-					n.Space(8);
-				}
+				CheckFirst();
 				total += v;
 				n.AddText("_bullet".lang() + text2 + " " + ((v > 0) ? "+" : "") + v, (v > 0) ? FontColor.Good : FontColor.Bad);
 			}
@@ -109,11 +120,7 @@ public class Element : EClass
 		{
 			if (v != 0)
 			{
-				if (first)
-				{
-					first = false;
-					n.Space(8);
-				}
+				CheckFirst();
 				n.AddText("_bullet".lang() + text + " " + ((v > 0) ? "+" : "") + v + "%", (v > 0) ? FontColor.Good : FontColor.Bad);
 			}
 		}

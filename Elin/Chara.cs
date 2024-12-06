@@ -872,7 +872,7 @@ public class Chara : Card, IPathfindWalker
 		{
 			if (base.c_genes != null)
 			{
-				return base.c_genes.GetGeneSlot();
+				return base.c_genes.GetGeneSlot(this);
 			}
 			return 0;
 		}
@@ -1605,11 +1605,16 @@ public class Chara : Card, IPathfindWalker
 		{
 			_Speed -= 25;
 		}
-		int num = 100;
 		if (parasite != null)
 		{
 			_Speed = _Speed * 100 / Mathf.Clamp(120 + parasite.LV * 2 - base.STR - Evalue(227) * 2, 100, 1000);
 		}
+		if (_Speed < elements.ValueWithoutLink(79) / 3)
+		{
+			_Speed = elements.ValueWithoutLink(79) / 3;
+			info?.AddText("minSpeed".lang((elements.ValueWithoutLink(79) / 3).ToString() ?? ""));
+		}
+		int num = 100;
 		if (IsPCFaction)
 		{
 			switch (burden.GetPhase())
@@ -1679,6 +1684,7 @@ public class Chara : Card, IPathfindWalker
 		else if (base.LV >= 1000)
 		{
 			num += EClass.curve((base.LV - 900) / 100 * 10, 500, 100);
+			info?.AddFix(EClass.curve((base.LV - 900) / 100 * 10, 500, 100), "enemySpeedBuff".lang());
 		}
 		if (HasCondition<ConGravity>())
 		{
@@ -1689,6 +1695,7 @@ public class Chara : Card, IPathfindWalker
 		if (_Speed < 10)
 		{
 			_Speed = 10;
+			info?.AddText("minSpeed".lang(10.ToString() ?? ""));
 		}
 		dirtySpeed = false;
 	}
@@ -6409,7 +6416,7 @@ public class Chara : Card, IPathfindWalker
 						_ListItems.Add(thing4);
 						num3 -= thing4.Num;
 					}
-					else if (num4 > 0 && thing4.trait is TraitBlanketColdproof)
+					else if (num4 > 0 && !HasElement(1236) && thing4.trait is TraitBlanketColdproof)
 					{
 						_ListItems.Add(thing4);
 						num4 -= thing4.Num;
@@ -6419,7 +6426,7 @@ public class Chara : Card, IPathfindWalker
 						_ListItems.Add(thing4);
 						num5 -= thing4.Num;
 					}
-					else if (num > 0 && CanEat(thing4, shouldEat))
+					else if (num > 0 && CanEat(thing4, shouldEat) && !thing4.c_isImportant)
 					{
 						_ListItems.Add(thing4);
 						num -= thing4.Num;
@@ -6495,11 +6502,11 @@ public class Chara : Card, IPathfindWalker
 	{
 		if (t == null)
 		{
-			t = things.Find((Thing a) => CanEat(a, shouldEat: true));
+			t = things.Find((Thing a) => CanEat(a, shouldEat: true) && !a.c_isImportant);
 		}
 		if (t == null)
 		{
-			t = things.Find((Thing a) => CanEat(a));
+			t = things.Find((Thing a) => CanEat(a) && !a.c_isImportant);
 		}
 		if (t != null)
 		{
@@ -6519,7 +6526,7 @@ public class Chara : Card, IPathfindWalker
 		{
 			return false;
 		}
-		if (shouldEat && !(t.trait is TraitFoodPrepared))
+		if (shouldEat && (!(t.trait is TraitFoodPrepared) || t.c_isImportant))
 		{
 			return false;
 		}
@@ -8329,7 +8336,7 @@ public class Chara : Card, IPathfindWalker
 			}
 			CureCondition<ConWait>();
 			CureCondition<ConSleep>();
-			if (type == CureType.Death)
+			if (type == CureType.Death && hunger.value > 30)
 			{
 				hunger.value = 30;
 			}
