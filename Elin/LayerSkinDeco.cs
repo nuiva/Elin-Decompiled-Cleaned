@@ -142,6 +142,7 @@ public class LayerSkinDeco : ELayer
 	public override void OnKill()
 	{
 		widget.transform.SetParent(ELayer.ui.widgets.transform, worldPositionStays: false);
+		widget.RefreshOrder();
 		foreach (SkinDeco deco in decos)
 		{
 			SkinDecoActor actor = deco.actor;

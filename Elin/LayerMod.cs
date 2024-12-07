@@ -35,7 +35,7 @@ public class LayerMod : ELayer
 			{
 				a.UpdateMeta(updateOnly: true);
 				b.package = a;
-				string s = ELayer.core.mods.packages.IndexOf(a) + 1 + ". " + (a.isInPackages ? "[Private] " : "") + a.title;
+				string s = ELayer.core.mods.packages.IndexOf(a) + 1 + ". " + (a.isInPackages ? "[Local] " : "") + a.title;
 				b.buttonActivate.mainText.SetText(s, (!a.IsValidVersion()) ? FontColor.Bad : (a.activated ? FontColor.ButtonGeneral : FontColor.Passive));
 				b.buttonActivate.subText.text = a.version;
 				b.buttonLock.mainText.text = a.author;

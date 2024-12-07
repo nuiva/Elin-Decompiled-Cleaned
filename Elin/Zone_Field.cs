@@ -28,7 +28,17 @@ public class Zone_Field : Zone
 		}
 	}
 
-	public override bool UseFog => base.lv <= 0;
+	public override bool UseFog
+	{
+		get
+		{
+			if (!base.IsPCFaction || base.lv != 0)
+			{
+				return base.lv <= 0;
+			}
+			return false;
+		}
+	}
 
 	public override ZoneFeatureType FeatureType => ZoneFeatureType.RandomField;
 

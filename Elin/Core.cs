@@ -91,6 +91,8 @@ public class Core : BaseCore
 	protected override void Awake()
 	{
 		base.Awake();
+		Debug.Log("Core Awake");
+		Debug.Log("Version:" + version.GetText());
 		QualitySettings.vSyncCount = 0;
 		Application.targetFrameRate = 60;
 		IO.CreateDirectory(CorePath.Temp);
@@ -183,7 +185,6 @@ public class Core : BaseCore
 		Portrait.dictList = new Dictionary<string, List<ModItem<Sprite>>>();
 		TileType.Init();
 		screen.tileMap.rendererObjDummy.Init();
-		Debug.Log("Core Awake");
 		Debug.Log(steam.steamworks.settings.applicationId);
 	}
 

@@ -3614,11 +3614,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 			}
 			if (IsPCParty && EClass.pc.ai is GoalAutoCombat)
 			{
-				dmg = dmg - EClass.pc.Evalue(13) - 1;
-			}
-			else if (origin != null && origin.IsPCParty && EClass.pc.ai is GoalAutoCombat)
-			{
-				dmg = dmg * 100 / Mathf.Max(110 - EClass.pc.Evalue(13), 105);
+				dmg = dmg * 100 / Mathf.Min(105 + EClass.pc.Evalue(135) / 10, 110);
 			}
 			if (HasElement(1218))
 			{
@@ -3763,7 +3759,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 						if (EClass.player.invlunerable)
 						{
 							EvadeDeath();
-							goto IL_099c;
+							goto IL_095f;
 						}
 					}
 					if (IsPC && Evalue(1220) > 0 && Chara.stamina.value >= Chara.stamina.max / 2)
@@ -3775,8 +3771,8 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 				}
 			}
 		}
-		goto IL_099c;
-		IL_099c:
+		goto IL_095f;
+		IL_095f:
 		if (trait.CanBeAttacked)
 		{
 			renderer.PlayAnime(AnimeID.HitObj);

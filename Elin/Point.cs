@@ -407,7 +407,7 @@ public class Point : EClass
 	{
 		foreach (Thing thing in EClass._map.things)
 		{
-			if (!(thing.trait is T))
+			if (!(thing.trait is T) || thing.trait.radius == 0)
 			{
 				continue;
 			}

@@ -283,6 +283,13 @@ public class FactionBranch : EClass
 		{
 			GetDailyIncome();
 		}
+		foreach (Chara chara in EClass._map.charas)
+		{
+			if (!chara.IsPCParty && !chara.noMove && (chara.pos.cell.IsBlocked || chara.pos.cell.hasDoor) && !chara.isRestrained && !chara.HasCondition<ConSuspend>())
+			{
+				chara.MoveImmediate(chara.pos.GetNearestPoint(allowBlock: false, allowChara: false) ?? chara.pos);
+			}
+		}
 	}
 
 	public void OnUnloadMap()

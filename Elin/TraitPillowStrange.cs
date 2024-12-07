@@ -33,7 +33,7 @@ public class TraitPillowStrange : TraitPillow
 				owner.SetDir((owner.dir == 0) ? 1 : ((owner.dir != 1) ? ((owner.dir == 2) ? 3 : 2) : 0));
 				SE.Rotate();
 				return false;
-			});
+			}, owner);
 		}
 	}
 }

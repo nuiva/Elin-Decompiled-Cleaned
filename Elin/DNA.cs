@@ -201,7 +201,7 @@ public class DNA : EClass
 		for (int i = 0; i < vals.Count; i += 2)
 		{
 			int num = vals[i];
-			if (num == 1202 || num == 1237 || num == 1415)
+			if (num == 1237 || num == 1415)
 			{
 				return false;
 			}

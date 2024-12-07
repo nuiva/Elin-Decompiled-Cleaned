@@ -284,6 +284,7 @@ public class Scene : EMono
 				EMono.player.onStartZone();
 				EMono.player.onStartZone = null;
 			}
+			ActionMode.LastBuildMode = null;
 			if (ActionMode.Adv.IsActive && (EInput.leftMouse.pressing || EInput.axis != Vector2.zero))
 			{
 				ActionMode.Adv.SetPressedAction(EInput.leftMouse);

@@ -677,40 +677,37 @@ public class ActPlan : EClass
 						Thing t = _c.Thing;
 						if (input == ActInput.AllAction)
 						{
-							if (EClass.debug.enable || EClass.player.HasKeyItem("license_illumination"))
+							if ((EClass.debug.enable || EClass.player.HasKeyItem("license_illumination")) && t.LightData != null)
 							{
-								if (t.LightData != null)
+								if (t.c_lightColor != 0)
 								{
-									if (t.c_lightColor != 0)
+									TrySetAct("actClearLight", delegate
 									{
-										TrySetAct("actClearLight", delegate
-										{
-											t.c_lightColor = 0;
-											t.RecalculateFOV();
-											t.renderer.GetTC<TCExtra>()?.RefreshColor();
-											return false;
-										}, t);
-									}
-									TrySetAct("actSetLight", delegate
-									{
-										Color lightColor = t.LightColor;
-										EClass.ui.AddLayer<LayerColorPicker>().SetColor(lightColor, lightColor, delegate(PickerState state, Color _c)
-										{
-											t.c_lightColor = (byte)Mathf.Clamp(_c.r * 32f, 1f, 31f) * 1024 + (byte)Mathf.Clamp(_c.g * 32f, 1f, 31f) * 32 + (byte)Mathf.Clamp(_c.b * 32f, 1f, 31f);
-											t.RecalculateFOV();
-											t.renderer.GetTC<TCExtra>()?.RefreshColor();
-										});
+										t.c_lightColor = 0;
+										t.RecalculateFOV();
+										t.renderer.GetTC<TCExtra>()?.RefreshColor();
 										return false;
 									}, t);
 								}
-								if (pos.cell.IsTopWater)
+								TrySetAct("actSetLight", delegate
 								{
-									TrySetAct("(debug) Toggle Float", delegate
+									Color lightColor = t.LightColor;
+									EClass.ui.AddLayer<LayerColorPicker>().SetColor(lightColor, lightColor, delegate(PickerState state, Color _c)
 									{
-										t.isFloating = !t.isFloating;
-										return false;
-									}, t);
-								}
+										t.c_lightColor = (byte)Mathf.Clamp(_c.r * 32f, 1f, 31f) * 1024 + (byte)Mathf.Clamp(_c.g * 32f, 1f, 31f) * 32 + (byte)Mathf.Clamp(_c.b * 32f, 1f, 31f);
+										t.RecalculateFOV();
+										t.renderer.GetTC<TCExtra>()?.RefreshColor();
+									});
+									return false;
+								}, t);
+							}
+							if (EClass.debug.enable && pos.cell.IsTopWater)
+							{
+								TrySetAct("(debug) Toggle Float", delegate
+								{
+									t.isFloating = !t.isFloating;
+									return false;
+								}, t);
 							}
 							if (!EClass._zone.IsUserZone || !t.isNPCProperty)
 							{

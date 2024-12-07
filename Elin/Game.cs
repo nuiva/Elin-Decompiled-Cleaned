@@ -295,6 +295,17 @@ public class Game : EClass
 		updater.FixedUpdate();
 	}
 
+	public static bool TryLoad(string id, bool cloud, Action onLoad)
+	{
+		if (GameIO.CanLoad((cloud ? CorePath.RootSaveCloud : CorePath.RootSave) + id))
+		{
+			onLoad();
+			return true;
+		}
+		EClass.ui.Say("incompatible");
+		return false;
+	}
+
 	public static void Load(string id, bool cloud)
 	{
 		string text = (cloud ? CorePath.RootSaveCloud : CorePath.RootSave) + id;
@@ -426,6 +437,16 @@ public class Game : EClass
 				}
 			}
 		});
+		if (version.IsBelow(0, 23, 51))
+		{
+			foreach (Chara value2 in EClass.game.cards.globalCharas.Values)
+			{
+				if (!(value2.id != "adv") && value2.IsPCFaction)
+				{
+					value2.idSkin = value2.uid % (value2.source._tiles.Length - 4) / 2 * 2 + ((!value2.IsMale) ? 1 : 0);
+				}
+			}
+		}
 		if (version.IsBelow(0, 22, 91))
 		{
 			TryAddQuestIfActive("demitas_spellwriter", "into_darkness");
@@ -488,9 +509,9 @@ public class Game : EClass
 		});
 		if (version.IsBelow(0, 22, 20))
 		{
-			foreach (Chara value2 in cards.globalCharas.Values)
+			foreach (Chara value3 in cards.globalCharas.Values)
 			{
-				value2.SetBool(18, enable: false);
+				value3.SetBool(18, enable: false);
 			}
 		}
 		if (version.IsBelow(0, 22, 22))

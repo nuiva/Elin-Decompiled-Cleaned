@@ -249,11 +249,14 @@ public class LayerLoadGame : ELayer
 			{
 				Dialog.YesNo("dialog_restoreWarning", delegate
 				{
-					GameIO.DeleteGame(idDest, cloud, deleteBackup: false);
-					IO.CopyDir(pathRoot + "/" + i.id, (cloud ? CorePath.RootSaveCloud : CorePath.RootSave) + "/" + idDest);
-					SE.WriteJournal();
-					Close();
-					Game.Load(idDest, cloud);
+					Game.TryLoad(idDest, cloud, delegate
+					{
+						GameIO.DeleteGame(idDest, cloud, deleteBackup: false);
+						IO.CopyDir(pathRoot + "/" + i.id, (cloud ? CorePath.RootSaveCloud : CorePath.RootSave) + "/" + idDest);
+						SE.WriteJournal();
+						Close();
+						Game.Load(idDest, cloud);
+					});
 				});
 			}
 			else
@@ -265,7 +268,10 @@ public class LayerLoadGame : ELayer
 					i.madeBackup = true;
 					GameIO.UpdateGameIndex(i);
 				}
-				Game.Load(i.id, cloud);
+				Game.TryLoad(i.id, cloud, delegate
+				{
+					Game.Load(i.id, cloud);
+				});
 			}
 		});
 		buttonDelete.SetOnClick(delegate

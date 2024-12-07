@@ -890,10 +890,6 @@ public class Zone : Spatial, ICardParent, IInspect
 					}
 					card.SetInt(55);
 				}
-				if (card.pos.cell.IsBlocked && !card.isRestrained && !card.HasCondition<ConSuspend>())
-				{
-					card.MoveImmediate(card.pos.GetNearestPoint(allowBlock: false, allowChara: false) ?? card.pos);
-				}
 				chara.SyncRide();
 				if (card.c_uidMaster != 0 && chara.master == null)
 				{

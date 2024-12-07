@@ -4108,6 +4108,10 @@ public class Chara : Card, IPathfindWalker
 		{
 			equip = job.equip;
 		}
+		if (equip == "none")
+		{
+			return;
+		}
 		switch (id)
 		{
 		case "kettle":
@@ -4441,7 +4445,10 @@ public class Chara : Card, IPathfindWalker
 		base.hp = MaxHP / 3;
 		mana.value = 0;
 		stamina.value = 0;
-		hunger.value = 30;
+		if (hunger.value > 30)
+		{
+			hunger.value = 30;
+		}
 		sleepiness.value = 0;
 		hostility = OriginalHostility;
 		if (IsPC)

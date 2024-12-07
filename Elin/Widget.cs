@@ -266,6 +266,33 @@ public class Widget : EMono, IChangeResolution, ISkinRoot
 		{
 			InstantiateDeco(deco);
 		}
+		RefreshOrder();
+	}
+
+	public void RefreshOrder()
+	{
+		if (!AlwaysBottom)
+		{
+			return;
+		}
+		Type setSiblingAfter = SetSiblingAfter;
+		bool flag = false;
+		if (setSiblingAfter != null)
+		{
+			foreach (Widget item in EMono.ui.widgets.list)
+			{
+				if (item.GetType() == setSiblingAfter)
+				{
+					base.transform.SetSiblingIndex(item.transform.GetSiblingIndex() + 1);
+					flag = true;
+					break;
+				}
+			}
+		}
+		if (!flag)
+		{
+			base.transform.SetAsFirstSibling();
+		}
 	}
 
 	public virtual void OnActivate()

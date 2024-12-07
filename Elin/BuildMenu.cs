@@ -96,13 +96,13 @@ public class BuildMenu : EMono
 		EMono.player.hotbars.bars[3].dirty = true;
 		EMono.player.hotbars.ResetHotbar(4);
 		EMono.player.hotbars.bars[4].dirty = true;
-		if (EMono.debug.godBuild || (EMono.Branch != null && EMono.Branch.elements.Has(4006)))
-		{
-			ActionMode.Inspect.Activate();
-		}
-		else if (ActionMode.LastBuildMode != null)
+		if (ActionMode.LastBuildMode != null)
 		{
 			ActionMode.LastBuildMode.Activate();
+		}
+		else if (EMono.debug.godBuild || (EMono.Branch != null && EMono.Branch.elements.Has(4006)))
+		{
+			ActionMode.Inspect.Activate();
 		}
 		else
 		{

@@ -140,6 +140,12 @@ public class GameIO : EClass
 		IO.CopyDir((cloud ? CorePath.RootSaveCloud : CorePath.RootSave) + id + "/", text + "/" + newId, (string s) => s == "Temp");
 	}
 
+	public static bool CanLoad(string root)
+	{
+		GameIndex gameIndex = IO.LoadFile<GameIndex>(root + "/index.txt");
+		return EClass.core.version.IsSaveCompatible(gameIndex.version);
+	}
+
 	public static Game LoadGame(string id, string root, bool cloud)
 	{
 		Game.id = id;

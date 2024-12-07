@@ -873,19 +873,24 @@ public class AM_Adv : AM_BaseGameMode
 			}
 			break;
 		case EAction.QuickLoad:
+		{
 			if (!EClass.debug.enable && !EClass.game.Difficulty.allowManualSave)
 			{
 				SE.Beep();
 				break;
 			}
-			EClass.core.WaitForEndOfFrame(delegate
+			string slot = Game.id;
+			bool isCloud = EClass.game.isCloud;
+			Game.TryLoad(slot, isCloud, delegate
 			{
-				string text = Game.id;
-				bool isCloud = EClass.game.isCloud;
-				EClass.scene.Init(Scene.Mode.None);
-				Game.Load(text, isCloud);
+				EClass.core.WaitForEndOfFrame(delegate
+				{
+					EClass.scene.Init(Scene.Mode.None);
+					Game.Load(slot, isCloud);
+				});
 			});
 			break;
+		}
 		case EAction.Report:
 			if (!EClass.debug.enable)
 			{

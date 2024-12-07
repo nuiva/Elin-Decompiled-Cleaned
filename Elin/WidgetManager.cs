@@ -199,27 +199,6 @@ public class WidgetManager : EMono
 		{
 			widget.OnManagerActivate();
 		}
-		if (widget.AlwaysBottom)
-		{
-			Type setSiblingAfter = widget.SetSiblingAfter;
-			bool flag = false;
-			if (setSiblingAfter != null)
-			{
-				foreach (Widget item in list)
-				{
-					if (item.GetType() == setSiblingAfter)
-					{
-						widget.transform.SetSiblingIndex(item.transform.GetSiblingIndex() + 1);
-						flag = true;
-						break;
-					}
-				}
-			}
-			if (!flag)
-			{
-				widget.transform.SetAsFirstSibling();
-			}
-		}
 		return widget;
 	}
 

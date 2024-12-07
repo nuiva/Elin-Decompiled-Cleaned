@@ -1047,7 +1047,7 @@ public class ActionMode : EClass
 			EClass.scene.ToggleShowWall();
 			break;
 		case CoreConfig.GameFuncBuild.TogglePicker:
-			if (!Picker.CanActivate)
+			if (Picker.CanActivate)
 			{
 				Picker.Activate();
 			}
@@ -1153,7 +1153,7 @@ public class ActionMode : EClass
 				Msg.Say("invalidAction");
 				return;
 			}
-			Inspect.Activate();
+			BuildMenu.Toggle();
 			break;
 		case CoreConfig.GameFunc.ShowJournal:
 		{
