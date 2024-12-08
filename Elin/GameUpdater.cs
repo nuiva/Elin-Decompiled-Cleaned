@@ -291,14 +291,17 @@ public class GameUpdater : EClass
 				Chara chara = charas[index];
 				for (int num = chara.conditions.Count - 1; num >= 0; num--)
 				{
-					Condition condition = chara.conditions[num];
-					if (condition.TimeBased)
+					if (num < chara.conditions.Count)
 					{
-						condition.Tick();
-					}
-					if (chara.isDead)
-					{
-						break;
+						Condition condition = chara.conditions[num];
+						if (condition.TimeBased)
+						{
+							condition.Tick();
+						}
+						if (chara.isDead)
+						{
+							break;
+						}
 					}
 				}
 			}

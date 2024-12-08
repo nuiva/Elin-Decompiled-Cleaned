@@ -176,6 +176,8 @@ public class Lot : EClass
 			{
 				if (num10 < num8 - 1 || num9 < 0 || num10 < 0 || num9 >= EClass._map.Size || num10 >= EClass._map.Size)
 				{
+					num9++;
+					num10--;
 					continue;
 				}
 				Cell cell = EClass._map.cells[num9, num10];

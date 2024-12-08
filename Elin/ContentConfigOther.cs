@@ -1,3 +1,7 @@
+using System;
+using System.IO;
+using SFB;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class ContentConfigOther : ContentConfig
@@ -19,6 +23,8 @@ public class ContentConfigOther : ContentConfig
 	public UIButton buttonBackerCode;
 
 	public UIButton toggleDisableMods;
+
+	public UIButton buttonWallPaper;
 
 	public UIDropdown ddSnap;
 
@@ -92,6 +98,7 @@ public class ContentConfigOther : ContentConfig
 			EClass.ui.GetLayer<LayerConfig>().Close();
 			EClass.ui.AddLayer<LayerConfig>();
 		});
+		buttonWallPaper.SetActive(base.config.HasBackerRewardCode());
 		RefreshRewardCode();
 	}
 
@@ -133,12 +140,37 @@ public class ContentConfigOther : ContentConfig
 				{
 					base.config.rewardCode = text;
 					SE.Change();
+					EClass.ui.GetLayer<LayerConfig>().Close();
+					EClass.ui.AddLayer<LayerConfig>();
 				}
 				else
 				{
 					Dialog.Ok("invalidRewardCode".lang(text));
 				}
-				RefreshRewardCode();
+			}
+		});
+	}
+
+	public void OnClickDownloadWallpaper()
+	{
+		EClass.core.WaitForEndOfFrame(delegate
+		{
+			string text = StandaloneFileBrowser.SaveFilePanel("Export Wallpaper", CorePath.RootData, "wallpaper", "zip");
+			Debug.Log(text);
+			if (!string.IsNullOrEmpty(text))
+			{
+				try
+				{
+					TextAsset textAsset = Resources.Load("Etc/wallpaper") as TextAsset;
+					Debug.Log(textAsset);
+					File.WriteAllBytes(text, textAsset.bytes);
+					EClass.ui.Say("umimyaaThankyou");
+					SE.Play("godbless");
+				}
+				catch (Exception ex)
+				{
+					EClass.ui.Say(ex.Message);
+				}
 			}
 		});
 	}

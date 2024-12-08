@@ -1508,8 +1508,8 @@ public class Chara : Card, IPathfindWalker
 		}
 		chara.SetFaith(faith);
 		chara.bio = IO.DeepCopy(bio);
-		chara.hp = Mathf.Max(0, (int)((float)chara.MaxHP * ((float)base.hp / (float)MaxHP) * 0.99f));
 		chara.LV = base.LV;
+		chara.hp = (int)Mathf.Clamp((float)chara.MaxHP * ((float)base.hp / (float)MaxHP) * 0.99f, 0f, chara.MaxHP);
 		chara.isCopy = true;
 		if (HaveFur())
 		{

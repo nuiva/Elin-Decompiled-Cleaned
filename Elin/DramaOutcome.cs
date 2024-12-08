@@ -52,11 +52,6 @@ public class DramaOutcome : EMono
 		EMono.game.quests.globalList.Add(Quest.Create("defense").SetClient(c, assignQuest: false));
 		EMono.game.quests.Get<QuestHome>().ChangePhase(2);
 		AddMaid();
-		if ((bool)WidgetCurrentTool.Instance)
-		{
-			WidgetCurrentTool.Instance.transHighlightSwitch.SetActive(enable: true);
-			EMono.player.flags.toggleHotbarHighlightDisabled = false;
-		}
 	}
 
 	public void AddMaid()

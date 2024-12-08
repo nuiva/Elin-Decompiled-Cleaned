@@ -400,6 +400,10 @@ public class ThingContainer : List<Thing>
 			SearchDest(this, searchEmpty: true, searchStack: true);
 			return d;
 		}
+		if (t.trait.CanOnlyCarry && IsFull())
+		{
+			return d;
+		}
 		ContainerFlag flag = t.category.GetRoot().id.ToEnum<ContainerFlag>();
 		if (flag == ContainerFlag.none)
 		{

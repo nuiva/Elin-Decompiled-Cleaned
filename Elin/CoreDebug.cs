@@ -1856,7 +1856,14 @@ public class CoreDebug : EScriptable
 		{
 			return "Element not found.";
 		}
-		EClass.pc.elements.SetBase(row.id, value, potential);
+		if (row.type == "Feat")
+		{
+			EClass.pc.SetFeat(row.id, value, msg: true);
+		}
+		else
+		{
+			EClass.pc.elements.SetBase(row.id, value, potential);
+		}
 		return "Done.";
 	}
 
@@ -2115,7 +2122,7 @@ public class CoreDebug : EScriptable
 		{
 			if (row.name.Contains(name) || row.id.ToString() == name)
 			{
-				text = text + row.name + " valid?:" + row.valid + " lang:" + row.lang + " type:" + row.type + " destroyed:" + EClass.player.doneBackers.Contains(row.id) + " loc:" + (row.loc.IsEmpty() ? "random" : row.loc) + Environment.NewLine;
+				text = text + row.id + " valid?:" + row.valid + " lang:" + row.lang + " type:" + row.type + " destroyed:" + EClass.player.doneBackers.Contains(row.id) + " loc:" + (row.loc.IsEmpty() ? "random" : row.loc) + Environment.NewLine;
 			}
 		}
 		if (text == "")
