@@ -114,25 +114,25 @@ public class ShopTransaction : EClass
 
 	public int GetPrice(Thing t, int n, bool sell)
 	{
-		int price = t.GetPrice(trader.currency, sell: false, trader.priceType);
-		int price2 = t.GetPrice(trader.currency, sell: true, trader.priceType);
-		int num = n;
-		int num2 = 0;
-		int num3 = (sell ? price : price2);
-		foreach (Item item in sell ? bought : sold)
+		int buyPrice = t.GetPrice(trader.currency, sell: false, trader.priceType);
+		int sellPrice = t.GetPrice(trader.currency, sell: true, trader.priceType);
+		int nonRefundedCount = n;
+		int refundedPrice = 0;
+		int inversePrice = (sell ? buyPrice : sellPrice);
+		foreach (Item earlierTransaction in sell ? bought : sold)
 		{
-			if (item.thing.id == t.id && item.price == num3)
+			if (earlierTransaction.thing.id == t.id && earlierTransaction.price == inversePrice)
 			{
-				int num4 = ((item.num >= num) ? num : item.num);
-				num -= num4;
-				num2 += num4 * num3;
+				int refundCount = ((earlierTransaction.num >= nonRefundedCount) ? nonRefundedCount : earlierTransaction.num);
+				nonRefundedCount -= refundCount;
+				refundedPrice += refundCount * inversePrice;
 			}
-			if (num == 0)
+			if (nonRefundedCount == 0)
 			{
 				break;
 			}
 		}
-		return num2 + num * (sell ? price2 : price);
+		return refundedPrice + nonRefundedCount * (sell ? sellPrice : buyPrice);
 	}
 
 	public void OnEndTransaction()
