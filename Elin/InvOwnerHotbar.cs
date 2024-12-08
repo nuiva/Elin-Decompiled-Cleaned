@@ -53,5 +53,11 @@ public class InvOwnerHotbar : InvOwner
 		{
 			WidgetCurrentTool.Instance.Reselect();
 		}
+		if (!EClass.player.flags.toggleHotbarHighlightActivated && (bool)WidgetCurrentTool.Instance)
+		{
+			WidgetCurrentTool.Instance.transHighlightSwitch.SetActive(enable: true);
+			EClass.player.flags.toggleHotbarHighlightActivated = true;
+			EClass.player.flags.toggleHotbarHighlightDisabled = false;
+		}
 	}
 }

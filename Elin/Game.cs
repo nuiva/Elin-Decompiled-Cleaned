@@ -437,6 +437,10 @@ public class Game : EClass
 				}
 			}
 		});
+		if (version.IsBelow(0, 23, 52))
+		{
+			player.flags.toggleHotbarHighlightActivated = true;
+		}
 		if (version.IsBelow(0, 23, 51))
 		{
 			foreach (Chara value2 in EClass.game.cards.globalCharas.Values)

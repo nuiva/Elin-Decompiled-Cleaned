@@ -377,7 +377,7 @@ public class TaskHarvest : BaseTaskHarvest
 							thing.c_priceFix = -100;
 							break;
 						case 2531:
-							thing.MakeFoodFrom("putty");
+							thing.MakeFoodFrom("cloud_electric");
 							break;
 						case 1027:
 							thing.ChangeMaterial(25);

@@ -1,18 +1,8 @@
-public class Zone_DungeonPuppy : Zone_Dungeon
+public class Zone_DungeonPuppy : Zone_DungeonUnfixed
 {
-	public override bool WillAutoSave => false;
-
 	public int LvPoppy => -2;
 
-	public override bool RegenerateOnEnter => true;
-
 	public override bool LockExit => base.lv <= LvPoppy;
-
-	public override float BigDaddyChance => 0f;
-
-	public override float ShrineChance => 0f;
-
-	public override int ExpireDays => 1;
 
 	public override void OnGenerateMap()
 	{

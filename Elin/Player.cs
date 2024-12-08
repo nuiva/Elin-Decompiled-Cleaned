@@ -407,6 +407,18 @@ public class Player : EClass
 			}
 		}
 
+		public bool toggleHotbarHighlightActivated
+		{
+			get
+			{
+				return bits[22];
+			}
+			set
+			{
+				bits[22] = value;
+			}
+		}
+
 		public int start
 		{
 			get

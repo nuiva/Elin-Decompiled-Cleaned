@@ -38,9 +38,9 @@ public class SPELL
 
 	public const int miasma_Sound = 50707;
 
-	public const int hand_Cut = 50414;
-
 	public const int miasma_Poison = 50705;
+
+	public const int hand_Cut = 50414;
 
 	public const int funnel_Poison = 50605;
 
@@ -56,9 +56,9 @@ public class SPELL
 
 	public const int weapon_Darkness = 50803;
 
-	public const int puddle_Darkness = 50903;
-
 	public const int miasma_Cut = 50714;
+
+	public const int puddle_Darkness = 50903;
 
 	public const int ball_Mind = 50104;
 
@@ -72,9 +72,9 @@ public class SPELL
 
 	public const int miasma_Mind = 50704;
 
-	public const int weapon_Mind = 50804;
-
 	public const int funnel_Cut = 50614;
+
+	public const int weapon_Mind = 50804;
 
 	public const int puddle_Mind = 50904;
 
@@ -186,7 +186,7 @@ public class SPELL
 
 	public const int hand_Ether = 50412;
 
-	public const int SpExterminate = 9160;
+	public const int SpEarthquake = 9151;
 
 	public const int puddle_Lightning = 50902;
 
@@ -210,9 +210,9 @@ public class SPELL
 
 	public const int SpHealOdina = 8405;
 
-	public const int SpChangeMaterialG = 8286;
-
 	public const int SpHealJure = 8406;
+
+	public const int SpRevive = 8430;
 
 	public const int SpHOT = 8450;
 
@@ -234,11 +234,13 @@ public class SPELL
 
 	public const int SpWisdom = 8503;
 
-	public const int SpRevive = 8430;
+	public const int SpHero = 8504;
+
+	public const int SpChangeMaterialG = 8286;
+
+	public const int SpResEle = 8506;
 
 	public const int SpChangeMaterial = 8285;
-
-	public const int SpChangeMaterialLesser = 8284;
 
 	public const int SpFaith = 8281;
 
@@ -288,13 +290,13 @@ public class SPELL
 
 	public const int SpLighten = 8280;
 
-	public const int SpHero = 8504;
+	public const int SpChangeMaterialLesser = 8284;
 
-	public const int SpResEle = 8506;
+	public const int ball_Darkness = 50103;
 
 	public const int SpSpeedUp = 8510;
 
-	public const int SpSilence = 8700;
+	public const int SpWeakness = 8702;
 
 	public const int ball_Fire = 50100;
 
@@ -344,13 +346,11 @@ public class SPELL
 
 	public const int SpDrawBacker = 9503;
 
-	public const int ball_Darkness = 50103;
+	public const int SpSilence = 8700;
 
 	public const int SpDrawMetal = 9502;
 
 	public const int SpWardMonster = 9500;
-
-	public const int SpWeakness = 8702;
 
 	public const int SpWeakResEle = 8704;
 
@@ -388,11 +388,13 @@ public class SPELL
 
 	public const int SpSummonPawn = 9005;
 
+	public const int SpSummonYeek = 9006;
+
 	public const int SpSummonShadow = 9050;
 
 	public const int SpMeteor = 9150;
 
-	public const int SpEarthquake = 9151;
+	public const int SpExterminate = 9160;
 
 	public const int SpShutterHex = 9200;
 
@@ -400,28 +402,29 @@ public class SPELL
 
 	public const int puddle_Cut = 50914;
 
-	public static readonly int[] IDS = new int[200]
+	public static readonly int[] IDS = new int[201]
 	{
 		50413, 50805, 50905, 50106, 50314, 50306, 50406, 50506, 50606, 50706,
-		50806, 50906, 50107, 50114, 50307, 50407, 50507, 50607, 50707, 50414,
-		50705, 50605, 50505, 50403, 50503, 50603, 50703, 50803, 50903, 50714,
-		50104, 50304, 50807, 50404, 50604, 50704, 50804, 50614, 50904, 50105,
+		50806, 50906, 50107, 50114, 50307, 50407, 50507, 50607, 50707, 50705,
+		50414, 50605, 50505, 50403, 50503, 50603, 50703, 50803, 50714, 50903,
+		50104, 50304, 50807, 50404, 50604, 50704, 50614, 50804, 50904, 50105,
 		50514, 50305, 50405, 50504, 50313, 50907, 50913, 50910, 50111, 50613,
 		50311, 50411, 50511, 50611, 50711, 50811, 50810, 50911, 50513, 50312,
 		50303, 50512, 50612, 50712, 50812, 50912, 50113, 50112, 50108, 50710,
 		50510, 50308, 50408, 50508, 50608, 50708, 50808, 50908, 50109, 50813,
 		50610, 50309, 50509, 50609, 50709, 50809, 50909, 50110, 50713, 50310,
-		50410, 50409, 50412, 9160, 50902, 8288, 8300, 8380, 8390, 8400,
-		8401, 8402, 8403, 8404, 8405, 8286, 8406, 8450, 8470, 8471,
-		8480, 8490, 8491, 8500, 8501, 8502, 8503, 8430, 8285, 8284,
-		8281, 50814, 7001, 7002, 7003, 7004, 7005, 7006, 7007, 7800,
-		8200, 8201, 8220, 8221, 8230, 8232, 8240, 8241, 8250, 8251,
-		8255, 8256, 8260, 8280, 8504, 8506, 8510, 8700, 50100, 50300,
-		50400, 50500, 50600, 50700, 50800, 50900, 50101, 50301, 50401, 50501,
-		50601, 50701, 50801, 50901, 50102, 50302, 50402, 50502, 50602, 50702,
-		50802, 9503, 50103, 9502, 9500, 8702, 8704, 8706, 8708, 8710,
+		50410, 50409, 50412, 9151, 50902, 8288, 8300, 8380, 8390, 8400,
+		8401, 8402, 8403, 8404, 8405, 8406, 8430, 8450, 8470, 8471,
+		8480, 8490, 8491, 8500, 8501, 8502, 8503, 8504, 8286, 8506,
+		8285, 8281, 50814, 7001, 7002, 7003, 7004, 7005, 7006, 7007,
+		7800, 8200, 8201, 8220, 8221, 8230, 8232, 8240, 8241, 8250,
+		8251, 8255, 8256, 8260, 8280, 8284, 50103, 8510, 8702, 50100,
+		50300, 50400, 50500, 50600, 50700, 50800, 50900, 50101, 50301, 50401,
+		50501, 50601, 50701, 50801, 50901, 50102, 50302, 50402, 50502, 50602,
+		50702, 50802, 9503, 8700, 9502, 9500, 8704, 8706, 8708, 8710,
 		8770, 8775, 8776, 8780, 8790, 8791, 8800, 8801, 9000, 9001,
-		9002, 9003, 9004, 9005, 9050, 9150, 9151, 9200, 9501, 50914
+		9002, 9003, 9004, 9005, 9006, 9050, 9150, 9160, 9200, 9501,
+		50914
 	};
 }
 public class Spell : Ability

@@ -157,6 +157,8 @@ public class Room : BaseArea
 			{
 				if (num12 < num10 - 1 || num11 < 0 || num12 < 0 || num11 >= EClass._map.Size || num12 >= EClass._map.Size)
 				{
+					num11++;
+					num12--;
 					continue;
 				}
 				Cell cell2 = EClass._map.cells[num11, num12];

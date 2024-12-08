@@ -2489,7 +2489,7 @@ public class Zone : Spatial, ICardParent, IInspect
 		}
 		BiomeProfile biome = pos.cell.biome;
 		SpawnList spawnList = null;
-		spawnList = ((setting.idSpawnList != null) ? SpawnList.Get(setting.idSpawnList) : ((setting.hostility == SpawnHostility.Neutral || (setting.hostility != SpawnHostility.Enemy && Rand.Range(0f, 1f) < ChanceSpawnNeutral)) ? SpawnList.Get("c_neutral") : ((biome.spawn.chara.Count <= 0) ? SpawnList.Get(biome.name, "chara", new CharaFilter
+		spawnList = ((setting.idSpawnList != null) ? SpawnList.Get(setting.idSpawnList) : ((EClass._zone is Zone_DungeonYeek) ? SpawnListChara.Get("dungeon_yeek", (SourceChara.Row r) => r.race == "yeek") : ((setting.hostility == SpawnHostility.Neutral || (setting.hostility != SpawnHostility.Enemy && Rand.Range(0f, 1f) < ChanceSpawnNeutral)) ? SpawnList.Get("c_neutral") : ((biome.spawn.chara.Count <= 0) ? SpawnList.Get(biome.name, "chara", new CharaFilter
 		{
 			ShouldPass = delegate(SourceChara.Row s)
 			{
@@ -2499,7 +2499,7 @@ public class Zone : Spatial, ICardParent, IInspect
 				}
 				return s.biome == biome.name || s.biome.IsEmpty();
 			}
-		}) : SpawnList.Get(biome.spawn.GetRandomCharaId()))));
+		}) : SpawnList.Get(biome.spawn.GetRandomCharaId())))));
 		int dangerLv = DangerLv;
 		CardBlueprint cardBlueprint = new CardBlueprint
 		{

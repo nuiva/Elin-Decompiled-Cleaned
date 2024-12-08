@@ -824,7 +824,7 @@ public class ActPlan : EClass
 			{
 				showOrder = true;
 			}
-			if (input == ActInput.AllAction && EClass.pc.held != null)
+			if (input == ActInput.AllAction && EClass.pc.held != null && !EClass.pc.held.trait.CanOnlyCarry)
 			{
 				TrySetAct("actDrop", delegate
 				{

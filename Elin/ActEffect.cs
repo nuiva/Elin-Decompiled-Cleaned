@@ -517,6 +517,7 @@ public class ActEffect : EClass
 				}
 				chara2 = actRef.n1 switch
 				{
+					"yeek" => CharaGen.CreateFromFilter(SpawnListChara.Get("yeek", (SourceChara.Row r) => r.race == "yeek"), power / 10), 
 					"pawn" => CharaGen.CreateFromFilter("c_pawn", power / 10), 
 					"monster" => CharaGen.CreateFromFilter("c_dungeon", power / 10), 
 					"animal" => CharaGen.CreateFromFilter("c_animal", power / 15), 
