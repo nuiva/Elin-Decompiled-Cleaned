@@ -33,11 +33,11 @@ public class ActEffect : EClass
 		});
 	}
 
-	public static bool DamageEle(Card CC, EffectId id, int power, Element e, List<Point> points, ActRef actref, string lang = null)
+	public static bool DamageEle(Card damageSource, EffectId id, int power, Element e, List<Point> targetPoints, ActRef actref, string lang = null) // Returns true iff any targets were hit
 	{
-		if (points.Count == 0)
+		if (targetPoints.Count == 0)
 		{
-			CC.SayNothingHappans();
+			damageSource.SayNothingHappans();
 			return false;
 		}
 		if (!EClass.setting.elements.ContainsKey(e.source.alias))
@@ -46,39 +46,39 @@ public class ActEffect : EClass
 			e = Element.Create(0, 1);
 		}
 		ElementRef elementRef = EClass.setting.elements[e.source.alias];
-		int num = actref.act?.ElementPowerMod ?? 50;
-		int num2 = 0;
-		Point point = CC.pos.Copy();
-		List<Card> list = new List<Card>();
-		bool flag = false;
+		int actrefElementPowerMod = actref.act?.ElementPowerMod ?? 50;
+		int numTargetsHit = 0;
+		Point sourcePoint = damageSource.pos.Copy();
+		List<Card> suicideChainTargets = new List<Card>();
+		bool effectIsEarthquake = false;
 		if (id == EffectId.Explosive && actref.refThing != null)
 		{
 			power = power * actref.refThing.material.hardness / 10;
 		}
-		string text = id.ToString();
-		string text2 = (EClass.sources.calc.map.ContainsKey(text) ? text : (text.ToLower() + "_"));
-		foreach (Point p in points)
+		string sourceCalcIdCandidate = id.ToString();
+		string sourceCalcId = (EClass.sources.calc.map.ContainsKey(sourceCalcIdCandidate) ? sourceCalcIdCandidate : (sourceCalcIdCandidate.ToLower() + "_"));
+		foreach (Point targetPoint in targetPoints)
 		{
-			bool flag2 = true;
+			bool shouldAddTrailAnimation = true;
 			switch (id)
 			{
 			case EffectId.Explosive:
-				text2 = "ball_";
-				flag = false;
+				sourceCalcId = "ball_";
+				effectIsEarthquake = false;
 				break;
 			case EffectId.BallBubble:
-				text2 = "ball_";
+				sourceCalcId = "ball_";
 				break;
 			case EffectId.Earthquake:
-				text2 = "SpEarthquake";
-				flag2 = false;
-				flag = true;
+				sourceCalcId = "SpEarthquake";
+				shouldAddTrailAnimation = false;
+				effectIsEarthquake = true;
 				break;
 			case EffectId.Meteor:
-				text2 = "SpMeteor";
+				sourceCalcId = "SpMeteor";
 				break;
 			default:
-				if (CC.isChara && p.Equals(CC.pos) && points.Count >= 2)
+				if (damageSource.isChara && targetPoint.Equals(damageSource.pos) && targetPoints.Count >= 2)
 				{
 					continue;
 				}
@@ -86,185 +86,185 @@ public class ActEffect : EClass
 			case EffectId.Suicide:
 				break;
 			}
-			Effect effect = null;
-			Effect effect2 = (flag2 ? Effect.Get("trail1") : null);
-			Point from = p;
-			switch (id)
+			Effect mainAnimationEffect = null;
+			Effect trailAnimationEffect = (shouldAddTrailAnimation ? Effect.Get("trail1") : null);
+			Point from = targetPoint;
+			switch (id) // Animation
 			{
 			case EffectId.Arrow:
 			{
-				effect = Effect.Get("spell_arrow");
-				effect.sr.color = elementRef.colorSprite;
-				TrailRenderer componentInChildren = effect.GetComponentInChildren<TrailRenderer>();
+				mainAnimationEffect = Effect.Get("spell_arrow");
+				mainAnimationEffect.sr.color = elementRef.colorSprite;
+				TrailRenderer componentInChildren = mainAnimationEffect.GetComponentInChildren<TrailRenderer>();
 				Color startColor = (componentInChildren.endColor = elementRef.colorSprite);
 				componentInChildren.startColor = startColor;
-				from = CC.pos;
+				from = damageSource.pos;
 				break;
 			}
 			case EffectId.Earthquake:
 			{
-				if (EClass.rnd(4) == 0 && p.IsSync)
+				if (EClass.rnd(4) == 0 && targetPoint.IsSync)
 				{
-					effect = Effect.Get("smoke_earthquake");
+					mainAnimationEffect = Effect.Get("smoke_earthquake");
 				}
-				float num3 = 0.06f * (float)CC.pos.Distance(p);
-				Point pos = p.Copy();
+				float num3 = 0.06f * (float)damageSource.pos.Distance(targetPoint);
+				Point pos = targetPoint.Copy();
 				TweenUtil.Tween(num3, null, delegate
 				{
 					pos.Animate(AnimeID.Quake, animeBlock: true);
 				});
-				if (effect != null)
+				if (mainAnimationEffect != null)
 				{
-					effect.SetStartDelay(num3);
+					mainAnimationEffect.SetStartDelay(num3);
 				}
 				break;
 			}
 			default:
 			{
-				effect = Effect.Get("Element/ball_" + ((e.id == 0) ? "Void" : e.source.alias.Remove(0, 3)));
-				if (effect == null)
+				mainAnimationEffect = Effect.Get("Element/ball_" + ((e.id == 0) ? "Void" : e.source.alias.Remove(0, 3)));
+				if (mainAnimationEffect == null)
 				{
-					effect = Effect.Get("Element/ball_Fire");
+					mainAnimationEffect = Effect.Get("Element/ball_Fire");
 				}
-				float startDelay = ((id == EffectId.Meteor) ? 0.1f : 0.04f) * (float)CC.pos.Distance(p);
-				effect.SetStartDelay(startDelay);
-				effect2.SetStartDelay(startDelay);
+				float startDelay = ((id == EffectId.Meteor) ? 0.1f : 0.04f) * (float)damageSource.pos.Distance(targetPoint);
+				mainAnimationEffect.SetStartDelay(startDelay);
+				trailAnimationEffect.SetStartDelay(startDelay);
 				break;
 			}
 			}
-			if (effect2 != null)
+			if (trailAnimationEffect != null) // Animation
 			{
-				effect2.SetParticleColor(elementRef.colorTrail, changeMaterial: true, "_TintColor").Play(from);
+				trailAnimationEffect.SetParticleColor(elementRef.colorTrail, changeMaterial: true, "_TintColor").Play(from);
 			}
-			if (effect != null)
+			if (mainAnimationEffect != null) // Animation
 			{
 				if (id == EffectId.Arrow)
 				{
 					TryDelay(delegate
 					{
-						effect.Play(CC.pos, 0f, p);
+						mainAnimationEffect.Play(damageSource.pos, 0f, targetPoint);
 					});
 				}
 				else
 				{
 					TryDelay(delegate
 					{
-						effect.Play(p).Flip(p.x > CC.pos.x);
+						mainAnimationEffect.Play(targetPoint).Flip(targetPoint.x > damageSource.pos.x);
 					});
 				}
 			}
-			bool flag3 = false;
-			if (CC.IsPCFactionOrMinion && (CC.HasElement(1651) || EClass.pc.Evalue(1651) >= 2))
+			bool pointIsProtectedFromShatter = false;
+			if (damageSource.IsPCFactionOrMinion && (damageSource.HasElement(1651 /* featMagicManner */) || EClass.pc.Evalue(1651 /* featMagicManner */) >= 2))
 			{
-				bool flag4 = false;
-				foreach (Card item in p.ListCards())
+				bool pointHasAllyOrNonFood = false;
+				foreach (Card item in targetPoint.ListCards())
 				{
 					if (item.isChara)
 					{
 						if (item.IsPCFactionOrMinion)
 						{
-							flag4 = true;
+							pointHasAllyOrNonFood = true;
 						}
 					}
-					else if (e.id != 910 || !item.IsFood || !item.category.IsChildOf("foodstuff"))
+					else if (e.id != 910 /* eleFire */ || !item.IsFood || !item.category.IsChildOf("foodstuff"))
 					{
-						flag4 = true;
+						pointHasAllyOrNonFood = true;
 					}
 				}
-				flag3 = flag4;
+				pointIsProtectedFromShatter = pointHasAllyOrNonFood;
 			}
-			if (!flag3)
+			if (!pointIsProtectedFromShatter)
 			{
-				if (e.id == 910)
+				if (e.id == 910 /* eleFire */)
 				{
-					EClass._map.TryShatter(p, 910, power);
+					EClass._map.TryShatter(targetPoint, 910 /* eleFire */, power);
 				}
-				if (e.id == 911)
+				if (e.id == 911 /* eleCold */)
 				{
-					EClass._map.TryShatter(p, 911, power);
+					EClass._map.TryShatter(targetPoint, 911 /* eleCold */, power);
 				}
 			}
-			foreach (Card item2 in p.ListCards().ToList())
+			foreach (Card item2 in targetPoint.ListCards().ToList()) // Deal damage to each target
 			{
-				Card c = item2;
-				if ((!c.isChara && !c.trait.CanBeAttacked) || (c.IsMultisize && item2 == CC) || (c.isChara && (c.Chara.host == CC || c.Chara.parasite == CC || c.Chara.ride == CC)))
+				Card damageTarget = item2;
+				if ((!damageTarget.isChara && !damageTarget.trait.CanBeAttacked) || (damageTarget.IsMultisize && item2 == damageSource) || (damageTarget.isChara && (damageTarget.Chara.host == damageSource || damageTarget.Chara.parasite == damageSource || damageTarget.Chara.ride == damageSource)))
 				{
 					continue;
 				}
-				if ((uint)(id - 249) <= 1u && c.isChara && CC.isChara)
+				if ((uint)(id - 249 /* 249 doesn't exist, 250 = gathering */) <= 1u && damageTarget.isChara && damageSource.isChara)
 				{
-					c.Chara.RequestProtection(CC.Chara, delegate(Chara a)
+					damageTarget.Chara.RequestProtection(damageSource.Chara, delegate(Chara a)
 					{
-						c = a;
+						damageTarget = a;
 					});
 				}
-				int num4 = 0;
-				bool isChara = CC.isChara;
+				int dmg = 0;
+				bool sourceIsChara = damageSource.isChara;
 				if (id == EffectId.Suicide)
 				{
-					num4 = CC.MaxHP * 2;
-					num4 = num4 * 100 / (50 + point.Distance(p) * 75);
-					if (c.HasTag(CTAG.suicide) && !c.HasCondition<ConWet>())
+					dmg = damageSource.MaxHP * 2;
+					dmg = dmg * 100 / (50 + sourcePoint.Distance(targetPoint) * 75);
+					if (damageTarget.HasTag(CTAG.suicide) && !damageTarget.HasCondition<ConWet>())
 					{
-						list.Add(c);
+						suicideChainTargets.Add(damageTarget);
 					}
 				}
 				else
 				{
-					Dice dice = Dice.Create(text2, power, CC, actref.act);
+					Dice dice = Dice.Create(sourceCalcId, power, damageSource, actref.act);
 					if (dice == null)
 					{
-						Debug.Log(text2);
+						Debug.Log(sourceCalcId);
 					}
-					num4 = dice.Roll();
+					dmg = dice.Roll();
 					if (id == EffectId.Earthquake)
 					{
-						if (c.HasCondition<ConGravity>())
+						if (damageTarget.HasCondition<ConGravity>())
 						{
-							num4 = dice.RollMax() * 2;
+							dmg = dice.RollMax() * 2;
 						}
-						else if (c.isChara && c.Chara.IsLevitating)
+						else if (damageTarget.isChara && damageTarget.Chara.IsLevitating)
 						{
-							num4 /= 2;
+							dmg /= 2;
 						}
 					}
 					if (id == EffectId.Ball || id == EffectId.BallBubble || id == EffectId.Explosive)
 					{
-						num4 = num4 * 100 / (90 + point.Distance(p) * 10);
+						dmg = dmg * 100 / (90 + sourcePoint.Distance(targetPoint) * 10);
 					}
 				}
-				if ((actref.noFriendlyFire && !CC.Chara.IsHostile(c as Chara)) || (flag && c == CC))
+				if ((actref.noFriendlyFire && !damageSource.Chara.IsHostile(damageTarget as Chara)) || (effectIsEarthquake && damageTarget == damageSource))
 				{
 					continue;
 				}
-				if (isChara && points.Count > 1 && c != null && c.isChara && CC.isChara && CC.Chara.IsFriendOrAbove(c.Chara))
+				if (sourceIsChara && targetPoints.Count > 1 && damageTarget != null && damageTarget.isChara && damageSource.isChara && damageSource.Chara.IsFriendOrAbove(damageTarget.Chara))
 				{
-					int num5 = CC.Evalue(302);
-					if (!CC.IsPC && CC.IsPCFactionOrMinion)
+					int sourceControlMana = damageSource.Evalue(302 /* controlmana */);
+					if (!damageSource.IsPC && damageSource.IsPCFactionOrMinion) // Add player's control mana skill to allies
 					{
-						num5 += EClass.pc.Evalue(302);
+						sourceControlMana += EClass.pc.Evalue(302 /* controlmana */);
 					}
-					if (num5 > 0)
+					if (sourceControlMana > 0)
 					{
-						if (num5 * 10 > EClass.rnd(num4 + 1))
+						if (sourceControlMana * 10 > EClass.rnd(dmg + 1))
 						{
-							if (c == c.pos.FirstChara)
+							if (damageTarget == damageTarget.pos.FirstChara)
 							{
-								CC.ModExp(302, CC.IsPC ? 10 : 50);
+								damageSource.ModExp(302 /* controlmana */, damageSource.IsPC ? 10 : 50);
 							}
 							continue;
 						}
-						num4 = EClass.rnd(num4 * 100 / (100 + num5 * 10 + 1));
-						if (c == c.pos.FirstChara)
+						dmg = EClass.rnd(dmg * 100 / (100 + sourceControlMana * 10 + 1));
+						if (damageTarget == damageTarget.pos.FirstChara)
 						{
-							CC.ModExp(302, CC.IsPC ? 20 : 100);
+							damageSource.ModExp(302 /* controlmana */, damageSource.IsPC ? 20 : 100);
 						}
-						if (num4 == 0)
+						if (dmg == 0)
 						{
 							continue;
 						}
 					}
-					if (CC.HasElement(1214) || (!CC.IsPC && (CC.IsPCFaction || CC.IsPCFactionMinion) && EClass.pc.HasElement(1214) && EClass.rnd(5) != 0))
+					if (damageSource.HasElement(1214 /* featManaPrecision */) || (!damageSource.IsPC && (damageSource.IsPCFaction || damageSource.IsPCFactionMinion) && EClass.pc.HasElement(1214 /* featManaPrecision */) && EClass.rnd(5) != 0))
 					{
 						continue;
 					}
@@ -273,17 +273,17 @@ public class ActEffect : EClass
 				{
 					if (lang == "spell_hand")
 					{
-						string[] list2 = Lang.GetList("attack" + (CC.isChara ? CC.Chara.race.meleeStyle.IsEmpty("Touch") : "Touch"));
+						string[] list2 = Lang.GetList("attack" + (damageSource.isChara ? damageSource.Chara.race.meleeStyle.IsEmpty("Touch") : "Touch"));
 						string @ref = "_elehand".lang(e.source.GetAltname(2), list2[4]);
-						CC.Say(c.IsPCParty ? "cast_hand_ally" : "cast_hand", CC, c, @ref, c.IsPCParty ? list2[1] : list2[2]);
+						damageSource.Say(damageTarget.IsPCParty ? "cast_hand_ally" : "cast_hand", damageSource, damageTarget, @ref, damageTarget.IsPCParty ? list2[1] : list2[2]);
 					}
 					else
 					{
-						CC.Say(lang + "_hit", CC, c, e.Name.ToLower());
+						damageSource.Say(lang + "_hit", damageSource, damageTarget, e.Name.ToLower());
 					}
 				}
-				Chara chara = (CC.isChara ? CC.Chara : ((actref.refThing != null) ? EClass._map.FindChara(actref.refThing.c_uidRefCard) : null));
-				if (c.IsMultisize)
+				Chara damageSourceChara = (damageSource.isChara ? damageSource.Chara : ((actref.refThing != null) ? EClass._map.FindChara(actref.refThing.c_uidRefCard) : null));
+				if (damageTarget.IsMultisize) // Halve AoE damage on big targets
 				{
 					switch (id)
 					{
@@ -293,80 +293,80 @@ public class ActEffect : EClass
 					case EffectId.Meteor:
 					case EffectId.Earthquake:
 					case EffectId.Suicide:
-						num4 /= 2;
+						dmg /= 2;
 						break;
 					}
 				}
-				c.DamageHP(num4, e.id, power * num / 100, AttackSource.None, chara ?? CC);
-				if (id == EffectId.Explosive && CC.trait is TraitCookerMicrowave)
+				damageTarget.DamageHP(dmg, e.id, power * actrefElementPowerMod / 100, AttackSource.None, damageSourceChara ?? damageSource);
+				if (id == EffectId.Explosive && damageSource.trait is TraitCookerMicrowave)
 				{
-					chara = EClass.pc;
+					damageSourceChara = EClass.pc;
 				}
-				if (chara != null && chara.IsAliveInCurrentZone)
+				if (damageSourceChara != null && damageSourceChara.IsAliveInCurrentZone)
 				{
-					chara.DoHostileAction(c);
+					damageSourceChara.DoHostileAction(damageTarget);
 				}
-				num2++;
+				numTargetsHit++;
 			}
 			if ((id == EffectId.Explosive || id == EffectId.Suicide) && ((id != EffectId.Suicide && id != EffectId.Meteor) || !EClass._zone.IsPCFaction))
 			{
-				int num6 = id switch
+				int effectMiningPower = id switch
 				{
-					EffectId.Suicide => CC.LV / 3 + 40, 
+					EffectId.Suicide => damageSource.LV / 3 + 40, 
 					EffectId.Meteor => 50 + power / 20, 
 					_ => (actref.refThing != null) ? actref.refThing.material.hardness : (30 + power / 20), 
 				};
-				bool flag5 = EClass._zone.HasLaw && !EClass._zone.IsPCFaction && (CC.IsPC || (id == EffectId.Explosive && actref.refThing == null)) && !(EClass._zone is Zone_Vernis);
-				if (p.HasObj && p.cell.matObj.hardness <= num6)
+				bool isMiningIllegal = EClass._zone.HasLaw && !EClass._zone.IsPCFaction && (damageSource.IsPC || (id == EffectId.Explosive && actref.refThing == null)) && !(EClass._zone is Zone_Vernis);
+				if (targetPoint.HasObj && targetPoint.cell.matObj.hardness <= effectMiningPower)
 				{
-					EClass._map.MineObj(p);
-					if (flag5)
+					EClass._map.MineObj(targetPoint);
+					if (isMiningIllegal)
 					{
 						EClass.player.ModKarma(-1);
 					}
 				}
-				if (!p.HasObj && p.HasBlock && p.matBlock.hardness <= num6)
+				if (!targetPoint.HasObj && targetPoint.HasBlock && targetPoint.matBlock.hardness <= effectMiningPower)
 				{
-					EClass._map.MineBlock(p);
-					if (flag5)
+					EClass._map.MineBlock(targetPoint);
+					if (isMiningIllegal)
 					{
 						EClass.player.ModKarma(-1);
 					}
 				}
 			}
-			if (e.id == 910)
+			if (e.id == 910 /* eleFire */)
 			{
-				int num7 = 0;
+				int groundBurnMultiplier = 0;
 				if (id == EffectId.Meteor)
 				{
-					num7 = 2;
+					groundBurnMultiplier = 2;
 				}
 				if (EClass._zone.IsPCFaction && EClass._zone.branch.lv >= 3)
 				{
-					num7 = 0;
+					groundBurnMultiplier = 0;
 				}
-				if (num7 > EClass.rnd(10))
+				if (groundBurnMultiplier > EClass.rnd(10))
 				{
-					p.ModFire(4 + EClass.rnd(10));
+					targetPoint.ModFire(4 + EClass.rnd(10));
 				}
 			}
-			if (e.id == 911)
+			if (e.id == 911 /* eleCold */)
 			{
-				p.ModFire(-20);
+				targetPoint.ModFire(-20);
 			}
 		}
 		if (RapidCount == 0)
 		{
-			foreach (Card item3 in list)
+			foreach (Card suicideChainTarget in suicideChainTargets)
 			{
-				if (item3.ExistsOnMap)
+				if (suicideChainTarget.ExistsOnMap)
 				{
 					RapidCount += 2;
-					ProcAt(id, power, BlessedState.Normal, item3, null, item3.pos, isNeg: true, actref);
+					ProcAt(id, power, BlessedState.Normal, suicideChainTarget, null, suicideChainTarget.pos, isNeg: true, actref);
 				}
 			}
 		}
-		return num2 > 0;
+		return numTargetsHit > 0;
 	}
 
 	public static void ProcAt(EffectId id, int power, BlessedState state, Card cc, Card tc, Point tp, bool isNeg, ActRef actRef = default(ActRef))
