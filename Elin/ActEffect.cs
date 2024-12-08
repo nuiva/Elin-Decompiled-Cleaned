@@ -1564,12 +1564,12 @@ public class ActEffect : EClass
 				break;
 			}
 			Msg.Say("wishHappen");
-			Dialog.InputName("dialogWish", "q", delegate(bool cancel, string text)
+			Dialog.InputName("dialogWish", "q", delegate(bool cancel, string wishText)
 			{
 				if (!cancel)
 				{
-					Msg.Say("wish", TC, text);
-					Wish(text, EClass.pc.NameTitled, power);
+					Msg.Say("wish", TC, wishText);
+					Wish(wishText, EClass.pc.NameTitled, power);
 				}
 			});
 			break;
@@ -2146,36 +2146,36 @@ public class ActEffect : EClass
 		return org.GetRandomNeighbor().GetNearestPoint();
 	}
 
-	public static bool Wish(string s, string name, int power)
+	public static bool Wish(string wishText, string name, int power)
 	{
 		Msg.thirdPerson1.Set(EClass.pc);
-		string netMsg = GameLang.Parse("wish".langGame(), thirdPerson: true, name, s);
-		bool net = EClass.core.config.net.enable && EClass.core.config.net.sendEvent;
-		List<WishItem> list = new List<WishItem>();
+		string netMsg = GameLang.Parse("wish".langGame(), thirdPerson: true, name, wishText);
+		bool networkMessagesEnabled = EClass.core.config.net.enable && EClass.core.config.net.sendEvent;
+		List<WishItem> matchingWishItems = new List<WishItem>();
 		int wishLv = 10 + power / 4;
 		int wishValue = power * 200;
 		Debug.Log(power + "/" + wishValue);
-		string _s = s.ToLower();
-		foreach (CardRow r in EClass.sources.cards.rows)
+		string wishTextLower = wishText.ToLower();
+		foreach (CardRow cardRow in EClass.sources.cards.rows)
 		{
-			if (r.HasTag(CTAG.godArtifact))
+			if (cardRow.HasTag(CTAG.godArtifact))
 			{
-				bool flag = false;
-				foreach (Religion item in EClass.game.religions.list)
+				bool playerHasAlreadyReceivedThisArtifact = false;
+				foreach (Religion religion in EClass.game.religions.list)
 				{
-					if (item.IsValidArtifact(r.id))
+					if (religion.IsValidArtifact(cardRow.id))
 					{
-						flag = true;
+						playerHasAlreadyReceivedThisArtifact = true;
 					}
 				}
-				if (!flag)
+				if (!playerHasAlreadyReceivedThisArtifact)
 				{
 					continue;
 				}
 			}
-			else if (r.quality >= 4 || r.HasTag(CTAG.noWish))
+			else if (cardRow.quality >= 4 || cardRow.HasTag(CTAG.noWish))
 			{
-				switch (r.id)
+				switch (cardRow.id)
 				{
 				case "medal":
 				case "plat":
@@ -2186,71 +2186,71 @@ public class ActEffect : EClass
 					continue;
 				}
 			}
-			if (r.isChara)
+			if (cardRow.isChara)
 			{
 				continue;
 			}
-			string text = r.GetName(1).ToLower();
-			int score = Compare(_s, text);
+			string cardNameLower = cardRow.GetName(1).ToLower();
+			int score = Compare(wishTextLower, cardNameLower);
 			if (score == 0)
 			{
 				continue;
 			}
-			list.Add(new WishItem
+			matchingWishItems.Add(new WishItem
 			{
 				score = score,
-				n = text,
+				n = cardNameLower,
 				action = delegate
 				{
-					Debug.Log(r.id);
-					SourceCategory.Row category = EClass.sources.cards.map[r.id].Category;
+					Debug.Log(cardRow.id);
+					SourceCategory.Row category = EClass.sources.cards.map[cardRow.id].Category;
 					if (category.IsChildOf("weapon") || category.IsChildOf("armor") || category.IsChildOf("ranged"))
 					{
 						CardBlueprint.SetRarity(Rarity.Legendary);
 					}
-					Thing thing = ThingGen.Create(r.id, -1, wishLv);
-					int num = 1;
+					Thing thing = ThingGen.Create(cardRow.id, -1, wishLv);
+					int grantedItemCount = 1;
 					switch (thing.id)
 					{
 					case "rod_wish":
 						thing.c_charges = 0;
 						break;
 					case "money":
-						num = EClass.rndHalf(wishValue);
+						grantedItemCount = EClass.rndHalf(wishValue);
 						break;
 					case "plat":
-						num = EClass.rndHalf(wishValue / 2000 + 4);
+						grantedItemCount = EClass.rndHalf(wishValue / 2000 + 4);
 						break;
 					case "money2":
-						num = EClass.rndHalf(wishValue / 1000 + 4);
+						grantedItemCount = EClass.rndHalf(wishValue / 1000 + 4);
 						break;
 					case "medal":
-						num = EClass.rndHalf(wishValue / 3000 + 4);
+						grantedItemCount = EClass.rndHalf(wishValue / 3000 + 4);
 						break;
 					}
-					if (num < 1)
+					if (grantedItemCount < 1)
 					{
-						num = 1;
+						grantedItemCount = 1;
 					}
-					if (num == 1 && thing.trait.CanStack)
+					if (grantedItemCount == 1 && thing.trait.CanStack) // Add extras of the wished item if it's cheap
 					{
-						int num2 = wishValue;
+						int remainingWishValue = wishValue;
 						for (int i = 0; i < 1000; i++)
 						{
-							int num3 = thing.GetPrice() + 500 + i * 200;
-							if (num2 > num3)
+							int extraItemCost = thing.GetPrice() + 500 + i * 200;
+							if (remainingWishValue > extraItemCost)
 							{
-								num++;
-								num2 -= num3;
+								grantedItemCount++;
+								remainingWishValue -= extraItemCost;
 							}
 						}
 					}
-					if (thing.trait is TraitDeed)
+					if (thing.trait is TraitDeed) // Only 1 deed is given no matter how much wish value the player has
 					{
-						num = 1;
+						grantedItemCount = 1;
 					}
-					thing.SetNum(num);
-					Debug.Log(_s + "/" + num + "/" + score);
+					thing.SetNum(grantedItemCount);
+					Debug.Log(wishTextLower + "/" + grantedItemCount + "/" + score);
 					if (thing.HasTag(CTAG.godArtifact))
 					{
 						Religion.Reforge(thing.id);
@@ -2260,7 +2260,7 @@ public class ActEffect : EClass
 						EClass._zone.AddCard(thing, EClass.pc.pos);
 					}
 					netMsg = netMsg + Lang.space + GameLang.Parse("wishNet".langGame(), Msg.IsThirdPerson(thing), Msg.GetName(thing).ToTitleCase());
-					if (net)
+					if (networkMessagesEnabled)
 					{
 						Net.SendChat(name, netMsg, ChatCategory.Wish, Lang.langCode);
 					}
@@ -2268,26 +2268,26 @@ public class ActEffect : EClass
 				}
 			});
 		}
-		if (list.Count == 0)
+		if (matchingWishItems.Count == 0)
 		{
 			netMsg = netMsg + Lang.space + "wishFail".langGame();
-			if (net)
+			if (networkMessagesEnabled)
 			{
 				Net.SendChat(name, netMsg, ChatCategory.Wish, Lang.langCode);
 			}
 			Msg.Say("wishFail");
 			return false;
 		}
-		list.Sort((WishItem a, WishItem b) => b.score - a.score);
-		foreach (WishItem item2 in list)
+		matchingWishItems.Sort((WishItem a, WishItem b) => b.score - a.score);
+		foreach (WishItem item2 in matchingWishItems)
 		{
-			Debug.Log(item2.score + "/" + s + "/" + item2.n);
+			Debug.Log(item2.score + "/" + wishText + "/" + item2.n);
 		}
-		list[0].action();
+		matchingWishItems[0].action(); // Grant the wish with the best string matching score
 		return true;
 	}
 
-	public static int Compare(string s, string t)
+	public static int Compare(string s, string t) // String comparison function for wishes, returns higher value if strings match closely
 	{
 		if (s.IsEmpty())
 		{
