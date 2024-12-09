@@ -25,6 +25,12 @@ public class ConSleep : BadCondition
 	[JsonProperty]
 	public bool slept;
 
+	[JsonProperty]
+	public int uidRide;
+
+	[JsonProperty]
+	public int uidParasite;
+
 	public override Emo2 EmoIcon => Emo2.speeing;
 
 	public override bool ConsumeTurn => true;
@@ -64,6 +70,19 @@ public class ConSleep : BadCondition
 		}
 		if (owner.IsPC && pcSleep > 0)
 		{
+			if (!EClass._zone.IsRegion)
+			{
+				if (EClass.pc.ride != null)
+				{
+					uidRide = EClass.pc.ride.uid;
+					ActRide.Unride(EClass.pc, parasite: false, talk: false);
+				}
+				if (EClass.pc.parasite != null)
+				{
+					uidParasite = EClass.pc.parasite.uid;
+					ActRide.Unride(EClass.pc, parasite: true, talk: false);
+				}
+			}
 			pcSleep--;
 			if (pcSleep != 0)
 			{
@@ -213,71 +232,88 @@ public class ConSleep : BadCondition
 		if (!owner.IsPC)
 		{
 			owner.sleepiness.Set(0);
+			return;
 		}
-		else
+		if (owner.IsPC)
 		{
-			if (owner.isDead)
+			if (uidRide != 0)
 			{
-				return;
-			}
-			TraitPillow traitPillow = (pcPillow?.trait as TraitPillow) ?? EClass.pc.pos.FindThing<TraitPillow>();
-			if (pickup)
-			{
-				TryPick(pcBed, posBed);
-				TryPick(pcPillow, posPillow);
-			}
-			if (slept)
-			{
-				Thing thing = EClass.pc.things.Find<TraitGrimoire>();
-				if (thing != null && thing.c_lockLv == 0 && !EClass._zone.IsRegion)
+				Chara chara = EClass._map.FindChara(uidRide);
+				if (chara != null)
 				{
-					foreach (Thing item in thing.things.List((Thing _t) => _t.trait is TraitSpellbook || _t.trait is TraitAncientbook || _t.id == "234"))
+					ActRide.Ride(EClass.pc, chara, parasite: false, talk: false);
+				}
+			}
+			if (uidParasite != 0)
+			{
+				Chara chara2 = EClass._map.FindChara(uidParasite);
+				if (chara2 != null)
+				{
+					ActRide.Ride(EClass.pc, chara2, parasite: true, talk: false);
+				}
+			}
+		}
+		if (owner.isDead)
+		{
+			return;
+		}
+		TraitPillow traitPillow = (pcPillow?.trait as TraitPillow) ?? EClass.pc.pos.FindThing<TraitPillow>();
+		if (pickup)
+		{
+			TryPick(pcBed, posBed);
+			TryPick(pcPillow, posPillow);
+		}
+		if (slept)
+		{
+			Thing thing = EClass.pc.things.Find<TraitGrimoire>();
+			if (thing != null && thing.c_lockLv == 0 && !EClass._zone.IsRegion)
+			{
+				foreach (Thing item in thing.things.List((Thing _t) => _t.trait is TraitSpellbook || _t.trait is TraitAncientbook || _t.id == "234"))
+				{
+					TraitBaseSpellbook traitBaseSpellbook = item.trait as TraitBaseSpellbook;
+					if (item.trait is TraitAncientbook && item.isOn)
 					{
-						TraitBaseSpellbook traitBaseSpellbook = item.trait as TraitBaseSpellbook;
-						if (item.trait is TraitAncientbook && item.isOn)
+						continue;
+					}
+					int c_charges = item.c_charges;
+					for (int i = 0; i < c_charges; i++)
+					{
+						if (EClass.pc.isDead)
 						{
-							continue;
+							return;
 						}
-						int c_charges = item.c_charges;
-						for (int i = 0; i < c_charges; i++)
+						int num = traitBaseSpellbook.GetActDuration(EClass.pc) + 1;
+						bool flag = false;
+						for (int j = 0; j < num; j++)
 						{
-							if (EClass.pc.isDead)
+							if (!traitBaseSpellbook.TryProgress(new AIProgress
 							{
+								owner = EClass.pc
+							}))
+							{
+								flag = true;
+								if (!EClass.pc.isDead)
+								{
+									break;
+								}
 								return;
 							}
-							int num = traitBaseSpellbook.GetActDuration(EClass.pc) + 1;
-							bool flag = false;
-							for (int j = 0; j < num; j++)
-							{
-								if (!traitBaseSpellbook.TryProgress(new AIProgress
-								{
-									owner = EClass.pc
-								}))
-								{
-									flag = true;
-									if (!EClass.pc.isDead)
-									{
-										break;
-									}
-									return;
-								}
-							}
-							if (!flag)
-							{
-								traitBaseSpellbook.OnRead(EClass.pc);
-							}
+						}
+						if (!flag)
+						{
+							traitBaseSpellbook.OnRead(EClass.pc);
 						}
 					}
 				}
 			}
-			if (!EClass.pc.isDead && slept)
+		}
+		if (!EClass.pc.isDead && slept)
+		{
+			EClass.player.recipes.OnSleep(traitPillow is TraitPillowEhekatl);
+			EClass.player.DreamSpell();
+			if (traitPillow is TraitPillowGod traitPillowGod)
 			{
-				EClass.player.recipes.OnSleep(traitPillow is TraitPillowEhekatl);
-				EClass.player.DreamSpell();
-				if (traitPillow is TraitPillowGod traitPillowGod)
-				{
-					traitPillowGod.Deity.Talk("morning");
-				}
+				traitPillowGod.Deity.Talk("morning");
 			}
 		}
 		static void TryPick(Thing t, ItemPosition pos)

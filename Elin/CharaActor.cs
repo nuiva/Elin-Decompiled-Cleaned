@@ -27,6 +27,10 @@ public class CharaActor : CardActor
 		Sprite sprite = sr.sprite;
 		Texture2D texture = sprite.texture;
 		Rect textureRect = sprite.textureRect;
+		if (!isPCC)
+		{
+			sr.flipX = owner.flipX;
+		}
 		Vector4 value = new Vector4(textureRect.x / (float)texture.width, textureRect.min.y / (float)texture.height, textureRect.max.x / (float)texture.width, textureRect.max.y / (float)texture.height);
 		mpb.SetVector("_Rect", value);
 		mpb.SetFloat("_PixelHeight", sprite.rect.height);

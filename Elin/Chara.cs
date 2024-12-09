@@ -2875,10 +2875,7 @@ public class Chara : Card, IPathfindWalker
 			EClass.player.nextZone = z;
 			if (IsInActiveZone && !EClass.player.simulatingZone)
 			{
-				if (held != null && held.trait.CanOnlyCarry)
-				{
-					DropHeld();
-				}
+				TryDropCarryOnly();
 				if (z.instance == null && currentZone.instance == null && !EClass.player.deathZoneMove && !EClass.pc.isDead && (z.IsPCFaction || z.WillAutoSave) && z.GetTopZone() != EClass._zone.GetTopZone())
 				{
 					if (EClass.player.returnInfo != null)
@@ -3292,9 +3289,16 @@ public class Chara : Card, IPathfindWalker
 			}
 			if (IsPC)
 			{
-				if (phase2 >= 5 && !(ai is AI_Eat) && EClass.rnd(5) == 0)
+				if (phase2 >= 5)
 				{
-					DamageHP(1 + EClass.rnd(2) + MaxHP / 50, AttackSource.Hunger);
+					if (!(ai is AI_Eat) && EClass.rnd(5) == 0)
+					{
+						DamageHP(1 + EClass.rnd(2) + MaxHP / 50, AttackSource.Hunger);
+					}
+					if (!isDead && EClass.rnd(3) == 0)
+					{
+						stamina.Mod(-1);
+					}
 				}
 				if (isDead)
 				{
@@ -4013,6 +4017,18 @@ public class Chara : Card, IPathfindWalker
 		return held.Split(a);
 	}
 
+	public void TryDropCarryOnly()
+	{
+		if (held != null && held.trait.CanOnlyCarry)
+		{
+			DropHeld();
+		}
+		foreach (Thing item in EClass.pc.things.List((Thing t) => t.trait.CanOnlyCarry))
+		{
+			DropThing(item);
+		}
+	}
+
 	public Card DropHeld(Point dropPos = null)
 	{
 		if (held == null)
@@ -4055,6 +4071,10 @@ public class Chara : Card, IPathfindWalker
 		t.ignoreAutoPick = true;
 		PlaySound("drop");
 		EClass._zone.AddCard(t, pos);
+		if (t.trait.CanOnlyCarry)
+		{
+			t.Install();
+		}
 	}
 
 	public AttackStyle GetFavAttackStyle()
@@ -4687,10 +4707,7 @@ public class Chara : Card, IPathfindWalker
 				Msg.SetColor();
 				SpawnLoot(origin);
 			}
-			if (held != null && held.trait.CanOnlyCarry)
-			{
-				DropHeld();
-			}
+			TryDropCarryOnly();
 		}
 		if (IsPCFaction)
 		{
@@ -5540,7 +5557,7 @@ public class Chara : Card, IPathfindWalker
 
 	public bool FindNewEnemy()
 	{
-		if (EClass._zone.isPeace && base.IsPCFactionOrMinion)
+		if (EClass._zone.isPeace && base.IsPCFactionOrMinion && !IsPC)
 		{
 			return false;
 		}
@@ -8332,13 +8349,16 @@ public class Chara : Card, IPathfindWalker
 			for (int num = conditions.Count - 1; num >= 0; num--)
 			{
 				Condition condition = conditions[num];
-				if (condition.Type == ConditionType.Bad || condition.Type == ConditionType.Debuff || condition.Type == ConditionType.Disease)
+				if (!(condition is ConAnorexia) || type == CureType.Death)
 				{
-					condition.Kill();
-				}
-				else if (type == CureType.Death && condition.isPerfume)
-				{
-					condition.Kill();
+					if (condition.Type == ConditionType.Bad || condition.Type == ConditionType.Debuff || condition.Type == ConditionType.Disease)
+					{
+						condition.Kill();
+					}
+					else if (type == CureType.Death && condition.isPerfume)
+					{
+						condition.Kill();
+					}
 				}
 			}
 			CureCondition<ConWait>();

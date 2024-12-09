@@ -14,7 +14,8 @@ public class TraitEcoMark : Trait
 					SE.Play("click_paper");
 					owner.ModNum(-1);
 					t.elements.SetBase(652, 10);
-					t.ChangeWeight(t.source.weight * 100 / 110);
+					int num = (t.isWeightChanged ? t.c_weight : t.source.weight);
+					t.ChangeWeight(num * 100 / 110);
 					return false;
 				});
 			}

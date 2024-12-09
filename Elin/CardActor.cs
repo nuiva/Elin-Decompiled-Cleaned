@@ -247,7 +247,7 @@ public class CardActor : Actor
 		Sprite sprite2 = (sr.sprite = owner.GetSprite(dir));
 		Sprite sprite4 = (spriteRenderer.sprite = sprite2);
 		Sprite sprite5 = sprite4;
-		sr.flipX = (dir == 1 || dir == 3) && (owner.Thing == null || !owner.Thing.isEquipped);
+		sr.flipX = dir == 1 || dir == 3;
 		mpb.SetTexture("_MainTex", sprite5.texture);
 		Vector4 value = new Vector4(sprite5.textureRect.min.x / (float)sprite5.texture.width, sprite5.textureRect.min.y / (float)sprite5.texture.height, sprite5.textureRect.max.x / (float)sprite5.texture.width, sprite5.textureRect.max.y / (float)sprite5.texture.height);
 		mpb.SetVector("_Rect", value);

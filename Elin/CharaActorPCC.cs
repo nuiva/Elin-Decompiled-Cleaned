@@ -124,6 +124,10 @@ public class CharaActorPCC : CharaActor
 					p.v.x = p.x;
 					p.v.y = p.y;
 					p.v.z = p.z;
+					if (thing.renderer.hasActor)
+					{
+						thing.renderer.RefreshSprite();
+					}
 					thing.renderer.Draw(p, ref p.v, drawShadow: false);
 				}
 				break;
@@ -148,24 +152,31 @@ public class CharaActorPCC : CharaActor
 				break;
 			}
 			case 0:
-				if (!flag && owner.body.slotOffHand != null && EMono.core.config.game.showOffhand)
+			{
+				if (flag || owner.body.slotOffHand == null || !EMono.core.config.game.showOffhand)
 				{
-					Thing thing2 = owner.body.slotOffHand.thing;
-					if (thing2 != null)
+					break;
+				}
+				Thing thing2 = owner.body.slotOffHand.thing;
+				if (thing2 != null)
+				{
+					bool flag4 = num == 1 || num == 3;
+					Vector3[] offHandPos = EMono.setting.render.offHandPos;
+					Vector3[] offHand = EMono.setting.render.animeWalk[provider.currentFrame].offHand;
+					SourcePref pref2 = thing2.source.pref;
+					thing2.dir = ((!flag4) ? 1 : 0);
+					thing2.SetRenderParam(p);
+					p.x = org.x + offHandPos[num].x + offHand[num].x + (flag4 ? 0.01f : (-0.01f)) * (float)pref2.equipX;
+					p.y = org.y + offHandPos[num].y + offHand[num].y + 0.01f * (float)pref2.equipY;
+					p.z = org.z - thing2.renderer.data.offset.z + offHandPos[num].z + offHand[num].z;
+					if (thing2.renderer.hasActor)
 					{
-						bool flag4 = num == 1 || num == 3;
-						Vector3[] offHandPos = EMono.setting.render.offHandPos;
-						Vector3[] offHand = EMono.setting.render.animeWalk[provider.currentFrame].offHand;
-						SourcePref pref2 = thing2.source.pref;
-						thing2.dir = ((!flag4) ? 1 : 0);
-						thing2.SetRenderParam(p);
-						p.x = org.x + offHandPos[num].x + offHand[num].x + (flag4 ? 0.01f : (-0.01f)) * (float)pref2.equipX;
-						p.y = org.y + offHandPos[num].y + offHand[num].y + 0.01f * (float)pref2.equipY;
-						p.z = org.z - thing2.renderer.data.offset.z + offHandPos[num].z + offHand[num].z;
-						thing2.renderer.Draw(p);
+						thing2.renderer.RefreshSprite();
 					}
+					thing2.renderer.Draw(p);
 				}
 				break;
+			}
 			case -1:
 				break;
 			}
