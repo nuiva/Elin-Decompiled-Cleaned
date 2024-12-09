@@ -1709,9 +1709,9 @@ public class Trait : EClass
 					break;
 				default:
 				{
-					float num = (float)(3 + Mathf.Min(ShopLv / 5, 10)) + Mathf.Sqrt(ShopLv);
-					num = num * (float)(100 + EClass.pc.Evalue(1406) * 5) / 100f;
-					for (int i = 0; (float)i < num; i++)
+					float numGeneratedStockItems = (float)(3 + Mathf.Min(ShopLv / 5, 10)) + Mathf.Sqrt(ShopLv);
+					numGeneratedStockItems = numGeneratedStockItems * (float)(100 + EClass.pc.Evalue(1406 /* featTourist */) * 5) / 100f;
+					for (int i = 0; (float)i < numGeneratedStockItems; i++)
 					{
 						Thing thing = CreateStock();
 						if ((!(thing.trait is TraitRod) || thing.c_charges != 0) && thing.GetPrice() > 0)
@@ -1782,7 +1782,7 @@ public class Trait : EClass
 				case ShopType.Festival:
 					if (EClass._zone.IsFestival)
 					{
-						Add("1085", 1, 0);
+						Add("1085" /* indulgence */, 1, 0);
 						if (EClass._zone.id == "noyel")
 						{
 							Add("holyFeather", 1, 0);
@@ -1824,7 +1824,7 @@ public class Trait : EClass
 				ShopType shopType = ShopType;
 				if (shopType == ShopType.General || shopType == ShopType.Food || shopType == ShopType.Festival)
 				{
-					for (int num9 = 0; num9 < (EClass.debug.enable ? 30 : 3); num9++)
+					for (int numGeneratedGambleChests = 0; numGeneratedGambleChests < (EClass.debug.enable ? 30 : 3); numGeneratedGambleChests++)
 					{
 						if (EClass.rnd(3) == 0)
 						{
@@ -1970,7 +1970,7 @@ public class Trait : EClass
 					}
 					if (EClass.rnd(5) == 0)
 					{
-						return Create("234");
+						return Create("234" /* naughty book */);
 					}
 					return FromFilter("shop_drink");
 				case ShopType.Furniture:
@@ -1981,9 +1981,9 @@ public class Trait : EClass
 					return FromFilter("shop_magic");
 				case ShopType.Ecopo:
 				{
-					Thing thing3 = TraitSeed.MakeRandomSeed(enc: true);
-					TraitSeed.LevelSeed(thing3, (thing3.trait as TraitSeed).row, 1);
-					return thing3;
+					Thing seedThing = TraitSeed.MakeRandomSeed(enc: true);
+					TraitSeed.LevelSeed(seedThing, (seedThing.trait as TraitSeed).row, 1);
+					return seedThing;
 				}
 				case ShopType.Healer:
 				{
@@ -2037,16 +2037,16 @@ public class Trait : EClass
 				case ShopType.Blackmarket:
 				case ShopType.Exotic:
 				{
-					int num = 30;
+					int itemCommonnessFactor = 30;
 					if (Guild.Thief.IsCurrentZone)
 					{
-						num = 25;
+						itemCommonnessFactor = 25;
 					}
 					if (Guild.Merchant.IsCurrentZone)
 					{
-						num = 15;
+						itemCommonnessFactor = 15;
 					}
-					CardBlueprint.SetRarity((EClass.rnd(num * 5) == 0) ? Rarity.Mythical : ((EClass.rnd(num) == 0) ? Rarity.Legendary : ((EClass.rnd(5) == 0) ? Rarity.Superior : Rarity.Normal)));
+					CardBlueprint.SetRarity((EClass.rnd(itemCommonnessFactor * 5) == 0) ? Rarity.Mythical : ((EClass.rnd(itemCommonnessFactor) == 0) ? Rarity.Legendary : ((EClass.rnd(5) == 0) ? Rarity.Superior : Rarity.Normal)));
 					return FromFilter("shop_blackmarket");
 				}
 				case ShopType.Drink:

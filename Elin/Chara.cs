@@ -6853,21 +6853,21 @@ public class Chara : Card, IPathfindWalker
 
 	public bool TryIdentify(Thing t, int count = 1, bool show = true)
 	{
-		int num = Evalue(289);
-		if (num == 0)
+		int appraisingSkill = Evalue(289 /* appraising */);
+		if (appraisingSkill == 0)
 		{
 			return false;
 		}
-		int lV = t.LV;
-		if (EClass.rnd(num * num + 5) > EClass.rnd(lV * lV) * 20)
+		int appraisalTargetLevel = t.LV;
+		if (EClass.rnd(appraisingSkill * appraisingSkill + 5) > EClass.rnd(appraisalTargetLevel * appraisalTargetLevel) * 20)
 		{
-			t.Identify(show, (num >= 20) ? IDTSource.SkillHigh : IDTSource.Skill);
-			int num2 = 50;
-			if (lV > num)
+			t.Identify(show, (appraisingSkill >= 20) ? IDTSource.SkillHigh : IDTSource.Skill);
+			int appraisingExpGain = 50;
+			if (appraisalTargetLevel > appraisingSkill)
 			{
-				num2 += (lV - num) * 10;
+				appraisingExpGain += (appraisalTargetLevel - appraisingSkill) * 10;
 			}
-			elements.ModExp(289, Mathf.Min(num2, 1000));
+			elements.ModExp(289 /* appraising */, Mathf.Min(appraisingExpGain, 1000));
 			return true;
 		}
 		return false;

@@ -502,10 +502,10 @@ public class Thing : Card
 		string text5 = "";
 		string text6 = source.GetText("unit");
 		ArticleStyle style2 = ((style == NameStyle.FullNoArticle) ? ArticleStyle.None : ArticleStyle.Default);
-		bool num2 = base.IsIdentified || source.unknown.IsEmpty();
+		bool hasNormalNameGeneration = base.IsIdentified || source.unknown.IsEmpty();
 		bool isEquipmentOrRanged = base.IsEquipmentOrRanged;
 		bool flag = Lang.setting.nameStyle == 0;
-		if (num2)
+		if (hasNormalNameGeneration)
 		{
 			if (base.c_idRefCard.IsEmpty() && !base.c_altName.IsEmpty())
 			{
@@ -1915,17 +1915,17 @@ public class Thing : Card
 		{
 			IDTSource.SkillHigh => Rarity.Legendary, 
 			IDTSource.Skill => Rarity.Superior, 
-			_ => Rarity.Normal, 
+			_ => Rarity.Normal, // == 0
 		};
-		if (rarity != 0 && ((base.IsEquipmentOrRanged && base.rarity >= rarity) || base.rarity >= Rarity.Mythical))
+		if (rarity != 0 && ((base.IsEquipmentOrRanged && base.rarity >= rarity) || base.rarity >= Rarity.Mythical)) // rarity != 0 checks whether idtSource was Skill or SkillHigh
 		{
 			base.c_IDTState = 3;
 		}
-		else if (base.rarity >= Rarity.Mythical && idtSource != IDTSource.SuperiorIdentify)
+		else if (base.rarity >= Rarity.Mythical && idtSource != IDTSource.SuperiorIdentify) // Mythical rarity requires superior identify
 		{
 			base.c_IDTState = 1;
 		}
-		else
+		else // Other items are identified successfully
 		{
 			base.c_IDTState = 0;
 		}

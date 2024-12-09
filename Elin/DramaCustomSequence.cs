@@ -877,7 +877,7 @@ public class DramaCustomSequence : EClass
 					EClass._zone.investment += cost4;
 					EClass._zone.ModDevelopment(5 + EClass.rnd(5));
 					EClass._zone.ModInfluence(2);
-					EClass.pc.ModExp(292, 100 + EClass._zone.development * 2);
+					EClass.pc.ModExp(292 /* investing */, 100 + EClass._zone.development * 2);
 					if (quick)
 					{
 						TempGoto("_investZone");

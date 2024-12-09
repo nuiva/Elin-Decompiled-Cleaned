@@ -2105,7 +2105,7 @@ public class Player : EClass
 	public void OnAdvanceHour()
 	{
 		EClass.pc.faith.OnChangeHour();
-		if (EClass.pc.Evalue(289) > 0)
+		if (EClass.pc.Evalue(289 /* appraising */) > 0)
 		{
 			foreach (Thing item in EClass.pc.things.List((Thing t) => t.c_IDTState == 5, onlyAccessible: true))
 			{

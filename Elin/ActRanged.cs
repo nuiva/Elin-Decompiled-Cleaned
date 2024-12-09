@@ -96,44 +96,44 @@ public class ActRanged : ActThrow
 		{
 			return false;
 		}
-		bool flag = weapon.trait is TraitToolRangeGun;
-		bool flag2 = weapon.trait is TraitToolRangeCane;
-		GameSetting.EffectData effectData = EClass.setting.effect.guns.TryGetValue(weapon.id) ?? EClass.setting.effect.guns[flag2 ? "cane" : (flag ? "gun" : "bow")];
+		bool isWeaponGun = weapon.trait is TraitToolRangeGun;
+		bool isWeaponRangeCane = weapon.trait is TraitToolRangeCane;
+		GameSetting.EffectData effectData = EClass.setting.effect.guns.TryGetValue(weapon.id) ?? EClass.setting.effect.guns[isWeaponRangeCane ? "cane" : (isWeaponGun ? "gun" : "bow")];
 		bool hasHit = false;
 		int numFire = effectData.num;
 		int numFireWithoutDamageLoss = numFire;
-		int num = weapon.Evalue(602);
-		if (num > 0)
+		int weaponModRapid = weapon.Evalue(602 /* mod_rapid */);
+		if (weaponModRapid > 0)
 		{
-			numFire += num / 10 + ((num % 10 > EClass.rnd(10)) ? 1 : 0);
+			numFire += weaponModRapid / 10 + ((weaponModRapid % 10 > EClass.rnd(10)) ? 1 : 0);
 		}
-		numFire += Act.CC.Evalue(1652);
-		int num2 = numFire;
-		int num3 = 1 + weapon.material.hardness / 30 + EClass.rnd(3);
-		int drill = weapon.Evalue(606);
-		int scatter = weapon.Evalue(607);
-		int num4 = weapon.Evalue(604);
-		if (num4 > 0)
+		numFire += Act.CC.Evalue(1652 /* featRapidArrow */);
+		int numSpentAmmo = numFire;
+		int caneManaCost = 1 + weapon.material.hardness / 30 + EClass.rnd(3);
+		int weaponModDrill = weapon.Evalue(606 /* mod_drill */);
+		int weaponModScatter = weapon.Evalue(607 /* mod_scatter */);
+		int weaponModAmmoRecover = weapon.Evalue(604 /* mod_ammo_recover */);
+		if (weaponModAmmoRecover > 0)
 		{
 			for (int i = 0; i < numFire; i++)
 			{
-				if (Mathf.Sqrt(num4) * 5f + 10f > (float)EClass.rnd(100))
+				if (Mathf.Sqrt(weaponModAmmoRecover) * 5f + 10f > (float)EClass.rnd(100))
 				{
-					num2--;
+					numSpentAmmo--;
 				}
 			}
-			num3 = Mathf.Max(1, num3 * 100 / (100 + num4 * 5));
+			caneManaCost = Mathf.Max(1, caneManaCost * 100 / (100 + weaponModAmmoRecover * 5));
 		}
 		string missSound = ((weapon.trait is TraitToolRangeGun) ? "miss_bullet" : "miss_arrow");
 		if (weapon.trait is TraitToolRangeCane)
 		{
-			foreach (Element item in weapon.elements.dict.Values.Where((Element e) => e.source.categorySub == "eleAttack"))
+			foreach (Element weaponEleAttackProc in weapon.elements.dict.Values.Where((Element e) => e.source.categorySub == "eleAttack"))
 			{
-				num3 += item.source.LV / 15;
+				caneManaCost += weaponEleAttackProc.source.LV / 15;
 			}
 			if (Act.CC.IsPC)
 			{
-				if (Act.CC.mana.value < num3)
+				if (Act.CC.mana.value < caneManaCost)
 				{
 					if (!Act.CC.ai.IsNoGoal)
 					{
@@ -189,16 +189,16 @@ public class ActRanged : ActThrow
 		Act.CC.LookAt(Act.TP);
 		int index = 0;
 		Point orgTP = Act.TP.Copy();
-		List<Point> points = new List<Point>();
-		if (drill > 0)
+		List<Point> weaponAoeProcPoints = new List<Point>();
+		if (weaponModDrill > 0)
 		{
-			points = EClass._map.ListPointsInLine(Act.CC.pos, Act.TP, drill / 10 + ((drill % 10 > EClass.rnd(10)) ? 1 : 0) + 1);
+			weaponAoeProcPoints = EClass._map.ListPointsInLine(Act.CC.pos, Act.TP, weaponModDrill / 10 + ((weaponModDrill % 10 > EClass.rnd(10)) ? 1 : 0) + 1);
 		}
-		else if (scatter > 0)
+		else if (weaponModScatter > 0)
 		{
 			Act.TP.ForeachNeighbor(delegate(Point _p)
 			{
-				points.Add(_p.Copy());
+				weaponAoeProcPoints.Add(_p.Copy());
 			});
 		}
 		if (EClass.core.config.game.waitOnRange)
@@ -206,24 +206,24 @@ public class ActRanged : ActThrow
 			EClass.Wait(0.25f, Act.CC);
 		}
 		Shoot(Act.TC, Act.TP);
-		if (points.Count > 0)
+		if (weaponAoeProcPoints.Count > 0)
 		{
-			Point obj = Act.TP.Copy();
-			foreach (Point item2 in points)
+			Point targetPoint = Act.TP.Copy();
+			foreach (Point aoeProcPoint in weaponAoeProcPoints)
 			{
-				if (!item2.Equals(obj))
+				if (!aoeProcPoint.Equals(targetPoint))
 				{
-					Chara firstChara = item2.FirstChara;
-					if ((firstChara == null || firstChara.IsHostile(Act.CC)) && (firstChara != null || scatter != 0))
+					Chara firstChara = aoeProcPoint.FirstChara;
+					if ((firstChara == null || firstChara.IsHostile(Act.CC)) && (firstChara != null || weaponModScatter != 0))
 					{
-						Shoot(item2.FirstChara, item2);
+						Shoot(aoeProcPoint.FirstChara, aoeProcPoint);
 					}
 				}
 			}
 		}
 		if (!(weapon.trait is TraitToolRangeCane))
 		{
-			weapon.c_ammo -= num2;
+			weapon.c_ammo -= numSpentAmmo;
 			if (weapon.ammoData != null)
 			{
 				weapon.ammoData.Num = weapon.c_ammo;
@@ -250,7 +250,7 @@ public class ActRanged : ActThrow
 			}
 			if (weapon.trait is TraitToolRangeCane)
 			{
-				Act.CC.mana.Mod(-num3 * numFire);
+				Act.CC.mana.Mod(-caneManaCost * numFire);
 			}
 		}
 		return true;
@@ -282,16 +282,16 @@ public class ActRanged : ActThrow
 				AttackProcess.Current.posRangedAnime = Act.TP.Copy();
 				AttackProcess.Current.ignoreAnime = index > 1;
 				AttackProcess.Current.ignoreAttackSound = false;
-				if (drill > 0 && points.Count > 0)
+				if (weaponModDrill > 0 && weaponAoeProcPoints.Count > 0)
 				{
-					AttackProcess.Current.posRangedAnime = points.LastItem();
+					AttackProcess.Current.posRangedAnime = weaponAoeProcPoints.LastItem();
 				}
-				else if (scatter > 0)
+				else if (weaponModScatter > 0)
 				{
 					AttackProcess.Current.ignoreAnime = false;
 					AttackProcess.Current.ignoreAttackSound = index > 1;
 				}
-				if (scatter > 0)
+				if (weaponModScatter > 0)
 				{
 					dmgMulti = Mathf.Clamp(1.2f - 0.2f * (float)Act.CC.Dist(Act.TP) - (Act.TP.Equals(orgTP) ? 0f : 0.4f), 0.2f, 1f);
 				}

@@ -4,12 +4,12 @@ public class CalcMoney : EClass
 {
 	public static int Negotiate(int a, float mod = 1.5f)
 	{
-		return (int)Mathf.Max((long)a * 100L / (long)(100f + (float)Mathf.Max(0, EClass.pc.CHA / 2 + EClass.pc.Evalue(291)) * mod), 1f);
+		return (int)Mathf.Max((long)a * 100L / (long)(100f + (float)Mathf.Max(0, EClass.pc.CHA / 2 + EClass.pc.Evalue(291 /* negotiation */)) * mod), 1f);
 	}
 
 	public static int Invest(int a, float mod = 2f)
 	{
-		return (int)Mathf.Max((long)a * 100L / (long)(100f + (float)Mathf.Max(0, EClass.pc.CHA / 2 + EClass.pc.Evalue(292)) * mod), 1f);
+		return (int)Mathf.Max((long)a * 100L / (long)(100f + (float)Mathf.Max(0, EClass.pc.CHA / 2 + EClass.pc.Evalue(292 /* investing */)) * mod), 1f);
 	}
 
 	public static int Meal(Chara c)
