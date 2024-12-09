@@ -9,7 +9,7 @@ public class TraitPowerStatue : TraitItem
 	public override void OnCreate(int lv)
 	{
 		owner.isOn = true;
-		owner.ChangeMaterial(12);
+		owner.ChangeMaterial(12 /* gold */);
 		owner.c_seed = EClass.rnd(20000);
 		owner.SetLv(lv);
 	}

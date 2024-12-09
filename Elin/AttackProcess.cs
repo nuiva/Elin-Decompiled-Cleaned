@@ -144,19 +144,19 @@ public class AttackProcess : EClass
 			else if (TP != null)
 			{
 				int num = CC.pos.Distance(TP);
-				distMod = Mathf.Max(115 - 10 * Mathf.Abs(num - toolRange.BestDist) * 100 / (100 + weapon.Evalue(605) * 10), 80);
+				distMod = Mathf.Max(115 - 10 * Mathf.Abs(num - toolRange.BestDist) * 100 / (100 + weapon.Evalue(605 /* mod_precision */) * 10), 80);
 			}
 		}
 		if (isThrow)
 		{
-			bool flag = weapon.HasTag(CTAG.throwWeapon) || weapon.HasTag(CTAG.throwWeaponEnemy);
-			int num2 = (int)Mathf.Clamp(Mathf.Sqrt(weapon.SelfWeight + weapon.ChildrenWeight) * 3f + 25f + (float)(flag ? 75 : 0), 10f, 400f + Mathf.Sqrt(CC.STR) * 50f);
-			int num3 = Mathf.Clamp(weapon.material.hardness, flag ? 40 : 20, 200);
-			weaponSkill = CC.elements.GetOrCreateElement(108);
+			bool isThrowWeapon = weapon.HasTag(CTAG.throwWeapon) || weapon.HasTag(CTAG.throwWeaponEnemy);
+			int damageWeightMultiplier = (int)Mathf.Clamp(Mathf.Sqrt(weapon.SelfWeight + weapon.ChildrenWeight) * 3f + 25f + (float)(isThrowWeapon ? 75 : 0), 10f, 400f + Mathf.Sqrt(CC.STR) * 50f);
+			int damageHardnessMultiplier = Mathf.Clamp(weapon.material.hardness, isThrowWeapon ? 40 : 20, 200);
+			weaponSkill = CC.elements.GetOrCreateElement(108 /* throwing */);
 			attackType = AttackType.Blunt;
 			dBonus = CC.DMG + (CC.IsPCParty ? 3 : 7);
 			dNum = 2;
-			dDim = (((!CC.IsPCParty) ? CC.LV : 0) + CC.STR + CC.Evalue(108)) * num2 * num3 / 10000 / 2;
+			dDim = (((!CC.IsPCParty) ? CC.LV : 0) + CC.STR + CC.Evalue(108 /* throwing */)) * damageWeightMultiplier * damageHardnessMultiplier / 10000 / 2;
 			dMulti = 1f;
 			toHitBase = EClass.curve(CC.DEX / 4 + CC.STR / 2 + weaponSkill.Value, 50, 25) + (CC.IsPCFaction ? 75 : 250);
 			toHitFix = CC.HIT + weapon.HIT;
@@ -164,25 +164,25 @@ public class AttackProcess : EClass
 		}
 		else if (IsMartial || IsMartialWeapon)
 		{
-			weaponSkill = CC.elements.GetOrCreateElement(100);
-			bool flag2 = weapon != null && weapon.Evalue(482) > 0;
-			if (flag2)
+			weaponSkill = CC.elements.GetOrCreateElement(100 /* martial */);
+			bool isForceWeapon = weapon != null && weapon.Evalue(482 /* force_weapon */) > 0;
+			if (isForceWeapon)
 			{
-				weaponSkill = CC.elements.GetOrCreateElement(305);
+				weaponSkill = CC.elements.GetOrCreateElement(305 /* magicDevice */);
 			}
 			attackType = ((!CC.race.meleeStyle.IsEmpty()) ? CC.race.meleeStyle.ToEnum<AttackType>() : ((EClass.rnd(2) == 0) ? AttackType.Kick : AttackType.Punch));
 			dBonus = CC.DMG + CC.encLV + (int)Mathf.Sqrt(Mathf.Max(0, CC.STR / 5 + weaponSkill.Value / 4));
 			dNum = 2 + Mathf.Min(weaponSkill.Value / 10, 4);
 			dDim = 5 + (int)Mathf.Sqrt(Mathf.Max(0, weaponSkill.Value / 3));
-			dMulti = 0.6f + (float)(CC.STR / 2 + weaponSkill.Value / 2 + CC.Evalue(flag2 ? 304 : 132) / 2) / 50f;
-			dMulti += 0.05f * (float)CC.Evalue(1400);
+			dMulti = 0.6f + (float)(CC.STR / 2 + weaponSkill.Value / 2 + CC.Evalue(isForceWeapon ? 304 /* casting */ : 132 /* tactics */) / 2) / 50f;
+			dMulti += 0.05f * (float)CC.Evalue(1400 /* featWarrior */);
 			toHitBase = EClass.curve(CC.DEX / 3 + CC.STR / 3 + weaponSkill.Value, 50, 25) + 50;
 			toHitFix = CC.HIT;
 			if (attackStyle == AttackStyle.Shield)
 			{
 				toHitBase = toHitBase * 75 / 100;
 			}
-			penetration = Mathf.Clamp(weaponSkill.Value / 10 + 5, 5, 20) + CC.Evalue(92);
+			penetration = Mathf.Clamp(weaponSkill.Value / 10 + 5, 5, 20) + CC.Evalue(92 /* penetration */);
 			if (IsMartialWeapon)
 			{
 				dBonus += weapon.DMG;
@@ -210,19 +210,19 @@ public class AttackProcess : EClass
 			{
 				attackType = weapon.source.attackType.ToEnum<AttackType>();
 			}
-			bool flag3 = IsCane || weapon.Evalue(482) > 0;
-			if (flag3)
+			bool isCaneOrForceWeapon = IsCane || weapon.Evalue(482 /* force_weapon */) > 0;
+			if (isCaneOrForceWeapon)
 			{
-				weaponSkill = CC.elements.GetOrCreateElement(305);
+				weaponSkill = CC.elements.GetOrCreateElement(305 /* magicDevice */);
 			}
 			dBonus = CC.DMG + CC.encLV + weapon.DMG;
 			dNum = weapon.source.offense[0];
 			dDim = weapon.c_diceDim;
-			dMulti = 0.6f + (float)(weaponSkill.GetParent(CC).Value + weaponSkill.Value / 2 + CC.Evalue(flag3 ? 304 : (IsRanged ? 133 : 132))) / 50f;
-			dMulti += 0.05f * (float)CC.Evalue(IsRanged ? 1404 : 1400);
+			dMulti = 0.6f + (float)(weaponSkill.GetParent(CC).Value + weaponSkill.Value / 2 + CC.Evalue(isCaneOrForceWeapon ? 304 /* casting */ : (IsRanged ? 133 /* marksman */ : 132 /* tactics */))) / 50f;
+			dMulti += 0.05f * (float)CC.Evalue(IsRanged ? 1404 /* featArcher */ : 1400 /* featWarrior */);
 			toHitBase = EClass.curve((IsCane ? CC.WIL : CC.DEX) / 4 + weaponSkill.GetParent(CC).Value / 3 + weaponSkill.Value, 50, 25) + 50;
 			toHitFix = CC.HIT + weapon.HIT;
-			penetration = weapon.Penetration + CC.Evalue(92);
+			penetration = weapon.Penetration + CC.Evalue(92 /* penetration */);
 			if (IsCane)
 			{
 				toHitBase += 50;
@@ -312,7 +312,7 @@ public class AttackProcess : EClass
 		}
 		if (TC != null)
 		{
-			evasion = EClass.curve(TC.PER / 3 + TC.Evalue(150), 50, 10) + TC.DV + 25;
+			evasion = EClass.curve(TC.PER / 3 + TC.Evalue(150 /* evasion */), 50, 10) + TC.DV + 25;
 			if (TC.isChara && TC.Chara.isBlind)
 			{
 				evasion /= 2;
@@ -392,87 +392,87 @@ public class AttackProcess : EClass
 
 	public bool Perform(int count, bool hasHit, float dmgMulti = 1f, bool maxRoll = false)
 	{
-		bool flag = CC.HasCondition<ConReload>();
+		bool isSourceOutOfAmmo = CC.HasCondition<ConReload>();
 		hit = CalcHit();
-		int num = Dice.Roll(dNum, dDim, dBonus, CC);
-		if (ammo != null && !flag)
+		int damageAmount = Dice.Roll(dNum, dDim, dBonus, CC);
+		if (ammo != null && !isSourceOutOfAmmo)
 		{
-			num += Dice.Roll(dNumAmmo, dDimAmmo, dBonusAmmo, CC);
+			damageAmount += Dice.Roll(dNumAmmo, dDimAmmo, dBonusAmmo, CC);
 		}
 		if (crit || maxRoll)
 		{
-			num = Dice.RollMax(dNum, dDim, dBonus);
-			if (ammo != null && !flag)
+			damageAmount = Dice.RollMax(dNum, dDim, dBonus);
+			if (ammo != null && !isSourceOutOfAmmo)
 			{
-				num += Dice.RollMax(dNumAmmo, dDimAmmo);
+				damageAmount += Dice.RollMax(dNumAmmo, dDimAmmo);
 			}
 			if (crit && (IsMartial || IsMartialWeapon))
 			{
 				dMulti *= 1.25f;
 			}
 		}
-		if (CC.Evalue(1355) > 0)
+		if (CC.Evalue(1355 /* featGod_strife1 */) > 0) // Favor of the Strife: Physical attacks enhanced with each enemy defeated
 		{
 			ConStrife condition = CC.GetCondition<ConStrife>();
-			num = ((condition == null) ? (num + 1) : (num + condition.GetDice().Roll()));
+			damageAmount = ((condition == null) ? (damageAmount + 1) : (damageAmount + condition.GetDice().Roll()));
 		}
-		num = Mathf.Clamp(num, 0, 9999999);
-		num = (int)(dMulti * (float)num * dmgMulti);
-		num = Mathf.Clamp(num, 0, 9999999);
+		damageAmount = Mathf.Clamp(damageAmount, 0, 9999999);
+		damageAmount = (int)(dMulti * (float)damageAmount * dmgMulti);
+		damageAmount = Mathf.Clamp(damageAmount, 0, 9999999);
 		if (IsRanged && count >= numFireWithoutDamageLoss)
 		{
-			num = num * 100 / (100 + (count - numFireWithoutDamageLoss + 1) * 30);
+			damageAmount = damageAmount * 100 / (100 + (count - numFireWithoutDamageLoss + 1) * 30);
 		}
 		if (CC.isRestrained)
 		{
-			num /= 2;
+			damageAmount /= 2;
 		}
-		List<Element> list2 = new List<Element>();
-		int num2 = CC.Evalue(91);
-		int num3 = 0;
+		List<Element> attackProcs = new List<Element>();
+		int sourceVorpalSkill = CC.Evalue(91 /* vopal */);
+		int weaponModAmmoKnockback = 0;
 		if (weapon != null)
 		{
-			list2 = weapon.elements.dict.Values.ToList();
-			if (ammo != null && !flag)
+			attackProcs = weapon.elements.dict.Values.ToList();
+			if (ammo != null && !isSourceOutOfAmmo)
 			{
-				list2 = list2.Concat(ammo.elements.dict.Values).ToList();
+				attackProcs = attackProcs.Concat(ammo.elements.dict.Values).ToList();
 			}
 			if (IsRanged || isThrow)
 			{
-				num2 += weapon.Evalue(91);
+				sourceVorpalSkill += weapon.Evalue(91 /* vopal */);
 			}
-			num3 += weapon.Evalue(603);
+			weaponModAmmoKnockback += weapon.Evalue(603 /* mod_ammo_knockback */);
 		}
 		else if (CC.id == "rabbit_vopal")
 		{
-			list2.Add(Element.Create(6650, 100));
+			attackProcs.Add(Element.Create(6650 /* ActNeckHunt */, 100));
 		}
 		int bane;
 		if (TC?.Chara != null)
 		{
-			SourceRace.Row race = TC.Chara.race;
+			SourceRace.Row targetRace = TC.Chara.race;
 			bane = CC.Evalue(468);
-			AddBane(race.IsUndead, 461);
-			AddBane(race.IsAnimal, 463);
-			AddBane(race.IsHuman, 464);
-			AddBane(race.IsDragon, 460);
-			AddBane(race.IsGod, 466);
-			AddBane(race.IsMachine, 465);
-			AddBane(race.IsFish, 467);
-			AddBane(race.IsFairy, 462);
+			AddBane(targetRace.IsUndead, 461 /* bane_undead */);
+			AddBane(targetRace.IsAnimal, 463 /* bane_animal */);
+			AddBane(targetRace.IsHuman, 464 /* bane_man */);
+			AddBane(targetRace.IsDragon, 460 /* bane_dragon */);
+			AddBane(targetRace.IsGod, 466 /* bane_god */);
+			AddBane(targetRace.IsMachine, 465 /* bane_machine */);
+			AddBane(targetRace.IsFish, 467 /* bane_fish */);
+			AddBane(targetRace.IsFairy, 462 /* bane_fairy */);
 			if (bane != 0)
 			{
-				num = num * (100 + bane * 3) / 100;
+				damageAmount = damageAmount * (100 + bane * 3) / 100;
 			}
 		}
 		if (CC.IsPCFaction)
 		{
 			foreach (Element value in EClass.pc.faction.charaElements.dict.Values)
 			{
-				list2.Add(value);
+				attackProcs.Add(value);
 			}
 		}
-		if (hit && num2 > EClass.rnd(100))
+		if (hit && sourceVorpalSkill > EClass.rnd(100))
 		{
 			CC.Say("vopal");
 			penetration = 100;
@@ -484,7 +484,7 @@ public class AttackProcess : EClass
 		}
 		if (CC.isSynced || (TC != null && TC.isSynced))
 		{
-			if (toolRange != null && (!IsRanged || count == 0) && !flag && !ignoreAnime)
+			if (toolRange != null && (!IsRanged || count == 0) && !isSourceOutOfAmmo && !ignoreAnime)
 			{
 				PlayRangedAnime((!IsRanged) ? 1 : numFire);
 			}
@@ -513,7 +513,7 @@ public class AttackProcess : EClass
 				ModExpDef(150, 90);
 				ModExpDef(151, 90);
 			}
-			Proc(list2);
+			Proc(attackProcs);
 			return false;
 		}
 		if (TC.IsPC)
@@ -526,81 +526,81 @@ public class AttackProcess : EClass
 			CC.Say("attackMelee", CC, TC, GetAttackText(attackType, 0));
 		}
 		bool showEffect = true;
-		int num4 = 0;
-		int num5 = 0;
-		int num6 = 0;
+		int attackElementalDomain = 0;
+		int attackElementalDomainPower = 0;
+		int attackConvertedElementalDamagePercent = 0;
 		ConWeapon conWeapon = null;
 		if (weapon != null)
 		{
-			foreach (Element value2 in weapon.elements.dict.Values)
+			foreach (Element attackProc in weapon.elements.dict.Values)
 			{
-				if (value2.source.categorySub == "eleConvert")
+				if (attackProc.source.categorySub == "eleConvert")
 				{
-					num4 = EClass.sources.elements.alias[value2.source.aliasRef].id;
-					num5 = 50 + value2.Value * 2;
-					num6 = Mathf.Min(value2.Value, 100);
+					attackElementalDomain = EClass.sources.elements.alias[attackProc.source.aliasRef].id;
+					attackElementalDomainPower = 50 + attackProc.Value * 2;
+					attackConvertedElementalDamagePercent = Mathf.Min(attackProc.Value, 100);
 					break;
 				}
 			}
 		}
-		if (num4 == 0)
+		if (attackElementalDomain == 0)
 		{
 			if (CC.HasCondition<ConWeapon>())
 			{
 				conWeapon = CC.GetCondition<ConWeapon>();
-				num4 = conWeapon.sourceElement.id;
-				num5 = conWeapon.power / 2;
-				num6 = 40 + (int)Mathf.Min(MathF.Sqrt(conWeapon.power), 80f);
+				attackElementalDomain = conWeapon.sourceElement.id;
+				attackElementalDomainPower = conWeapon.power / 2;
+				attackConvertedElementalDamagePercent = 40 + (int)Mathf.Min(MathF.Sqrt(conWeapon.power), 80f);
 			}
 			if (conWeapon == null && weapon == null && (CC.MainElement != Element.Void || CC.HasElement(1565)))
 			{
-				num4 = (CC.HasElement(1565) ? 915 : CC.MainElement.id);
-				num5 = CC.Power / 3 + EClass.rnd(CC.Power / 2);
+				attackElementalDomain = (CC.HasElement(1565 /* etherPoisonHand */) ? 915 /* elePoison */ : CC.MainElement.id);
+				attackElementalDomainPower = CC.Power / 3 + EClass.rnd(CC.Power / 2);
 				if (CC.MainElement != Element.Void)
 				{
-					num5 += CC.MainElement.Value;
+					attackElementalDomainPower += CC.MainElement.Value;
 				}
 				showEffect = false;
-				num6 = 50;
+				attackConvertedElementalDamagePercent = 50;
 			}
 			if (conWeapon == null && weapon != null && weapon.trait is TraitToolRangeCane)
 			{
 				IEnumerable<Element> enumerable = weapon.elements.dict.Values.Where((Element e) => e.source.categorySub == "eleAttack");
 				if (enumerable.Count() > 0)
 				{
-					num4 = enumerable.RandomItem().id;
-					num5 = num4 switch
+					attackElementalDomain = enumerable.RandomItem().id;
+					attackElementalDomainPower = attackElementalDomain switch
 					{
-						920 => 30, 
-						914 => 50, 
-						918 => 50, 
+						920 /* eleChaos */ => 30, 
+						914 /* eleMind */ => 50, 
+						918 /* eleNerve */ => 50, 
 						_ => 100, 
 					};
 				}
-				num6 = 50;
+				attackConvertedElementalDamagePercent = 50;
 			}
 		}
-		int num7 = num;
-		int num8 = num * num6 / 100;
-		num -= num8;
-		int num9 = num * penetration / 100;
-		num -= num9;
-		num = TC.ApplyProtection(num) + num9 + num8;
-		TC.DamageHP(num, num4, num5, (!IsRanged && !isThrow) ? AttackSource.Melee : AttackSource.Range, CC, showEffect);
+		int damageAmountUnmitigated = damageAmount;
+		int damageAmountElemental = damageAmount * attackConvertedElementalDamagePercent / 100;
+		damageAmount -= damageAmountElemental;
+		int damageAmountArmorPenetrating = damageAmount * penetration / 100;
+		damageAmount -= damageAmountArmorPenetrating;
+		damageAmount = TC.ApplyProtection(damageAmount) + damageAmountArmorPenetrating + damageAmountElemental;
+		TC.DamageHP(damageAmount, attackElementalDomain, attackElementalDomainPower, (!IsRanged && !isThrow) ? AttackSource.Melee : AttackSource.Range, CC, showEffect);
 		conWeapon?.Mod(-1);
-		bool flag2 = IsCane || (weapon != null && weapon.Evalue(482) > 0);
-		int attackStyleElement = CC.body.GetAttackStyleElement(attackStyle);
-		int mod2 = 100 / (count + 1);
+		bool isCaneOrForceWeapon = IsCane || (weapon != null && weapon.Evalue(482 /* force_weapon */) > 0);
+		int attackStyleElement = CC.body.GetAttackStyleElement(attackStyle); // 130 twohand or 131 twowield or 0 _void
+		int sourceSkillExpGain = 100 / (count + 1);
 		if (!IsRanged || count == 0)
 		{
-			ModExpAtk(weaponSkill.id, mod2);
-			ModExpAtk(flag2 ? 304 : (IsRanged ? 133 : 132), mod2);
+			ModExpAtk(weaponSkill.id, sourceSkillExpGain);
+			ModExpAtk(isCaneOrForceWeapon ? 304 /* casting */ : (IsRanged ? 133 /* marksman */ : 132 /* tactics */), sourceSkillExpGain);
 		}
 		if (crit)
 		{
-			ModExpAtk(134, 50);
+			ModExpAtk(134 /* eyeofmind */, 50);
 		}
-		if (count == 0 && attackStyleElement != 0)
+		if (count == 0 && attackStyleElement != 0) // Grant 2H or DW exp
 		{
 			ModExpAtk(attackStyleElement, 100);
 		}
@@ -608,56 +608,56 @@ public class AttackProcess : EClass
 		{
 			return true;
 		}
-		if (EClass.rnd(8) == 0 && TC.isChara && CC.HasElement(1219))
+		if (EClass.rnd(8) == 0 && TC.isChara && CC.HasElement(1219 /* featElderCrab */)) // Crab Claw Grip: Restrain the target with scissors
 		{
 			CC.Say("abCrab", CC, TC);
 			TC.Chara.AddCondition<ConParalyze>(30 + EClass.rnd(30));
 			TC.Chara.AddCondition<ConGravity>();
 		}
-		if (list2.Count > 0)
+		if (attackProcs.Count > 0)
 		{
-			foreach (Element item in list2)
+			foreach (Element attackProc in attackProcs)
 			{
 				if (!TC.IsAliveInCurrentZone)
 				{
 					break;
 				}
-				if (item.source.categorySub == "eleAttack")
+				if (attackProc.source.categorySub == "eleAttack")
 				{
-					int num10 = 25;
-					int dmg = EClass.rnd(num * (100 + item.Value * 10) / 500 + 5);
+					int procChance = 25;
+					int dmg = EClass.rnd(damageAmount * (100 + attackProc.Value * 10) / 500 + 5);
 					if (conWeapon == null && weapon != null && weapon.trait is TraitToolRangeCane)
 					{
-						num10 = 0;
+						procChance = 0;
 					}
-					if (num10 >= EClass.rnd(100))
+					if (procChance >= EClass.rnd(100))
 					{
-						TC.DamageHP(dmg, item.id, isThrow ? (100 + item.Value * 5) : (30 + item.Value), AttackSource.WeaponEnchant, CC);
+						TC.DamageHP(dmg, attackProc.id, isThrow ? (100 + attackProc.Value * 5) : (30 + attackProc.Value), AttackSource.WeaponEnchant, CC);
 					}
 				}
 			}
-			Proc(list2);
+			Proc(attackProcs);
 		}
 		if (!CC.IsAliveInCurrentZone || !TC.IsAliveInCurrentZone)
 		{
 			return true;
 		}
-		if (!IsRanged && attackStyle == AttackStyle.Shield)
+		if (!IsRanged && attackStyle == AttackStyle.Shield) // Shield bash
 		{
-			int num11 = CC.Evalue(123);
-			if (CC.elements.ValueWithoutLink(123) >= 10 && Mathf.Clamp(Mathf.Sqrt(num11) - 2f, 8f, 12f) > (float)EClass.rnd(100))
+			int sourceShieldSkill = CC.Evalue(123 /* shield */);
+			if (CC.elements.ValueWithoutLink(123 /* shield */) >= 10 && Mathf.Clamp(Mathf.Sqrt(sourceShieldSkill) - 2f, 8f, 12f) > (float)EClass.rnd(100))
 			{
-				num = num7 * Mathf.Min(50 + num11, 200) / 100;
-				num = TC.ApplyProtection(num);
-				Debug.Log("Bash:" + num + "/" + num7);
+				damageAmount = damageAmountUnmitigated * Mathf.Min(50 + sourceShieldSkill, 200) / 100;
+				damageAmount = TC.ApplyProtection(damageAmount);
+				Debug.Log("Bash:" + damageAmount + "/" + damageAmountUnmitigated);
 				CC.PlaySound("shield_bash");
 				CC.Say("shield_bash", CC, TC);
-				TC.DamageHP(num, AttackSource.None, CC);
+				TC.DamageHP(damageAmount, AttackSource.None, CC);
 				if (TC.IsAliveInCurrentZone && TC.isChara)
 				{
 					if (EClass.rnd(2) == 0)
 					{
-						TC.Chara.AddCondition<ConDim>(50 + (int)Mathf.Sqrt(num11) * 10);
+						TC.Chara.AddCondition<ConDim>(50 + (int)Mathf.Sqrt(sourceShieldSkill) * 10);
 					}
 					TC.Chara.AddCondition<ConParalyze>(EClass.rnd(2), force: true);
 				}
@@ -667,7 +667,7 @@ public class AttackProcess : EClass
 		{
 			return true;
 		}
-		if (TC.isChara && num3 > 0 && num3 * 2 + 15 > EClass.rnd(100) && !TC.isRestrained && TC.Chara.TryMoveFrom(CC.pos) == Card.MoveResult.Success)
+		if (TC.isChara && weaponModAmmoKnockback > 0 && weaponModAmmoKnockback * 2 + 15 > EClass.rnd(100) && !TC.isRestrained && TC.Chara.TryMoveFrom(CC.pos) == Card.MoveResult.Success)
 		{
 			TC.pos.PlayEffect("vanish");
 			TC.PlaySound("push", 1.5f);
@@ -759,23 +759,23 @@ public class AttackProcess : EClass
 			}
 			CC.PlaySound(id);
 		}
-		void Proc(List<Element> list)
+		void Proc(List<Element> attackProcs)
 		{
-			if (list == null)
+			if (attackProcs == null)
 			{
 				return;
 			}
-			foreach (Element item2 in list)
+			foreach (Element attackProc in attackProcs)
 			{
-				if (item2 is Ability)
+				if (attackProc is Ability)
 				{
-					int num12 = 10 + item2.Value / 5;
-					int power = EClass.curve((100 + item2.Value * 10) * (100 + weaponSkill.Value) / 100, 400, 100);
-					if (num12 >= EClass.rnd(100))
+					int procChance = 10 + attackProc.Value / 5;
+					int power = EClass.curve((100 + attackProc.Value * 10) * (100 + weaponSkill.Value) / 100, 400, 100);
+					if (procChance >= EClass.rnd(100))
 					{
-						Act obj = item2 as Act;
+						Act obj = attackProc as Act;
 						Card card = (obj.TargetType.CanSelectSelf ? CC : TC);
-						string text = ((item2.source.proc.Length >= 2) ? item2.source.proc[1] : "");
+						string text = ((attackProc.source.proc.Length >= 2) ? attackProc.source.proc[1] : "");
 						switch (obj.source.abilityType.TryGet(0))
 						{
 						case "buff":
@@ -794,10 +794,10 @@ public class AttackProcess : EClass
 						if (card.IsAliveInCurrentZone)
 						{
 							Card tC = TC;
-							ActEffect.ProcAt(item2.source.proc[0].ToEnum<EffectId>(), power, BlessedState.Normal, CC, card, card.pos, isNeg: false, new ActRef
+							ActEffect.ProcAt(attackProc.source.proc[0].ToEnum<EffectId>(), power, BlessedState.Normal, CC, card, card.pos, isNeg: false, new ActRef
 							{
 								n1 = text,
-								aliasEle = item2.source.aliasRef,
+								aliasEle = attackProc.source.aliasRef,
 								noFriendlyFire = true
 							});
 							TC = tC;
@@ -832,24 +832,24 @@ public class AttackProcess : EClass
 			{
 				return Crit();
 			}
-			int num = TC.Evalue(151);
-			if (num != 0 && toHit < num * 10)
+			int targetGreaterEvasion = TC.Evalue(151 /* evasionPlus */);
+			if (targetGreaterEvasion != 0 && toHit < targetGreaterEvasion * 10)
 			{
-				int num2 = evasion * 100 / Mathf.Clamp(toHit, 1, toHit);
-				if (num2 > 300 && EClass.rnd(num + 250) > 100)
+				int evasionCoefficient = evasion * 100 / Mathf.Clamp(toHit, 1, toHit);
+				if (evasionCoefficient > 300 && EClass.rnd(targetGreaterEvasion + 250) > 100)
 				{
 					return EvadePlus();
 				}
-				if (num2 > 200 && EClass.rnd(num + 250) > 150)
+				if (evasionCoefficient > 200 && EClass.rnd(targetGreaterEvasion + 250) > 150)
 				{
 					return EvadePlus();
 				}
-				if (num2 > 150 && EClass.rnd(num + 250) > 200)
+				if (evasionCoefficient > 150 && EClass.rnd(targetGreaterEvasion + 250) > 200)
 				{
 					return EvadePlus();
 				}
 			}
-			if (TC.Evalue(57) > EClass.rnd(100))
+			if (TC.Evalue(57 /* evasionPerfect */) > EClass.rnd(100))
 			{
 				return EvadePlus();
 			}
@@ -874,18 +874,18 @@ public class AttackProcess : EClass
 		{
 			return false;
 		}
-		if (EClass.rnd(5000) < CC.Evalue(73) + 50)
+		if (EClass.rnd(5000) < CC.Evalue(73 /* PER */) + 50)
 		{
 			return Crit();
 		}
-		if ((float)CC.Evalue(90) + Mathf.Sqrt(CC.Evalue(134)) > (float)EClass.rnd(200))
+		if ((float)CC.Evalue(90 /* critical */) + Mathf.Sqrt(CC.Evalue(134 /* eyeofmind */)) > (float)EClass.rnd(200))
 		{
 			return Crit();
 		}
-		if (CC.Evalue(1420) > 0)
+		if (CC.Evalue(1420 /* featExecutioner */) > 0)
 		{
-			int num3 = Mathf.Min(100, 100 - CC.hp * 100 / CC.MaxHP);
-			if (num3 >= 50 && num3 * num3 * num3 * num3 / 3 > EClass.rnd(100000000))
+			int sourceMissingHealthPercent = Mathf.Min(100, 100 - CC.hp * 100 / CC.MaxHP);
+			if (sourceMissingHealthPercent >= 50 && sourceMissingHealthPercent * sourceMissingHealthPercent * sourceMissingHealthPercent * sourceMissingHealthPercent / 3 > EClass.rnd(1_00_00_00_00)) // In other words, sourceMissingHealthPercent**4 / 3 > rnd(100**4) -> at 0% health gives 33% crit chance
 			{
 				return Crit();
 			}

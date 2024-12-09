@@ -2541,12 +2541,12 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 		}
 		else
 		{
-			bool flag = (bp != null && bp.fixedMat) || sourceCard.quality == 4 || sourceCard.tierGroup.IsEmpty();
+			bool shouldHaveFixedMaterial = (bp != null && bp.fixedMat) || sourceCard.quality == 4 || sourceCard.tierGroup.IsEmpty();
 			if (_idMat != -1)
 			{
 				_material = EClass.sources.materials.rows[_idMat];
 			}
-			else if (!flag)
+			else if (!shouldHaveFixedMaterial)
 			{
 				if (sourceCard.tierGroup == "wood")
 				{
@@ -3516,20 +3516,20 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 		DamageHP(dmg, 0, 0, attackSource, origin);
 	}
 
-	public void DamageHP(int dmg, int ele, int eleP = 100, AttackSource attackSource = AttackSource.None, Card origin = null, bool showEffect = true)
+	public void DamageHP(int dmg, int elementalDomain, int elementalDomainPower = 100, AttackSource attackSource = AttackSource.None, Card origin = null, bool showEffect = true)
 	{
 		if (hp < 0)
 		{
 			return;
 		}
 		Element e;
-		if (ele == 0)
+		if (elementalDomain == 0)
 		{
 			e = Element.Void;
 		}
 		else
 		{
-			e = Element.Create(ele);
+			e = Element.Create(elementalDomain);
 			if (attackSource != AttackSource.Condition && showEffect)
 			{
 				ActEffect.TryDelay(delegate
@@ -3919,7 +3919,7 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 		{
 			if (e.id == 916)
 			{
-				origin.HealHP(Mathf.Clamp(EClass.rnd(dmg * (50 + eleP) / 500 + 5), 1, origin.MaxHP / 5 + EClass.rnd(10)));
+				origin.HealHP(Mathf.Clamp(EClass.rnd(dmg * (50 + elementalDomainPower) / 500 + 5), 1, origin.MaxHP / 5 + EClass.rnd(10)));
 			}
 			if ((attackSource == AttackSource.Melee || attackSource == AttackSource.Range) && origin.Dist(this) <= 1)
 			{
@@ -3992,61 +3992,61 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 		switch (e.id)
 		{
 		case 910:
-			if (Chance(30 + eleP / 5, 100))
+			if (Chance(30 + elementalDomainPower / 5, 100))
 			{
-				Chara.AddCondition<ConBurning>(eleP);
+				Chara.AddCondition<ConBurning>(elementalDomainPower);
 			}
 			break;
 		case 911:
 			if (Chara.isWet)
 			{
-				if (Chance(30 + eleP / 10, 100))
+				if (Chance(30 + elementalDomainPower / 10, 100))
 				{
-					Chara.AddCondition<ConFreeze>(eleP);
+					Chara.AddCondition<ConFreeze>(elementalDomainPower);
 				}
 			}
-			else if (Chance(50 + eleP / 10, 100))
+			else if (Chance(50 + elementalDomainPower / 10, 100))
 			{
-				Chara.AddCondition<ConWet>(eleP);
+				Chara.AddCondition<ConWet>(elementalDomainPower);
 			}
 			break;
 		case 912:
-			if (Chance(75 + eleP / 20, 100) && EClass.rnd(3) == 0)
+			if (Chance(75 + elementalDomainPower / 20, 100) && EClass.rnd(3) == 0)
 			{
 				Chara.AddCondition<ConParalyze>(1, force: true);
 			}
 			break;
 		case 915:
-			if (Chance(30 + eleP / 5, 100))
+			if (Chance(30 + elementalDomainPower / 5, 100))
 			{
-				Chara.AddCondition<ConPoison>(eleP);
+				Chara.AddCondition<ConPoison>(elementalDomainPower);
 			}
 			break;
 		case 913:
-			if (Chance(30 + eleP / 5, 100))
+			if (Chance(30 + elementalDomainPower / 5, 100))
 			{
-				Chara.AddCondition<ConBlind>(eleP);
+				Chara.AddCondition<ConBlind>(elementalDomainPower);
 			}
 			break;
 		case 918:
 			flag2 = false;
-			if (Chance(30 + eleP / 5, 100))
+			if (Chance(30 + elementalDomainPower / 5, 100))
 			{
-				Chara.AddCondition<ConParalyze>(eleP);
+				Chara.AddCondition<ConParalyze>(elementalDomainPower);
 			}
 			break;
 		case 914:
 			flag2 = false;
 			if (EClass.rnd(3) != 0)
 			{
-				if (Chance(30 + eleP / 5, 100))
+				if (Chance(30 + elementalDomainPower / 5, 100))
 				{
-					Chara.AddCondition<ConConfuse>(eleP);
+					Chara.AddCondition<ConConfuse>(elementalDomainPower);
 				}
 			}
-			else if (Chance(30 + eleP / 5, 100))
+			else if (Chance(30 + elementalDomainPower / 5, 100))
 			{
-				Chara.AddCondition<ConSleep>(eleP);
+				Chara.AddCondition<ConSleep>(elementalDomainPower);
 			}
 			if (Chance(50, 100))
 			{
@@ -4054,17 +4054,17 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 			}
 			break;
 		case 917:
-			if (Chance(50 + eleP / 10, 100))
+			if (Chance(50 + elementalDomainPower / 10, 100))
 			{
-				Chara.AddCondition<ConDim>(eleP);
+				Chara.AddCondition<ConDim>(elementalDomainPower);
 			}
 			break;
 		case 925:
 			if (EClass.rnd(3) == 0)
 			{
-				if (Chance(30 + eleP / 5, 100))
+				if (Chance(30 + elementalDomainPower / 5, 100))
 				{
-					Chara.AddCondition<ConDim>(eleP);
+					Chara.AddCondition<ConDim>(elementalDomainPower);
 				}
 			}
 			else if (EClass.rnd(2) == 0)
@@ -4081,49 +4081,49 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 			break;
 		case 920:
 			flag2 = false;
-			if (Chance(5 + eleP / 25, 40))
+			if (Chance(5 + elementalDomainPower / 25, 40))
 			{
-				Chara.AddCondition<ConBlind>(eleP / 2);
+				Chara.AddCondition<ConBlind>(elementalDomainPower / 2);
 			}
-			if (Chance(5 + eleP / 25, 40))
+			if (Chance(5 + elementalDomainPower / 25, 40))
 			{
-				Chara.AddCondition<ConParalyze>(eleP / 2);
+				Chara.AddCondition<ConParalyze>(elementalDomainPower / 2);
 			}
-			if (Chance(5 + eleP / 25, 40))
+			if (Chance(5 + elementalDomainPower / 25, 40))
 			{
-				Chara.AddCondition<ConConfuse>(eleP / 2);
+				Chara.AddCondition<ConConfuse>(elementalDomainPower / 2);
 			}
-			if (Chance(5 + eleP / 25, 40))
+			if (Chance(5 + elementalDomainPower / 25, 40))
 			{
-				Chara.AddCondition<ConPoison>(eleP / 2);
+				Chara.AddCondition<ConPoison>(elementalDomainPower / 2);
 			}
-			if (Chance(5 + eleP / 25, 40))
+			if (Chance(5 + elementalDomainPower / 25, 40))
 			{
-				Chara.AddCondition<ConSleep>(eleP / 2);
+				Chara.AddCondition<ConSleep>(elementalDomainPower / 2);
 			}
-			if (Chance(5 + eleP / 25, 40))
+			if (Chance(5 + elementalDomainPower / 25, 40))
 			{
-				Chara.AddCondition<ConDim>(eleP / 2);
+				Chara.AddCondition<ConDim>(elementalDomainPower / 2);
 			}
-			if (Chance(30 + eleP / 10, 100))
+			if (Chance(30 + elementalDomainPower / 10, 100))
 			{
 				Chara.SAN.Mod(EClass.rnd(2));
 			}
 			break;
 		case 924:
-			if (Chance(50 + eleP / 10, 100))
+			if (Chance(50 + elementalDomainPower / 10, 100))
 			{
-				Chara.AddCondition<ConBleed>(eleP);
+				Chara.AddCondition<ConBleed>(elementalDomainPower);
 			}
 			break;
 		case 923:
-			if (Chance(50 + eleP / 10, 100) && EClass.rnd(4) == 0)
+			if (Chance(50 + elementalDomainPower / 10, 100) && EClass.rnd(4) == 0)
 			{
 				ActEffect.Proc(EffectId.Acid, Chara);
 			}
 			break;
 		case 922:
-			Chara.ModCorruption(EClass.rnd(eleP / 50 + 10));
+			Chara.ModCorruption(EClass.rnd(elementalDomainPower / 50 + 10));
 			break;
 		}
 		if (origin != null && origin.HasElement(1411) && !Chara.HasCondition<ConGravity>())

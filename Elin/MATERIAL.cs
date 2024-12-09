@@ -40,40 +40,40 @@ public class MATERIAL : EClass
 
 	public static SourceMaterial.Row sourceWaterSea => EClass.sources.materials.rows[88];
 
-	public static SourceMaterial.Row GetRandomMaterial(int lv, string group = null, bool tryLevelMatTier = false)
+	public static SourceMaterial.Row GetRandomMaterial(int lv, string materialGroup = null, bool tryLevelMatTier = false)
 	{
-		if (group == null)
+		if (materialGroup == null)
 		{
-			group = ((EClass.rnd(2) == 0) ? "metal" : "leather");
+			materialGroup = ((EClass.rnd(2) == 0) ? "metal" : "leather");
 		}
-		if (!(group == "metal"))
+		if (!(materialGroup == "metal"))
 		{
-			if (group == "leather" && EClass.rnd(15) == 0)
+			if (materialGroup == "leather" && EClass.rnd(15) == 0)
 			{
-				group = "metal";
+				materialGroup = "metal";
 			}
 		}
 		else if (EClass.rnd(15) == 0)
 		{
-			group = "leather";
+			materialGroup = "leather";
 		}
-		SourceMaterial.TierList tierList = SourceMaterial.tierMap[group];
-		int num = 0;
-		if (tryLevelMatTier)
+		SourceMaterial.TierList tierListOfMaterialGroup = SourceMaterial.tierMap[materialGroup];
+		int chosenMaterialTier = 0;
+		if (tryLevelMatTier) // This targets a specific material tier, and never gives low rolls for high levels
 		{
-			num = Mathf.Clamp(lv / 15, 0, tierList.tiers.Length - 1);
-			num = Mathf.Clamp(num + EClass.rnd(2) - EClass.rnd(2), 0, tierList.tiers.Length - 1);
+			chosenMaterialTier = Mathf.Clamp(lv / 15, 0, tierListOfMaterialGroup.tiers.Length - 1);
+			chosenMaterialTier = Mathf.Clamp(chosenMaterialTier + EClass.rnd(2) - EClass.rnd(2), 0, tierListOfMaterialGroup.tiers.Length - 1);
 		}
-		else
+		else // This is a more random tier selection
 		{
-			int min = ((lv >= 60) ? 2 : ((lv >= 25) ? 1 : 0));
-			num = Mathf.Clamp(EClass.rnd(EClass.rnd(EClass.rnd(lv / 10 + 2) + 1) + 1), min, tierList.tiers.Length - 1);
+			int minimumMaterialTier = ((lv >= 60) ? 2 : ((lv >= 25) ? 1 : 0));
+			chosenMaterialTier = Mathf.Clamp(EClass.rnd(EClass.rnd(EClass.rnd(lv / 10 + 2) + 1) + 1), minimumMaterialTier, tierListOfMaterialGroup.tiers.Length - 1);
 		}
-		SourceMaterial.Tier obj = tierList.tiers[num];
+		SourceMaterial.Tier obj = tierListOfMaterialGroup.tiers[chosenMaterialTier];
 		SourceMaterial.Row result = obj.Select();
 		if (obj.list.Count == 0)
 		{
-			Debug.Log(lv + "/" + group + "/" + num + "/");
+			Debug.Log(lv + "/" + materialGroup + "/" + chosenMaterialTier + "/");
 		}
 		return result;
 	}

@@ -774,10 +774,10 @@ public class ActEffect : EClass
 		}
 		Chara TC = tc.Chara;
 		Chara CC = cc.Chara;
-		bool blessed = state >= BlessedState.Blessed;
-		bool flag = state <= BlessedState.Cursed;
+		bool isBlessed = state >= BlessedState.Blessed;
+		bool isCursed = state <= BlessedState.Cursed;
 		int orgPower = power;
-		if (blessed || flag)
+		if (isBlessed || isCursed)
 		{
 			power *= 2;
 		}
@@ -845,7 +845,7 @@ public class ActEffect : EClass
 				CC.SayNothingHappans();
 				break;
 			}
-			if (flag)
+			if (isCursed)
 			{
 				CC.Say("abMagicMap_curse", CC);
 				CC.PlaySound("curse3");
@@ -856,7 +856,7 @@ public class ActEffect : EClass
 			CC.Say("abMagicMap", CC);
 			CC.PlayEffect("identify");
 			CC.PlaySound("identify");
-			if (blessed)
+			if (isBlessed)
 			{
 				EClass._map.RevealAll();
 			}
@@ -911,13 +911,13 @@ public class ActEffect : EClass
 			}
 			cc.PlaySound("identify");
 			cc.PlayEffect("identify");
-			if (flag)
+			if (isCursed)
 			{
 				cc.Say("enc_curse", tc);
 				tc.ModEncLv(-1);
 				break;
 			}
-			int num5 = (flag5 ? 4 : 2) + (blessed ? 1 : 0);
+			int num5 = (flag5 ? 4 : 2) + (isBlessed ? 1 : 0);
 			if (tc.encLV >= num5)
 			{
 				cc.Say("enc_resist", tc);
@@ -931,14 +931,14 @@ public class ActEffect : EClass
 		case EffectId.GreaterIdentify:
 		{
 			bool flag3 = id == EffectId.GreaterIdentify;
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(EffectId.ForgetItems, flag3 ? BlessedState.Cursed : BlessedState.Normal, default(ActRef));
 				break;
 			}
 			if (!tc.isThing)
 			{
-				int count = ((!blessed) ? 1 : (flag3 ? (2 + EClass.rnd(2)) : (3 + EClass.rnd(3))));
+				int count = ((!isBlessed) ? 1 : (flag3 ? (2 + EClass.rnd(2)) : (3 + EClass.rnd(3))));
 				LayerDragGrid.CreateIdentify(CC, flag3, state, 0, count);
 				return;
 			}
@@ -987,7 +987,7 @@ public class ActEffect : EClass
 			Element orCreateElement3 = tc.elements.GetOrCreateElement(67);
 			Element orCreateElement4 = tc.elements.GetOrCreateElement(66);
 			bool flag2 = tc.IsEquipmentOrRanged || tc.IsThrownWeapon || tc.IsAmmo;
-			if (flag)
+			if (isCursed)
 			{
 				num = (int)(0.01f * (float)num * (float)power * 0.75f + 500f);
 				if (num < 1)
@@ -1012,7 +1012,7 @@ public class ActEffect : EClass
 			else
 			{
 				num = num * (100 - power / 10) / 100;
-				if (blessed)
+				if (isBlessed)
 				{
 					power /= 4;
 				}
@@ -1087,11 +1087,11 @@ public class ActEffect : EClass
 				string text2 = tc.Thing.source.tierGroup;
 				Dictionary<string, SourceMaterial.TierList> tierMap = SourceMaterial.tierMap;
 				int num3 = 1;
-				if (flag)
+				if (isCursed)
 				{
 					num3 -= 2;
 				}
-				if (blessed)
+				if (isBlessed)
 				{
 					num3++;
 				}
@@ -1178,7 +1178,7 @@ public class ActEffect : EClass
 			break;
 		case EffectId.Teleport:
 		case EffectId.TeleportShort:
-			if (!tc.HasHost && !flag)
+			if (!tc.HasHost && !isCursed)
 			{
 				if (id == EffectId.TeleportShort)
 				{
@@ -1189,11 +1189,11 @@ public class ActEffect : EClass
 					tc.Teleport(GetTeleportPos(tc.pos, EClass._map.bounds.Width));
 				}
 			}
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(EffectId.Gravity, BlessedState.Normal, default(ActRef));
 			}
-			if (blessed)
+			if (isBlessed)
 			{
 				Redirect(EffectId.Levitate, BlessedState.Normal, default(ActRef));
 			}
@@ -1358,7 +1358,7 @@ public class ActEffect : EClass
 			}
 			TC.PlaySound("curse3");
 			TC.PlayEffect("curse");
-			if (EClass.rnd(150 + TC.LUC * 5 + TC.Evalue(972) * 20) >= power + (flag ? 200 : 0) || TC.TryNullifyCurse())
+			if (EClass.rnd(150 + TC.LUC * 5 + TC.Evalue(972) * 20) >= power + (isCursed ? 200 : 0) || TC.TryNullifyCurse())
 			{
 				break;
 			}
@@ -1384,10 +1384,10 @@ public class ActEffect : EClass
 		case EffectId.UncurseEQ:
 		case EffectId.UncurseEQGreater:
 		{
-			TC.Say("uncurseEQ" + (blessed ? "_bless" : (flag ? "_curse" : "")), TC);
+			TC.Say("uncurseEQ" + (isBlessed ? "_bless" : (isCursed ? "_curse" : "")), TC);
 			TC.PlaySound("uncurse");
 			TC.PlayEffect("uncurse");
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(EffectId.CurseEQ, BlessedState.Normal, default(ActRef));
 				break;
@@ -1398,7 +1398,7 @@ public class ActEffect : EClass
 			TC.things.Foreach(delegate(Thing t)
 			{
 				int num7 = 0;
-				if ((t.isEquipped || t.IsRangedWeapon || blessed) && t.blessedState < BlessedState.Normal)
+				if ((t.isEquipped || t.IsRangedWeapon || isBlessed) && t.blessedState < BlessedState.Normal)
 				{
 					if (t.blessedState == BlessedState.Cursed)
 					{
@@ -1408,7 +1408,7 @@ public class ActEffect : EClass
 					{
 						num7 = EClass.rnd(1000);
 					}
-					if (blessed)
+					if (isBlessed)
 					{
 						num7 /= 2;
 					}
@@ -1452,7 +1452,7 @@ public class ActEffect : EClass
 		{
 			string text3 = actRef.n1;
 			string text4 = "";
-			if (flag)
+			if (isCursed)
 			{
 				text4 = EClass.sources.stats.alias[text3].curse;
 				if (!text4.IsEmpty())
@@ -1584,20 +1584,20 @@ public class ActEffect : EClass
 			tc.PlayEffect("aura_heaven");
 			tc.PlaySound("aura_heaven");
 			tc.Say("faith", tc, faith.Name);
-			if (flag)
+			if (isCursed)
 			{
 				tc.Say("faith_curse", tc, faith.Name);
 				break;
 			}
-			if (blessed)
+			if (isBlessed)
 			{
 				tc.Say("faith_bless", tc, faith.Name);
 			}
-			tc.ModExp(306, power * 10);
-			tc.ModExp(85, power * 10);
-			if (tc.elements.Base(85) >= tc.elements.Value(306))
+			tc.ModExp(306 /* faith */, power * 10);
+			tc.ModExp(85 /* piety */, power * 10);
+			if (tc.elements.Base(85 /* piety */) >= tc.elements.Value(306 /* faith */))
 			{
-				tc.elements.SetBase(85, tc.elements.Value(306));
+				tc.elements.SetBase(85 /* piety */, tc.elements.Value(306 /* faith */));
 			}
 			break;
 		}
@@ -1619,12 +1619,12 @@ public class ActEffect : EClass
 			tc.bio.SetGender(gender2);
 			tc.Say("transGender", tc, Gender.Name(tc.bio.gender));
 			tc.Talk("tail");
-			if (blessed && tc.bio.age > 1)
+			if (isBlessed && tc.bio.age > 1)
 			{
 				tc.Say("ageDown", tc);
 				tc.bio.age--;
 			}
-			else if (flag)
+			else if (isCursed)
 			{
 				tc.Say("ageUp", tc);
 				tc.bio.age++;
@@ -1642,11 +1642,11 @@ public class ActEffect : EClass
 			if (power < 0 || id == EffectId.DebuffStats)
 			{
 				power = Mathf.Abs(power);
-				if (blessed)
+				if (isBlessed)
 				{
 					power /= 4;
 				}
-				flag = true;
+				isCursed = true;
 			}
 			TC.AddCondition(Condition.Create(power, delegate(ConBuffStats con)
 			{
@@ -1723,7 +1723,7 @@ public class ActEffect : EClass
 		case EffectId.RestoreMind:
 		{
 			bool flag8 = id == EffectId.RestoreBody;
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(flag8 ? EffectId.DamageBodyGreat : EffectId.DamageMindGreat, BlessedState.Normal, default(ActRef));
 				break;
@@ -1732,7 +1732,7 @@ public class ActEffect : EClass
 			TC.PlaySound("heal");
 			TC.PlayEffect("heal");
 			TC.CureHost(flag8 ? CureType.CureBody : CureType.CureMind, power, state);
-			if (blessed)
+			if (isBlessed)
 			{
 				Redirect(flag8 ? EffectId.EnhanceBodyGreat : EffectId.EnhanceMindGreat, BlessedState.Normal, default(ActRef));
 			}
@@ -1752,7 +1752,7 @@ public class ActEffect : EClass
 				EClass.game.religions.Healing.Talk("ability");
 			}
 			int num9 = Dice.Create((actRef.act != null && EClass.sources.calc.map.ContainsKey(actRef.act.ID)) ? actRef.act.ID : "SpHealLight", power, CC, actRef.act).Roll();
-			if (flag)
+			if (isCursed)
 			{
 				TC.DamageHP(num9 / 2, 919, power);
 				break;
@@ -1772,7 +1772,7 @@ public class ActEffect : EClass
 			break;
 		case EffectId.RemoveHex:
 		case EffectId.RemoveHexAll:
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(EffectId.CurseEQ, BlessedState.Normal, default(ActRef));
 				break;
@@ -1794,7 +1794,7 @@ public class ActEffect : EClass
 		case EffectId.CureCorruption:
 			TC.PlaySound("heal");
 			TC.PlayEffect("heal");
-			if (flag)
+			if (isCursed)
 			{
 				TC.Say("cureCorruption_curse", TC);
 				TC.mana.Mod(9999);
@@ -1803,7 +1803,7 @@ public class ActEffect : EClass
 			else
 			{
 				TC.Say("cureCorruption", TC);
-				TC.ModCorruption(-power * (blessed ? 150 : 200) / 100);
+				TC.ModCorruption(-power * (isBlessed ? 150 : 200) / 100);
 			}
 			break;
 		case EffectId.Drink:
@@ -1823,18 +1823,18 @@ public class ActEffect : EClass
 				{
 					TC.Say("drinkMilk", TC);
 				}
-				if (blessed)
+				if (isBlessed)
 				{
 					TC.ModHeight(EClass.rnd(5) + 3);
 				}
-				else if (flag)
+				else if (isCursed)
 				{
 					TC.ModHeight((EClass.rnd(5) + 3) * -1);
 				}
 			}
 			break;
 		case EffectId.DrinkWater:
-			if (flag)
+			if (isCursed)
 			{
 				if (TC.IsPC)
 				{
@@ -1881,7 +1881,7 @@ public class ActEffect : EClass
 			}
 			break;
 		case EffectId.CatsEye:
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(EffectId.Blind, BlessedState.Normal, default(ActRef));
 			}
@@ -1891,7 +1891,7 @@ public class ActEffect : EClass
 			}
 			break;
 		case EffectId.Hero:
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(EffectId.Fear, BlessedState.Normal, default(ActRef));
 			}
@@ -1901,7 +1901,7 @@ public class ActEffect : EClass
 			}
 			break;
 		case EffectId.HolyVeil:
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(EffectId.Fear, BlessedState.Normal, default(ActRef));
 			}
@@ -1911,7 +1911,7 @@ public class ActEffect : EClass
 			}
 			break;
 		case EffectId.Levitate:
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(EffectId.Gravity, BlessedState.Normal, default(ActRef));
 			}
@@ -1921,12 +1921,12 @@ public class ActEffect : EClass
 			}
 			break;
 		case EffectId.Gravity:
-			if (blessed)
+			if (isBlessed)
 			{
 				power /= 4;
 			}
 			TC.AddCondition<ConGravity>(power);
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(EffectId.BuffStats, BlessedState.Cursed, new ActRef
 				{
@@ -1935,96 +1935,96 @@ public class ActEffect : EClass
 			}
 			break;
 		case EffectId.Fear:
-			if (blessed)
+			if (isBlessed)
 			{
 				power /= 4;
 			}
 			TC.AddCondition<ConFear>(power);
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(EffectId.Confuse, BlessedState.Normal, default(ActRef));
 			}
 			break;
 		case EffectId.Faint:
-			if (blessed)
+			if (isBlessed)
 			{
 				power /= 4;
 			}
 			TC.AddCondition<ConFaint>(power);
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(EffectId.Disease, BlessedState.Normal, default(ActRef));
 			}
 			break;
 		case EffectId.Paralyze:
-			if (blessed)
+			if (isBlessed)
 			{
 				power /= 4;
 			}
 			TC.AddCondition<ConParalyze>(power);
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(EffectId.Blind, BlessedState.Normal, default(ActRef));
 			}
 			break;
 		case EffectId.Poison:
-			if (blessed)
+			if (isBlessed)
 			{
 				power /= 4;
 			}
 			TC.AddCondition<ConPoison>(power);
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(EffectId.Paralyze, BlessedState.Normal, default(ActRef));
 			}
 			break;
 		case EffectId.Sleep:
-			if (blessed)
+			if (isBlessed)
 			{
 				power /= 4;
 			}
 			TC.AddCondition<ConSleep>(power);
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(EffectId.Disease, BlessedState.Normal, default(ActRef));
 			}
 			break;
 		case EffectId.Confuse:
-			if (blessed)
+			if (isBlessed)
 			{
 				power /= 4;
 			}
 			TC.AddCondition<ConConfuse>(power);
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(EffectId.Fear, BlessedState.Normal, default(ActRef));
 			}
 			break;
 		case EffectId.Blind:
-			if (blessed)
+			if (isBlessed)
 			{
 				power /= 4;
 			}
 			TC.AddCondition<ConBlind>(power);
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(EffectId.Confuse, BlessedState.Normal, default(ActRef));
 			}
 			break;
 		case EffectId.Disease:
-			if (blessed)
+			if (isBlessed)
 			{
 				power /= 4;
 			}
 			TC.AddCondition<ConDisease>(power);
-			if (flag)
+			if (isCursed)
 			{
 				Redirect(EffectId.Poison, BlessedState.Normal, default(ActRef));
 			}
 			break;
 		case EffectId.Acid:
 		{
-			if (blessed)
+			if (isBlessed)
 			{
 				power /= 4;
 			}
@@ -2054,7 +2054,7 @@ public class ActEffect : EClass
 			TC.DamageHP(power / 5, actRef.idEle, power);
 			break;
 		case EffectId.Acidproof:
-			if (blessed)
+			if (isBlessed)
 			{
 				power /= 4;
 			}
@@ -2069,7 +2069,7 @@ public class ActEffect : EClass
 			Msg.Say("nothingHappens");
 			break;
 		case EffectId.Love:
-			if (flag)
+			if (isCursed)
 			{
 				if (CC == TC)
 				{

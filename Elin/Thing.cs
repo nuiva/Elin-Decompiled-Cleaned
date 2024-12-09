@@ -191,26 +191,26 @@ public class Thing : Card
 		}
 		if (base.category.slot != 0)
 		{
-			int num = 0;
+			int numGeneratedEnchants = 0;
 			if (base.rarity == Rarity.Superior)
 			{
-				num = EClass.rnd(3);
+				numGeneratedEnchants = EClass.rnd(3);
 			}
 			else if (base.rarity == Rarity.Legendary)
 			{
-				num = EClass.rnd(4) + 2;
+				numGeneratedEnchants = EClass.rnd(4) + 2;
 			}
 			else if (base.rarity == Rarity.Mythical)
 			{
-				num = EClass.rnd(3) + 5;
+				numGeneratedEnchants = EClass.rnd(3) + 5;
 			}
 			else if (base.rarity >= Rarity.Artifact)
 			{
-				num = EClass.rnd(2) + 1;
+				numGeneratedEnchants = EClass.rnd(2) + 1;
 			}
-			if (num > 0 && !HasTag(CTAG.godArtifact))
+			if (numGeneratedEnchants > 0 && !HasTag(CTAG.godArtifact))
 			{
-				for (int i = 0; i < num; i++)
+				for (int i = 0; i < numGeneratedEnchants; i++)
 				{
 					AddEnchant(genLv);
 				}
@@ -323,8 +323,8 @@ public class Thing : Card
 		if (remove)
 		{
 			ApplyMaterialElements(remove: true);
-			bool flag2 = (base.isFireproof = false);
-			base.isAcidproof = flag2;
+			bool constantFalse = (base.isFireproof = false);
+			base.isAcidproof = constantFalse;
 			return;
 		}
 		bool pvSet = false;
@@ -338,25 +338,25 @@ public class Thing : Card
 			}
 			if (source.offense.Length > 2)
 			{
-				SetBase(66, source.offense[2]);
+				SetBase(66 /* HIT */, source.offense[2]);
 			}
 			if (source.offense.Length > 3)
 			{
-				SetBase(67, source.offense[3]);
+				SetBase(67 /* DMG */, source.offense[3]);
 			}
 			if (source.defense.Length != 0)
 			{
-				SetBase(64, source.defense[0]);
+				SetBase(64 /* DV */, source.defense[0]);
 			}
 			if (source.defense.Length > 1)
 			{
-				SetBase(65, source.defense[1]);
+				SetBase(65 /* PV */, source.defense[1]);
 			}
 		}
 		else
 		{
 			int num = 120;
-			bool flag3 = !base.IsAmmo;
+			bool isBaseNotAmmo = !base.IsAmmo;
 			if (base.rarity <= Rarity.Crude)
 			{
 				num = 150;
@@ -371,23 +371,23 @@ public class Thing : Card
 			}
 			if (source.offense.Length != 0)
 			{
-				base.c_diceDim = source.offense[1] * base.material.dice / (num + (flag3 ? EClass.rnd(25) : 0));
+				base.c_diceDim = source.offense[1] * base.material.dice / (num + (isBaseNotAmmo ? EClass.rnd(25) : 0));
 			}
 			if (source.offense.Length > 2)
 			{
-				SetBase(66, source.offense[2] * base.material.atk * 9 / (num - (flag3 ? EClass.rnd(30) : 0)));
+				SetBase(66 /* HIT */, source.offense[2] * base.material.atk * 9 / (num - (isBaseNotAmmo ? EClass.rnd(30) : 0)));
 			}
 			if (source.offense.Length > 3)
 			{
-				SetBase(67, source.offense[3] * base.material.dmg * 5 / (num - (flag3 ? EClass.rnd(30) : 0)));
+				SetBase(67 /* DMG */, source.offense[3] * base.material.dmg * 5 / (num - (isBaseNotAmmo ? EClass.rnd(30) : 0)));
 			}
 			if (source.defense.Length != 0)
 			{
-				SetBase(64, source.defense[0] * base.material.dv * 7 / (num - (flag3 ? EClass.rnd(30) : 0)));
+				SetBase(64 /* DV */, source.defense[0] * base.material.dv * 7 / (num - (isBaseNotAmmo ? EClass.rnd(30) : 0)));
 			}
 			if (source.defense.Length > 1)
 			{
-				SetBase(65, source.defense[1] * base.material.pv * 9 / (num - (flag3 ? EClass.rnd(30) : 0)));
+				SetBase(65 /* PV */, source.defense[1] * base.material.pv * 9 / (num - (isBaseNotAmmo ? EClass.rnd(30) : 0)));
 			}
 		}
 		if (base.isReplica)
@@ -469,8 +469,8 @@ public class Thing : Card
 		}
 		if (base.rarity >= Rarity.Artifact)
 		{
-			bool flag2 = (base.isFireproof = true);
-			base.isAcidproof = flag2;
+			bool constantTrue = (base.isFireproof = true);
+			base.isAcidproof = constantTrue;
 		}
 		_colorInt = 0;
 		void SetBase(int ele, int a)
