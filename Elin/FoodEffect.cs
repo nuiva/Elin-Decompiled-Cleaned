@@ -119,7 +119,7 @@ public class FoodEffect : EClass
 			foodTasteIndicatorMultiplier = 0f;
 			foodEffectMultiplier *= 0.5f;
 		}
-		if (eater.HasElement(1200))
+		if (eater.HasElement(1200 /* featSlowFood */))
 		{
 			foodEffectMultiplier *= 1.25f;
 		}
@@ -127,7 +127,7 @@ public class FoodEffect : EClass
 		{
 			foodEffectMultiplier *= 3f;
 		}
-		if (isFoodDecayed && !eater.HasElement(480))
+		if (isFoodDecayed && !eater.HasElement(480 /* strongStomach */))
 		{
 			if (eater.IsPC)
 			{
@@ -277,7 +277,7 @@ public class FoodEffect : EClass
 					if (eater.race.id == "mutant" && eater.elements.Base(1230 /* featAdam */) < 10) // Add Adam feat
 					{
 						eater.Say("little_adam", eater);
-						eater.SetFeat(1230, eater.elements.Base(1230 /* featAdam */) + 1);
+						eater.SetFeat(1230 /* featAdam */, eater.elements.Base(1230 /* featAdam */) + 1);
 					}
 					eater.SetInt(112, numSistersEaten + 1);
 					break;
