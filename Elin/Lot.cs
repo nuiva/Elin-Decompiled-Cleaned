@@ -163,7 +163,7 @@ public class Lot : EClass
 		}
 		int num3 = (mx - x + pointMinX.z - z) / 2;
 		int num4 = pointMaxX.x - pointMinX.x + pointMaxX.z - pointMinX.z + 1;
-		int num5 = (mx - x + mz - z) / 2 + 2;
+		int num5 = (mx - x + mz - z) / 2 + 4;
 		int num6 = pointMinX.x + num3 - num5;
 		int num7 = pointMinX.z - num3 + num5;
 		int num8 = 0;

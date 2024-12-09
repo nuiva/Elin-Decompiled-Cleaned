@@ -10,7 +10,8 @@ public class Trait : EClass
 		Default,
 		Door,
 		Illumination,
-		DefaultNoAnime
+		DefaultNoAnime,
+		SignalAnime
 	}
 
 	public enum CopyShopType

@@ -44,7 +44,7 @@ public class ActRide : Ability
 		return false;
 	}
 
-	public static void Ride(Chara host, Chara t, bool parasite = false)
+	public static void Ride(Chara host, Chara t, bool parasite = false, bool talk = true)
 	{
 		if (parasite)
 		{
@@ -86,8 +86,11 @@ public class ActRide : Ability
 		}
 		t.host = host;
 		t._CreateRenderer();
-		host.PlaySound("ride");
-		t.Talk(parasite ? "parasite" : "ride");
+		if (talk)
+		{
+			host.PlaySound("ride");
+			t.Talk(parasite ? "parasite" : "ride");
+		}
 		host.SetDirtySpeed();
 		t.SetDirtySpeed();
 		host.SyncRide();
@@ -95,7 +98,7 @@ public class ActRide : Ability
 		host.Refresh();
 	}
 
-	public static void Unride(Chara host, bool parasite = false)
+	public static void Unride(Chara host, bool parasite = false, bool talk = true)
 	{
 		Chara chara = null;
 		if (parasite)
@@ -112,10 +115,15 @@ public class ActRide : Ability
 		}
 		chara.host = null;
 		chara._CreateRenderer();
-		chara.Talk(parasite ? "parasite_unride" : "ride_unride", null, null, forceSync: true);
+		if (talk)
+		{
+			chara.Talk(parasite ? "parasite_unride" : "ride_unride", null, null, forceSync: true);
+		}
 		host.PlaySound("ride");
 		host.SetDirtySpeed();
 		chara.SetDirtySpeed();
 		host.Refresh();
+		Point randomNeighbor = host.pos.GetRandomNeighbor();
+		chara.MoveImmediate(randomNeighbor);
 	}
 }

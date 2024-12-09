@@ -12,15 +12,12 @@ public class ConBoost : BaseBuff
 
 	public override RendererReplacer GetRendererReplacer()
 	{
-		string text = owner.id;
-		if (!(text == "black_angel"))
+		return owner.id switch
 		{
-			if (text == "adv_verna")
-			{
-				return RendererReplacer.CreateFrom("adv_verna", 2);
-			}
-			return null;
-		}
-		return RendererReplacer.CreateFrom("black_angel", -1);
+			"black_angel" => RendererReplacer.CreateFrom("black_angel", -1), 
+			"adv_verna" => RendererReplacer.CreateFrom("adv_verna", 2), 
+			"griffin" => RendererReplacer.CreateFrom("griffin", 1), 
+			_ => null, 
+		};
 	}
 }

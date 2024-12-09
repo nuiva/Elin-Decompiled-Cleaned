@@ -30,6 +30,8 @@ public class TaskBuild : TaskBaseBuild
 
 	public bool freePos;
 
+	public bool disableRotateBlock;
+
 	public Card target;
 
 	public Point lastPos;
@@ -69,8 +71,25 @@ public class TaskBuild : TaskBaseBuild
 		return true;
 	}
 
+	public bool CanRotateBlock()
+	{
+		if (!EInput.rightMouse.pressing)
+		{
+			disableRotateBlock = false;
+		}
+		if (useHeld && EClass.pc.held != null && EClass.pc.held.trait is TraitBlock && pos.HasBlock && !EClass.pc.held.trait.IsDoor && !disableRotateBlock)
+		{
+			return true;
+		}
+		return false;
+	}
+
 	public override string GetText(string str = "")
 	{
+		if (CanRotateBlock())
+		{
+			return "actRotateWall".lang();
+		}
 		if (useHeld && EClass.pc.held != null)
 		{
 			if (EClass.pc.held.category.id == "seed")
@@ -132,6 +151,10 @@ public class TaskBuild : TaskBaseBuild
 			if (EClass.pc.held.TileType.IsBlockPass && pos.HasChara)
 			{
 				return HitResult.Invalid;
+			}
+			if (CanRotateBlock())
+			{
+				return HitResult.Valid;
 			}
 			if (pos.HasBlock && EClass.pc.held.TileType.IsDoor && pos.HasWallOrFence && pos.cell.blockDir != 2)
 			{
@@ -248,6 +271,14 @@ public class TaskBuild : TaskBaseBuild
 			{
 				return;
 			}
+			if (CanRotateBlock())
+			{
+				SE.Rotate();
+				pos.cell.RotateBlock(1);
+				disableRotateBlock = true;
+				return;
+			}
+			disableRotateBlock = true;
 			ActionMode.Build.FixBridge(pos, recipe);
 			bridgeHeight = ActionMode.Build.bridgeHeight;
 			target = (EClass.pc.held.category.installOne ? EClass.pc.held.Split(1) : EClass.pc.held);

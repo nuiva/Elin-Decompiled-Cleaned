@@ -16,6 +16,11 @@ public class Zone_Tent : Zone
 		foreach (Thing thing in EClass._map.things)
 		{
 			num += thing.ChildrenAndSelfWeight;
+			if (num >= 10000000 || num < 0)
+			{
+				num = 10000000;
+				break;
+			}
 		}
 		SetInt(1, num);
 	}

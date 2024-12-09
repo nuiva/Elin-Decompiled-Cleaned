@@ -22,6 +22,8 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 		Force
 	}
 
+	public const int MaxWeight = 10000000;
+
 	[JsonProperty(PropertyName = "A")]
 	public int[] _ints = new int[30];
 
@@ -63,6 +65,8 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 	public float roundTimer;
 
 	public float angle = 180f;
+
+	public float animeCounter;
 
 	public bool isDestroyed;
 
@@ -1828,9 +1832,9 @@ public class Card : BaseCard, IReservable, ICardParent, IRenderSource, IGlobalVa
 					{
 						Chara.CalcBurden();
 					}
-					if (_childrenWeight < 0 || _childrenWeight >= 10000000)
+					if (_childrenWeight < 0 || _childrenWeight > 10000000)
 					{
-						_childrenWeight = 9999999;
+						_childrenWeight = 10000000;
 					}
 				}
 			}

@@ -1408,33 +1408,56 @@ public class Thing : Card
 			}
 			if (source.anime.Length > 2)
 			{
-				float num3 = Time.realtimeSinceStartup * 1000f / (float)source.anime[1] % (float)source.anime[2];
-				if ((int)num3 == source.anime[0] - 1 && source.anime.Length > 3)
+				float num = Time.realtimeSinceStartup * 1000f / (float)source.anime[1] % (float)source.anime[2];
+				if ((int)num == source.anime[0] - 1 && source.anime.Length > 3)
 				{
 					PlaySound("anime_sound" + source.anime[3]);
 				}
-				if (!(num3 >= (float)source.anime[0]))
+				if (!(num >= (float)source.anime[0]))
 				{
-					p.tile += num3 * (float)((!flipX) ? 1 : (-1));
+					p.tile += num * (float)((!flipX) ? 1 : (-1));
 				}
 			}
 			else
 			{
-				float num4 = Time.realtimeSinceStartup * 1000f / (float)source.anime[1] % (float)source.anime[0];
-				p.tile += num4 * (float)((!flipX) ? 1 : (-1));
+				float num2 = Time.realtimeSinceStartup * 1000f / (float)source.anime[1] % (float)source.anime[0];
+				p.tile += num2 * (float)((!flipX) ? 1 : (-1));
+			}
+			break;
+		case Trait.TileMode.SignalAnime:
+			if (source._altTiles.Length != 0 && trait.UseAltTiles)
+			{
+				p.tile = source._altTiles[base.dir % source._altTiles.Length] * ((!flipX) ? 1 : (-1));
+			}
+			else
+			{
+				p.tile = sourceCard._tiles[base.dir % sourceCard._tiles.Length] * ((!flipX) ? 1 : (-1));
+			}
+			if (animeCounter > 0f)
+			{
+				animeCounter += Time.deltaTime;
+				int num3 = (int)(animeCounter / (0.001f * (float)source.anime[1]));
+				if (num3 > source.anime[2])
+				{
+					animeCounter = 0f;
+				}
+				else
+				{
+					p.tile += num3 % source.anime[0] * ((!flipX) ? 1 : (-1));
+				}
 			}
 			break;
 		case Trait.TileMode.Illumination:
 			if (base.isOn || base.isRoofItem)
 			{
-				int num = (int)((float)base.uid + Time.realtimeSinceStartup * 5f);
-				int num2 = (int)(Time.realtimeSinceStartup * 5f);
-				p.tile = (sourceCard._tiles[base.dir % sourceCard._tiles.Length] + num % 3 + 1) * ((!flipX) ? 1 : (-1));
-				if (num2 % 16 == 0)
+				int num4 = (int)((float)base.uid + Time.realtimeSinceStartup * 5f);
+				int num5 = (int)(Time.realtimeSinceStartup * 5f);
+				p.tile = (sourceCard._tiles[base.dir % sourceCard._tiles.Length] + num4 % 3 + 1) * ((!flipX) ? 1 : (-1));
+				if (num5 % 16 == 0)
 				{
 					p.color = 5242880f;
 				}
-				else if (num2 % 11 == 0)
+				else if (num5 % 11 == 0)
 				{
 					p.color = 7864320f;
 				}
@@ -1469,10 +1492,10 @@ public class Thing : Card
 		}
 		if (base.idSkin != 0)
 		{
-			int num5 = base.idSkin - 1;
+			int num6 = base.idSkin - 1;
 			if (sourceCard.skins.Length != 0)
 			{
-				p.tile += ((p.tile < 0f) ? (-sourceCard.skins[num5]) : sourceCard.skins[num5]);
+				p.tile += ((p.tile < 0f) ? (-sourceCard.skins[num6]) : sourceCard.skins[num6]);
 			}
 		}
 	}
