@@ -813,12 +813,12 @@ public class Thing : Card
 	{
 		List<Element> list = ListLimitedValidTraits(limit);
 		bool showFoodEnc = base.ShowFoodEnc;
-		bool flag = EClass.pc.HasElement(1650);
+		bool playerHasFeatGourmet = EClass.pc.HasElement(1650 /* featGourmet */);
 		if (showFoodEnc)
 		{
 			foreach (Element value in elements.dict.Values)
 			{
-				if (value.IsFoodTrait && !list.Contains(value) && (isCraft || flag || value.IsFoodTraitMain) && (!value.IsFoodTraitMain || value.Value < 0))
+				if (value.IsFoodTrait && !list.Contains(value) && (isCraft || playerHasFeatGourmet || value.IsFoodTraitMain) && (!value.IsFoodTraitMain || value.Value < 0))
 				{
 					list.Add(value);
 				}
@@ -826,7 +826,7 @@ public class Thing : Card
 		}
 		foreach (Element value2 in elements.dict.Values)
 		{
-			if ((isCraft || flag || ((!value2.IsFoodTrait || value2.IsFoodTraitMain) && (!showFoodEnc || !value2.IsTrait || value2.Value >= 0))) && !list.Contains(value2) && (value2.IsTrait || (value2.IsFoodTrait && !value2.IsFoodTraitMain)))
+			if ((isCraft || playerHasFeatGourmet || ((!value2.IsFoodTrait || value2.IsFoodTraitMain) && (!showFoodEnc || !value2.IsTrait || value2.Value >= 0))) && !list.Contains(value2) && (value2.IsTrait || (value2.IsFoodTrait && !value2.IsFoodTraitMain)))
 			{
 				list.Add(value2);
 			}
